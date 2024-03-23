@@ -14,4 +14,11 @@
             </div>
         </div>
     </div>
+
+    <div>
+        hola a todos
+        <h1>MIRAME ESTOY EDITANDO<h1>
+        <h2> JAJAJA XD<h2>
+    </div>
+    
 </x-app-layout>

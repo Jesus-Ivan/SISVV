@@ -23,4 +23,18 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
-require __DIR__.'/auth.php';
+Route::view('recepcion', 'recepcion')
+    ->middleware(['auth'])
+    ->name('recepcion');
+Route::view('almacen', 'almacen')
+    ->middleware(['auth'])
+    ->name('almacen');
+Route::view('cocina', 'cocina')
+    ->middleware(['auth'])
+    ->name('cocina');
+
+Route::get('pv/{codigopv?}', function (string $codigopv) {
+    return view('puntoVenta',['codigopv'=>$codigopv]);;
+})->middleware(['auth'])->name('pv');
+
+require __DIR__ . '/auth.php';

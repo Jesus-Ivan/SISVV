@@ -16,10 +16,10 @@ return new class extends Migration
             $table->integer('codigo_producto');
             $table->integer('id_detalle_venta_producto');
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('codigo_producto')->references('codigo')->on('ICO_productos');
-            $table->foreign('id_detalle_venta_producto')->references('id')->on('detalles_ventas_productos');
+            $table->foreign('id_detalle_venta_producto')->references('id')->on('detalles_ventas_productos');*/
         });
     }
 

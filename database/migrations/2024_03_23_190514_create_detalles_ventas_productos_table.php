@@ -24,10 +24,10 @@ return new class extends Migration
             $table->dateTime('terminado')->nullable();
             $table->string('tiempo', 2)->nullable();
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('folio_venta')->references('folio')->on('ventas');
-            $table->foreign('codigo_venta_producto')->references('codigo_venta')->on('catalogo_productos');
+            $table->foreign('codigo_venta_producto')->references('codigo_venta')->on('catalogo_productos');*/
         });
     }
 

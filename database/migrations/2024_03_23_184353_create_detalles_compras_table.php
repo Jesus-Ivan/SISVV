@@ -30,12 +30,13 @@ return new class extends Migration
             $table->dateTime('ultima_compra');
             $table->boolean('estado');
 
+            /*
             //Relaciones
 
             $table->foreign('folio_orden')->references('folio')->on('ordenes_compra');
             $table->foreign('codigo_producto')->references('codigo')->on('IPA_inventario_principal');
             $table->foreign('id_unidad')->references('id')->on('unidades');
-            $table->foreign('id_proveedor')->references('id')->on('proveedores');
+            $table->foreign('id_proveedor')->references('id')->on('proveedores');*/
         });
     }
 

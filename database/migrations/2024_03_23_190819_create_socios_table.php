@@ -30,7 +30,7 @@ return new class extends Migration
 
             //Relaciones
 
-            $table->foreign('clave_membresia')->references('clave')->on('membresias');
+            //$table->foreign('clave_membresia')->references('clave')->on('membresias');
         });
     }
 

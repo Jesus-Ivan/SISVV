@@ -20,10 +20,10 @@ return new class extends Migration
             $table->decimal('existencia_origen', 10, 3);
             $table->decimal('existencia_destino', 10, 3);
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('folio_traspaso')->references('folio')->on('traspasos');
-            $table->foreign('codigo_articulo')->references('codigo')->on('IPA_inventario_principal');
+            $table->foreign('codigo_articulo')->references('codigo')->on('IPA_inventario_principal');*/
         });
     }
 

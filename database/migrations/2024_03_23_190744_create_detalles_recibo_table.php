@@ -20,11 +20,11 @@ return new class extends Migration
             $table->decimal('saldo', 10, 2);
             $table->string('observaciones', 50);
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('folio_recibo')->references('folio')->on('recibos');
             $table->foreign('id_estado_cuenta')->references('id') ->on('estados_cuentas');
-            $table->foreign('id_tipo_pago')->references( 'id' )->on('tipos_pago');
+            $table->foreign('id_tipo_pago')->references( 'id' )->on('tipos_pago');*/
         });
     }
 

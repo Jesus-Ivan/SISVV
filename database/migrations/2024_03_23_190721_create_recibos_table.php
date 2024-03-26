@@ -20,11 +20,11 @@ return new class extends Migration
             $table->integer('id_usuario');
             $table->dateTime('fecha');
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('id_socio')->references('id')->on('socios');
             $table->foreign('id_tipo_pago')->references('id')->on('tipos_pago');
-            $table->foreign('id_usuario')->references('id')->on('usuarios');
+            $table->foreign('id_usuario')->references('id')->on('usuarios');*/
         });
     }
 

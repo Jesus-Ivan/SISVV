@@ -21,7 +21,7 @@ return new class extends Migration
 
             //Relaciones
 
-            $table->foreign('folio_orden_compra')->references('folio')->on('ordenes_compra');
+            //$table->foreign('folio_orden_compra')->references('folio')->on('ordenes_compra');
         });
     }
 

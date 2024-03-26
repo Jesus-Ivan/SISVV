@@ -20,10 +20,10 @@ return new class extends Migration
             $table->decimal('iva', 10, 2);
             $table->integer('folio_entrada');
 
-            //Relaciones
+            /*//Relaciones
             
             $table->foreign('codigo_articulo')->references('codigo')->on('IPA_inventario_principal');
-            $table->foreign('folio_entrada')->references('folio ')->on('entradas');
+            $table->foreign('folio_entrada')->references('folio ')->on('entradas');*/
         });
     }
 

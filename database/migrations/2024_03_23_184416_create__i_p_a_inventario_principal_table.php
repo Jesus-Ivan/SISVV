@@ -26,12 +26,12 @@ return new class extends Migration
             $table->decimal('costo_unitario', total:10, places:2);
             $table->boolean('estado');
 
-            // Relaciones
+            /*// Relaciones
 
             $table->foreign('id_familia')->references('id')->on('familias');
             $table->foreign('id_categoria')->references('id')->on('categorias');
             $table->foreign('id_unidad')->references('id')->on('unidades');
-            $table->foreign('id_proveedor')->references('id')->on('proveedores');
+            $table->foreign('id_proveedor')->references('id')->on('proveedores');*/
         });
     }
 

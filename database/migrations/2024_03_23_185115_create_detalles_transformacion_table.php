@@ -18,10 +18,10 @@ return new class extends Migration
             $table->smallInteger('cantidad_ocupada');
             $table->float('merma_transformacion');
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('folio_transformaciones')->references('folio')->on('transformaciones');
-            $table->foreign('codigo_materia_prima')->references( 'id' )->on('ICO_materia_prima');
+            $table->foreign('codigo_materia_prima')->references( 'id' )->on('ICO_materia_prima');*/
         });
     }
 

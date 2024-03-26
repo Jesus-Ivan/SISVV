@@ -17,10 +17,10 @@ return new class extends Migration
             $table->integer('cantidad_requerida');
             $table->float('ml_requerido');
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('codigo_bebida')->references('codigo')->on('ICB_bebidas');
-            $table->foreign('codigo_principal')->references('codigo')->on('IPA_inventario_principal');
+            $table->foreign('codigo_principal')->references('codigo')->on('IPA_inventario_principal');*/
         });
     }
 

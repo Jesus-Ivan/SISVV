@@ -22,10 +22,10 @@ return new class extends Migration
             $table->string('usuario', 20);
             $table->string('detalles', 100);
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('codigo_insumo')->references('codigo')->on('ICO_insumos');
-            $table->foreign('codigo_articulo')->references('codigo')->on('IPA_inventario_principal');
+            $table->foreign('codigo_articulo')->references('codigo')->on('IPA_inventario_principal');*/
         });
     }
 

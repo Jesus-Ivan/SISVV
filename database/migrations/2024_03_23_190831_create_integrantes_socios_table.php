@@ -21,7 +21,7 @@ return new class extends Migration
 
             //Relaciones
 
-            $table->foreign('id_socio')->references('id')->on('socios');
+            //$table->foreign('id_socio')->references('id')->on('socios');
         });
     }
 

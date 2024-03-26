@@ -19,11 +19,11 @@ return new class extends Migration
             $table->decimal('monto', 10, 2);
             $table->smallInteger('id_tipo_pago');
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('folio_venta')->references('folio')->on('ventas');
             $table->foreign('id_socio')->references('id')->on('socios');
-            $table->foreign('id_tipo_pago')->references('id')->on('tipos_pago');
+            $table->foreign('id_tipo_pago')->references('id')->on('tipos_pago');*/
         });
     }
 

@@ -21,12 +21,12 @@ return new class extends Migration
             $table->decimal('precio_venta', 10, 2);
             $table->json('pv_permitidos');
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('codigo_principal')->references('codigo')->on('IPA_inventario_principal');
             $table->foreign('codigo_recepcion')->references('codigo')->on('IRC_recepcion');
             $table->foreign('codigo_cocina')->references('codigo')->on('ICO_productos');
-            $table->foreign('codigo_bebida')->references('codigo')->on('ICB_bebidas');
+            $table->foreign('codigo_bebida')->references('codigo')->on('ICB_bebidas');*/
         });
     }
 

@@ -18,10 +18,10 @@ return new class extends Migration
             $table->string('salida_de', 20);
             $table->decimal('existencia_origen', 10, 3);
 
-            //Referencias
+            /*//Referencias
 
             $table->foreign('folio_salida')->references('folio') ->on('salidas');
-            $table->foreign('codigo_articulo')->references('codigo')->on('IPA_inventario_principal');
+            $table->foreign('codigo_articulo')->references('codigo')->on('IPA_inventario_principal');*/
         });
     }
 

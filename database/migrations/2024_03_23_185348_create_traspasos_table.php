@@ -15,7 +15,6 @@ return new class extends Migration
             $table->integer('folio')->primary()->unsigned();
             $table->dateTime('fecha');
             $table->string('origen', 20);
-            $table->string('origen', 20);
             $table->string('destino', 20);
             $table->string('observaciones', 150);
         });

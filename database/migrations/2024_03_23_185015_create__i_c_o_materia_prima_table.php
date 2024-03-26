@@ -19,7 +19,7 @@ return new class extends Migration
 
             //Relaciones
 
-            $table->foreign('codigo')->references('codigo')->on('IPA_inventario_principal');
+            //$table->foreign('codigo')->references('codigo')->on('IPA_inventario_principal');
         });
     }
 

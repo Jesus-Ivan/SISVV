@@ -23,12 +23,12 @@ return new class extends Migration
             $table->decimal('abonos', 10, 2);
             $table->decimal('saldo', 10, 2);
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('id_cuenta_pago')->references('id')->on('detalles_ventas_pagos');
             //$table->foreign('folio_evento')->references('folio')->on('eventos');
             $table->foreign('id_cuota')->references('id')->on('cuotas_club');
-            $table->foreign('id_socio')->references('id')->on('socios');
+            $table->foreign('id_socio')->references('id')->on('socios');*/
         });
     }
 

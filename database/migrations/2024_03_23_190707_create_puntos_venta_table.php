@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('puntos_venta', function (Blueprint $table) {
-            $table->string('clave', 10)->primary()->unsigned();
+            $table->string('clave', 10)->primary();
             $table->string('nombre', 80);
         });
     }

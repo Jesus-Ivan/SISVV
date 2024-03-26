@@ -17,10 +17,10 @@ return new class extends Migration
             $table->decimal('saldo', 10, 2);
             $table->string('aplicado_a', 80);
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('folio_recibo_origen')->references('folio')->on('recibos');
-            $table->foreign('aplicado_a')->references('folio')->on('recibos');
+            $table->foreign('aplicado_a')->references('folio')->on('recibos');*/
         });
     }
 

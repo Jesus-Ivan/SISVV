@@ -19,10 +19,10 @@ return new class extends Migration
             $table->decimal('precio', 10, 2);
             $table->decimal('monto', 10, 2);
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('id_venta_producto')->references('id')->on('detalles_ventas_productos');
-            $table->foreign('id_modificador')->references('codigo')->on('IPA_inventario_principal');
+            $table->foreign('id_modificador')->references('codigo')->on('IPA_inventario_principal');*/
         });
     }
 

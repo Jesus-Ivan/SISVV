@@ -18,9 +18,9 @@ return new class extends Migration
             $table->decimal('st_max', total:10, places:3);
             $table->decimal('st_copas', total:10, places:3);
 
-            //Relaciones
+            /*//Relaciones
 
-            $table->foreign('codigo')->references('codigo')->on('IPA_inventario_principal');
+            $table->foreign('codigo')->references('codigo')->on('IPA_inventario_principal');*/
         });
     }
 

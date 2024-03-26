@@ -18,11 +18,11 @@ return new class extends Migration
             $table->smallInteger('cantidad_requerida')->nullable();
             $table->float('peso_requerido')->nullable();
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('folio_produccion')->references('folio')->on('produccion');
             $table->foreign('codigo_insumo')->references('codigo')->on('ICO_insumos');
-            $table->foreign('codigo_materia_prima')->references('codigo')->on('IPA_inventario_principal');
+            $table->foreign('codigo_materia_prima')->references('codigo')->on('IPA_inventario_principal');*/
         });
     }
 

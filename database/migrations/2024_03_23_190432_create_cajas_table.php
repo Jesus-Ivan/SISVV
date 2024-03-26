@@ -19,7 +19,7 @@ return new class extends Migration
 
             //Relaciones
 
-            $table->foreign('id_usuario')->references('id')->on('users');
+            //$table->foreign('id_usuario')->references('id')->on('users');
         });
     }
 

@@ -25,12 +25,12 @@ return new class extends Migration
             $table->boolean('status');
             $table->integer('corte_caja')->nullable();
 
-            //Relaciones
+            /*//Relaciones
 
             $table->foreign('id_socio')->references('id')->on('socios');
             $table->foreign('id_tipo_pago')->references('id')->on('tipos_pago');
             $table->foreign('clave_punto_venta')->references('clave')->on('puntos_venta');
-            $table->foreign('corte_caja')->references('corte')->on('cajas');
+            $table->foreign('corte_caja')->references('corte')->on('cajas');*/
         });
     }
 

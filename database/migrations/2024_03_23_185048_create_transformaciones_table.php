@@ -20,7 +20,7 @@ return new class extends Migration
 
             //Relaciones
 
-            $table->foreign('codigo_insumo')->references('codigo')->on('ICO_insumos');
+            //$table->foreign('codigo_insumo')->references('codigo')->on('ICO_insumos');
         });
     }
 

@@ -101,10 +101,16 @@
                         </td>
                     </tr>
                 </tbody>
+                <tfoot>
+                    <tr class="font-semibold text-gray-900 dark:text-white">
+                        <th scope="row" class="px-6 py-3 text-base">Total</th>
+                        <td class="px-6 py-3"></td>
+                        <td class="px-6 py-3"></td>
+                        <td class="px-6 py-3">$21,000</td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
-        <!--Total de articulos-->
-        <h6 class="text-lg font-bold dark:text-white">Heading 6</h6>
         <!--Linea -->
         <hr class="h-px my-4 bg-gray-300 border-0 dark:bg-gray-700">
         <!--Metodo de pagos -->
@@ -179,10 +185,16 @@
                         </td>
                     </tr>
                 </tbody>
+                <tfoot>
+                    <tr class="font-semibold text-gray-900 dark:text-white">
+                        <th scope="row" class="px-6 py-3 text-base">Total</th>
+                        <td class="px-6 py-3"></td>
+                        <td class="px-6 py-3"></td>
+                        <td class="px-6 py-3">$21,000</td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
-        <!--Total del pago-->
-        <h6 class="text-lg font-bold dark:text-white">Heading 6</h6>
         <!--Botones de navegacion (cancelar y cerrar venta)-->
         <div>
             <button type="button"

@@ -63,6 +63,7 @@ Route::prefix('recepcion')->middleware(['auth'])->group(function (){
     });
     Route::prefix('socios')->group(function(){
         Route::view('/','recepcion.Socios.socios')->name('recepcion.socios');
+        Route::view('nuevo','recepcion.Socios.nuevo-socio')->name('recepcion.socios.nuevo');
     });
 });
 

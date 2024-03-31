@@ -1,5 +1,6 @@
 <?php
 
+use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,10 +23,6 @@ Route::view('dashboard', 'dashboard')
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
-
-Route::view('recepcion', 'recepcion')
-    ->middleware(['auth'])
-    ->name('recepcion');
 
 Route::prefix('almacen')->middleware(['auth'])->group(function () {
     Route::view('/','almacen.index')->name('almacen');
@@ -52,13 +49,29 @@ Route::prefix('almacen')->middleware(['auth'])->group(function () {
     });
 });
 
+Route::prefix('recepcion')->middleware(['auth'])->group(function (){
+    Route::view('/','recepcion.index')->name('recepcion');
+    Route::prefix('ventas')->group(function(){
+        Route::view('/','recepcion.Ventas.ventas')->name('recepcion.ventas');
+        Route::view('nueva','recepcion.Ventas.nueva-venta')->name('recepcion.ventas.nueva');
+        Route::view('reporte','recepcion.Ventas.reporte-ventas')->name('recepcion.ventas.reporte');
+    });
+    Route::prefix('cobros')->group(function(){
+        Route::view('/','recepcion.Cobros.cobros')->name('recepcion.cobros');
+        Route::view('nuevo','recepcion.Cobros.nuevo-cobro')->name('recepcion.cobros.nuevo');
+        Route::view('reportes','recepcion.Cobros.reporte-cobros')->name('recepcion.cobros.reportes');
+    });
+    Route::prefix('socios')->group(function(){
+        Route::view('/','recepcion.Socios.socios')->name('recepcion.socios');
+    });
+});
 
 Route::view('cocina', 'cocina')
     ->middleware(['auth'])
     ->name('cocina');
 
 Route::get('pv/{codigopv?}', function (string $codigopv) {
-    return view('puntoVenta',['codigopv'=>$codigopv]);;
+    return view('puntoVenta', ['codigopv' => $codigopv]);;
 })->middleware(['auth'])->name('pv');
 
 require __DIR__ . '/auth.php';

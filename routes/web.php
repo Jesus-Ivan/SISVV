@@ -64,6 +64,11 @@ Route::prefix('recepcion')->middleware(['auth'])->group(function (){
     Route::prefix('socios')->group(function(){
         Route::view('/','recepcion.Socios.socios')->name('recepcion.socios');
         Route::view('nuevo','recepcion.Socios.nuevo-socio')->name('recepcion.socios.nuevo');
+        Route::view('editar/{socio}','recepcion.Socios.editar-socio')->name('recepcion.socios.editar');
+    });
+    Route::prefix('edo-cuenta')->group(function(){
+        Route::view('/','recepcion.Estado-cuenta.estado-cuenta')->name('recepcion.estado');
+        Route::view('nuevo-cargo','recepcion.Estado-cuenta.nuevo-cargo')->name('recepcion.estado.nuevo');
     });
 });
 

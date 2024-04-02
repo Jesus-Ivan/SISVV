@@ -47,6 +47,14 @@ Route::prefix('almacen')->middleware(['auth'])->group(function () {
         Route::view('nuevo','almacen.Traspasos.nuevo-traspaso')->name('almacen.traspasos.nuevo');
         Route::view('historial','almacen.Traspasos.historial')->name('almacen.traspasos.historial');
     });
+
+    Route::view('ordenes','almacen.ordenes')->name('almacen.ordenes');
+    Route::view('editar-orden','almacen.editar-orden')->name('almacen.editar');
+
+    Route::prefix('ordenes_realizadas')->group(function(){
+        Route::view('/','almacen.Ordenes.ordenes_realizadas')->name('almacen.ordenes_realizadas');
+        Route::view('historial','almacen.Ordenes.historial')->name('almacen.ordenes.historial');
+    });
 });
 
 Route::prefix('recepcion')->middleware(['auth'])->group(function (){
@@ -65,6 +73,7 @@ Route::prefix('recepcion')->middleware(['auth'])->group(function (){
         Route::view('/','recepcion.Socios.socios')->name('recepcion.socios');
         Route::view('nuevo','recepcion.Socios.nuevo-socio')->name('recepcion.socios.nuevo');
     });
+
 });
 
 Route::view('cocina', 'cocina')

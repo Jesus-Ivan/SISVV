@@ -45,12 +45,12 @@ Route::prefix('almacen')->middleware(['auth'])->group(function () {
     Route::prefix('traspasos')->group(function(){
         Route::view('/','almacen.Traspasos.traspasos')->name('almacen.traspasos');
         Route::view('nuevo','almacen.Traspasos.nuevo-traspaso')->name('almacen.traspasos.nuevo');
+        Route::view('solicitud','almacen.Traspasos.solicitud-traspaso')->name('almacen.traspasos.solicitud');
         Route::view('historial','almacen.Traspasos.historial')->name('almacen.traspasos.historial');
     });
 
     Route::view('ordenes','almacen.ordenes')->name('almacen.ordenes');
     Route::view('editar-orden','almacen.editar-orden')->name('almacen.editar');
-
     Route::prefix('ordenes_realizadas')->group(function(){
         Route::view('/','almacen.Ordenes.ordenes_realizadas')->name('almacen.ordenes_realizadas');
         Route::view('historial','almacen.Ordenes.historial')->name('almacen.ordenes.historial');

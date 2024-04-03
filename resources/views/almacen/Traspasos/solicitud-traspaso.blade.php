@@ -17,15 +17,14 @@
                             clip-rule="evenodd" />
                     </svg>
                 </button>
-                <h4 class="flex items-center ms-2 text-2xl font-bold dark:text-white">Nuevo de Traspaso de artículos
-                </h4>
+                <h4 class="flex items-center ms-2 text-2xl font-bold dark:text-white">Solicitud de Traspaso de artículos</h4>
             </div>
 
             <div class="inline-flex">
                 <label for="name" class="flex items-center text-sm font-medium text-gray-900 dark:text-white">FECHA:
                 </label>
                 <input type="text" id="disabled-input" aria-label="disabled input"
-                    class="ms-2 bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    class="ms-2 bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     value="Fecha" disabled>
             </div>
             <div class="inline-flex">
@@ -33,7 +32,7 @@
                     class="flex items-center ms-2 text-sm font-medium text-gray-900 dark:text-white">FOLIO:
                 </label>
                 <input type="text" id="disabled-input" aria-label="disabled input"
-                    class="ms-2 bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 cursor-not-allowed me-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    class="ms-2 bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed me-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     value="Fecha" disabled>
             </div>
         </div>
@@ -46,27 +45,17 @@
                     <label for="name"
                         class="flex items-center text-sm font-medium text-gray-900 dark:text-white">SALIDA:
                     </label>
-                    <select id="category"
-                        class="ms-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                        <option selected="">Seleccionar</option>
-                        <option value="TV">Barra</option>
-                        <option value="PC">Bar</option>
-                        <option value="GA">Cafetería</option>
-                        <option value="PH">Caddie</option>
-                    </select>
+                    <input type="text" id="disabled-input" aria-label="disabled input"
+                        class="ms-2 bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        value="Salida De" disabled>
                 </div>
                 <div class="inline-flex">
-                    <label for="category"
+                    <label for="name"
                         class="ms-2 flex items-center text-sm font-medium text-gray-900 dark:text-white">DESTINO:
                     </label>
-                    <select id="category"
-                        class="ms-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                        <option selected="">Seleccionar</option>
-                        <option value="TV">Barra</option>
-                        <option value="PC">Bar</option>
-                        <option value="GA">Cafetería</option>
-                        <option value="PH">Caddie</option>
-                    </select>
+                    <input type="text" id="disabled-input" aria-label="disabled input"
+                        class="ms-2 bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        value="Destino" disabled>
                 </div>
             </div>
         </div>
@@ -78,6 +67,9 @@
             <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
+                        <th scope="col" class="px-6 py-3">
+
+                        </th>
                         <th scope="col" class="px-6 py-3">
                             CÓDIGO
                         </th>
@@ -93,6 +85,9 @@
                         <th scope="col" class="px-4 py-3">
                             EXISTENCIAS DESTINO
                         </th>
+                        <th scope="col" class="px-4 py-3">
+                            ESTADO
+                        </th>
                         <th scope="col" class="px-6 py-3">
                             ACCIONES
                         </th>
@@ -101,6 +96,13 @@
                 <tbody>
                     <tr
                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                        <td class="w-4 p-4">
+                            <div class="flex items-center">
+                                <input id="checkbox-table-1" type="checkbox"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                <label for="checkbox-table-1" class="sr-only">checkbox</label>
+                            </div>
+                        </td>
                         <td class="px-6 py-4">
                             1234
                         </td>
@@ -115,6 +117,11 @@
                         </td>
                         <td class="px-6 py-4">
                             100
+                        </td>
+                        <td class="px-4 py-2">
+                            <span
+                                class="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Entregado
+                            </span>
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex">
@@ -250,4 +257,5 @@
             </div>
         </div>
     </div>
+
 </x-app-layout>

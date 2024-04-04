@@ -85,8 +85,15 @@ Route::view('cocina', 'cocina')
     ->middleware(['auth'])
     ->name('cocina');
 
-Route::get('pv/{codigopv?}', function (string $codigopv) {
-    return view('puntoVenta', ['codigopv' => $codigopv]);;
-})->middleware(['auth'])->name('pv');
+Route:: prefix('pv/{codigopv}')->middleware(['auth'])->group(function(){
+    Route::view('/','puntos.index')->name('pv.index');
+    Route::prefix('ventas')->group(function(){
+        Route::view('/','puntos.Ventas.ventas')->name('pv.ventas');
+        Route::view('/editar/{folioventa}','puntos.Ventas.editar-venta')->name('pv.ventas.editar');
+        Route::view('/ver/{folioventa}','puntos.Ventas.ver-venta')->name('pv.ventas.ver');
+        Route::view('nueva','puntos.Ventas.nueva-venta')->name('pv.ventas.nueva');
+        Route::view('reporte','puntos.Ventas.reporte-ventas')->name('pv.ventas.reporte');
+    });
+});
 
 require __DIR__ . '/auth.php';

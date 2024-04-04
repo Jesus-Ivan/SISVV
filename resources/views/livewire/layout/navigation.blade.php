@@ -125,24 +125,24 @@ new class extends Component {
                                 </button>
                                 <ul id="dropdown-example" class="hidden py-2 space-y-2">
                                     <li>
-                                        <a href="{{route('pv', ['codigopv' => 'bar'])}}"
+                                        <a href="{{route('pv.index', ['codigopv' => 'bar'])}}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Bar</a>
                                     </li>
                                     <li>
-                                        <a href="{{route('pv', ['codigopv' => 'restaurant'])}}"
+                                        <a href="{{route('pv.index', ['codigopv' => 'restaurant'])}}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Barra/restaurant</a>
                                     </li>
                                     <li>
-                                        <a href="{{route('pv', ['codigopv' => 'caddie'])}}"
+                                        <a href="{{route('pv.index', ['codigopv' => 'caddie'])}}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Caddie
                                             bar</a>
                                     </li>
                                     <li>
-                                        <a href="{{route('pv', ['codigopv' => 'cafeteria'])}}"
+                                        <a href="{{route('pv.index', ['codigopv' => 'cafeteria'])}}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Cafeteria</a>
                                     </li>
                                     <li>
-                                        <a href="{{route('pv', ['codigopv' => 'lockers'])}}"
+                                        <a href="{{route('pv.index', ['codigopv' => 'lockers'])}}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Lockers</a>
                                     </li>
                                 </ul>

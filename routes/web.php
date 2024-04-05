@@ -55,6 +55,14 @@ Route::prefix('almacen')->middleware(['auth'])->group(function () {
         Route::view('/','almacen.Ordenes.ordenes_realizadas')->name('almacen.ordenes_realizadas');
         Route::view('historial','almacen.Ordenes.historial')->name('almacen.ordenes.historial');
     });
+
+    Route::view('nuevo-costeo','almacen.nuevo-costeo')->name('almacen.nuevo');
+    
+    Route::prefix('recetas')->group(function(){
+        Route::view('/','almacen.Recetas.recetas')->name('almacen.recetas');
+        Route::view('nueva','almacen.Recetas.nueva-receta')->name('almacen.recetas.nueva');
+        Route::view('editar','almacen.Recetas.editar-receta')->name('almacen.recetas.editar');
+    });
 });
 
 Route::prefix('recepcion')->middleware(['auth'])->group(function (){

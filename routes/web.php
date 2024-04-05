@@ -86,13 +86,23 @@ Route::view('cocina', 'cocina')
     ->name('cocina');
 
 Route:: prefix('pv/{codigopv}')->middleware(['auth'])->group(function(){
+
     Route::view('/','puntos.index')->name('pv.index');
+
     Route::prefix('ventas')->group(function(){
         Route::view('/','puntos.Ventas.ventas')->name('pv.ventas');
         Route::view('/editar/{folioventa}','puntos.Ventas.editar-venta')->name('pv.ventas.editar');
         Route::view('/ver/{folioventa}','puntos.Ventas.ver-venta')->name('pv.ventas.ver');
         Route::view('nueva','puntos.Ventas.nueva-venta')->name('pv.ventas.nueva');
         Route::view('reporte','puntos.Ventas.reporte-ventas')->name('pv.ventas.reporte');
+    });
+
+    Route::view('inventario','puntos.Inventario.inventario')->name('pv.inventario');
+
+    Route::prefix('solicitudes-mercancia')->group(function(){
+        Route::view('/','puntos.Inventario.SolicitarMercancia.solicitudes')->name('pv.mercancia');
+        Route::view('/ver/{folio}','puntos.Inventario.SolicitarMercancia.ver-solicitud')->name('pv.mercancia.ver');
+        Route::view('nueva','puntos.Inventario.SolicitarMercancia.nueva-solicitud')->name('pv.mercancia.nueva');
     });
 });
 

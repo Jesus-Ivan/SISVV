@@ -59,6 +59,9 @@
                         <th scope="col" class="px-4 py-3">
                             UNIDAD
                         </th>
+                        <th scope="col" class="px-4 py-3">
+                            PROVEEDOR
+                        </th>
                         <th scope="col" class="px-6 py-3">
                             DEPTO
                         </th>
@@ -108,6 +111,9 @@
                         </td>
                         <td class="px-6 py-4">
                             PIEZA
+                        </td>
+                        <td class="px-6 py-4">
+                            BARCEL
                         </td>
                         <td class="px-6 py-4">
                             ALMACÉN

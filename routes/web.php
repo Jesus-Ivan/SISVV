@@ -112,6 +112,8 @@ Route:: prefix('pv/{codigopv}')->middleware(['auth'])->group(function(){
         Route::view('/ver/{folio}','puntos.Inventario.SolicitarMercancia.ver-solicitud')->name('pv.mercancia.ver');
         Route::view('nueva','puntos.Inventario.SolicitarMercancia.nueva-solicitud')->name('pv.mercancia.nueva');
     });
+
+    Route::view('socios','puntos.Socios.socios')->name('pv.socios');
 });
 
 require __DIR__ . '/auth.php';

@@ -24,6 +24,14 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
+Route::prefix('administracion')->middleware(['auth'])->group(function () {
+    Route::view('/', 'administracion.index')->name('administracion');
+    Route::view('reportes-ordenes', 'administracion.reportes-ordenes')->name('administracion.reportes-ordenes');
+    Route::view('detalles-ordenes', 'administracion.detalles-ordenes')->name('administracion.detalles-ordenes');
+    Route::view('reportes-ventas', 'administracion.reportes-ventas')->name('administracion.reportes-ventas');
+    Route::view('reportes-cobranza', 'administracion.reportes-cobranza')->name('administracion.reportes-cobranza');
+});
+
 Route::prefix('almacen')->middleware(['auth'])->group(function () {
     Route::view('/','almacen.index')->name('almacen');
     

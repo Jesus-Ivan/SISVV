@@ -111,6 +111,8 @@ Route::prefix('cocina')->middleware(['auth'])->group(function () {
         Route::view('/', 'cocina.Inventarios.SolicitarMercancia.mercancias')->name('cocina.mercancias');
         Route::view('nueva', 'cocina.Inventarios.SolicitarMercancia.nueva-mercancia')->name('cocina.mercancias.nueva-soli');
     });
+
+    Route::view('platillos', 'cocina.Platillos.platillos')->name('cocina.platillos');
 });
 
 Route::prefix('pv/{codigopv}')->middleware(['auth'])->group(function () {

@@ -105,6 +105,15 @@ Route::prefix('cocina')->middleware(['auth'])->group(function () {
         Route::view('historial', 'cocina.Ordenes.historial')->name('cocina.ordenes.historial');
     });
 
+    Route::view('inventarios', 'cocina.Inventarios.inventarios')->name('cocina.inventarios');
+
+    Route::prefix('solicitud-mercancia')->group(function () {
+        Route::view('/', 'cocina.Inventarios.SolicitarMercancia.mercancias')->name('cocina.mercancias');
+        Route::view('nueva', 'cocina.Inventarios.SolicitarMercancia.nueva-mercancia')->name('cocina.mercancias.nueva-soli');
+    });
+
+    Route::view('platillos', 'cocina.Platillos.platillos')->name('cocina.platillos');
+
     Route::prefix('transformaciones')->group(function() {
         Route::view('/', 'cocina.Transformaciones.transformaciones')->name('cocina.transformaciones');
         Route::view('nueva', 'cocina.Transformaciones.nueva-transformacion')->name('cocina.transformaciones.nueva');

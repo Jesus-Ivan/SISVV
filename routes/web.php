@@ -113,6 +113,12 @@ Route::prefix('cocina')->middleware(['auth'])->group(function () {
     });
 
     Route::view('platillos', 'cocina.Platillos.platillos')->name('cocina.platillos');
+
+    Route::prefix('transformaciones')->group(function() {
+        Route::view('/', 'cocina.Transformaciones.transformaciones')->name('cocina.transformaciones');
+        Route::view('nueva', 'cocina.Transformaciones.nueva-transformacion')->name('cocina.transformaciones.nueva');
+        Route::view('historial', 'cocina.Transformaciones.historial-transformaciones')->name('cocina.transformaciones.historial');
+    });
 });
 
 Route::prefix('pv/{codigopv}')->middleware(['auth'])->group(function () {

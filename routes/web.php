@@ -119,6 +119,8 @@ Route::prefix('cocina')->middleware(['auth'])->group(function () {
         Route::view('nueva', 'cocina.Transformaciones.nueva-transformacion')->name('cocina.transformaciones.nueva');
         Route::view('historial', 'cocina.Transformaciones.historial-transformaciones')->name('cocina.transformaciones.historial');
     });
+
+    Route::view('mermas', 'cocina.Mermas.mermas')->name('cocina.mermas');
 });
 
 Route::prefix('pv/{codigopv}')->middleware(['auth'])->group(function () {

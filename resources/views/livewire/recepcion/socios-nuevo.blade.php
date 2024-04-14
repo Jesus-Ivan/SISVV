@@ -2,52 +2,77 @@
     <!-- Registro del socio -->
     <div class="flex gap-4">
         <!-- IMAGEN DEL SOCIO -->
-        <img class="h-auto w-auto" src="https://placehold.co/400" alt="image description">
+        <div class="w-full">
+            @if ($formSocio->img_path)
+                <img class="size-96" src="{{ $formSocio->img_path->temporaryUrl() }}">
+            @else
+                <!--Placeholder-->
+                <img class="size-96" src="https://placehold.co/400" alt="image description">
+            @endif
+            <!--loading state image-->
+            <div wire:loading wire:target="formSocio.img_path">
+                <div class="flex gap-3 items-center">
+                    <svg class="w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                        viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                            fill="currentColor" />
+                        <path
+                            d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                            fill="currentFill" />
+                    </svg>
+                    <span>Cargando imagen...</span>
+                </div>
+            </div>
+        </div>
         <!-- columna 2 -->
         <div class="w-full">
             <div>
                 <label for="nombre"
                     class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre(s)</label>
-                <input type="text" id="nombre"
+                <input type="text" id="nombre" wire:model="formSocio.nombre"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     required />
+                @error('formSocio.nombre')
+                    <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                @enderror
             </div>
             <div>
                 <label for="calle" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Calle</label>
-                <input type="text" id="calle"
+                <input type="text" id="calle" wire:model="formSocio.calle"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
             </div>
             <div class="flex gap-4">
                 <div class="w-full">
                     <label for="num-exterior"
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Num.Exterior</label>
-                    <input type="text" id="num-exterior"
+                    <input type="text" id="num-exterior" wire:model="formSocio.num_exterior"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                 </div>
                 <div class="w-full">
                     <label for="CP" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Codigo
                         postal</label>
-                    <input type="number" id="CP"
+                    <input type="number" id="CP" wire:model="formSocio.codigo_postal"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                 </div>
             </div>
             <div>
                 <label for="colonia"
                     class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Colonia</label>
-                <input type="text" id="colonia"
+                <input type="text" id="colonia" wire:model="formSocio.colonia"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
             </div>
             <div>
                 <label for="estado"
                     class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Estado</label>
-                <input type="text" id="estado"
+                <input type="text" id="estado" wire:model="formSocio.estado"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="Oaxaca" />
             </div>
             <div>
                 <label for="ciudad"
                     class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Ciudad</label>
-                <input type="text" id="ciudad"
+                <input type="text" id="ciudad" wire:model="formSocio.ciudad"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
             </div>
         </div>
@@ -56,39 +81,43 @@
             <div>
                 <label for="estado-civil" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Estado
                     civil</label>
-                <input type="text" id="estado-civil"
+                <input type="text" id="estado-civil" wire:model="formSocio.estado_civil"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="Soltero(a)" />
             </div>
             <div>
                 <label for="tel-fijo" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Telefono
                     fijo</label>
-                <input type="number" id="tel-fijo"
+                <input type="number" id="tel-fijo" wire:model="formSocio.tel_fijo"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
             </div>
             <div>
                 <label for="tel-celular" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Telefono
                     celular</label>
-                <input type="number" id="tel-celular"
+                <input type="number" id="tel-celular" wire:model="formSocio.tel_celular"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
             </div>
             <div>
                 <div>
                     <label for="membresias"
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia</label>
-                    <select id="membresias"
+                    <select id="membresias" wire:model="formSocio.clave_membresia"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option>01-Casa club Individual</option>
-                        <option>02-Casa club Familiar</option>
-                        <option>03-Golf Individual</option>
-                        <option>04-Golf Familiar</option>
+                        <option selected value="{{null}}">Seleccione</option>
+                        <option value="1">01-Casa club Individual</option>
+                        <option value="2">02-Casa club Familiar</option>
+                        <option value="3">03-Golf Individual</option>
+                        <option value="4">04-Golf Familiar</option>
                     </select>
+                    @error('formSocio.clave_membresia')
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
             <div>
                 <label for="correo"
                     class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Correo</label>
-                <input type="email" id="correo"
+                <input type="email" id="correo" wire:model="formSocio.correo"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="someone@example.com" />
             </div>
@@ -96,9 +125,12 @@
                 <div class="w-full">
                     <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="file_input">Subir
                         foto</label>
-                    <input
+                    <input wire:model="formSocio.img_path"
                         class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                         id="file_input" type="file">
+                    @error('formSocio.img_path')
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                    @enderror
                 </div>
                 <button type="button"
                     class="max-h-11 rounded-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium text-sm p-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
@@ -123,46 +155,63 @@
             <div class="w-full">
                 <label for="nombre-miembro"
                     class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre</label>
-                <input type="text" id="nombre-miembro"
+                <input wire:model='formSocio.nombre_integrante' type="text" id="nombre-miembro"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                @error('formSocio.nombre_integrante')
+                    <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                @enderror
             </div>
             <div class="w-full">
                 <label for="fecha-nac" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fecha
                     nacimiento</label>
-                <input type="text" id="fecha-nac"
+                <input wire:model='formSocio.fecha_nac' type="date" id="fecha-nac"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="Soltero(a)" />
+                @error('formSocio.fecha_nac')
+                    <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                @enderror
             </div>
             <div class="w-full">
                 <div>
                     <label for="membresias"
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Parentesco</label>
-                    <select id="membresias"
+                    <select wire:model='formSocio.parentesco' id="membresias"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option>Padre</option>
-                        <option>Madre</option>
-                        <option>Hijo(a)</option>
-                        <option>Hermano(a)</option>
-                        <option>Esposo(a)</option>
+                        <option selected value="{{null}}">Seleccione</option>
+                        <option value="1">Padre</option>
+                        <option value="2">Madre</option>
+                        <option value="3">Hijo(a)</option>
+                        <option value="4">Hermano(a)</option>
+                        <option value="5">Esposo(a)</option>
                     </select>
+                    @error('formSocio.parentesco')
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
         </div>
         <!-- Buton y Image -->
         <div class="flex items-end">
-            <button type="button"
+            <!-- Agregar miembro -->
+            <button type="button" wire:click='agregarMiembro'
                 class="max-h-11 w-full text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">Añadir
                 miembro
             </button>
             <div class="w-full"></div>
+            <!-- Subir foto -->
             <div class="w-full gap-3 items-end flex">
+                <!--INPUT-->
                 <div class="w-full">
                     <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="file_input">Subir
                         foto</label>
-                    <input
+                    <input wire:model='formSocio.img_path_integrante'
                         class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                         id="file_input" type="file">
+                    @error('formSocio.img_path_integrante')
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                    @enderror
                 </div>
+                <!--CAMARA-->
                 <button type="button"
                     class="max-h-11 rounded-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium text-sm p-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
                     <svg class="w-6 h-6 dark:text-gray-800 text-white" aria-hidden="true"
@@ -197,54 +246,93 @@
                 </tr>
             </thead>
             <tbody>
-                <tr
-                    class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
-                    <td scope="row" class="w-full px-6 py-4">
-                        <div class="flex items-center gap-4">
-                            <!-- IMAGEN DE PERFIL -->
-                            <div>
-                                <img class="w-20 h-20 rounded-full" src="https://placehold.co/400"
-                                    alt="Rounded avatar">
+                @foreach ($formSocio->integrantes as $integrante)
+                    <tr id="{{ $integrante['temp'] }}"
+                        class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                        <td scope="row" class="w-full px-6 py-4">
+                            <div class="flex items-center gap-4">
+                                <!-- IMAGEN DE PERFIL -->
+                                <div>
+                                    @if ($integrante['img_path_integrante'])
+                                        <img class="size-20"
+                                            src="{{ $integrante['img_path_integrante']->temporaryUrl() }}">
+                                    @else
+                                        <!--Placeholder-->
+                                        <img class="size-20" src="https://placehold.co/400" alt="image description">
+                                    @endif
+                                </div>
+                                <!-- INFO -->
+                                <div class="dark:text-white">
+                                    <div class="font-medium">{{ $integrante['nombre_integrante'] }}</div>
+                                </div>
                             </div>
-                            <!-- INFO -->
-                            <div class="dark:text-white">
-                                <div class="font-medium">JUANITO MASAFECIO HERNESTINO DE LA CRUZ</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="min-w-72 px-6 py-4">
-                        12/09/2000
-                    </td>
-                    <td class="min-w-72 px-6 py-4">
-                        Hijo(a)
-                    </td>
-                    <td class="flex max-w-fit px-6 py-4">
-                        <button type="button"
-                            class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                class="w-5 h-5">
-                                <path fill-rule="evenodd"
-                                    d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z"
-                                    clip-rule="evenodd" />
-                                <path fill-rule="evenodd"
-                                    d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                            <span class="sr-only">Editar</span>
-                        </button>
-                        <button type="button"
-                            class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                class="w-5 h-5">
-                                <path fill-rule="evenodd" d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="sr-only">Borrar</span>
-                        </button>
-                    </td>
-                </tr>
+                        </td>
+                        <td class="min-w-72 px-6 py-4">
+                            {{ $integrante['fecha_nac'] }}
+                        </td>
+                        <td class="min-w-72 px-6 py-4">
+                            {{ $integrante['parentesco'] }}
+                        </td>
+                        <td class="flex max-w-fit px-6 py-4">
+                            <button wire:click="borrarMiembro({{ $integrante['temp'] }})" type="button"
+                                class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                    class="w-5 h-5">
+                                    <path fill-rule="evenodd"
+                                        d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                <span class="sr-only">Borrar</span>
+                            </button>
+                        </td>
+                    </tr>
+                @endforeach
             </tbody>
         </table>
     </div>
     <!-- Boton de registro-->
-    <button type="button" class="m-2 w-64 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Finalizar registro</button>
+    <button type="button" wire:click="register"
+        class="items-center gap-2 justify-center flex m-2 w-64 focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+        <svg wire:loading.delay wire:loading.attr="disabled" wire:target="register"
+            class="inline w-5 h-4 text-white animate-spin" viewBox="0 0 100 101" fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                fill="#E5E7EB" />
+            <path
+                d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                fill="currentColor" />
+        </svg>
+        Finalizar registro
+    </button>
+    <!--Alerts-->
+    <x-action-message on='open-action-message'>
+        @if (session('success'))
+            <div id="alert-exito"
+                class="flex items-center p-4 mb-4 text-green-800 border-t-4 border-green-300 bg-green-50 dark:text-green-400 dark:bg-gray-800 dark:border-green-800"
+                role="alert">
+                <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                        d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                </svg>
+                <div class="ms-3 text-sm font-medium">
+                    {{ session('success') }}
+                </div>
+            </div>
+        @else
+            <div id="alert-error"
+                class="flex items-center p-4 mb-4 text-red-800 border-t-4 border-red-300 bg-red-50 dark:text-red-400 dark:bg-gray-800 dark:border-red-800"
+                role="alert">
+                <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                        d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                </svg>
+                <div class="ms-3 text-sm font-medium">
+                    {{ session('fail') }}
+                </div>
+            </div>
+        @endif
+    </x-action-message>
 </div>

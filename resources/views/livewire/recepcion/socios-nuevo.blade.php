@@ -103,11 +103,10 @@
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia</label>
                     <select id="membresias" wire:model="formSocio.clave_membresia"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option selected value="{{null}}">Seleccione</option>
-                        <option value="1">01-Casa club Individual</option>
-                        <option value="2">02-Casa club Familiar</option>
-                        <option value="3">03-Golf Individual</option>
-                        <option value="4">04-Golf Familiar</option>
+                        <option selected value="{{ null }}">Seleccione</option>
+                        @foreach ($this->membresias as $membresia)
+                            <option value="{{$membresia->clave}}">{{$membresia->descripcion}}</option>
+                        @endforeach
                     </select>
                     @error('formSocio.clave_membresia')
                         <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
@@ -177,12 +176,15 @@
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Parentesco</label>
                     <select wire:model='formSocio.parentesco' id="membresias"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option selected value="{{null}}">Seleccione</option>
-                        <option value="1">Padre</option>
-                        <option value="2">Madre</option>
-                        <option value="3">Hijo(a)</option>
-                        <option value="4">Hermano(a)</option>
-                        <option value="5">Esposo(a)</option>
+                        <option selected value="{{ null }}">Seleccione</option>
+                        <option value="Padre">Padre</option>
+                        <option value="Madre">Madre</option>
+                        <option value="Hijo">Hijo</option>
+                        <option value="Hija">Hija</option>
+                        <option value="Hermano">Hermano</option>
+                        <option value="Hermana">Hermana</option>
+                        <option value="Esposo">Esposo</option>
+                        <option value="Esposa">Esposa</option>
                     </select>
                     @error('formSocio.parentesco')
                         <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>

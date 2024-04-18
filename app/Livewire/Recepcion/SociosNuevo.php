@@ -2,7 +2,10 @@
 
 namespace App\Livewire\Recepcion;
 
-use App\Livewire\Forms\NuevoSocio;
+use App\Livewire\Forms\SocioForm;
+use App\Models\Membresias;
+use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -10,17 +13,27 @@ class SociosNuevo extends Component
 {
     use WithFileUploads;
 
-    public NuevoSocio $formSocio;
+    public SocioForm $formSocio;
+    
+    #[Computed()]
+    public function membresias()
+    {
+        return Membresias::all();
+    }
 
     public function register()
     {
         //Intentamos registrar al socio con el objeto del form
-        if ($this->formSocio->store()) {
+        try {
+            $this->formSocio->store();
             //Enviamos flash message, al action-message
             session()->flash('success', "Socio registrado con exito");
-        } else {
-            //Enviamos flash message, al action-message (error)
-            session()->flash('fail', 'Ocurrio un error');
+        } catch (ValidationException $e) {
+            //Si es una excepcion de validacion, volverla a lanzar a la vista
+            throw $e;
+        } catch (\Throwable $th) {
+            //Enviamos flash message, al action-message (En cualquier otro caso de excepcion)
+            session()->flash('fail', $th->getMessage());
         }
         //emitir evento para mostrar el action-message
         $this->dispatch('open-action-message');

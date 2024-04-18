@@ -3,6 +3,7 @@
 namespace App\Livewire\Recepcion;
 
 use App\Models\Socio;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -13,9 +14,14 @@ class Socios extends Component
 
     public function render()
     {
+        $result = DB::table('socios')
+            ->join('membresias', 'socios.clave_membresia', '=', 'membresias.clave')
+            ->where('nombre', 'like', '%' . $this->search . '%')->orWhere('id', '=', $this->search)
+            ->orderByDesc('socios.id')
+            ->paginate(5);
+
         return view('livewire.recepcion.socios', [
-            'listaSocios' => Socio::where('nombre', 'like', '%' . $this->search . '%')->orWhere('id', '=', $this->search)
-                ->paginate(5)
+            'listaSocios' => $result
         ]);
     }
 }

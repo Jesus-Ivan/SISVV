@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('socios', function (Blueprint $table) {
-            $table->integer('id')->primary()->unsigned();
+            $table->integer('id')->autoIncrement()->unsigned();
             $table->string('nombre', 80);
             $table->string('img_path', 255)->nullable();
             $table->date('fecha_registro');

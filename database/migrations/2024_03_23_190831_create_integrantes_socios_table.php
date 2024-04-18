@@ -12,11 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('integrantes_socios', function (Blueprint $table) {
-            $table->integer('id_socio')->primary()->unsigned();
-            $table->string('nombre', 80);
-            $table->string('img_path', 255);
-            $table->date('fecha_nac');
-            $table->string('sexo', 20);
+            $table->integer('id')->autoIncrement()->unsigned();
+            $table->integer('id_socio')->unsigned();
+            $table->string('nombre_integrante', 80);
+            $table->string('img_path_integrante', 255)->nullable();
+            $table->date('fecha_nac')->nullable();
+            $table->string('sexo', 20)->nullable();
             $table->string('parentesco', 20);
 
             //Relaciones

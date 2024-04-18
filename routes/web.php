@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SociosController;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -88,7 +89,7 @@ Route::prefix('recepcion')->middleware(['auth'])->group(function () {
     Route::prefix('socios')->group(function () {
         Route::view('/', 'recepcion.Socios.socios')->name('recepcion.socios');
         Route::view('nuevo', 'recepcion.Socios.nuevo-socio')->name('recepcion.socios.nuevo');
-        Route::view('editar/{socio}', 'recepcion.Socios.editar-socio')->name('recepcion.socios.editar');
+        Route::get('editar/{socio}', [SociosController::class, 'showEdit'])->name('recepcion.socios.editar');
     });
     Route::prefix('edo-cuenta')->group(function () {
         Route::view('/', 'recepcion.Estado-cuenta.estado-cuenta')->name('recepcion.estado');

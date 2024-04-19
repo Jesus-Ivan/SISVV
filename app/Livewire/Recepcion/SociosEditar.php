@@ -44,15 +44,17 @@ class SociosEditar extends Component
     }
     public function cancelarEdicion()
     {
-        $this->form->cancelEdit();
+        $this->form->cleanEdit();
     }
-    public function confirmarEdicion()
+    public function confirmarEdicion($index_interante_BD)
     {
         try {
-            $this->form->confirmEdit();
+            $this->form->confirmEdit($index_interante_BD);
             session()->flash('success', "Integrante actualizado correctamente");
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $th) {
-            session()->flash('fail', "Ocurrio un error");
+            session()->flash('fail', $th->getMessage());
         }
         //emitir evento para mostrar el action-message
         $this->dispatch('open-action-message');
@@ -87,6 +89,11 @@ class SociosEditar extends Component
         }
         //emitir evento para mostrar el action-message
         $this->dispatch('open-action-message');
+    }
+
+    public function eliminarIntegrante()
+    {
+        dump('holiii');
     }
 
     public function render()

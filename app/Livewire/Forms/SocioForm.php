@@ -39,7 +39,7 @@ class SocioForm extends Form
     public ?Socio $socio;
 
     //--Propiedades axuiliares cuando el usuario hace click para editar un miembro/socio--//
-    public $id_miembro_editar;
+    public $editando_miembro_id;
     public $editando_nombre_integrante;
     public $editando_fecha_nac;
     public $editando_parentesco;
@@ -62,7 +62,7 @@ class SocioForm extends Form
     ];
 
     //setear los valores a editar
-    public function setSocio($socio)
+    public function setSocio(Socio $socio)
     {
         //Guardamos el objeto del socio
         $this->socio = $socio;
@@ -82,37 +82,57 @@ class SocioForm extends Form
         $this->correo = $socio->correo;
         $this->clave_membresia = $socio->clave_membresia;
     }
-    public function setIntegrantes($socio)
+    public function setIntegrantes(Socio $socio)
     {
         //Buscamos los integrantes del socio
         $this->integrantes_BD = IntegrantesSocio::where('id_socio', $socio->id)->get();
     }
 
-    public function editMiembro($miembro)
+    public function editMiembro(array $miembro)
     {
-        $this->id_miembro_editar = $miembro['id'];
+        $this->editando_miembro_id = $miembro['id'];
         $this->editando_nombre_integrante = $miembro['nombre_integrante'];
         $this->editando_fecha_nac = $miembro['fecha_nac'];
         $this->editando_parentesco = $miembro['parentesco'];
     }
 
-    public function cancelEdit()
+    public function cleanEdit()
     {
-        $this->reset('id_miembro_editar');
+        $this->reset(
+            'editando_miembro_id',
+            'editando_nombre_integrante',
+            'editando_fecha_nac',
+            'editando_parentesco',
+            'editando_img_path_integrante'
+        );
     }
 
-    public function confirmEdit()
+    public function confirmEdit(int $index)
     {
-        for ($i = 0; $i < count($this->integrantes_BD); $i++) {
-            if ($this->integrantes_BD[$i]->id == $this->id_miembro_editar) {
-                $this->integrantes_BD[$i]->nombre_integrante = $this->editando_nombre_integrante;
-                $this->integrantes_BD[$i]->fecha_nac = $this->editando_fecha_nac;
-                $this->integrantes_BD[$i]->parentesco = $this->editando_parentesco;
-                $this->integrantes_BD[$i]->update();
-                break;
-            }
+        //Obtenemos la instacia a editar, con base al indice que ocupa en en array.
+        $miembro = $this->integrantes_BD[$index];
+
+        $validated = $this->validate([
+            'editando_nombre_integrante' => "required|max:50",
+            'editando_fecha_nac' => "max:10",
+            'editando_parentesco' => "required|max:20",
+            'editando_img_path_integrante' => "max:255"
+        ]);
+
+        if ($this->editando_img_path_integrante) {
+            $validated['editando_img_path_integrante'] = $this->editando_img_path_integrante->store('fotos/integrantes', 'public');
+            if ($miembro->img_path_integrante)
+                Storage::disk('public')->delete($miembro->img_path_integrante);
+        } else {
+            $validated['editando_img_path_integrante'] = $miembro->img_path_integrante;
         }
-        $this->reset('id_miembro_editar');
+        $miembro->update([
+            'nombre_integrante'=>$validated['editando_nombre_integrante'],
+            'fecha_nac'=>$validated['editando_fecha_nac'],
+            'parentesco'=>$validated['editando_parentesco'],
+            'img_path_integrante'=>$validated['editando_img_path_integrante'],
+        ]);
+        $this->cleanEdit();
     }
 
     public function store()
@@ -135,13 +155,14 @@ class SocioForm extends Form
 
             //Creamos cada uno de los miembros del socio
             foreach ($this->integrantes as $integrante) {
-                $this->crearIntegranteBD( $integrante, $socio->id);
+                $this->crearIntegranteBD($integrante, $socio->id);
             }
             //Limpiamos la pagina
             $this->reset();
         });
     }
 
+    //Crea un miembro de forma temporal(utilizado en la vista socios-nuevo.blade.php)
     public function crearMiembro()
     {
         //Validamos las entradas
@@ -159,7 +180,7 @@ class SocioForm extends Form
         //Limpiamos los campos 
         $this->reset('nombre_integrante', 'img_path_integrante', 'fecha_nacimiento', 'parentesco');
     }
-
+    //Elimina un miembro de memoria (utilizado en la vista socios-nuevo.blade.php)
     public function quitarMiembro($temp)
     {
         //Quitamos el miembro correspondiente al $temp
@@ -200,11 +221,13 @@ class SocioForm extends Form
         ]);
         //Creamos el integrante
         $this->crearIntegranteBD($validated, $this->socio->id);
-        $this->reset('nombre_integrante','fecha_nac','parentesco','img_path_integrante');
+        //Buscamos los nuevos integrantes del socio
+        $this->setIntegrantes($this->socio);
+        $this->reset('nombre_integrante', 'fecha_nac', 'parentesco', 'img_path_integrante');
     }
-    
+
     //Encargada de insertar el registro en la BD y almacenar la imagen
-    private function crearIntegranteBD($integrante, $socioId)
+    private function crearIntegranteBD(array $integrante, string $socioId)
     {
         $ruta = null;
         if ($integrante['img_path_integrante'])

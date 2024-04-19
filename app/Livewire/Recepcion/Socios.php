@@ -12,6 +12,10 @@ class Socios extends Component
     use WithPagination;
     public $search;
 
+    public function updated($search){
+        $this->resetPage();
+    }
+
     public function render()
     {
         $result = DB::table('socios')

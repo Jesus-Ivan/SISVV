@@ -11,7 +11,7 @@
         </div>
         <input wire:model.live.debounce.500ms="search" type="search" id="search"
             class="block w-full p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            placeholder="Buscar categoría" required/>
+            placeholder="Buscar categoría" required />
     </div>
 
     {{-- Tabla --}}
@@ -24,7 +24,7 @@
                             ID
                         </th>
                         <th scope="col" class="px-6 py-3 w-96">
-                            CATEGORÍAS
+                            FAMILIA
                         </th>
                         <th scope="col" class="px-6 py-3">
                             ESTADO
@@ -35,17 +35,17 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($listaCategorias as $categorias)
-                        <tr wire:key={{ $categorias->id }}
+                    @foreach ($listaFamilias as $familias)
+                        <tr wire:key={{ $familias->id }}
                             class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                             <td class="px-6 py-4">
-                                {{ $categorias->id }}
+                                {{ $familias->id }}
                             </td>
                             <td class="px-6 py-4 uppercase">
-                                {{ $categorias->categoria }}
+                                {{ $familias->familia }}
                             </td>
                             <td class="px-6 py-4">
-                                @if ($categorias->estado == '1')
+                                @if ($familias->estado == '1')
                                     <span
                                         class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">ACTIVO
                                     </span>
@@ -56,9 +56,9 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                @if ($categorias->estado == '1')
+                                @if ($familias->estado == '1')
                                     <div class="flex">
-                                        <button wire:click="edit({{ $categorias }})" type="button"
+                                        <button wire:click="edit({{ $familias }})" type="button"
                                             class="text-green-700 hover:text-white border border-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:hover:bg-green-600 dark:focus:ring-green-800">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                                                 fill="currentColor" class="w-5 h-5">
@@ -68,7 +68,7 @@
                                                     d="M5.25 5.25a3 3 0 0 0-3 3v10.5a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3V13.5a.75.75 0 0 0-1.5 0v5.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V8.25a1.5 1.5 0 0 1 1.5-1.5h5.25a.75.75 0 0 0 0-1.5H5.25Z" />
                                             </svg>
                                         </button>
-                                        <button type="button" wire:click="delete({{ $categorias }})"
+                                        <button wire:click="delete({{ $familias }})" type="button"
                                             class="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                                                 fill="currentColor" class="w-5 h-5">
@@ -80,7 +80,7 @@
                                     </div>
                                 @else
                                     <div class="flex">
-                                        <button type="button" wire:click="reingresar({{ $categorias }})"
+                                        <button type="button" wire:click="reingresar({{ $familias }})"
                                             class="text-gray-700 hover:text-white border border-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 dark:border-gray-500 dark:text-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-900">
                                             <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                                                 width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
@@ -96,21 +96,21 @@
                 </tbody>
             </table>
         </div>
-        <div class="w-full my-2">{{ $listaCategorias->links() }}</div>
+        <div class="w-full my-2">{{ $listaFamilias->links() }}</div>
     </div>
 
-    {{-- Modal para añadir categoria --}}
-    <x-modal name="añadirCt" title="AÑADIR NUEVA CATEGORÍA">
+    {{-- Modal para añadir familia --}}
+    <x-modal name="añadirFm" title="AÑADIR NUEVA FAMILIA">
         <x-slot:body>
             <form class="p-4 md:p-5">
                 <div class="grid gap-4 mb-4 grid-cols-2">
                     <div class="col-span-2">
-                        <label for="nombre_cat"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre de la
-                            categoría</label>
-                        <input type="text" name="nombre_cat" id="nombre_cat" wire:model="categoria"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Nombre" required>
+                        <label for="nombre_fam"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre de la familia
+                        </label>
+                        <input type="text" name="nombre_fam" id="nombre_fam" wire:model="familia"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                            placeholder="Nombre" required="">
                     </div>
                 </div>
             </form>
@@ -125,25 +125,25 @@
         </x-slot>
     </x-modal>
 
-    {{-- Modal para modificar categoria --}}
-    @if ($accionesCategoria)
-        <x-modal name="modificarCt" title="EDITAR CATEGORÍA">
+    {{-- Modal para modificar familia --}}
+    @if ($accionesFamilia)
+        <x-modal name="modificarFm" title="EDITAR FAMILIA">
             <x-slot:body>
                 <form class="p-4 md:p-5">
                     <div class="grid gap-4 mb-4 grid-cols-2">
                         <div class="col-span-2">
 
-                            <label for="edit_cat"
+                            <label for="edit_fam"
                                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre de la
-                                categoría</label>
-                            <input type="text" name="edit_cat" id="edit_cat" wire:model="categoria"
+                                Familia</label>
+                            <input type="text" name="edit_fam" id="edit_fam" wire:model="familia"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" />
                         </div>
                     </div>
                 </form>
             </x-slot>
             <x-slot:footer>
-                <button type="button" wire:click="updateCat()"
+                <button type="button" wire:click="updateFam()"
                     class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Editar
                 </button>
                 <button wire:click="cancelarEdit" x-on:click="show = false " type="button"
@@ -153,9 +153,9 @@
         </x-modal>
     @endif
 
-    {{-- Modal para eliminar categoria --}}
-    @if ($accionesCategoria)
-        <x-modal name="eliminarCt" title="ELIMINAR CATEGORÍA">
+    {{-- Modal para eliminar familia --}}
+    @if ($accionesFamilia)
+        <x-modal name="eliminarFm" title="ELIMINAR FAMILIA">
             <x-slot:body>
                 <div class="text-center">
                     <svg class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" aria-hidden="true"
@@ -164,9 +164,9 @@
                             d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
                     <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¿Desea eliminar
-                        {{ $accionesCategoria->categoria }}?
+                        {{ $accionesFamilia->familia }}?
                     </h3>
-                    <p class="text-gray-500 dark:text-gray-400">La categoría no se eliminara de la base de datos, solo
+                    <p class="text-gray-500 dark:text-gray-400">La familia no se eliminara de la base de datos, solo
                         pasara a un estado inactivo.</p>
                 </div>
             </x-slot>
@@ -182,8 +182,8 @@
     @endif
 
     {{-- Modal para reingresar la categoria --}}
-    @if ($accionesCategoria)
-        <x-modal name="reingresarCt" title="REINGRESAR CATEGORÍA">
+    @if ($accionesFamilia)
+        <x-modal name="reingresarFm" title="REINGRESAR FAMILIA">
             <x-slot:body>
                 <div class="text-center">
                     <svg class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" aria-hidden="true"
@@ -192,9 +192,9 @@
                             d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
                     <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¿Desea reingresar
-                        {{ $accionesCategoria->categoria }}?
+                        {{ $accionesFamilia->familia }}?
                     </h3>
-                    <p class="text-gray-500 dark:text-gray-400">La categoría pasará nuevamente a un estado Activo</p>
+                    <p class="text-gray-500 dark:text-gray-400">La familia pasará nuevamente a un estado Activo</p>
                 </div>
             </x-slot>
             <x-slot:footer>

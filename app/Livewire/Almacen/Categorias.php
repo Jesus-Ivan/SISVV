@@ -23,6 +23,9 @@ class Categorias extends Component
         Categoria::create($validated);
         $this->reset('categoria');
         $this->dispatch('close-modal');
+        session()->flash('success', "Categoría registrada con exito");//MENSAJE DE ALERTA CUANDO SE REGISTRE CORRECTAMENTE
+        $this->dispatch('open-action-message');
+        $this->resetPage();
     }
 
     //EDITAMOS CATEGORIA DE LA BASE DE DATOS
@@ -38,7 +41,15 @@ class Categorias extends Component
     {
         $validated = $this->validate();
         $this->accionesCategoria->update($validated);
-        $this->accionesCategoria->save();
+        $this->reset('categoria');
+        $this->dispatch('close-modal');
+        session()->flash('success', "Cambios registrados con exito");//MENSAJE DE ALERTA CUANDO SE EDITE CORRECTAMENTE
+        $this->dispatch('open-action-message');
+    }
+
+    public function cancelarEdit()
+    {
+        $this->reset('categoria');
         $this->dispatch('close-modal');
     }
 
@@ -55,6 +66,8 @@ class Categorias extends Component
         $this->accionesCategoria->estado = 0;
         $this->accionesCategoria->save();
         $this->dispatch('close-modal');
+        session()->flash('fail', "Categoría inactivada correctamente");//MENSAJE DE ALERTA CUANDO SE ELIMINE CORRECTAMENTE
+        $this->dispatch('open-action-message');
     }
 
     //REINGRESAMOS LA CATEGORIA 
@@ -70,6 +83,14 @@ class Categorias extends Component
         $this->accionesCategoria->estado = 1;
         $this->accionesCategoria->save();
         $this->dispatch('close-modal');
+        session()->flash('success', "Categoría reingresada con exito");//MENSAJE DE ALERTA CUANDO SE REINGRESE CORRECTAMENTE
+        $this->dispatch('open-action-message');
+    }
+
+    //UN HOOK PARA RESETEAR LA PAGINACION
+    public function updated($search)
+    {
+        $this->resetPage();
     }
 
     public function render()

@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('catalogo_productos', function (Blueprint $table) {
-            $table->integer('codigo_venta')->primary()->unsigned();
+            $table->integer('codigo_venta')->autoIncrement()->unsigned();
             $table->integer('codigo_principal')->nullable();
             $table->integer('codigo_recepcion')->nullable();
             $table->integer('codigo_cocina')->nullable();
             $table->integer('codigo_bebida')->nullable();
             $table->string('nombre', 50);
             $table->decimal('precio_venta', 10, 2);
-            $table->json('pv_permitidos');
+            $table->json('pv_permitidos')->nullable();
 
             /*//Relaciones
 

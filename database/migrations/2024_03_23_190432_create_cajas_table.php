@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('cajas', function (Blueprint $table) {
-            $table->integer('corte')->primary()->unsigned();
-            $table->date('fecha_apertura');
+            $table->integer('corte')->autoIncrement()->unsigned();
+            $table->dateTime('fecha_apertura');
             $table->integer('id_usuario');
-            $table->boolean('estado');
+            $table->dateTime('fecha_cierre')->nullable();
 
             //Relaciones
 

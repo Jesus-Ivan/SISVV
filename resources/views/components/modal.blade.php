@@ -1,19 +1,14 @@
 @props(['name', 'title'])
 <!-- Main modal -->
-<div 
-    x-data="{ show: false, name: '{{ $name }}' }" 
-    x-show= "show" 
-    x-on:open-modal.window= "show = ($event.detail.name === name)" 
-    x-on:close-modal.window= "show = false"
-    x-on:keydown.escape.window="show = false" 
-    style= "display: none;" 
+<div x-data="{ show: false, name: '{{ $name }}' }" x-show= "show" x-on:open-modal.window= "show = ($event.detail.name === name)"
+    x-on:close-modal.window= "show = false" x-on:keydown.escape.window="show = false" style= "display: none;"
     class="fixed z-50 inset-0">
 
     <!-- Gray Background -->
     <div wire:click="cancelarEdit" x-on:click="show=false" class="fixed inset-0 bg-gray-400 opacity-40"></div>
 
     <!-- Modal body -->
-    <div class="bg-white rounded m-auto fixed inset-0 max-w-fit max-h-fit" >
+    <div class="bg-white rounded m-auto fixed inset-0 max-w-fit max-h-fit">
         <!-- Modal header -->
         <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
             @if (isset($title))
@@ -35,9 +30,11 @@
             {{ $body }}
         </div>
         <!-- Modal footer -->
-        <div
-            class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b dark:border-gray-600">
-            {{ $footer }}
-        </div>
+        @if (isset($footer))
+            <div
+                class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b dark:border-gray-600">
+                {{ $footer }}
+            </div>
+        @endif
     </div>
 </div>

@@ -11,7 +11,7 @@
         </div>
         <input wire:model.live.debounce.500ms="search" type="search" id="search"
             class="block w-full p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            placeholder="Buscar categoría" required />
+            placeholder="Buscar unidad" required />
     </div>
 
     {{-- Tabla --}}
@@ -111,6 +111,9 @@
                         <input type="text" name="nombre_ud" id="nombre_ud" wire:model="unidad"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             placeholder="Nombre">
+                        @error('unidad')
+                            <x-input-error messages="{{ $message }}" />
+                        @enderror
                     </div>
                 </div>
             </form>
@@ -137,6 +140,9 @@
                                 Unidad</label>
                             <input type="text" name="edit_ud" id="edit_ud" wire:model="unidad"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" />
+                            @error('unidad')
+                                <x-input-error messages="{{ $message }}" />
+                            @enderror
                         </div>
                     </div>
                 </form>

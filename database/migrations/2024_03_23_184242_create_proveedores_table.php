@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('proveedores', function (Blueprint $table) {
-            $table->integer('id')->primary()->unsigned();
+            $table->integer('id')->autoIncrement()->unsigned();
             $table->string('proveedor', 20);
             $table->string('rfc', 14);
             $table->decimal('consumo', total:10, places:2);
             $table->decimal('credito_compra', total:10, places:2);
-            $table->boolean('estado');
+            $table->boolean('estado')->default(1);
         });
     }
 

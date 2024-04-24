@@ -4,10 +4,10 @@ namespace App\Livewire;
 
 use Livewire\Component;
 
-class TablaProveedores extends Component
+class SalidasNueva extends Component
 {
     public function render()
     {
-        return view('livewire.tabla-proveedores');
+        return view('livewire.salidas-nueva');
     }
 }

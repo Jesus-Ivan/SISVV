@@ -4,10 +4,10 @@ namespace App\Livewire;
 
 use Livewire\Component;
 
-class TablaUnidades extends Component
+class Salidas extends Component
 {
     public function render()
     {
-        return view('livewire.tabla-unidades');
+        return view('livewire.salidas');
     }
 }

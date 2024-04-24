@@ -12,19 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('IPA_inventario_principal', function (Blueprint $table) {
-            $table->integer('codigo')->primary()->unsigned();
+            $table->integer('codigo')->autoIncrement()->unsigned();
             $table->integer('id_familia');
             $table->integer('id_categoria');
             $table->string('nombre', 100);
             $table->integer('id_unidad');
             $table->integer('id_proveedor');
-            $table->json('punto_venta');
-            $table->decimal('stock', total:10, places:3);
-            $table->decimal('st_evento', total:10, places:3);
+            $table->json('punto_venta')->default('{}');
+            $table->decimal('stock', total:10, places:3)->default(0);
+            $table->decimal('st_evento', total:10, places:3)->default(0);
             $table->decimal('st_min', total:10, places:3);
             $table->decimal('st_max', total:10, places:3);
             $table->decimal('costo_unitario', total:10, places:2);
-            $table->boolean('estado');
+            $table->boolean('estado')->default(1);
 
             /*// Relaciones
 

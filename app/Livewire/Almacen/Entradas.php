@@ -4,10 +4,10 @@ namespace App\Livewire;
 
 use Livewire\Component;
 
-class TablaArticulos extends Component
+class Entradas extends Component
 {
     public function render()
     {
-        return view('livewire.tabla-articulos');
+        return view('livewire.entradas');
     }
 }

@@ -13,7 +13,7 @@ class Familias extends Component
     public $search;
     public Familia $accionesFamilia;
 
-    #[Validate('required:min:5|max:20')]
+    #[Validate('required|min:5|max:20')]
     public $familia;
 
     //REGISTRAMOS LA FAMILIA EN LA BASE DE DATOS

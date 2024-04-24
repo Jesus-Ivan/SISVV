@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('detalles_ventas_productos', function (Blueprint $table) {
-            $table->integer('id')->primary()->unsigned();
+            $table->integer('id')->autoIncrement()->unsigned();
             $table->integer('folio_venta');
             $table->integer('codigo_venta_producto')->nullable();
             $table->smallInteger('cantidad');

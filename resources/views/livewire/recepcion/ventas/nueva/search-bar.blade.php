@@ -1,12 +1,12 @@
 <div>
     <div class="grid grid-flow-col gap-4">
         <!--Autocomplete search component-->
-        <livewire:autocomplete table="socios" />
+        <livewire:autocomplete :params="['table_name' => 'socios', 'columns' => ['nombre', 'id']]" event="on-selected-socio"/>
         <!--Info -->
         <div>
             @if ($socioSeleccionado)
-                <p>Nombre: {{ $socioSeleccionado->nombre }}</p>
-                <p>No. de socio: {{ $socioSeleccionado->id }}</p>
+                <p>Nombre: {{ $socioSeleccionado['nombre'] }}</p>
+                <p>No. de socio: {{ $socioSeleccionado['id'] }}</p>
             @endif
         </div>
     </div>

@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('ventas', function (Blueprint $table) {
-            $table->integer('folio')->primary()->unsigned();
+            $table->integer('folio')->autoIncrement()->unsigned();
             $table->integer('id_socio')->nullable();
             $table->string('nombre', 80);
             $table->dateTime('fecha_apertura');
             $table->dateTime('fecha_cierre');
-            $table->decimal('subtotal', 10, 2);
+            $table->decimal('subtotal', 10, 2)->nullable();
             $table->smallInteger('descuento')->nullable();
             $table->decimal('total', 10, 2);
             $table->smallInteger('id_tipo_pago');

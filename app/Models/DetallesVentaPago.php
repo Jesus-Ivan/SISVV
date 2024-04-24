@@ -5,15 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class CatalogoProducto extends Model
+class DetallesVentaPago extends Model
 {
     use HasFactory;
     //Nombre de tabla
-    protected $table = 'catalogo_productos';
+    protected $table = 'detalles_ventas_pagos';
     //Desactivar los timestamps para este modelo
     public $timestamps = false;
     //Propiedades restringidas para asignacion masiva
-    protected $guarded = ['codigo_venta'];
+    protected $guarded = ['id'];
     //Clave primaria
-    protected $primaryKey = 'codigo_venta';
+    protected $primaryKey = 'id';
 }

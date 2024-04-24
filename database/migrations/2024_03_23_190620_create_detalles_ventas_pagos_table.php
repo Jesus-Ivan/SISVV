@@ -12,11 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('detalles_ventas_pagos', function (Blueprint $table) {
-            $table->integer('id')->primary()->unsigned();
+            $table->integer('id')->autoIncrement()->unsigned();
             $table->integer('folio_venta');
             $table->integer('id_socio')->nullable();
             $table->string('nombre', 80);
-            $table->decimal('monto', 10, 2);
+            $table->decimal('monto', 10, 2)->unsigned();
+            $table->decimal('propina',10,2)->unsigned()->nullable();
             $table->smallInteger('id_tipo_pago');
 
             /*//Relaciones

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tipos_pago', function (Blueprint $table) {
-            $table->smallInteger('id')->primary()->unsigned();
+            $table->smallInteger('id')->autoIncrement()->unsigned();
             $table->string('descripcion', 50);
         });
     }

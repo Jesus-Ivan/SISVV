@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CatalogoProducto extends Model
 {
@@ -16,4 +17,8 @@ class CatalogoProducto extends Model
     protected $guarded = ['codigo_venta'];
     //Clave primaria
     protected $primaryKey = 'codigo_venta';
+
+    public function detallesVentaProductos(): HasMany{
+        return $this->hasMany(DetallesVentaProducto::class);
+    }
 }

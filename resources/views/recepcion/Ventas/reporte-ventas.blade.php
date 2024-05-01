@@ -8,6 +8,6 @@
     <div>
         <!-- Title -->
         <h4 class="text-2xl font-bold dark:text-white mx-2">Reporte de ventas-Recepcion</h4>
-        <livewire:recepcion.ventas-reporte codigopv="recepcion"/>
+        <livewire:recepcion.ventas.reporte.container />
     </div>
 </x-app-layout>

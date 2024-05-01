@@ -49,7 +49,7 @@ class PagosModalBody extends Component
     public function selectMetodo($value)
     {
         if ($value) {
-            $this->metodo_pago = TipoPago::find($value);
+            $this->metodo_pago =  TipoPago::find($value);
         }
     }
 

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DetallesVentaProducto extends Model
 {
@@ -16,4 +17,8 @@ class DetallesVentaProducto extends Model
     protected $guarded = ['id'];
     //Clave primaria
     protected $primaryKey = 'id';
+
+    public function catalogoProductos(): BelongsTo{
+        return $this->belongsTo(CatalogoProducto::class, 'codigo_venta_producto');
+    }
 }

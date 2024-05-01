@@ -5,16 +5,28 @@ namespace App\Livewire\Recepcion\Ventas\Nueva;
 use App\Models\Caja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
-use App\Models\Socio;
+use App\Models\PuntoVenta;
 use App\Models\Venta;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class Container extends Component
 {
-    public  $datosSocio = [];
-    public  $datosProductos = [];
-    public  $datosPagos = [];
+    public $datosSocio = [];
+    public $datosProductos = [];
+    public $datosPagos = [];
+
+    #[Computed()]
+    public function puntoVenta()
+    {
+        //Obtenemos el punto de venta actual
+        return PuntoVenta::where('nombre', 'LIKE', '%RECEP%')
+        ->limit(1)
+        ->get()[0];
+    }
 
     public function cerrarVenta()
     {
@@ -24,18 +36,22 @@ class Container extends Component
             'datosPagos' => 'min:1',
         ]);
 
+        //Consultamos la BD para obtener la caja abierta
         $resultCaja = Caja::where('fecha_cierre', null)
             ->where('id_usuario', auth()->user()->id)
-            ->take(1)
+            ->where('clave_punto_venta', $this->puntoVenta->clave)
+            ->limit(1)
             ->get();
 
-        //Si no hay caja abierta
+        //Comprobamos las cajas abiertas
         if (count($resultCaja) == 1) {
-
-            //Se crea la venta
+            //Se crea la transaccion
             DB::transaction(function () use ($resultCaja, $info) {
+                //Obtenemos la fecha-hora de cierre actual, con una instancia de Carbon.
                 $fecha_cierre = now()->format('Y-m-d H:i:s');
+                //Se calcular el total de los productos
                 $total = array_sum(array_column($info['datosProductos'], 'subtotal'));
+                //Se crea la venta
                 $resultVenta = Venta::create([
                     'id_socio' => $info['datosSocio']['id'],
                     'nombre' => $info['datosSocio']['nombre'],
@@ -43,10 +59,10 @@ class Container extends Component
                     'fecha_cierre' => $fecha_cierre,
                     'total' => $total,
                     'id_tipo_pago' => 0,
-                    'clave_punto_venta' => 'pendi',
                     'status' => false,
                     'corte_caja' => $resultCaja[0]->corte,
                 ]);
+                //Se crea el detalle de la venta
                 foreach ($info['datosProductos'] as $key => $producto) {
                     DetallesVentaProducto::create([
                         'folio_venta' => $resultVenta->folio,
@@ -57,6 +73,7 @@ class Container extends Component
                         'inicio' => $producto['inicio'],
                     ]);
                 }
+                //Se crea el detalle de los pagoss
                 foreach ($info['datosPagos'] as $key => $pago) {
                     DetallesVentaPago::create([
                         'folio_venta' => $resultVenta->folio,
@@ -69,15 +86,13 @@ class Container extends Component
                 }
             });
             session()->flash('success', "Se registro la venta correctamente");
+            //Se limpian los datos
+            $this->reset();
         } else {
+            //Si no hay cajas abiertas
             session()->flash('fail', "No hay caja abierta");
         }
         $this->dispatch('action-message-venta');
-    }
-
-    public function showData()
-    {
-        dump($this->datosSocio, $this->datosPagos, $this->datosProductos);
     }
 
     public function render()

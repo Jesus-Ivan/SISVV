@@ -1,6 +1,6 @@
-<div>
+<div >
     {{-- Contenido --}}
-    <div>
+    <form wire:submit="cerrarVenta">
         <!-- Title -->
         <h4 class="text-2xl font-bold dark:text-white mx-2">Nueva venta-Recepcion</h4>
         <!-- Search Bar -->
@@ -11,7 +11,7 @@
         <!--Boton de articulos -->
         <div class="flex">
             <div class="flex-grow"></div>
-            <button x-data x-on:click="$dispatch('open-modal', {name:'agregar-productos'})"
+            <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'agregar-productos'})"
                 class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700 inline-flex items-center">
                 <svg class="w-5 h-5 text-white me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                     fill="currentColor" viewBox="0 0 24 24">
@@ -61,7 +61,7 @@
         @enderror
         <!--Botones de navegacion (cancelar y cerrar venta)-->
         <div>
-            <button type="button"
+            <a type="button" href="{{ route('recepcion.ventas') }}"
                 class="inline-flex items-center focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
                 <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -71,21 +71,22 @@
                         clip-rule="evenodd" />
                 </svg>
                 Cancelar
-            </button>
-            <button type="button" wire:click='cerrarVenta'
+            </a>
+            <button type="submit"
                 class="inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
-                    viewBox="0 0 24 24">
+                <svg wire:loading.delay.remove wire:target='cerrarVenta'
+                    class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
                     <path fill-rule="evenodd"
                         d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm13.707-1.293a1 1 0 0 0-1.414-1.414L11 12.586l-1.793-1.793a1 1 0 0 0-1.414 1.414l2.5 2.5a1 1 0 0 0 1.414 0l4-4Z"
                         clip-rule="evenodd" />
                 </svg>
+                <!--Loading indicator-->
+                <div wire:loading.delay wire:target='cerrarVenta' class="me-4">
+                    @include('livewire.utils.loading', ['w' => 6, 'h' => 6])
+                </div>
                 Cerrar venta
             </button>
-            <x-primary-button wire:click='showData'>
-                ver datos
-            </x-primary-button>
         </div>
         <!--Alerts-->
         <x-action-message on='action-message-venta'>
@@ -117,7 +118,7 @@
                 </div>
             @endif
         </x-action-message>
-    </div>
+    </form>
     <!--Modal productos -->
     <x-modal name="agregar-productos" title="Agregar productos">
         <x-slot name='body'>

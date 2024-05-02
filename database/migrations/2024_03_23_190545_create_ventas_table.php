@@ -17,11 +17,10 @@ return new class extends Migration
             $table->string('nombre', 80);
             $table->dateTime('fecha_apertura');
             $table->dateTime('fecha_cierre');
-            $table->decimal('subtotal', 10, 2)->nullable();
+            //$table->decimal('subtotal', 10, 2)->nullable();
             $table->smallInteger('descuento')->nullable();
             $table->decimal('total', 10, 2);
             $table->smallInteger('id_tipo_pago');
-            $table->string('clave_punto_venta', 10);
             $table->boolean('status');
             $table->integer('corte_caja')->nullable();
 

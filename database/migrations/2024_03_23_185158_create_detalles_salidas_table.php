@@ -15,7 +15,6 @@ return new class extends Migration
             $table->integer('folio_salida');
             $table->integer('codigo_articulo');
             $table->integer('cantidad');
-            $table->string('salida_de', 20);
             $table->decimal('existencia_origen', 10, 3);
 
             /*//Referencias

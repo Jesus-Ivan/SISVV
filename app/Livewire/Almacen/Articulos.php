@@ -19,6 +19,7 @@ class Articulos extends Component
     public $search;
     public InventarioPrincipal $inventarioPrincipal;
     public $codigo;
+    public $stock;
 
     #[Validate('required')]
     public $id_familia;
@@ -202,6 +203,7 @@ class Articulos extends Component
                 'ipa_inventario_principal.nombre',
                 'ipa_inventario_principal.punto_venta',
                 'ipa_inventario_principal.costo_unitario',
+                'ipa_inventario_principal.stock',
                 'ipa_inventario_principal.st_min',
                 'ipa_inventario_principal.st_max',
                 'ipa_inventario_principal.estado',

@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('salidas', function (Blueprint $table) {
-            $table->integer('folio')->primary()->unsigned();
-            $table->dateTime('fecha');
+            $table->integer('folio')->autoIncrement()->unsigned();
+            $table->date('fecha');
+            $table->string('origen', 10);
+            $table->string('destino', 20);
             $table->string('observaciones', 150);
         });
     }

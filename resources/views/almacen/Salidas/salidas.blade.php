@@ -22,7 +22,7 @@
     </div>
 
     <div>
-        <livewire:almacen.salidas />
+        <livewire:almacen.salidas.principal />
     </div>
 
     <div class="ms-3 mx-3">

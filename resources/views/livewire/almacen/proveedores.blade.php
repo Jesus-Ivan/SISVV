@@ -114,7 +114,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="w-full my-2">{{ $listaProveedores->links() }}</div>
+        <div class="w-full my-2 flex justify-end">{{ $listaProveedores->links() }}</div>
     </div>
 
     {{-- Modal para añadir proveedor --}}

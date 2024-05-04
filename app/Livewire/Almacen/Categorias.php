@@ -97,7 +97,7 @@ class Categorias extends Component
     {
         return view('livewire.almacen.categorias', [
             'listaCategorias' => Categoria::where('categoria', 'like', '%' . $this->search . '%')->orWhere('id', '=', $this->search)
-                ->paginate(5)
+                ->paginate(10)
         ]);
     }
 }

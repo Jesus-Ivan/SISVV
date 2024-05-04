@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('salidas', function (Blueprint $table) {
             $table->integer('folio')->autoIncrement()->unsigned();
             $table->date('fecha');
-            $table->string('origen', 10);
+            $table->string('origen', 10)->default('almacén');
             $table->string('destino', 20);
             $table->string('observaciones', 150);
         });

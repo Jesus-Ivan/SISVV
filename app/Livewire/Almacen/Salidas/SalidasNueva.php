@@ -19,9 +19,6 @@ class SalidasNueva extends Component
     public $articulos = [];
 
     #[Validate('required')]
-    public $folio;
-
-    #[Validate('required')]
     public $fechaActual;
 
     #[Validate('required')]
@@ -61,7 +58,6 @@ class SalidasNueva extends Component
                 'observaciones' => $info['observaciones'],
                 'fecha' => $this->fechaActual,
             ]);
-
             //REGISTRAMOS LOS DETALLES DE LA SALIDA EN LA TABLA CORRESPONDIENTE
             foreach ($info['detalleSalidas'] as $key => $articulo) {
                 DB::table('detalles_salidas')

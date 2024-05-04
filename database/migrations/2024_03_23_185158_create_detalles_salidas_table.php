@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('detalles_salidas', function (Blueprint $table) {
             $table->integer('folio_salida');
             $table->integer('codigo_articulo');
+            $table->string('nombre', 100);
             $table->integer('cantidad');
             $table->decimal('existencia_origen', 10, 3);
 

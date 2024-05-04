@@ -14,7 +14,7 @@ class Categorias extends Component
     public $search;
     public Categoria $accionesCategoria;
 
-    #[Validate('required:min:5|max:20')]
+    #[Validate('required|min:5|max:20')]
     public $categoria;
 
     //REGISTRAMOS UNA NUEVA CATEGORIA EN LA BASE DE DATOS
@@ -99,7 +99,7 @@ class Categorias extends Component
     {
         return view('livewire.almacen.categorias', [
             'listaCategorias' => Categoria::where('categoria', 'like', '%' . $this->search . '%')->orWhere('id', '=', $this->search)
-                ->paginate(5)
+                ->paginate(10)
         ]);
     }
 }

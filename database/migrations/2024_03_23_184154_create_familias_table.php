@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('familias', function (Blueprint $table) {
             $table->integer('id')->autoIncrement()->unsigned();
-            $table->string('familia', 20);
+            $table->string('familia', 30);
             $table->boolean('estado')->default(1);
         });
     }

@@ -13,7 +13,7 @@ class Unidades extends Component
     public $search;
     public Unidad $accionesUnidad;
 
-    #[Validate('required:min:5|max:20')]
+    #[Validate('required|min:2|max:20')]
     public $unidad;
 
     //REGISTRAMOS UNA NUEVA UNIDAD EN LA BASE DE DATOS

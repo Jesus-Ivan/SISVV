@@ -10,6 +10,7 @@ class Autocomplete extends Component
 {
 
     public $params, $search, $event;
+    public $primary;
 
     #[Computed]
     public function results()
@@ -32,9 +33,9 @@ class Autocomplete extends Component
         }
     }
 
-    public function select(int $socioId)
+    public function select($id)
     {
-        $this->dispatch($this->event, $socioId);
+        $this->dispatch($this->event, $id);
         $this->reset('search');
     }
     public function render()

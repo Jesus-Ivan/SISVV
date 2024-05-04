@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\SociosController;
-use App\Http\Controllers\VentasController;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -81,7 +81,8 @@ Route::prefix('recepcion')->middleware(['auth'])->group(function () {
         Route::view('/', 'recepcion.Ventas.ventas')->name('recepcion.ventas');
         Route::view('nueva', 'recepcion.Ventas.nueva-venta')->name('recepcion.ventas.nueva');
         Route::view('reporte', 'recepcion.Ventas.reporte-ventas')->name('recepcion.ventas.reporte');
-        Route::get('imprimir/{venta}', [VentasController::class, 'generarPDF'])->name('recepcion.ventas.imprimir');
+        Route::get('ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('recepcion.ventas.ticket');
+        Route::get('corte/{caja}', [ReportesController::class, 'generarCorte'])->name('recepcion.ventas.corte');
     });
     Route::prefix('cobros')->group(function () {
         Route::view('/', 'recepcion.Cobros.cobros')->name('recepcion.cobros');

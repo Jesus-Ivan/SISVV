@@ -14,10 +14,14 @@ class ProductosModalBody extends Component
     #[Computed]
     public function productos()
     {
-        //Reseteamos el array de productos seleccionados cada vez que se calcula la propiedad
-        $this->reset('selectedProducts'); 
-        //Obtenemos los productos que coincidan con el nombre buscado
-        return CatalogoProducto::where('nombre', 'like', '%' . $this->searchProduct . '%')->take(10)->get();
+        if ($this->searchProduct != '') {
+            //Reseteamos el array de productos seleccionados cada vez que se calcula la propiedad
+            $this->reset('selectedProducts');
+            //Obtenemos los productos que coincidan con el nombre buscado
+            return CatalogoProducto::where('nombre', 'like', '%' . $this->searchProduct . '%')->take(15)->get();
+        } else {
+            return [];
+        }
     }
 
     //Metodo que se ejecuta para guardar los elementos seleccionados
@@ -27,10 +31,15 @@ class ProductosModalBody extends Component
         $total_seleccionados = array_filter($this->selectedProducts, function ($val) {
             return $val;
         });
-        //Emitimos evento con los productos seleccionados, al resto de componentes
-        $this->dispatch('productosSeleccionados', $total_seleccionados);
-        //Emitimos evento para cerrar el componente del modal
-        $this->dispatch('close-modal');
+        //Si ha seleccionado al menos 1 articulo
+        if (count($total_seleccionados) > 0) {
+            //Emitimos evento con los productos seleccionados, al resto de componentes
+            $this->dispatch('productosSeleccionados', $total_seleccionados);
+            //Emitimos evento para cerrar el componente del modal
+            $this->dispatch('close-modal');
+            //Reseteamos el componente
+            $this->reset();
+        }
     }
 
     public function render()

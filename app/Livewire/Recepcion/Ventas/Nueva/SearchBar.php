@@ -17,11 +17,7 @@ class SearchBar extends Component
     {
         $this->socioSeleccionado = $socioId->toArray();
     }
-
-    #[On('get-datos')]
-    public function sendData(){
-        $this->dispatch('on-get-socio',$this->socioSeleccionado);
-    }
+    
 
     public function render()
     {

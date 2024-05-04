@@ -16,6 +16,7 @@ return new class extends Migration
             $table->dateTime('fecha_apertura');
             $table->integer('id_usuario');
             $table->dateTime('fecha_cierre')->nullable();
+            $table->string('clave_punto_venta', 10);
 
             //Relaciones
 

@@ -27,7 +27,11 @@
                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
                     Cerrar caja</a>
             </li>
-
+            <li>
+                <a wire:click ='verCaja'
+                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                    Ver caja</a>
+            </li>
         </ul>
     </div>
 

@@ -21,7 +21,7 @@
                         de cuenta</a>
                 </li>
                 <li>
-                    <livewire:caja/>
+                    <livewire:caja nombrePunto='RECEP'/>
                 </li>
             </ul>
         </div>

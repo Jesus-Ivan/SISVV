@@ -6,11 +6,16 @@
             <label for="table-search" class="sr-only">Descripcion</label>
             <div class="relative mt-1">
                 <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
-                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                    <svg wire:loading.delay.remove wire:target='searchProduct'
+                        class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
                     </svg>
+                    <!--Loading indicator-->
+                    <div wire:loading.delay wire:target='searchProduct'>
+                        @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
+                    </div>
                 </div>
                 <input type="text" id="table-search" wire:model.live.debounce.500ms="searchProduct"
                     class="w-full block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
@@ -23,7 +28,6 @@
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
                         <th scope="col" class="p-4">
-                            
                         </th>
                         <th scope="col" class="px-6 py-3">
                             CODIGO
@@ -42,7 +46,8 @@
                             class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                             <td class="w-4 p-4">
                                 <div class="flex items-center">
-                                    <input id="checkbox-table-search-{{ $producto->codigo_venta }}" type="checkbox" wire:model="selectedProducts.{{ $producto->codigo_venta }}"
+                                    <input id="checkbox-table-search-{{ $producto->codigo_venta }}" type="checkbox"
+                                        wire:model="selectedProducts.{{ $producto->codigo_venta }}"
                                         class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                 </div>
                             </td>

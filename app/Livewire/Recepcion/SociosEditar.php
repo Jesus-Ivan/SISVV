@@ -5,6 +5,7 @@ namespace App\Livewire\Recepcion;
 use App\Livewire\Forms\SocioForm;
 use App\Models\IntegrantesSocio;
 use App\Models\Membresias;
+use Exception;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -59,6 +60,19 @@ class SociosEditar extends Component
         //emitir evento para mostrar el action-message
         $this->dispatch('open-action-message');
     }
+    public function confirmarEliminacion()
+    {
+        try {
+            $this->form->confirmDelete();
+            session()->flash('success', "Integrante eliminado correctamente");
+        } catch (\Throwable $th) {
+            session()->flash('fail', $th->getMessage());
+        }
+        //emitir evento para mostrar el action-message
+        $this->dispatch('open-action-message');
+        //Emitir evento para cerrar el modal
+        $this->dispatch('close-modal');
+    }
     public function saveSocio()
     {
         //Intentamos guardar cambios al socio con el objeto del form
@@ -91,9 +105,10 @@ class SociosEditar extends Component
         $this->dispatch('open-action-message');
     }
 
-    public function eliminarIntegrante()
+    public function eliminarIntegrante($integrante)
     {
-        dump('holiii');
+        $this->form->selectMiembro($integrante);
+        $this->dispatch('open-modal',  name: 'modalEliminar'); //ABRIMOS EL MODAL PARA PODER ELIMINAR
     }
 
     public function render()

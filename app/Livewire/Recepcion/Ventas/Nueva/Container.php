@@ -5,7 +5,9 @@ namespace App\Livewire\Recepcion\Ventas\Nueva;
 use App\Models\Caja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
+use App\Models\EstadoCuenta;
 use App\Models\PuntoVenta;
+use App\Models\TipoPago;
 use App\Models\Venta;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -24,8 +26,8 @@ class Container extends Component
     {
         //Obtenemos el punto de venta actual
         return PuntoVenta::where('nombre', 'LIKE', '%RECEP%')
-        ->limit(1)
-        ->get()[0];
+            ->limit(1)
+            ->get()[0];
     }
 
     public function cerrarVenta()
@@ -73,9 +75,9 @@ class Container extends Component
                         'inicio' => $producto['inicio'],
                     ]);
                 }
-                //Se crea el detalle de los pagoss
+                //Se crea el detalle de los pagos
                 foreach ($info['datosPagos'] as $key => $pago) {
-                    DetallesVentaPago::create([
+                    $resultPago = DetallesVentaPago::create([
                         'folio_venta' => $resultVenta->folio,
                         'id_socio' => $pago['id_socio'],
                         'nombre' => $pago['nombre'],
@@ -83,6 +85,29 @@ class Container extends Component
                         'propina' => $pago['propina'],
                         'id_tipo_pago' => $pago['id_tipo_pago'],
                     ]);
+                    //Verificamos si el tipo de pago es firma
+                    if (strcasecmp('FIRMA', $pago['descripcion_tipo_pago']) == 0) {
+                        //Creamos el concepto en el estado de cuenta (con abono 0)
+                        EstadoCuenta::create([
+                            'id_socio' => $pago['id_socio'],
+                            'id_venta_pago' => $resultPago->id,
+                            'concepto' => 'Nota venta: ' . $resultVenta->folio . ' - ' . $this->puntoVenta->nombre,
+                            'cargo' => $pago['monto'],
+                            'saldo' => $pago['monto'],
+                            'fecha' => $fecha_cierre,
+                        ]);
+                    } else {
+                        //Creamos el concepto en el estado de cuenta (con abono total)
+                        EstadoCuenta::create([
+                            'id_socio' => $pago['id_socio'],
+                            'id_venta_pago' => $resultPago->id,
+                            'concepto' => 'Nota venta: ' . $resultVenta->folio . ' - ' . $this->puntoVenta->nombre,
+                            'cargo' => $pago['monto'],
+                            'abono' => $pago['monto'],
+                            'saldo' => 0,
+                            'fecha' => $fecha_cierre,
+                        ]);
+                    }
                 }
             });
             session()->flash('success', "Se registro la venta correctamente");

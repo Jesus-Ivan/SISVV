@@ -4,10 +4,10 @@
         @include('recepcion.nav')
     </x-slot>
     {{-- Contenido --}}
-    <div>
+    <div class="mx-2">
         <!-- Title -->
-        <h4 class="text-2xl font-bold dark:text-white mx-2">Nuevo cargo a estado de cuenta</h4>
+        <h4 class="text-2xl font-bold dark:text-white ">Nuevo cargo a estado de cuenta</h4>
         <!-- Componente -->
-        <livewire:recepcion.cargos-nuevo/>
+        <livewire:recepcion.estados.cargos-nuevo :socio="$socio" year="{{$year}}" month="{{$month}}" />
     </div>
 </x-app-layout>

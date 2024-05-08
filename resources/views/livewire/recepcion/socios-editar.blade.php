@@ -49,7 +49,7 @@
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     required />
                 @error('form.nombre')
-                    <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                    <x-input-error messages="{{ $message }}" />
                 @enderror
             </div>
             <div>
@@ -134,7 +134,7 @@
                         @endforeach
                     </select>
                     @error('form.clave_membresia')
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                        <x-input-error messages="{{ $message }}" />
                     @enderror
                 </div>
             </div>
@@ -153,7 +153,7 @@
                         class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                         id="file_input" type="file">
                     @error('form.img_path')
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                        <x-input-error messages="{{ $message }}" />
                     @enderror
                 </div>
                 <button type="button"
@@ -183,7 +183,7 @@
                 <input type="text" id="nombre-miembro" wire:model='form.nombre_integrante'
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                 @error('form.nombre_integrante')
-                    <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                    <x-input-error messages="{{ $message }}" />
                 @enderror
             </div>
             <div class="w-full">
@@ -209,7 +209,7 @@
                         <option value="Esposa">Esposa</option>
                     </select>
                     @error('form.parentesco')
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                        <x-input-error messages="{{ $message }}" />
                     @enderror
                 </div>
             </div>
@@ -231,7 +231,7 @@
                         class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                         id="file_input" type="file">
                     @error('form.img_path_integrante')
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                        <x-input-error messages="{{ $message }}" />
                     @enderror
                 </div>
                 <button type="button"
@@ -282,7 +282,8 @@
                                                 <div class="flex flex-col items-center justify-center">
                                                     @if ($form->editando_img_path_integrante)
                                                         <!--Imagen temporal-->
-                                                        <img class="size-20" wire:loading.remove wire:target='form.editando_img_path_integrante'
+                                                        <img class="size-20" wire:loading.remove
+                                                            wire:target='form.editando_img_path_integrante'
                                                             src="{{ $form->editando_img_path_integrante->temporaryUrl() }}">
                                                     @endif
                                                     <!--loading state spin-->
@@ -309,7 +310,7 @@
                                             wire:model='form.editando_nombre_integrante'
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                                         @error('form.editando_nombre_integrante')
-                                            <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                                            <x-input-error messages="{{ $message }}" />
                                         @enderror
                                     </div>
                                 </div>
@@ -318,7 +319,7 @@
                                 <input type="date" id="fecha_nac" wire:model='form.editando_fecha_nac'
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                                 @error('form.editando_fecha_nac')
-                                    <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                                    <x-input-error messages="{{ $message }}" />
                                 @enderror
                             </td>
                             <td class="min-w-72 px-6 py-4">
@@ -335,11 +336,11 @@
                                     <option value="Esposa">Esposa</option>
                                 </select>
                                 @error('form.editando_parentesco')
-                                    <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                                    <x-input-error messages="{{ $message }}" />
                                 @enderror
                             </td>
                             <td class="flex max-w-fit px-6 py-4">
-                                <button type="button" wire:click='confirmarEdicion({{$index}})'
+                                <button type="button" wire:click='confirmarEdicion({{ $index }})'
                                     class="text-gr-700 border border-gray-700 hover:bg-gray-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-gray-500 dark:text-gray-500 dark:hover:text-white dark:focus:ring-gray-800 dark:hover:bg-gray-500">
                                     <svg class="w-5 h-5 " aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                                         width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
@@ -410,6 +411,29 @@
             </tbody>
         </table>
     </div>
+    <!--Modal de eliminacion -->
+    <x-modal title="Eliminar integrante" name="modalEliminar">
+        <x-slot name='body'>
+            <div class="text-center">
+                <svg class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¿Desea eliminar a:
+                    {{ $form->integrante_eliminar ? $form->integrante_eliminar['nombre_integrante'] : '' }}?
+                </h3>
+                <p class="text-gray-500 dark:text-gray-400">Esta accion eliminara al integrante de la membresia actual
+                </p>
+            </div>
+        </x-slot>
+        <x-slot name='footer'>
+            <button type="button" wire:click="confirmarEliminacion()"
+                class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
+                Eliminar
+            </button>
+        </x-slot>
+    </x-modal>
     <!--Alerts-->
     <x-action-message on='open-action-message'>
         @if (session('success'))

@@ -55,7 +55,7 @@
             </button>
         </div>
         <!-- Tabla de metodos de pago-->
-        <livewire:recepcion.ventas.nueva.pagos-table wire:model='datosPagos' />
+        <livewire:recepcion.ventas.nueva.pagos-table wire:model='datosPagos'/>
         @error('datosPagos')
             <x-input-error messages="{{ $message }}" />
         @enderror

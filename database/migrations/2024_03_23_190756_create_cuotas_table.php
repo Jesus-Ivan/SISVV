@@ -11,16 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cuotas_club', function (Blueprint $table) {
-            $table->integer('id')->primary()->unsigned();
-            $table->integer('id_socio');
-            $table->string('tipo_cuota', 80);
-            $table->string('descripcion', 255);
-            $table->date('fecha_mensualidad');
+        Schema::create('cuotas', function (Blueprint $table) {
+            $table->string('clave',20)->primary();
+            $table->string('descripcion', 100);
             $table->decimal('monto', 10, 2);
 
             //Relaciones
-
             //$table->foreign('id_socio')->references('id')->on('socios');
         });
     }

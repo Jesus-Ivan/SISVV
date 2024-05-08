@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EdoCuentaController;
 use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\SociosController;
 use GuzzleHttp\Psr7\Request;
@@ -96,7 +97,8 @@ Route::prefix('recepcion')->middleware(['auth'])->group(function () {
     });
     Route::prefix('edo-cuenta')->group(function () {
         Route::view('/', 'recepcion.Estado-cuenta.estado-cuenta')->name('recepcion.estado');
-        Route::view('nuevo-cargo', 'recepcion.Estado-cuenta.nuevo-cargo')->name('recepcion.estado.nuevo');
+        Route::get('nuevo-cargo/{socio}/{year}/{month}', [EdoCuentaController::class, 'showEditEdoCuenta'])->name('recepcion.estado.nuevo');
+        Route::get('reporte/{socio}/{tipo}/{year}/{month}', [ReportesController::class, 'generarEstadoCuenta'])->name('recepcion.estado.reporte');
     });
 });
 
@@ -118,7 +120,7 @@ Route::prefix('cocina')->middleware(['auth'])->group(function () {
 
     Route::view('platillos', 'cocina.Platillos.platillos')->name('cocina.platillos');
 
-    Route::prefix('transformaciones')->group(function() {
+    Route::prefix('transformaciones')->group(function () {
         Route::view('/', 'cocina.Transformaciones.transformaciones')->name('cocina.transformaciones');
         Route::view('nueva', 'cocina.Transformaciones.nueva-transformacion')->name('cocina.transformaciones.nueva');
         Route::view('historial', 'cocina.Transformaciones.historial-transformaciones')->name('cocina.transformaciones.historial');

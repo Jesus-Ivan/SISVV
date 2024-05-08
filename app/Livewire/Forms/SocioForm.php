@@ -45,6 +45,9 @@ class SocioForm extends Form
     public $editando_parentesco;
     public $editando_img_path_integrante;
 
+    // Propiedad auxiliar para eliminar un integrante
+    public $integrante_eliminar;
+
     protected $socio_rules = [
         'nombre' => 'required|min:5|max:80',
         'fecha_registro' => 'max:10',
@@ -95,6 +98,10 @@ class SocioForm extends Form
         $this->editando_fecha_nac = $miembro['fecha_nac'];
         $this->editando_parentesco = $miembro['parentesco'];
     }
+    public function selectMiembro(array $miembro)
+    {
+        $this->integrante_eliminar = $miembro;
+    }
 
     public function cleanEdit()
     {
@@ -127,12 +134,26 @@ class SocioForm extends Form
             $validated['editando_img_path_integrante'] = $miembro->img_path_integrante;
         }
         $miembro->update([
-            'nombre_integrante'=>$validated['editando_nombre_integrante'],
-            'fecha_nac'=>$validated['editando_fecha_nac'],
-            'parentesco'=>$validated['editando_parentesco'],
-            'img_path_integrante'=>$validated['editando_img_path_integrante'],
+            'nombre_integrante' => $validated['editando_nombre_integrante'],
+            'fecha_nac' => $validated['editando_fecha_nac'],
+            'parentesco' => $validated['editando_parentesco'],
+            'img_path_integrante' => $validated['editando_img_path_integrante'],
         ]);
         $this->cleanEdit();
+    }
+
+    public function confirmDelete()
+    {
+        //Si existe imagen del miembro, la borramos del servidor
+        if ($this->integrante_eliminar['img_path_integrante']){
+            Storage::disk('public')->delete($this->integrante_eliminar['img_path_integrante']);
+        }
+        //Eliminamos el registro del miembro
+        IntegrantesSocio::destroy($this->integrante_eliminar['id']);
+        //Buscamos los nuevos integrantes del socio
+        $this->setIntegrantes($this->socio);
+        //Limipamos el integrante
+        $this->reset('integrante_eliminar');
     }
 
     public function store()

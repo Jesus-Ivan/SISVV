@@ -26,7 +26,7 @@
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     required />
                 @error('formSocio.nombre')
-                    <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                <x-input-error messages="{{ $message }}" />    
                 @enderror
             </div>
             <div>
@@ -101,7 +101,7 @@
                         @endforeach
                     </select>
                     @error('formSocio.clave_membresia')
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                    <x-input-error messages="{{ $message }}" />    
                     @enderror
                 </div>
             </div>
@@ -120,7 +120,7 @@
                         class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                         id="file_input" type="file">
                     @error('formSocio.img_path')
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                    <x-input-error messages="{{ $message }}" />    
                     @enderror
                 </div>
                 <button type="button"
@@ -149,7 +149,7 @@
                 <input wire:model='formSocio.nombre_integrante' type="text" id="nombre-miembro"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                 @error('formSocio.nombre_integrante')
-                    <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                <x-input-error messages="{{ $message }}" />    
                 @enderror
             </div>
             <div class="w-full">
@@ -159,7 +159,7 @@
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="Soltero(a)" />
                 @error('formSocio.fecha_nac')
-                    <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                <x-input-error messages="{{ $message }}" />    
                 @enderror
             </div>
             <div class="w-full">
@@ -179,7 +179,7 @@
                         <option value="Esposa">Esposa</option>
                     </select>
                     @error('formSocio.parentesco')
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                    <x-input-error messages="{{ $message }}" />    
                     @enderror
                 </div>
             </div>

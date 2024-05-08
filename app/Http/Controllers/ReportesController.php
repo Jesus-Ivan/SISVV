@@ -5,10 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Caja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
+use App\Models\EstadoCuenta;
 use App\Models\PuntoVenta;
+use App\Models\Socio;
 use App\Models\TipoPago;
 use App\Models\Venta;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Stringable;
 
@@ -69,9 +73,51 @@ class ReportesController extends Controller
 
         $pdf = Pdf::loadView('reportes.ventas', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
-        return $pdf->stream('documento.pdf');
+        return $pdf->stream('corte.pdf');
     }
 
+    public function generarEstadoCuenta( $socio, $tipo, $year, $month)
+    {
+        //Buscamos el socio
+        $resultSocio = Socio::find($socio);
+
+        switch ($tipo) {
+            case 'T':
+                //Obtenemos todos los conceptos del estado-cuenta correspondiente al socio
+                $resulEstado = EstadoCuenta::where('id_socio', $resultSocio->id)
+                    ->whereMonth('fecha', $month)
+                    ->whereYear('fecha', $year)
+                    ->get();
+                break;
+            case 'P':
+                //Obtenemos los conceptos pendientes (de pagar) del estado-cuenta correspondiente al socio
+                $resulEstado = EstadoCuenta::where('id_socio', $resultSocio->id)
+                    ->whereMonth('fecha', $month)
+                    ->whereYear('fecha', $year)
+                    ->where('saldo', '>', 0)
+                    ->get();
+                break;
+            case 'C':
+                //Obtenemos los consumos del socio (esten o no esten pagados)
+                $resulEstado = EstadoCuenta::where('id_socio', $resultSocio->id)
+                    ->whereMonth('fecha', $month)
+                    ->whereYear('fecha', $year)
+                    ->where('consumo', true)
+                    ->get();
+                break;
+        }
+
+        $data = [
+            'resultSocio' => $resultSocio,
+            'month' => $this->getMes($month),
+            'year' => $year,
+            'resulEstado' => $resulEstado,
+        ];
+
+        $pdf = Pdf::loadView('reportes.estado-cuenta', $data);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        return $pdf->stream('estado-cuenta.pdf');
+    }
 
     private function calcularAltura($data)
     {
@@ -95,5 +141,36 @@ class ReportesController extends Controller
         }
         $footer_ticket = ($font_size_p * 2) + 10;
         return  $header_ticket + $inicio_ticket + $productos_ticket + $pago_ticket + $footer_ticket;
+    }
+
+    //Recibe un numero de mes y devuelve el mes en español
+    private function getMes($fecha)
+    {
+        switch ($fecha) {
+            case 1:
+                return 'Enero';
+            case 2:
+                return 'Febrero';
+            case 3:
+                return 'Marzo';
+            case 4:
+                return 'Abril';
+            case 5:
+                return 'Mayo';
+            case 6:
+                return 'Junio';
+            case 7:
+                return 'Julio';
+            case 8:
+                return 'Agosto';
+            case 9:
+                return 'Septiembre';
+            case 10:
+                return 'Octubre';
+            case 11:
+                return 'Noviembre';
+            case 12:
+                return 'Diciembre';
+        }
     }
 }

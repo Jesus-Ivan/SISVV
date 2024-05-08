@@ -12,16 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('estados_cuenta', function (Blueprint $table) {
-            $table->integer('id')->primary()->unsigned();
-            $table->integer('id_cuenta_pago')->nullable();
+            $table->integer('id')->autoIncrement()->unsigned();
+            $table->integer('id_venta_pago')->nullable();
             $table->integer('folio_evento')->nullable();
-            $table->integer('id_cuota')->nullable();
+            $table->string('clave_cuota', 20)->nullable();
             $table->integer('id_socio')->nullable();
             $table->string('concepto', 100);
-            $table->date('fecha_registro');
-            $table->decimal('cargos', 10, 2);
-            $table->decimal('abonos', 10, 2);
+            $table->date('fecha');
+            $table->decimal('cargo', 10, 2);
+            $table->decimal('abono', 10, 2)->default(0);
             $table->decimal('saldo', 10, 2);
+            $table->boolean('consumo')->nullable();
 
             /*//Relaciones
 

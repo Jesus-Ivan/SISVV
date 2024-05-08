@@ -23,7 +23,7 @@
             </thead>
             <tbody>
                 @foreach ($productos as $productoIndex => $producto)
-                    <tr
+                    <tr wire:key="{{ $productoIndex }}"
                         class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
                         <th scope="row"
                             class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
@@ -33,9 +33,9 @@
                             {{ $producto['precio'] }}
                         </td>
                         <td class="px-6 py-4">
-                            <input type="number"
-                            wire:model="productos.{{ $productoIndex }}.cantidad"
-                            wire:change="updateQuantity({{ $productoIndex }}, $event.target.value)"
+                            <input type="number" wire:model="productos.{{ $productoIndex }}.cantidad"
+                                wire:loading.attr="disabled" wire:target='removeProduct'
+                                wire:change="updateQuantity({{ $productoIndex }}, $event.target.value)"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="ej:1" />
                         </td>
@@ -44,6 +44,7 @@
                         </td>
                         <td class="px-6 py-4">
                             <button type="button" wire:click="removeProduct({{ $productoIndex }})"
+                                wire:loading.attr="disabled" wire:target='updateQuantity'
                                 class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                     class="w-5 h-5">
@@ -63,7 +64,7 @@
                     <td class="px-6 py-3">
                     </td>
                     <td class="px-6 py-3"></td>
-                    <td class="px-6 py-3">${{$this->total}}</td>
+                    <td class="px-6 py-3">${{ $this->total }}</td>
                 </tr>
             </tfoot>
         </table>

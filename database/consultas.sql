@@ -1176,3 +1176,11 @@ INSERT INTO proveedores (proveedor, rfc, consumo, credito_compra) VALUES
 	('VINOLESA', 'ASDFGHJKL12388', '1000', '1500'),
 	('WALMART', 'ASDFGHJKL12389', '1000', '1500'),
 	('XO CHIHUAHUA', 'ASDFGHJKL12390', '1000', '1500')
+
+--PLATILLOS--
+INSERT INTO ico_productos (categoria, nombre, descripcion, tamaño, precio_venta) VALUES
+	('pizzas', 'mozzarella', 'queso mozzarella fresco, jitomate con un toque de aceite de olivo y oregano', 'grande', '255.00'),
+	('hamburguesas', 'italiana', 'carne molida de filete de res con queso suizo, y chimichurri', '1 porción', '110.00'),
+	('sándwiches y paninis', 'dúo dinámico', 'jamón de pierna, salami, queso suizo, lechuga italiana y jitomate', '1 porción', '90.00'),
+	('pastas', 'spaghetti con salmón y vodka', '', '1 porción', '176.00'),
+	('carnes', 'carne enchilada oaxaqueña', 'con guacamole, entomatadas, frijoles refritos', '150 gramos', '143.00')

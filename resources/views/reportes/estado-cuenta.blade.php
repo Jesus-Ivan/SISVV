@@ -1,6 +1,6 @@
 <style>
     html {
-        font-size: small;
+        font-size: x-small;
     }
 
     h1,
@@ -17,7 +17,8 @@
         border-top: 1px solid black;
         border-bottom: 1px solid black;
     }
-    tfoot{
+
+    tfoot {
         border-top: 1px solid black;
     }
 
@@ -27,21 +28,19 @@
 </style>
 <div>
     <div>
-        <h2>VISTA VERDE COUNTRY CLUB</h2>
-        <h3>Estado de cuenta</h3>
+        <h2 style="line-height: 2pt">VISTA VERDE COUNTRY CLUB</h2>
+        <h3>Estado de cuenta del: {{$fInicio}} - {{$fFin}}</h3>
+        <p style="line-height: 2pt">RFC: {{ $header['rfc'] }}</p>
+        <p style="line-height: 2pt">{{ $header['direccion'] }}</p>
+        <p style="line-height: 2pt">Tel: 238{{ $header['telefono'] }}</p>
     </div>
+    <hr>
     <div>
         <table>
             <tbody>
                 <tr>
                     <td>Socio: </td>
                     <td>{{ $resultSocio->id }}-{{ $resultSocio->nombre }}</td>
-                </tr>
-                <tr>
-                    <td>Mes: </td>
-                    <td>{{ $month }}</td>
-                    <td>AÑO: </td>
-                    <td>{{ $year }}</td>
                 </tr>
             </tbody>
         </table>

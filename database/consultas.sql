@@ -1177,10 +1177,75 @@ INSERT INTO proveedores (proveedor, rfc, consumo, credito_compra) VALUES
 	('WALMART', 'ASDFGHJKL12389', '1000', '1500'),
 	('XO CHIHUAHUA', 'ASDFGHJKL12390', '1000', '1500')
 
---PLATILLOS--
-INSERT INTO ico_productos (categoria, nombre, descripcion, tamaño, precio_venta) VALUES
-	('pizzas', 'mozzarella', 'queso mozzarella fresco, jitomate con un toque de aceite de olivo y oregano', 'grande', '255.00'),
-	('hamburguesas', 'italiana', 'carne molida de filete de res con queso suizo, y chimichurri', '1 porción', '110.00'),
-	('sándwiches y paninis', 'dúo dinámico', 'jamón de pierna, salami, queso suizo, lechuga italiana y jitomate', '1 porción', '90.00'),
-	('pastas', 'spaghetti con salmón y vodka', '', '1 porción', '176.00'),
-	('carnes', 'carne enchilada oaxaqueña', 'con guacamole, entomatadas, frijoles refritos', '150 gramos', '143.00')
+--!		CONSULTAS DE JESUS IVAN		!--
+-- Agregar membresias --
+INSERT INTO membresias (clave, descripcion)
+VALUES ('CC-I','CC-INDIVIDUAL'),
+ ('CC-F','CC-FAMILIAR'),
+ ('CG-I','CG-INDIVIDUAL'),
+ ('CG-F','CG-FAMILIAR'),
+ ('CG-V-S','CG-VIUDA S.HIJOS'),
+ ('CG-V-C','CG-VIUDA C.HIJOS'),
+ ('CC-V-S','CC-VIUDA S.HIJOS'),
+ ('CC-V-C','CC-VIUDA C.HIJOS')
+ 
+-- Agregar productos de ejemplo de recepcion -- 
+INSERT INTO catalogo_productos (codigo_recepcion, nombre, precio_venta)
+VALUES (1,'CAMPO DE GOLF NIÑOS E.S',125.00),
+ (2,'CAMPO DE GOLF NIÑOS F.S',150.00),
+ (3,'CAMPO DE GOLF ADULTOS E.S',200.00),
+ (4,'CAMPO DE GOLF ADULTOS F.S',250.00),
+ (5,'RENTA CARRITO',300.00), 
+ (6,'RENTA CARRITO GRANDE',330.00),
+ (7,'CUBETA PELOTAS 20 PZ',190.00),
+ (8,'CUBETA PELOTAS 30 PZ',220.00),
+ (9,'CUBETA PELOTAS 40 PZ',300.00),
+ (10,'REPOSICION QR',200.00),
+ (11,'VISITA CON INSTALACIONES F.S',220.00),
+ (12,'VISITA SIN INSTALACIONES F.S',298.00),
+ (13,'VISITA CON INSTALACIONES E.S',123.00),
+ (14,'VISITA SIN INSTALACIONES E.S',321.00),
+ (15,'PRODUCTO 1',10.00),
+ (16,'PRODUCTO 2',11.00),
+ (17,'PRODUCTO 3',12.00)
+ 
+-- Agregar puntos de venta --
+INSERT INTO puntos_venta (clave,nombre)
+VALUES
+('BAR','BAR'),
+('RES','BARRA/RESTAURANT'),
+('CAD','CADDIE BAR'),
+('CAF','CAFETERIA'),
+('LOC','LOCKERS'),
+('REC','RECEPCIÓN')
+ 
+-- Agregar tipos de pago, ejemplos -- 
+INSERT INTO tipos_pago (descripcion)
+VALUES 
+('EFECTIVO'),
+('T. CREDITO'),
+('T. DEBITO'),
+('FIRMA'),
+('TRANSFERENCIA'),
+('DEPOSITO'),
+('CHEQUE'),
+
+-- Agregar ejemplo --
+INSERT INTO cuotas (descripcion, monto, tipo, clave_membresia)
+VALUES
+('LOCKER',200,'CASMEN', NULL),
+('DIFERENCIA CONSUMO',0,'DIFCON',null),
+('MENSUALIDAD CG-INDIVIDUAL',3517,'MEN','CG-I'),
+('MENSUALIDAD CC-INDIVIDUAL',1460,'MEN','CC-I'),
+('MENSUALIDAD CC-FAMILIAR',4650,'MEN','CC-F'),
+('MENSUALIDAD CG-FAMILIAR',6820,'MEN','CG-F'),
+('MENSUALIDAD CC-VIUDA C.HIJOS',4083,'MEN','CC-V-C'),
+('MENSUALIDAD CC-VIUDA S.HIJOS',3100,'MEN','CC-V-S'),
+('MENSUALIDAD CG-VIUDA C.HIJOS',5116,'MEN','CG-V-C'),
+('MENSUALIDAD CG-VIUDA S.HIJOS',3694,'MEN','CG-V-S'),
+('MEN.INACTIVA CG-FAMILIAR',682,'INA','CG-F'),
+('MEN.INACTIVA CG-INDIVIDUAL',351,'INA','CG-I'),
+('MEN.INACTIVA CC-FAMILIAR',465,'INA','CC-F'),
+('MEN.INACTIVA CC-INDIVIDUAL',146,'INA','CC-I'),
+('RESGUARDO CARRITO',1500,'RES',NULL)
+

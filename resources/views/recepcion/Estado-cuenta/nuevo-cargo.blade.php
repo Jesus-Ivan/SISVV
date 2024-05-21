@@ -8,6 +8,6 @@
         <!-- Title -->
         <h4 class="text-2xl font-bold dark:text-white ">Nuevo cargo a estado de cuenta</h4>
         <!-- Componente -->
-        <livewire:recepcion.estados.cargos-nuevo :socio="$socio" year="{{$year}}" month="{{$month}}" />
+        <livewire:recepcion.estados.cargos-nuevo :socio="$socio"/>
     </div>
 </x-app-layout>

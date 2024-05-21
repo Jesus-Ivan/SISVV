@@ -5,5 +5,5 @@
     </x-slot>
 
     {{-- Contenido --}}
-    <livewire:recepcion.cobros.principal>
+    <livewire:caja />
 </x-app-layout>

@@ -9,8 +9,8 @@ use Illuminate\Support\Carbon;
 class EdoCuentaController extends Controller
 {
     //Muestra el formulario para editar un estado de cuenta
-    public function showEditEdoCuenta(Socio $socio, $year, $month)
+    public function showEditEdoCuenta(Socio $socio)
     {
-        return view('recepcion.Estado-cuenta.nuevo-cargo', ['socio' => $socio, 'year' => $year, 'month' => $month]);
+        return view('recepcion.Estado-cuenta.nuevo-cargo', ['socio' => $socio]);
     }
 }

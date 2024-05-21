@@ -3,7 +3,9 @@
 namespace App\Livewire\Forms;
 
 use App\Models\IntegrantesSocio;
+use App\Models\Membresias;
 use App\Models\Socio;
+use App\Models\SocioMembresia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Validate;
@@ -25,6 +27,7 @@ class SocioForm extends Form
     public $tel_celular;
     public $correo;
     public $clave_membresia;
+    public $estado_membresia;
 
     // -- Informacion de los nuevos integrantes -- //
     public $nombre_integrante;
@@ -47,6 +50,8 @@ class SocioForm extends Form
 
     // Propiedad auxiliar para eliminar un integrante
     public $integrante_eliminar;
+    //Propiedad axiliar para definir el bloqueo de registro de integrantes
+    public $registro_permitido = false;
 
     protected $socio_rules = [
         'nombre' => 'required|min:5|max:80',
@@ -61,14 +66,15 @@ class SocioForm extends Form
         'tel_fijo' => 'max:10',
         'tel_celular' => 'max:10',
         'correo' => 'max:50',
-        'clave_membresia' => 'required',
+        'clave_membresia' => 'required'
     ];
 
-    //setear los valores a editar
+    //Setear los valores a editar
     public function setSocio(Socio $socio)
     {
         //Guardamos el objeto del socio
         $this->socio = $socio;
+        $resultMembresia = SocioMembresia::where('id_socio', $socio->id)->get()[0];
 
         $this->nombre = $socio->nombre;
         $this->img_path;
@@ -83,7 +89,10 @@ class SocioForm extends Form
         $this->tel_fijo = $socio->tel_fijo;
         $this->tel_celular = $socio->tel_celular;
         $this->correo = $socio->correo;
-        $this->clave_membresia = $socio->clave_membresia;
+        $this->clave_membresia = $resultMembresia->clave_membresia;
+        $this->estado_membresia = $resultMembresia->estado;
+        //Comprobamos el tipo de membresia para bloquear campos de integrantes
+        $this->comprobar($resultMembresia->clave_membresia);
     }
     public function setIntegrantes(Socio $socio)
     {
@@ -93,6 +102,9 @@ class SocioForm extends Form
 
     public function editMiembro(array $miembro)
     {
+        /**
+         * Clonamos los atributos del miembro para el modo de edicion
+         */
         $this->editando_miembro_id = $miembro['id'];
         $this->editando_nombre_integrante = $miembro['nombre_integrante'];
         $this->editando_fecha_nac = $miembro['fecha_nac'];
@@ -100,6 +112,7 @@ class SocioForm extends Form
     }
     public function selectMiembro(array $miembro)
     {
+        //Setear el miembro a eliminar, para el dialog
         $this->integrante_eliminar = $miembro;
     }
 
@@ -119,18 +132,22 @@ class SocioForm extends Form
         //Obtenemos la instacia a editar, con base al indice que ocupa en en array.
         $miembro = $this->integrantes_BD[$index];
 
+        //Validamos la informacion que se modifico
         $validated = $this->validate([
             'editando_nombre_integrante' => "required|max:50",
             'editando_fecha_nac' => "max:10",
             'editando_parentesco' => "required|max:20",
             'editando_img_path_integrante' => "max:255"
         ]);
-
+        //verificamos si existe una imagen cargada en la edicion.
         if ($this->editando_img_path_integrante) {
+            //Guardamos la imagen en el servidor y recuperamos su ruta relativa
             $validated['editando_img_path_integrante'] = $this->editando_img_path_integrante->store('fotos/integrantes', 'public');
+            //Si existe una anterior, la borramos del servidor 
             if ($miembro->img_path_integrante)
                 Storage::disk('public')->delete($miembro->img_path_integrante);
         } else {
+            //Dejamos la ruta original de la imagen si no hay una nueva cargada
             $validated['editando_img_path_integrante'] = $miembro->img_path_integrante;
         }
         $miembro->update([
@@ -145,7 +162,7 @@ class SocioForm extends Form
     public function confirmDelete()
     {
         //Si existe imagen del miembro, la borramos del servidor
-        if ($this->integrante_eliminar['img_path_integrante']){
+        if ($this->integrante_eliminar['img_path_integrante']) {
             Storage::disk('public')->delete($this->integrante_eliminar['img_path_integrante']);
         }
         //Eliminamos el registro del miembro
@@ -156,6 +173,30 @@ class SocioForm extends Form
         $this->reset('integrante_eliminar');
     }
 
+    //se confirma la actualizacion de los datos del socio, incluyendo el cambio de membresia
+    public function confirmUpdate()
+    {
+        //Buscamos todos los integrantes de la membresia
+        $integrantes = IntegrantesSocio::where('id_socio', $this->socio->id)->get();
+
+        DB::transaction(function () use ($integrantes) {
+            //Actualizamos la informacion del socio
+            $this->update();
+            //Recorremos todos los integrantes
+            foreach ($integrantes as $integrante) {
+                //Si existe imagen del miembro, la borramos del servidor
+                if ($integrante->img_path_integrante) {
+                    Storage::disk('public')->delete($integrante->img_path_integrante);
+                }
+                //Eliminamos el registro del miembro
+                IntegrantesSocio::destroy($integrante->id);
+                //Buscamos los nuevos integrantes del socio
+                $this->setIntegrantes($this->socio);
+            }
+        });
+    }
+
+    //Finalizar registro del socio y guardar toda la informacion, junto con los integrantes
     public function store()
     {
         //Agregamos la fecha del dia actual del registro
@@ -173,6 +214,10 @@ class SocioForm extends Form
             }
             //Creamos el socio
             $socio = Socio::create($validated);
+            SocioMembresia::create([
+                'id_socio' => $socio->id,
+                'clave_membresia' => $validated['clave_membresia'],
+            ]);
 
             //Creamos cada uno de los miembros del socio
             foreach ($this->integrantes as $integrante) {
@@ -213,6 +258,8 @@ class SocioForm extends Form
     //Esta funcion actualiza la informacion del socio
     public function update()
     {
+        //Agregamos la regla del estado de la membresia
+        $this->socio_rules['estado_membresia'] = 'required';
         //Validamos las entradas (sin la imagen)
         $validated = $this->validate($this->socio_rules);
 
@@ -228,6 +275,12 @@ class SocioForm extends Form
         }
         //Actualizamos el socio.
         $this->socio->update($validated);
+        //Actualizamos su membresia
+        SocioMembresia::where('id_socio', $this->socio->id)
+            ->update([
+                'clave_membresia' => $validated['clave_membresia'],
+                'estado' => $validated['estado_membresia'],
+            ]);
     }
 
     //Este metodo sirve para registrar un integrante, hacia un socio existente
@@ -261,5 +314,24 @@ class SocioForm extends Form
             'parentesco' => $integrante['parentesco'],
             'img_path_integrante' => $ruta
         ]);
+    }
+
+    //Se ejecuta para saber el nuevo tipo de membresia seleccionada
+    public function comprobar($value)
+    {
+        //Si el value no es null
+        if ($value) {
+            //Buscar la membresia
+            $membresia = Membresias::find($value);
+            //Comprobar si la membresia es individual, sin importar la clave
+            if (strpos($membresia->descripcion, "INDIVIDUAL")) {
+                //Limpiamos los campos 
+                $this->reset('nombre_integrante', 'img_path_integrante', 'fecha_nacimiento', 'parentesco', 'integrantes');
+                //Deshabilitamos el registro de miembros el formulario
+                $this->registro_permitido = false;
+            } else {
+                $this->registro_permitido = true;
+            }
+        }
     }
 }

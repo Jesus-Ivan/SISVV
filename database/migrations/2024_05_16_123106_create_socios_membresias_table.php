@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('membresias', function (Blueprint $table) {
-            $table->string('clave', 10)->primary();
-            $table->string('descripcion', 80);
+        Schema::create('socios_membresias', function (Blueprint $table) {
+            $table->integer('id')->autoIncrement()->unsigned();
+            $table->integer('id_socio')->unsigned();
+            $table->string('clave_membresia', 10);
+            $table->string('estado', 20)->default('MEN');
         });
     }
 
@@ -22,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('membresias');
+        Schema::dropIfExists('socios_membresias');
     }
 };

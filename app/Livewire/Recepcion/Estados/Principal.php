@@ -10,17 +10,17 @@ use Livewire\WithPagination;
 class Principal extends Component
 {
     use WithPagination;
-
-    public $year;
-    public $month;
     public $search;
     public $radioButon;
 
+    public $fechaInicio, $fechaFin;
+
     //Iniciamos los valores por defecto
     public function mount()
-    {   //Fecha actual
-        $this->year = now()->year;
-        $this->month = now()->month;              
+    {   //Fecha del primer dia del mes actual
+        $this->fechaInicio = now()->day(1)->toDateString();
+        //Fecha del ultimo dia del mes actual
+        $this->fechaFin = now()->day(now()->daysInMonth)->toDateString();              
         $this->search = '';                     //Nombre por default
         $this->radioButon = 'T';                //Radio button 'Mostrar Todos'
     }
@@ -28,9 +28,9 @@ class Principal extends Component
     #[Computed()]
     public function resultSocios()
     {
-        return Socio::with('membresia')->where('nombre', 'LIKE', '%' . $this->search . '%')
+        return Socio::with('socioMembresia')->where('nombre', 'LIKE', '%' . $this->search . '%')
             ->orWhere('id', $this->search)
-            ->limit(20)
+            ->limit(40)
             ->paginate(5);
     }
 

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Livewire\Recepcion\Ventas\Reporte;
+namespace App\Livewire\Recepcion\Cobros\Reporte;
 
 use App\Models\Caja;
 use App\Models\PuntoVenta;
-use App\Models\Venta;
+use App\Models\Recibo;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
@@ -42,21 +42,22 @@ class Container extends Component
             $this->caja = null;
         }
     }
-
     public function render()
     {
+        //Si existe la caja, buscar los cobros asociados y devolver la vista con los datos
         if ($this->caja) {
             return view(
-                'livewire.recepcion.ventas.reporte.container',
+                'livewire.recepcion.cobros.reporte.container',
                 [
-                    'ventas' => Venta::where('corte_caja', $this->caja[0]->corte)->paginate(10)
+                    'cobros' => Recibo::where('corte_caja', $this->caja[0]->corte)->paginate(10)
                 ]
             );
         } else {
+            //Devolver la vista, con array vacio
             return view(
-                'livewire.recepcion.ventas.reporte.container',
+                'livewire.recepcion.cobros.reporte.container',
                 [
-                    'ventas' => []
+                    'cobros' => []
                 ]
             );
         }

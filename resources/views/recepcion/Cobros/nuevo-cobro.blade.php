@@ -5,11 +5,9 @@
     </x-slot>
 
     {{-- Contenido --}}
-    <div >
+    <div>
         <!-- Title -->
         <h4 class="text-2xl font-bold dark:text-white mx-2">Nuevo cobro</h4>
-        <div>
-           <livewire:recepcion.cobros-nuevo/>
-        </div>
+        <livewire:recepcion.cobros.nuevo.container />
     </div>
 </x-app-layout>

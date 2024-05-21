@@ -4,22 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Socio extends Model
+class SocioMembresia extends Model
 {
     use HasFactory;
+
     //Nombre de tabla
-    protected $table = 'socios';
+    protected $table = 'socios_membresias';
     //Desactivar los timestamps para este modelo
     public $timestamps = false;
     //Propiedades restringidas para asignacion masiva
     protected $guarded = ['id'];
     //Clave primaria
     protected $primaryKey = 'id';
-
-   public function socioMembresia(): HasOne
-   {
-       return $this->hasOne(SocioMembresia::class, 'id_socio');
-   }
+    
+    public function membresia(): BelongsTo{
+        return $this->belongsTo(Membresias::class, 'clave_membresia');
+    }
 }

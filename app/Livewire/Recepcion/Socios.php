@@ -7,20 +7,26 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+use function Laravel\Prompts\select;
+
 class Socios extends Component
 {
     use WithPagination;
     public $search;
 
-    public function updated($search){
+    public function updated($search)
+    {
         $this->resetPage();
     }
 
     public function render()
     {
         $result = DB::table('socios')
-            ->join('membresias', 'socios.clave_membresia', '=', 'membresias.clave')
-            ->where('nombre', 'like', '%' . $this->search . '%')->orWhere('id', '=', $this->search)
+            ->join('socios_membresias', 'socios.id', '=', 'socios_membresias.id_socio')
+            ->join('membresias', 'socios_membresias.clave_membresia', '=', 'membresias.clave')
+            ->select('socios.*', 'membresias.descripcion')
+            ->where('socios.nombre', 'like', '%' . $this->search . '%')
+            ->orWhere('socios.id', '=', $this->search)
             ->orderByDesc('socios.id')
             ->paginate(5);
 

@@ -12,7 +12,7 @@
             <!--loading state image-->
             <div wire:loading wire:target="formSocio.img_path">
                 <div class="flex gap-3 items-center">
-                    @include('livewire.utils.loading', ['w' =>8, 'h' => 8])
+                    @include('livewire.utils.loading', ['w' => 8, 'h' => 8])
                     <span>Cargando imagen...</span>
                 </div>
             </div>
@@ -26,7 +26,7 @@
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     required />
                 @error('formSocio.nombre')
-                <x-input-error messages="{{ $message }}" />    
+                    <x-input-error messages="{{ $message }}" />
                 @enderror
             </div>
             <div>
@@ -94,14 +94,15 @@
                     <label for="membresias"
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia</label>
                     <select id="membresias" wire:model="formSocio.clave_membresia"
+                        wire:change="comprobarMembresia($event.target.value)"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         <option selected value="{{ null }}">Seleccione</option>
                         @foreach ($this->membresias as $membresia)
-                            <option value="{{$membresia->clave}}">{{$membresia->descripcion}}</option>
+                            <option value="{{ $membresia->clave }}">{{ $membresia->descripcion }}</option>
                         @endforeach
                     </select>
                     @error('formSocio.clave_membresia')
-                    <x-input-error messages="{{ $message }}" />    
+                        <x-input-error messages="{{ $message }}" />
                     @enderror
                 </div>
             </div>
@@ -120,7 +121,7 @@
                         class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                         id="file_input" type="file">
                     @error('formSocio.img_path')
-                    <x-input-error messages="{{ $message }}" />    
+                        <x-input-error messages="{{ $message }}" />
                     @enderror
                 </div>
                 <button type="button"
@@ -139,8 +140,9 @@
     </div>
     <!-- Linea -->
     <hr class="h-px my-4 bg-gray-300 border-0 dark:bg-gray-700">
+    <h4 class="text-2xl font-bold dark:text-white mx-2">Integrantes</h4>
     <!-- Registros miembros del socio -->
-    <div>
+    <div aria-disabled="true" class="{{ $formSocio->registro_permitido ? '' : 'pointer-events-none opacity-50' }}">
         <!-- Inputs -->
         <div class="flex gap-4">
             <div class="w-full">
@@ -149,7 +151,7 @@
                 <input wire:model='formSocio.nombre_integrante' type="text" id="nombre-miembro"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                 @error('formSocio.nombre_integrante')
-                <x-input-error messages="{{ $message }}" />    
+                    <x-input-error messages="{{ $message }}" />
                 @enderror
             </div>
             <div class="w-full">
@@ -159,7 +161,7 @@
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="Soltero(a)" />
                 @error('formSocio.fecha_nac')
-                <x-input-error messages="{{ $message }}" />    
+                    <x-input-error messages="{{ $message }}" />
                 @enderror
             </div>
             <div class="w-full">
@@ -171,15 +173,18 @@
                         <option selected value="{{ null }}">Seleccione</option>
                         <option value="Padre">Padre</option>
                         <option value="Madre">Madre</option>
-                        <option value="Hijo">Hijo</option>
-                        <option value="Hija">Hija</option>
-                        <option value="Hermano">Hermano</option>
-                        <option value="Hermana">Hermana</option>
                         <option value="Esposo">Esposo</option>
                         <option value="Esposa">Esposa</option>
+                        <option value="Hijo/a">Hijo/a</option>
+                        <option value="Hermano/a">Hermano/a</option>
+                        <option value="Yerno/nuera">Yerno/nuera</option>
+                        <option value="Sobrino/a">Sobrino/a</option>
+                        <option value="Nieto/a">Nieto/a</option>
+                        <option value="Tio/a">Tio/a</option>
+                        <option value="Suegro/a">Suegro/a</option>
                     </select>
                     @error('formSocio.parentesco')
-                    <x-input-error messages="{{ $message }}" />    
+                        <x-input-error messages="{{ $message }}" />
                     @enderror
                 </div>
             </div>

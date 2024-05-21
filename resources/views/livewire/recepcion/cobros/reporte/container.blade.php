@@ -1,7 +1,7 @@
 <div>
     <form class="flex m-2 items-end gap-4">
         <div class="flex gap-4 grow">
-            <!--Fecha-->
+            {{-- Fecha --}}
             <div class="w-48">
                 <label for="fecha" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fecha</label>
                 <input type="date" id="tel-celular" wire:model="fecha"
@@ -21,18 +21,15 @@
         </button>
     </form>
     <!--Tabla de ventas -->
-    <div class="h-96 relative overflow-x-auto shadow-md sm:rounded-lg">
+    <div class="shadow-md sm:rounded-lg">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                     <th scope="col" class="px-6 py-3">
-                        FOLIO VENTA
+                        FOLIO
                     </th>
                     <th scope="col" class="px-6 py-3">
-                        NO.SOCIO
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        NOMBRE
+                        SOCIO
                     </th>
                     <th scope="col" class="px-6 py-3">
                         FECHA
@@ -40,33 +37,24 @@
                     <th scope="col" class="px-6 py-3">
                         TOTAL
                     </th>
-                    <th scope="col" class="px-6 py-3">
-                        CORTE DE CAJA
-                    </th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($ventas as $venta)
-                    <tr
+                @foreach ($cobros as $index => $cobro)
+                    <tr wire:key="{{ $index }}"
                         class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
                         <th scope="row"
                             class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            {{ $venta->folio }}
+                            {{ $cobro->folio }}
                         </th>
                         <td class="px-6 py-4">
-                            {{ $venta->id_socio }}
+                            {{ $cobro->nombre }}
                         </td>
                         <td class="px-6 py-4">
-                            {{ $venta->nombre }}
+                            {{ $cobro->fecha }}
                         </td>
                         <td class="px-6 py-4">
-                            {{ $venta->fecha_apertura }}
-                        </td>
-                        <td class="px-6 py-4">
-                            ${{ $venta->total }}
-                        </td>
-                        <td class="px-6 py-4">
-                            {{ $venta->corte_caja }}
+                            ${{ $cobro->total }}
                         </td>
                     </tr>
                 @endforeach
@@ -74,13 +62,13 @@
         </table>
         <div>
             @if ($caja)
-                <div>{{ $ventas->links() }}</div>
+                {{ $cobros->links() }}
             @endif
         </div>
     </div>
     <!--Botones de navegacion (regresar y imprimir reporte)-->
     <div>
-        <a type="button" href="{{ route('recepcion.ventas') }}"
+        <a type="button" href="{{ route('recepcion.cobros') }}"
             class="inline-flex items-center focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
             <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -91,7 +79,8 @@
             Regresar
         </a>
         @if ($caja)
-            <a type="button" href="{{ route('recepcion.ventas.corte', ['caja' => $caja[0]->corte]) }}" target="_blank"
+            <a type="button" href="{{ route('recepcion.cobros.corte', ['caja' => $caja[0]->corte]) }}"
+                target="_blank"
                 class="inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
                 <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"

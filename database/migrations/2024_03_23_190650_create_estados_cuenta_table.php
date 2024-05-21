@@ -15,7 +15,7 @@ return new class extends Migration
             $table->integer('id')->autoIncrement()->unsigned();
             $table->integer('id_venta_pago')->nullable();
             $table->integer('folio_evento')->nullable();
-            $table->string('clave_cuota', 20)->nullable();
+            $table->integer('id_cuota')->nullable();
             $table->integer('id_socio')->nullable();
             $table->string('concepto', 100);
             $table->date('fecha');

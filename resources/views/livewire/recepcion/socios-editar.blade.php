@@ -93,12 +93,15 @@
             <div>
                 <label for="estado-membresia"
                     class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Estado de membresia</label>
-                <select id="estado-membresia"
+                <select id="estado-membresia" wire:model='form.estado_membresia'
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                    <option>Activa</option>
-                    <option>Inactiva</option>
-                    <option>Cancelada</option>
+                    <option value="MEN">Activa</option>
+                    <option value="INA">Inactiva</option>
+                    <option value="CAN">Cancelada</option>
                 </select>
+                @error('form.estado_membresia')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
             </div>
         </div>
         <!-- columna 3 -->
@@ -127,6 +130,7 @@
                     <label for="membresias"
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia</label>
                     <select id="membresias" wire:model="form.clave_membresia"
+                        wire:change="comprobarMembresia($event.target.value)"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         <option selected value="{{ null }}">Seleccione</option>
                         @foreach ($this->membresias as $membresia)
@@ -174,7 +178,7 @@
     <hr class="h-px my-4 bg-gray-300 border-0 dark:bg-gray-700">
     <h4 class="text-2xl font-bold dark:text-white mb-4">Integrantes</h4>
     <!-- Registros integrantes del socio -->
-    <div>
+    <div class="{{ $form->registro_permitido ? '' : 'pointer-events-none opacity-50' }}">
         <!-- Inputs -->
         <div class="flex gap-4">
             <div class="w-full">
@@ -201,12 +205,15 @@
                         <option selected value="{{ null }}">Seleccione</option>
                         <option value="Padre">Padre</option>
                         <option value="Madre">Madre</option>
-                        <option value="Hijo">Hijo</option>
-                        <option value="Hija">Hija</option>
-                        <option value="Hermano">Hermano</option>
-                        <option value="Hermana">Hermana</option>
                         <option value="Esposo">Esposo</option>
                         <option value="Esposa">Esposa</option>
+                        <option value="Hijo/a">Hijo/a</option>
+                        <option value="Hermano/a">Hermano/a</option>
+                        <option value="Yerno/nuera">Yerno/nuera</option>
+                        <option value="Sobrino/a">Sobrino/a</option>
+                        <option value="Nieto/a">Nieto/a</option>
+                        <option value="Tio/a">Tio/a</option>
+                        <option value="Suegro/a">Suegro/a</option>
                     </select>
                     @error('form.parentesco')
                         <x-input-error messages="{{ $message }}" />
@@ -217,9 +224,13 @@
         <!-- Buton y Image -->
         <div class="flex items-end">
             <!-- Agregar integrante -->
-            <button type="button" wire:click='registrarIntegrante'
-                class="max-h-11 w-full text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">Agregar
-                nuevo integrante
+            <button type="button" wire:click='registrarIntegrante' wire:loading.attr="disabled"
+                class="align-middle max-h-12 w-full text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">
+                <!--loading state image-->
+                <div wire:loading.delay wire:target="registrarIntegrante">
+                    @include('livewire.utils.loading', ['w' => 4, 'h' => 4])
+                </div>
+                Agregar nuevo integrante
             </button>
             <div class="w-full"></div>
             <!--Imagen de perfil-->
@@ -249,7 +260,8 @@
         </div>
     </div>
     <!-- TABLA integrantes del socio -->
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <div
+        class="{{ $form->registro_permitido ? 'overflow-x-auto shadow-md sm:rounded-lg' : 'pointer-events-none opacity-50' }}">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
@@ -328,12 +340,15 @@
                                     <option selected value="{{ null }}">Seleccione</option>
                                     <option value="Padre">Padre</option>
                                     <option value="Madre">Madre</option>
-                                    <option value="Hijo">Hijo</option>
-                                    <option value="Hija">Hija</option>
-                                    <option value="Hermano">Hermano</option>
-                                    <option value="Hermana">Hermana</option>
                                     <option value="Esposo">Esposo</option>
                                     <option value="Esposa">Esposa</option>
+                                    <option value="Hijo/a">Hijo/a</option>
+                                    <option value="Hermano/a">Hermano/a</option>
+                                    <option value="Yerno/nuera">Yerno/nuera</option>
+                                    <option value="Sobrino/a">Sobrino/a</option>
+                                    <option value="Nieto/a">Nieto/a</option>
+                                    <option value="Tio/a">Tio/a</option>
+                                    <option value="Suegro/a">Suegro/a</option>
                                 </select>
                                 @error('form.editando_parentesco')
                                     <x-input-error messages="{{ $message }}" />
@@ -431,6 +446,31 @@
             <button type="button" wire:click="confirmarEliminacion()"
                 class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
                 Eliminar
+            </button>
+        </x-slot>
+    </x-modal>
+    {{-- Modal de Advertencia --}}
+    <x-modal title="Advertencia" name="modalAdvertencia">
+        <x-slot name='body'>
+            <div class="text-center">
+                <svg class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¡¡ Cambio de membresia !!
+                </h3>
+                <p class="text-gray-500 dark:text-gray-400">
+                    Has modificado tu membresia, esta accion eliminara todos
+                    los integrantes registrados en tu membresia actual.
+                </p>
+                <p class="text-gray-500 dark:text-gray-400">Deseas continuar?</p>
+            </div>
+        </x-slot>
+        <x-slot name='footer'>
+            <button type="button" wire:click="confirmarActualizacion()"
+                class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
+                Continuar
             </button>
         </x-slot>
     </x-modal>

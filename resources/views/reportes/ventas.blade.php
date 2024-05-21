@@ -32,7 +32,7 @@
         </tr>
         <tr>
             <td style="border: 0px">Vendedor: {{ $caja->users->name }}</td>
-            <td style="border: 0px">Punto de venta: {{$caja->puntoVenta->nombre}}</td>
+            <td style="border: 0px">Punto de venta: {{ $caja->puntoVenta->nombre }}</td>
         </tr>
     </tbody>
 </table>
@@ -67,3 +67,5 @@
         </tfoot>
     </table>
 @endforeach
+<hr>
+<p>Total de venta: ${{ $totalVenta }}</p>

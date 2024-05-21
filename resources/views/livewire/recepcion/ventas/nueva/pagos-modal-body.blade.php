@@ -2,7 +2,7 @@
     <!-- Modal body -->
     <div class="pb-4 space-y-4">
         <div>
-            <livewire:autocomplete :params="['table_name' => 'socios', 'columns' => ['nombre', 'id']]" event='on-selected-socio-pago' />
+            <livewire:autocomplete :params="['table_name' => 'socios', 'columns' => ['nombre', 'id']]" event='on-selected-socio-pago' primary='id'/>
             <div class="flex">
                 <p>{{ $socio ? $socio->id : '' }}</p>
                 -

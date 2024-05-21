@@ -1,9 +1,7 @@
 <x-app-layout>
     {{-- Sub barra de navegacion --}}
     <x-slot name="header">
-        @include('recepcion.nav')
+        @include('puntos.nav')
     </x-slot>
-
-    {{-- Contenido --}}
-    <livewire:recepcion.cobros.principal>
+    <livewire:caja nombrePunto="{{$codigopv}}"/>
 </x-app-layout>

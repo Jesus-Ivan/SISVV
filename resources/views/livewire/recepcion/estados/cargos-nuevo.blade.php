@@ -5,14 +5,25 @@
             <p>No.Socio:{{ $socio->id }} </p>
         </div>
         <div class="w-full">
-            <p>Mensualidad: {{ $mes }} - {{ $year }}</p>
+            <p>Membresia: {{ $socioMembresia->membresia->descripcion }}</p>
+            <p>Membresia: {{ $socioMembresia }}</p>
         </div>
     </div>
-    <!--BOTON DE CARGOS-->
-    <div class="flex">
-        <div class="w-full"></div>
-        <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'cargosModal'})" wire:loading.attr="disabled" 
-            class="text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
+    {{-- FECHA Y BOTON DE CARGOS --}}
+    <div
+        class="{{ $socioMembresia->estado == 'CAN' || $socioMembresia->estado == 'INA' ? 'flex opacity-50 pointer-events-none' : 'flex' }}">
+        {{-- Fecha --}}
+        <div class="w-full">
+            <input type="date" id="inicio" wire:model="fechaDestino"
+                class="w-64 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+            @error('fechaDestino')
+                <x-input-error messages="{{ $message }}" />
+            @enderror
+        </div>
+        {{-- boton --}}
+        <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'cargosModal'})"
+            wire:loading.attr="disabled"
+            class="h-10 text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
             <svg class="w-5 h-5 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                 viewBox="0 0 24 24">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -27,7 +38,7 @@
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                     <th scope="col" class="px-6 py-3 w-32">
-                        CLAVE
+                        APLICADO AL
                     </th>
                     <th scope="col" class="px-6 py-3 ">
                         CONCEPTO
@@ -44,25 +55,19 @@
                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                         <th scope="row"
                             class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            {{ $cargo['clave'] }}
+                            {{ $cargo['fecha'] }}
                         </th>
                         <td class="px-6 py-4">
                             {{ $cargo['descripcion'] }}
                         </td>
                         <td class="px-6 py-4 ">
                             <div class="flex items-center">
-                                $
-                                <input type="number" wire:model="listaCargos.{{ $cargoIndex }}.monto"
-                                    wire:loading.attr="disabled" wire:target='removeCuota, guardarCambios'
-                                    class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                    placeholder="ej:1" />
+                                $ {{ $cargo['monto'] }}
                             </div>
-                            @error('listaCargos.' . $cargoIndex . '.monto')
-                                <span class="text-red-500 text-xs">{{ $message }}</span>
-                            @enderror
                         </td>
                         <td class="px-6 py-4">
-                            <button type="button" wire:click="removeCuota({{ $cargoIndex }})" wire:loading.attr="disabled" wire:target='removeCuota, guardarCambios'
+                            <button type="button" wire:click="removeCuota({{ $cargoIndex }})"
+                                wire:loading.attr="disabled" wire:target='removeCuota, guardarCambios'
                                 class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                     class="w-5 h-5">
@@ -90,11 +95,12 @@
             </svg>
             Regresar
         </a>
-        <button type="button" wire:click='guardarCambios' wire:target='removeCuota, guardarCambios, addCuota' wire:loading.attr="disabled"
+        <button type="button" wire:click='guardarCambios' wire:target='removeCuota, guardarCambios, addCuota'
+            wire:loading.attr="disabled"
             class="inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-            <svg wire:loading.delay.remove wire:target='guardarCambios' class="w-6 h-6 dark:text-gray-800 text-white me-2"
-                aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
-                viewBox="0 0 24 24">
+            <svg wire:loading.delay.remove wire:target='guardarCambios'
+                class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                 <path fill-rule="evenodd"
                     d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm13.707-1.293a1 1 0 0 0-1.414-1.414L11 12.586l-1.793-1.793a1 1 0 0 0-1.414 1.414l2.5 2.5a1 1 0 0 0 1.414 0l4-4Z"
                     clip-rule="evenodd" />
@@ -135,12 +141,10 @@
                 </div>
                 <!-- Result table-->
                 <div class="overflow-y-auto max-h-full h-96">
-                    <table class="text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                    <table class="text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400"
+                        wire:loading.delay.class="pointer-events-none opacity-50" wire:target='addCuota'>
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                             <tr>
-                                <th scope="col" class="px-6 py-3">
-                                    CLAVE
-                                </th>
                                 <th scope="col" class="px-6 py-3 w-full">
                                     DESCRIPCION
                                 </th>
@@ -153,12 +157,8 @@
                         </thead>
                         <tbody>
                             @foreach ($this->cuotas as $index => $cuota)
-                                <tr wire:key='{{ $index }}'
+                                <tr wire:key="{{ $index }}"
                                     class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <th scope="row"
-                                        class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                        {{ $cuota->clave }}
-                                    </th>
                                     <td class="px-6 py-4">
                                         {{ $cuota->descripcion }}
                                     </td>
@@ -174,7 +174,7 @@
                                                 <path stroke="currentColor" stroke-linecap="round"
                                                     stroke-linejoin="round" stroke-width="2" d="M5 12h14m-7 7V5" />
                                             </svg>
-                                            <span class="sr-only">Icon description</span>
+
                                         </button>
                                     </td>
                                 </tr>
@@ -183,6 +183,16 @@
                     </table>
                 </div>
             </div>
+        </x-slot>
+        <x-slot name='footer'>
+            <!--Loading indicator-->
+            <div wire:loading.delay wire:target='addCuota'
+                class="px-3 py-1 text-xs font-medium leading-none text-center text-blue-800 bg-blue-200 rounded-full animate-pulse dark:bg-blue-900 dark:text-blue-200">
+                Verificando cargos registrados ...
+            </div>
+            @if (session('fail'))
+                <x-input-error messages="{{ session('fail') }}" wire:loading.remove wire:target='addCuota' />
+            @endif
         </x-slot>
     </x-modal>
     <!--Alerts-->

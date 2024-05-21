@@ -12,13 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('ICO_productos', function (Blueprint $table) {
-            $table->integer('codigo')->primary()->unsigned();
+            $table->integer('codigo')->autoIncrement()->unsigned();
             $table->string('categoria', 30);
             $table->string('nombre', 100);
-            $table->string('descripcion', 255);
+            $table->string('descripcion', 255)->nullable();
             $table->string('tamaño', 10);
-            $table->smallInteger('stock');
+            $table->smallInteger('stock')->default(1);
             $table->decimal('precio_venta', 10, 2);
+            $table->boolean('estado')->default(1);
         });
     }
 

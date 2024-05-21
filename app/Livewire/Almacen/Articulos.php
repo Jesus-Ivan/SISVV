@@ -162,7 +162,6 @@ class Articulos extends Component
         $this->dispatch('close-modal');
         session()->flash('fail', "Artículo inactivado correctamente"); //MENSAJE DE ALERTA CUANDO SE ELIMINE CORRECTAMENTE
         $this->dispatch('open-action-message');
-        //$this->dispatch('reload')->self();
     }
 
     //REINGRESAMOS EL ARTICULO 

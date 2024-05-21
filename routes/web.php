@@ -150,4 +150,21 @@ Route::prefix('pv/{codigopv}')->middleware(['auth'])->group(function () {
     Route::view('socios', 'puntos.Socios.socios')->name('pv.socios');
 });
 
+Route::prefix('sistemas')->middleware(['auth'])->group(function () {
+    Route::view('/', 'sistemas.index')->name('sistemas');
+
+    Route::prefix('catalogo')->group(function () {
+        Route::view('/', 'sistemas.Almacen.catalogo')->name('sistemas.catalogo');
+        Route::view('nuevo', 'sistemas.Almacen.nuevo-catalogo')->name('sistemas.almacen.nuevo');
+        //Route::view('nuevo', 'almacen.Salidas.nueva-salida')->name('almacen.salidas.nueva');
+    });
+    //Route::view('catalogo', 'sistemas.Almacen.catalogo')->name('sistemas.catalogo');
+
+    Route::view('proveedores', 'sistemas.proveedores')->name('sistemas.proveedores');
+    Route::view('familias', 'sistemas.familias')->name('sistemas.familias');
+    Route::view('categorias', 'sistemas.categorias')->name('sistemas.categorias');
+    Route::view('unidades', 'sistemas.unidades')->name('sistemas.unidades');
+    
+});
+
 require __DIR__ . '/auth.php';

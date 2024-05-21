@@ -15,7 +15,7 @@ class Principal extends Component
     public function ventasHoy()
     {
         //return Venta::whereDate('fecha_apertura', now()->format('Y-m-d'))->get();
-        return Venta::orderby('fecha_apertura','desc')->paginate(5);
+        return Venta::orderby('fecha_apertura','desc')->paginate(10);
     }
 
     public function render()

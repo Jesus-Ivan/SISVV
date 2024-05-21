@@ -27,6 +27,7 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
+
 Route::prefix('administracion')->middleware(['auth'])->group(function () {
     Route::view('/', 'administracion.index')->name('administracion');
     Route::view('reportes-ordenes', 'administracion.reportes-ordenes')->name('administracion.reportes-ordenes');
@@ -89,6 +90,8 @@ Route::prefix('recepcion')->middleware(['auth'])->group(function () {
         Route::view('/', 'recepcion.Cobros.cobros')->name('recepcion.cobros');
         Route::view('nuevo', 'recepcion.Cobros.nuevo-cobro')->name('recepcion.cobros.nuevo');
         Route::view('reportes', 'recepcion.Cobros.reporte-cobros')->name('recepcion.cobros.reportes');
+        Route::get('recibo/{folio}', [ReportesController::class, 'generarRecibo'])->name('recepcion.cobros.recibo');
+        Route::get('corte/{caja}', [ReportesController::class, 'generarCobranza'])->name('recepcion.cobros.corte');
     });
     Route::prefix('socios')->group(function () {
         Route::view('/', 'recepcion.Socios.socios')->name('recepcion.socios');
@@ -97,9 +100,11 @@ Route::prefix('recepcion')->middleware(['auth'])->group(function () {
     });
     Route::prefix('edo-cuenta')->group(function () {
         Route::view('/', 'recepcion.Estado-cuenta.estado-cuenta')->name('recepcion.estado');
-        Route::get('nuevo-cargo/{socio}/{year}/{month}', [EdoCuentaController::class, 'showEditEdoCuenta'])->name('recepcion.estado.nuevo');
-        Route::get('reporte/{socio}/{tipo}/{year}/{month}', [ReportesController::class, 'generarEstadoCuenta'])->name('recepcion.estado.reporte');
+        Route::get('nuevo-cargo/{socio}', [EdoCuentaController::class, 'showEditEdoCuenta'])->name('recepcion.estado.nuevo');
+        Route::get('reporte/{socio}/{tipo}/{fInicio}/{fFin}', [ReportesController::class, 'generarEstadoCuenta'])->name('recepcion.estado.reporte');
     });
+
+    Route::view('caja', 'recepcion.caja.caja')->middleware(['auth'])->name('recepcion.caja');
 });
 
 Route::prefix('cocina')->middleware(['auth'])->group(function () {
@@ -150,6 +155,7 @@ Route::prefix('pv/{codigopv}')->middleware(['auth'])->group(function () {
     });
 
     Route::view('socios', 'puntos.Socios.socios')->name('pv.socios');
+    Route::view('caja', 'puntos.caja.caja')->middleware(['auth'])->name('pv.caja');
 });
 
 require __DIR__ . '/auth.php';

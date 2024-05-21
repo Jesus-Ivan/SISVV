@@ -12,13 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('recibos', function (Blueprint $table) {
-            $table->integer('folio')->primary()->unsigned();
+            $table->integer('folio')->autoIncrement()->unsigned();
             $table->integer('id_socio');
             $table->string('nombre', 80);
-            $table->integer('id_tipo_pago');
+            $table->integer('id_tipo_pago')->nullable();
             $table->decimal('total', 10, 2);
-            $table->integer('id_usuario');
+            $table->integer('corte_caja')->unsigned();
             $table->dateTime('fecha');
+            $table->string('observaciones', 50)->nullable();
 
             /*//Relaciones
 

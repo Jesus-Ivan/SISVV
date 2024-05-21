@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('tel_fijo', 10)->unique()->nullable();
             $table->string('tel_celular', 10)->unique()->nullable();
             $table->string('correo', 50)->unique()->nullable();
-            $table->string('clave_membresia', 6);
+
 
             //Relaciones
 

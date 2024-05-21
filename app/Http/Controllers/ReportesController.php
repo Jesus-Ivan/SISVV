@@ -7,11 +7,13 @@ use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
 use App\Models\PuntoVenta;
+use App\Models\Recibo;
 use App\Models\Socio;
 use App\Models\TipoPago;
 use App\Models\Venta;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Stringable;
@@ -40,20 +42,25 @@ class ReportesController extends Controller
             'caja' => $caja,
         ];
 
-        $altura = $this->calcularAltura($data);
+        //$altura = $this->calcularAltura($data);
 
         $pdf = Pdf::loadView('reportes.nota-venta', $data);
-        $pdf->setOption(['defaultFont' => 'Courier']);
-        $pdf->setPaper([0, 0, 226.772, $altura], 'portrait');
-
-        return $pdf->stream('documento.pdf');
+        $pdf->setOption(['defaultFont' => 'Helvetica']);
+        //Tamaño predeterminado de papel del ticket (80mm x 297mm)
+        $pdf->setPaper([0, 0, 226.772, 841.89], 'portrait');
+        return $pdf->stream('venta.pdf');
     }
 
+    //Genera reportes de ventas, con ayuda del corte de caja
     public function generarCorte(Caja $caja)
     {
-        //Buscamos todos los metodos de pago
-        $tipos_pago = TipoPago::all();
-        //Array de pagos separados por tipo
+        //Buscamos los metodos de pago, permitidos.
+        $tipos_pago = TipoPago::whereNot(function (Builder $query) {
+            $query->where('descripcion', 'like', 'TRANSFERENCIA')
+                ->orWhere('descripcion', 'like', 'DEPOSITO')
+                ->orWhere('descripcion', 'like', 'CHEQUE');
+        })->get();
+        //Array auxiliar de pagos separados por tipo
         $separados = [];
         //Consulta que obtiene los detalles de los pagos con su corte de caja
         $detalles_pago = DB::table('detalles_ventas_pagos')
@@ -61,62 +68,153 @@ class ReportesController extends Controller
             ->select('detalles_ventas_pagos.*', 'ventas.corte_caja')
             ->where('corte_caja', $caja->corte)
             ->get();
+
+        //Obtenemos el total del corte
+        $totalVenta = array_sum(array_column($detalles_pago->toArray(), 'monto'));
         //Separar los pagos por tipo
         foreach ($tipos_pago as $pago) {
             $separados[$pago->descripcion] = $detalles_pago->where('id_tipo_pago', $pago->id);
         }
-
+        //Almacenamos la informacion en un array, para la vista del resporte
         $data = [
             'caja' => $caja,
-            'detalles_pagos' => $separados
+            'detalles_pagos' => $separados,
+            'totalVenta' => $totalVenta
         ];
 
         $pdf = Pdf::loadView('reportes.ventas', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
-        return $pdf->stream('corte.pdf');
+        return $pdf->stream("corte{{$caja->corte}}.pdf");
     }
 
-    public function generarEstadoCuenta( $socio, $tipo, $year, $month)
+    public function generarEstadoCuenta($socio, $tipo, $fInicio, $fFin)
     {
         //Buscamos el socio
         $resultSocio = Socio::find($socio);
+        $header = [
+            'title' => 'VISTA VERDE COUNTRY CLUB',
+            'rfc' => 'VVC101110AQ4',
+            'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
+            'telefono' => '3745011'
+        ];
 
         switch ($tipo) {
             case 'T':
                 //Obtenemos todos los conceptos del estado-cuenta correspondiente al socio
                 $resulEstado = EstadoCuenta::where('id_socio', $resultSocio->id)
-                    ->whereMonth('fecha', $month)
-                    ->whereYear('fecha', $year)
+                    ->whereDate('fecha', '>=', $fInicio)
+                    ->whereDate('fecha', '<=', $fFin)
                     ->get();
                 break;
             case 'P':
                 //Obtenemos los conceptos pendientes (de pagar) del estado-cuenta correspondiente al socio
                 $resulEstado = EstadoCuenta::where('id_socio', $resultSocio->id)
-                    ->whereMonth('fecha', $month)
-                    ->whereYear('fecha', $year)
+                    ->whereDate('fecha', '>=', $fInicio)
+                    ->whereDate('fecha', '<=', $fFin)
                     ->where('saldo', '>', 0)
                     ->get();
                 break;
             case 'C':
                 //Obtenemos los consumos del socio (esten o no esten pagados)
                 $resulEstado = EstadoCuenta::where('id_socio', $resultSocio->id)
-                    ->whereMonth('fecha', $month)
-                    ->whereYear('fecha', $year)
+                    ->whereDate('fecha', '>=', $fInicio)
+                    ->whereDate('fecha', '<=', $fFin)
                     ->where('consumo', true)
                     ->get();
                 break;
         }
 
         $data = [
+            'header' => $header,
             'resultSocio' => $resultSocio,
-            'month' => $this->getMes($month),
-            'year' => $year,
+            'fInicio' =>  $fInicio,
+            'fFin' =>  $fFin,
             'resulEstado' => $resulEstado,
         ];
 
         $pdf = Pdf::loadView('reportes.estado-cuenta', $data);
-        $pdf->setOption(['defaultFont' => 'Courier']);
         return $pdf->stream('estado-cuenta.pdf');
+    }
+
+
+    public function generarRecibo(int $folio)
+    {
+        $detalles_cobro = DB::table('detalles_recibo')
+            ->join('estados_cuenta', 'detalles_recibo.id_estado_cuenta', '=', 'estados_cuenta.id')
+            ->join('tipos_pago', 'detalles_recibo.id_tipo_pago', '=', 'tipos_pago.id')
+            ->select('detalles_recibo.*', 'estados_cuenta.concepto', 'tipos_pago.descripcion')
+            ->where('folio_recibo', '=', $folio)
+            ->get();
+        $cobro = Recibo::find($folio);
+        $header = [
+            'title' => 'VISTA VERDE COUNTRY CLUB',
+            'rfc' => 'VVC101110AQ4',
+            'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
+            'telefono' => '3745011'
+        ];
+
+        $data = [
+            'header' => $header,
+            'detalles' => $detalles_cobro,
+            'cobro' => $cobro,
+        ];
+
+        $pdf = Pdf::loadView('reportes.recibo', $data);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        return $pdf->stream('recibo' . $folio . '.pdf');
+    }
+
+    public function generarCobranza(Caja $caja)
+    {
+        //Buscamos los metodos de pago, permitidos para el reporte de cobranza
+        $tipos_pago = TipoPago::whereNot(function (Builder $query) {
+            $query->where('descripcion', 'like', 'FIRMA');
+        })->get();
+
+        //Array auxiliar de recibos separados por tipo
+        $separados = [];
+        //Obtenemos los detalles de recibos unidos con el re
+        $detalles = DB::table('recibos')
+            ->join('detalles_recibo', 'recibos.folio', '=', 'detalles_recibo.folio_recibo')
+            ->select(
+                'recibos.folio',
+                'recibos.id_socio',
+                'recibos.nombre',
+                'recibos.total',
+                'recibos.corte_caja',
+                'recibos.fecha',
+                'detalles_recibo.id_estado_cuenta',
+                'detalles_recibo.id_tipo_pago',
+                'detalles_recibo.saldo_anterior',
+                'detalles_recibo.monto_pago',
+                'detalles_recibo.saldo'
+            )
+            ->where('corte_caja', $caja->corte)
+            ->get();
+
+        //Obtenemos el total del corte
+        $totalCobranza = array_sum(array_column($detalles->toArray(), 'monto_pago'));
+        //Separar los pagos por tipo
+        foreach ($tipos_pago as $pago) {
+            $separados[$pago->descripcion] = $detalles->where('id_tipo_pago', $pago->id);
+        }
+        $header = [
+            'title' => 'VISTA VERDE COUNTRY CLUB',
+            'rfc' => 'VVC101110AQ4',
+            'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
+            'telefono' => '3745011'
+        ];
+
+        $data = [
+            'header' => $header,
+            'detalles_recibo' => $separados,
+            'cobro' => 2,
+            'total' => $totalCobranza
+        ];
+
+        $pdf = Pdf::loadView('reportes.cobranza', $data);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        return $pdf->stream('ReporteCobranza.pdf');
     }
 
     private function calcularAltura($data)

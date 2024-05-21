@@ -4,6 +4,7 @@ namespace App\Livewire\Recepcion\Ventas\Nueva;
 
 use App\Models\Socio;
 use App\Models\TipoPago;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -17,7 +18,11 @@ class PagosModalBody extends Component
     #[Computed]
     public function tiposPago()
     {
-        return TipoPago::all();
+        return TipoPago::whereNot(function (Builder $query) {
+            $query->where('descripcion', 'like', 'TRANSFERENCIA')
+                ->orWhere('descripcion', 'like', 'DEPOSITO')
+                ->orWhere('descripcion', 'like', 'CHEQUE');
+        })->get();
     }
 
     public function finishPago()

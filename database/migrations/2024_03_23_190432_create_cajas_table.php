@@ -13,10 +13,13 @@ return new class extends Migration
     {
         Schema::create('cajas', function (Blueprint $table) {
             $table->integer('corte')->autoIncrement()->unsigned();
+            $table->integer('id_usuario')->unsigned();
             $table->dateTime('fecha_apertura');
-            $table->integer('id_usuario');
             $table->dateTime('fecha_cierre')->nullable();
+            $table->dateTime('cierre_parcial')->nullable();
+            $table->decimal('cambio_inicial', 10, 2);
             $table->string('clave_punto_venta', 10);
+
 
             //Relaciones
 

@@ -14,11 +14,17 @@ class SociosNuevo extends Component
     use WithFileUploads;
 
     public SocioForm $formSocio;
-    
+
     #[Computed()]
     public function membresias()
     {
         return Membresias::all();
+    }
+
+    //Se comprueba el tipo de membresia, para restringir el registro de integrantes
+    public function comprobarMembresia($value)
+    {
+        $this->formSocio->comprobar($value);
     }
 
     public function register()

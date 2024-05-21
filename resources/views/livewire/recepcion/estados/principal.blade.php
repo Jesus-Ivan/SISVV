@@ -2,29 +2,17 @@
     <!-- BARRA DE BUSQUEDA -->
     <div class=" m-2 flex items-end gap-4">
         <div class="flex items-end gap-4 grow">
-            <!--Fecha-->
+            {{-- Fecha Inicio --}}
             <div class="w-72">
-                <label for="year" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Año</label>
-                <input type="number" id="year" wire:model.live.debounce.500ms="year"
+                <label for="inicio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Inicio</label>
+                <input type="date" id="inicio" wire:model.live.debounce.500ms="fechaInicio"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
             </div>
+            {{-- Fecha fin --}}
             <div class="w-72">
-                <label for="month" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Mes</label>
-                <select id="month" wire:model.live.debounce.500ms="month"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                    <option value="1" selected>Enero</option>
-                    <option value="2">Febrero</option>
-                    <option value="3">Marzo</option>
-                    <option value="4">Abril</option>
-                    <option value="5">Mayo</option>
-                    <option value="6">Junio</option>
-                    <option value="7">Julio</option>
-                    <option value="8">Agosto</option>
-                    <option value="9">Septiembre</option>
-                    <option value="10">Octubre</option>
-                    <option value="11">Noviembre</option>
-                    <option value="12">Diciembre</option>
-                </select>
+                <label for="fin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fin</label>
+                <input type="date" id="fin" wire:model.live.debounce.500ms="fechaFin"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
             </div>
             <!-- INPUT -->
             <div>
@@ -113,12 +101,16 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4">
-                            {{ $socio->membresia->descripcion }}
-                        </td>
+
+                        <td class="px-6 py-4 ">
+                            <div>
+                                {{ $socio->socioMembresia->membresia->descripcion }}
+                            </div>
+                            {{ $socio->socioMembresia->estado }}
+                        </td> 
                         <td class="px-6 py-4">
                             <a
-                                href="{{ route('recepcion.estado.nuevo', ['socio' => $socio->id, 'year' => $year, 'month' => $month]) }}">
+                                href="{{ route('recepcion.estado.nuevo',['socio' => $socio->id]) }}">
                                 <button type="button"
                                     class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
@@ -141,7 +133,7 @@
                                 <span class="sr-only">Editar</span>
                             </button> --}}
                             <a type="button"
-                                href="{{ route('recepcion.estado.reporte', ['socio' => $socio->id, 'tipo' => $radioButon, 'year' => $year, 'month' => $month]) }}"
+                                href="{{ route('recepcion.estado.reporte', ['socio' => $socio->id, 'tipo' => $radioButon, 'fInicio' => $fechaInicio, 'fFin' => $fechaFin]) }}"
                                 target="_blank"
                                 class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"

@@ -12,9 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('cuotas', function (Blueprint $table) {
-            $table->string('clave',20)->primary();
+            $table->integer('id')->autoIncrement()->unsigned();
             $table->string('descripcion', 100);
             $table->decimal('monto', 10, 2);
+            $table->string('tipo', 20);
+            $table->string('clave_membresia', 10);
 
             //Relaciones
             //$table->foreign('id_socio')->references('id')->on('socios');

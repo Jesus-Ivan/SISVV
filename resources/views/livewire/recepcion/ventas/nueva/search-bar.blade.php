@@ -1,7 +1,7 @@
 <div>
     <div class="grid grid-flow-col gap-4">
         <!--Autocomplete search component-->
-        <livewire:autocomplete :params="['table_name' => 'socios', 'columns' => ['nombre', 'id']]" event="on-selected-socio"/>
+        <livewire:autocomplete :params="['table_name' => 'socios', 'columns' => ['nombre', 'id']]" event="on-selected-socio" primary='id'/>
         <!--Info -->
         <div>
             @if ($socioSeleccionado)

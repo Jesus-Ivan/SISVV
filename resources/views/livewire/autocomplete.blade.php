@@ -9,7 +9,7 @@
                     d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
             </svg>
             <!--Loading indicator-->
-            <div wire:loading wire:target='search' >
+            <div wire:loading wire:target='search'>
                 @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
             </div>
         </div>

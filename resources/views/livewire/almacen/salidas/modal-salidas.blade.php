@@ -5,6 +5,7 @@
             <div class="col-span-3">
                 <label for="name" class="mb-2 text-sm font-medium text-gray-900 dark:text-white">Buscar articulo</label>
                 <livewire:autocomplete :params="['table_name' => 'ipa_inventario_principal', 'columns' => ['nombre', 'codigo']]" event="on-selected-articulo" primary='codigo' />
+                
             </div>
             {{-- CODIGO DE ARTICULO --}}
             <div class="col-span-1">

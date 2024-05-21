@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class CatalogoVistaVerde extends Model
+class ICOProductos extends Model
 {
     use HasFactory;
+
     //Nombre de la tabla
-    protected $table = 'catalogo_vista_verde';
+    protected $table = 'ico_productos';
     //Desactivar los timestamps para este modelo
     public $timestamps = false;
     //Propiedades restringidas para asignacion masiva

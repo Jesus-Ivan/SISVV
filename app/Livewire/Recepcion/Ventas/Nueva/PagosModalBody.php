@@ -11,18 +11,32 @@ use Livewire\Component;
 
 class PagosModalBody extends Component
 {
-    public Socio $socio;
+    public $socio = [];
     public TipoPago $metodo_pago;
     public $pago, $monto, $propina;
+    public $invitado;
 
     #[Computed]
     public function tiposPago()
     {
-        return TipoPago::whereNot(function (Builder $query) {
-            $query->where('descripcion', 'like', 'TRANSFERENCIA')
-                ->orWhere('descripcion', 'like', 'DEPOSITO')
-                ->orWhere('descripcion', 'like', 'CHEQUE');
-        })->get();
+        //Si es socio, mostrar metodo de pago de firma
+        if (!$this->invitado) {
+            return TipoPago::whereNot(function (Builder $query) {
+                $query->where('descripcion', 'like', 'TRANSFERENCIA')
+                    ->orWhere('descripcion', 'like', 'DEPOSITO')
+                    ->orWhere('descripcion', 'like', 'CHEQUE')
+                    ->orWhere('descripcion', 'like', '%SALDO%');
+            })->get();
+        }else{
+            //Retirar firma si es invitado
+            return TipoPago::whereNot(function (Builder $query) {
+                $query->where('descripcion', 'like', 'TRANSFERENCIA')
+                    ->orWhere('descripcion', 'like', 'DEPOSITO')
+                    ->orWhere('descripcion', 'like', 'CHEQUE')
+                    ->orWhere('descripcion', 'like', '%SALDO%')
+                    ->orWhere('descripcion', 'like', 'FIRMA');
+            })->get();
+        }
     }
 
     public function finishPago()
@@ -37,8 +51,8 @@ class PagosModalBody extends Component
         //Emitimos evento para agregar el pago
         //El par clave-valor ('descripcion_tipo_pago' => ''), se remueve antes de insertar en la base de datos
         $this->dispatch('onFinisPago', [
-            'id_socio' => $this->socio->id,
-            'nombre' => $this->socio->nombre,
+            'id_socio' => array_key_exists('id', $this->socio) ? $this->socio['id'] : null,
+            'nombre' => $this->socio['nombre'],
             'monto' => $validated['monto'],
             'propina' => $this->propina,
             'id_tipo_pago' => $this->metodo_pago->id,
@@ -46,7 +60,13 @@ class PagosModalBody extends Component
         ]);
         //Emitimos evento para cerrar el componente del modal
         $this->dispatch('close-modal');
-        $this->reset();
+        //Si no esta activada la opcion de invitado
+        if (!$this->invitado) {
+            $this->reset();
+        } else {
+            //Si esta activada la opcion de invitado, resetear solo el metodo de pago
+            $this->reset('metodo_pago', 'pago', 'monto', 'propina');
+        }
     }
 
     //Cada vez que el usuario cambia el valor del select
@@ -61,7 +81,18 @@ class PagosModalBody extends Component
     #[On('on-selected-socio-pago')]
     public function onSelectSocioPago(Socio $socio)
     {
-        $this->socio = $socio;
+        $this->socio = $socio->toArray();
+    }
+
+    #[On('on-invitado')]
+    public function onInvitado(bool $val)
+    {
+        //guardamos el valor recibido del evento, en propiedad del componente
+        $this->invitado = $val;
+        //Si se trata de un usuario invitado
+        if ($val) {
+            $this->socio = ['nombre' => 'INVITADO'];
+        }
     }
 
     public function render()

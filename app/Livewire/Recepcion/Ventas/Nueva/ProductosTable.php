@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Recepcion\Ventas\Nueva;
 
-use App\Models\CatalogoProducto;
+use App\Models\CatalogoVistaVerde;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Modelable;
 use Livewire\Attributes\On;
@@ -24,24 +24,21 @@ class ProductosTable extends Component
     {
         foreach ($total_seleccionados as $key => $value) {
             //Buscamos el producto en la base de datos
-            $product = CatalogoProducto::find($key);
+            $product = CatalogoVistaVerde::find($key);
             //Agregamos el producto a la lista de productos
             array_push($this->productos, [
                 'temp' => time(),
-                'codigo_venta_producto' => $key,
+                'codigo_catalogo' => $key,
                 'nombre' => $product->nombre,
                 'cantidad' => 1,
-                'precio' => $product->precio_venta,
-                'subtotal' => $product->precio_venta,
+                'precio' => $product->costo_unitario,
+                'subtotal' => $product->costo_unitario,
                 'inicio' => now()->format('Y-m-d H:i:s'),
             ]);
         }
     }
 
-    #[On('get-datos')]
-    public function sendData(){
-        $this->dispatch('on-get-productos',$this->productos);
-    }
+    
 
     public function removeProduct($productoIndex){
         //Eliminar el producto del array de productos

@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('nombre_integrante', 80);
             $table->string('img_path_integrante', 255)->nullable();
             $table->date('fecha_nac')->nullable();
-            $table->string('sexo', 20)->nullable();
             $table->string('parentesco', 20);
 
             //Relaciones

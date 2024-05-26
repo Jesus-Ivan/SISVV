@@ -27,7 +27,7 @@
             <tr wire:key="{{ $index }}"
                 class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
                 <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                    {{ $item['id_estado_cuenta'] }}
+                    {{ $item['id'] }}
                 </th>
                 <td class="px-6 py-4 ">
                     {{ $item['concepto'] }}
@@ -52,7 +52,7 @@
                     <div class="inline-flex items-center">
                         $
                         <input type="number" id="monto" wire:model="cargosTabla.{{ $index }}.monto_pago"
-                            wire:loading.attr="disabled" wire:change='calcularTotales'
+                            wire:loading.attr="disabled" wire:change="calcularTotales()"
                             class="min-w-20 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             placeholder="0" />
                     </div>
@@ -76,11 +76,18 @@
     </tbody>
     <tfoot>
         <tr class="font-semibold text-gray-900 dark:text-white">
-            <th scope="row" class="px-6 py-3 text-base">Total</th>
+            <th scope="row" class="px-6 py-3 text-base"></th>
             <td class="px-6 py-3"></td>
-            <td class="px-6 py-3"></td>
+            <td class="px-6 py-3">Total</td>
             <td class="px-6 py-3">${{ $totalSaldo }}</td>
             <td class="px-6 py-3">${{ $totalAbono }}</td>
+        </tr>
+        <tr class="font-semibold text-gray-900 dark:text-white">
+            <th scope="row" class="px-6 py-3 text-base"></th>
+            <td class="px-6 py-3"></td>
+            <td class="px-6 py-3">Saldo a favor generado</td>
+            <td class="px-6 py-3"></td>
+            <td class="px-6 py-3">${{ $saldoFavor }}</td>
         </tr>
     </tfoot>
 </table>

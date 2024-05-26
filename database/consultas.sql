@@ -1189,25 +1189,80 @@ VALUES ('CC-I','CC-INDIVIDUAL'),
  ('CC-V-S','CC-VIUDA S.HIJOS'),
  ('CC-V-C','CC-VIUDA C.HIJOS')
  
--- Agregar productos de ejemplo de recepcion -- 
-INSERT INTO catalogo_productos (codigo_recepcion, nombre, precio_venta)
-VALUES (1,'CAMPO DE GOLF NIÑOS E.S',125.00),
- (2,'CAMPO DE GOLF NIÑOS F.S',150.00),
- (3,'CAMPO DE GOLF ADULTOS E.S',200.00),
- (4,'CAMPO DE GOLF ADULTOS F.S',250.00),
- (5,'RENTA CARRITO',300.00), 
- (6,'RENTA CARRITO GRANDE',330.00),
- (7,'CUBETA PELOTAS 20 PZ',190.00),
- (8,'CUBETA PELOTAS 30 PZ',220.00),
- (9,'CUBETA PELOTAS 40 PZ',300.00),
- (10,'REPOSICION QR',200.00),
- (11,'VISITA CON INSTALACIONES F.S',220.00),
- (12,'VISITA SIN INSTALACIONES F.S',298.00),
- (13,'VISITA CON INSTALACIONES E.S',123.00),
- (14,'VISITA SIN INSTALACIONES E.S',321.00),
- (15,'PRODUCTO 1',10.00),
- (16,'PRODUCTO 2',11.00),
- (17,'PRODUCTO 3',12.00)
+-- AGREGAMOS PORDUCTOS AL CATALOGO, (RECEPCION) -- 
+INSERT INTO catalogo_vista_verde ( nombre, costo_unitario)
+VALUES ('CAMPO DE GOLF NIÑOS E.S',125.00),
+ ('CAMPO DE GOLF NIÑOS F.S',150.00),
+ ('CAMPO DE GOLF ADULTOS E.S',200.00),
+ ('CAMPO DE GOLF ADULTOS F.S',250.00),
+ ('RENTA CARRITO',300.00), 
+ ('RENTA CARRITO GRANDE',330.00),
+ ('CUBETA PELOTAS 20 PZ',190.00),
+ ('CUBETA PELOTAS 30 PZ',220.00),
+ ('CUBETA PELOTAS 40 PZ',300.00),
+ ('REPOSICION QR',200.00),
+ ('VISITA CON INSTALACIONES F.S',220.00),
+ ('VISITA SIN INSTALACIONES F.S',298.00),
+ ('VISITA CON INSTALACIONES E.S',123.00),
+ ('VISITA SIN INSTALACIONES E.S',321.00),
+ ('PRODUCTO 1',10.00),
+ ('PRODUCTO 2',11.00),
+ ('PRODUCTO 3',12.00),
+ ('GANSITO', 25.00)
+
+ -- TIPOS --
+INSERT INTO tipos (clave, descripcion)
+VALUES 
+('NINV','NO INVENTARIABLE'),
+('INV','INVENTARIABLE'),
+('VEN','VENDIBLE'),
+('NVEN','NO VENDIBLE'),
+('ABA','ABARROTES'),
+('MAT','MATERIA PRIMA'),
+('SEM','SEMIPRODUCIDO'),
+('SER','SERVICIOS'),
+('PPRE','PRODUCTO PREPARADO'),
+('PLA','PLATILLO'),
+('BEB','BEBIDAS')
+
+ -- ASOCIAR TIPOS Y EL CATALOGO --
+INSERT INTO tipos_catalogo (codigo_catalogo, clave_tipo)
+VALUES 
+(1,'NINV'),
+(1,'SER'),
+(2,'NINV'),
+(2,'SER'),
+(3,'NINV'),
+(3,'SER'),
+(4,'NINV'),
+(4,'SER'),
+(5,'NINV'),
+(5,'SER'),
+(6,'NINV'),
+(6,'SER'),
+(7,'NINV'),
+(7,'SER'),
+(8,'NINV'),
+(8,'SER'),
+(9,'NINV'),
+(9,'SER'),
+(10,'NINV'),
+(10,'SER'),
+(11,'NINV'),
+(12,'SER'),
+(12,'NINV'),
+(13,'SER'),
+(13,'NINV'),
+(14,'SER'),
+(14,'NINV'),
+(15,'SER'),
+(15,'NINV'),
+(16,'SER'),
+(16,'NINV'),
+(17,'SER'),
+(17,'NINV'),
+(18,'INV'),
+(18,'VEN')
  
 -- Agregar puntos de venta --
 INSERT INTO puntos_venta (clave,nombre)
@@ -1219,7 +1274,7 @@ VALUES
 ('LOC','LOCKERS'),
 ('REC','RECEPCIÓN')
  
--- Agregar tipos de pago, ejemplos -- 
+-- Agregar tipos de pago -- 
 INSERT INTO tipos_pago (descripcion)
 VALUES 
 ('EFECTIVO'),
@@ -1229,8 +1284,9 @@ VALUES
 ('TRANSFERENCIA'),
 ('DEPOSITO'),
 ('CHEQUE'),
+('SALDO A FAVOR'),
 
--- Agregar ejemplo --
+-- CUOTAS DE LAS MEMBRESIAS --
 INSERT INTO cuotas (descripcion, monto, tipo, clave_membresia)
 VALUES
 ('LOCKER',200,'CASMEN', NULL),

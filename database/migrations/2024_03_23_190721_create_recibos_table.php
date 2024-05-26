@@ -15,7 +15,6 @@ return new class extends Migration
             $table->integer('folio')->autoIncrement()->unsigned();
             $table->integer('id_socio');
             $table->string('nombre', 80);
-            $table->integer('id_tipo_pago')->nullable();
             $table->decimal('total', 10, 2);
             $table->integer('corte_caja')->unsigned();
             $table->dateTime('fecha');

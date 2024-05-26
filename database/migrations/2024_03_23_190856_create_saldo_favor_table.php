@@ -12,10 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('saldo_favor', function (Blueprint $table) {
-            $table->integer('id')->primary()->unsigned();
+            $table->integer('id')->autoIncrement()->unsigned();
             $table->integer('folio_recibo_origen');
             $table->decimal('saldo', 10, 2);
-            $table->string('aplicado_a', 80);
+            $table->integer('aplicado_a')->nullable();
+            $table->timestamps();
 
             /*//Relaciones
 

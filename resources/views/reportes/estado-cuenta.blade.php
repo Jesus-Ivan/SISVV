@@ -29,7 +29,7 @@
 <div>
     <div>
         <h2 style="line-height: 2pt">VISTA VERDE COUNTRY CLUB</h2>
-        <h3>Estado de cuenta del: {{$fInicio}} - {{$fFin}}</h3>
+        <h3>Estado de cuenta del: {{ $fInicio }} - {{ $fFin }}</h3>
         <p style="line-height: 2pt">RFC: {{ $header['rfc'] }}</p>
         <p style="line-height: 2pt">{{ $header['direccion'] }}</p>
         <p style="line-height: 2pt">Tel: 238{{ $header['telefono'] }}</p>
@@ -78,11 +78,27 @@
             <tfoot>
                 <tr>
                     <td></td>
-                    <td style="text-align: right;">Total:</td>
+                    <td style="text-align: right;">Subtotal:</td>
                     <td>${{ array_sum(array_column($resulEstado->toArray(), 'cargo')) }}</td>
                     <td>${{ array_sum(array_column($resulEstado->toArray(), 'abono')) }}</td>
                     <td>${{ array_sum(array_column($resulEstado->toArray(), 'saldo')) }}</td>
                 </tr>
+                @if (count($saldoFavor) > 0)
+                    <tr>
+                        <td></td>
+                        <td style="text-align: right;">Saldo a favor:</td>
+                        <td></td>
+                        <td></td>
+                        <td>${{ array_sum(array_column($saldoFavor->toArray(), 'saldo')) }}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="text-align: right;">Total:</td>
+                        <td></td>
+                        <td></td>
+                        <td>${{ array_sum(array_column($resulEstado->toArray(), 'saldo')) - array_sum(array_column($saldoFavor->toArray(), 'saldo')) }}</td>
+                    </tr>
+                @endif
             </tfoot>
         </table>
     </div>

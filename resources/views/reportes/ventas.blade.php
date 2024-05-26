@@ -1,4 +1,7 @@
 <style>
+    html{
+        font-size: x-small
+    }
     h3,
     h5 {
         line-height: 2pt;
@@ -28,11 +31,15 @@
     <tbody>
         <tr>
             <td style="border: 0px">Corte de caja: {{ $caja->corte }}</td>
-            <td style="border: 0px">Fecha: {{ $caja->fecha_apertura }}</td>
+            <td style="border: 0px">Fecha apertura: {{ $caja->fecha_apertura }}</td>
         </tr>
         <tr>
             <td style="border: 0px">Vendedor: {{ $caja->users->name }}</td>
             <td style="border: 0px">Punto de venta: {{ $caja->puntoVenta->nombre }}</td>
+        </tr>
+        <tr>
+            <td style="border: 0px">Cambio inicial: ${{ $caja->cambio_inicial}}</td>
+            <td style="border: 0px"></td>
         </tr>
     </tbody>
 </table>

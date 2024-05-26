@@ -14,26 +14,37 @@ use Livewire\Form;
 class SocioForm extends Form
 {
     public $nombre;
+    public $apellido_p;
+    public $apellido_m;
     public $img_path;
     public $fecha_registro;
     public $estado_civil;
     public $calle;
     public $num_exterior;
-    public $codigo_postal;
+    public $num_interior;
     public $colonia;
     public $ciudad;
     public $estado;
-    public $tel_fijo;
-    public $tel_celular;
-    public $correo;
+    public $codigo_postal;
+    public $tel_1;
+    public $tel_2;
+    public $correo1;
+    public $correo2;
+    public $correo3;
+    public $correo4;
+    public $correo5;
+    public $curp;
+    public $rfc;
     public $clave_membresia;
     public $estado_membresia;
 
     // -- Informacion de los nuevos integrantes -- //
     public $nombre_integrante;
+    public $apellido_p_integrante;
+    public $apellido_m_integrante;
+    public $img_path_integrante;
     public $fecha_nac;
     public $parentesco;
-    public $img_path_integrante;
     public $integrantes = [];       //Integrantes temporales (utilizado en para crearlos en el registro)
 
     public $integrantes_BD = [];    //Integrantes que ya estan registrados
@@ -44,6 +55,8 @@ class SocioForm extends Form
     //--Propiedades axuiliares cuando el usuario hace click para editar un miembro/socio--//
     public $editando_miembro_id;
     public $editando_nombre_integrante;
+    public $editando_apellido_p_integrante;
+    public $editando_apellido_m_integrante;
     public $editando_fecha_nac;
     public $editando_parentesco;
     public $editando_img_path_integrante;
@@ -54,19 +67,25 @@ class SocioForm extends Form
     public $registro_permitido = false;
 
     protected $socio_rules = [
-        'nombre' => 'required|min:5|max:80',
+        'nombre' => 'required|min:3|max:80',
+        'apellido_p' => 'required|min:3|max:80',
+        'apellido_m' => 'required|min:3|max:80',
         'fecha_registro' => 'max:10',
         'estado_civil' => 'max:20',
         'calle' => 'max:50',
-        'num_exterior' => 'max:5',
-        'codigo_postal' => 'max:6',
+        'num_exterior' => 'max:6',
+        'num_interior' => 'max:3',
         'colonia' => 'max:30',
         'ciudad' => 'max:20',
         'estado' => 'max:20',
-        'tel_fijo' => 'max:10',
-        'tel_celular' => 'max:10',
-        'correo' => 'max:50',
-        'clave_membresia' => 'required'
+        'codigo_postal' => 'max:6',
+        'tel_1' => 'max:10',
+        'tel_2' => 'max:10',
+        'correo1' => 'max:50',
+        'correo2' => 'max:50',
+        'curp' => 'max:18',
+        'rfc' => 'max:13',
+        'clave_membresia' => 'max:10',
     ];
 
     //Setear los valores a editar
@@ -77,20 +96,27 @@ class SocioForm extends Form
         $resultMembresia = SocioMembresia::where('id_socio', $socio->id)->get()[0];
 
         $this->nombre = $socio->nombre;
+        $this->apellido_p = $socio->apellido_p;
+        $this->apellido_m = $socio->apellido_m;
         $this->img_path;
         $this->fecha_registro = $socio->fecha_registro;
         $this->estado_civil = $socio->estado_civil;
         $this->calle = $socio->calle;
         $this->num_exterior = $socio->num_exterior;
-        $this->codigo_postal = $socio->codigo_postal;
+        $this->num_interior = $socio->num_interior;
         $this->colonia = $socio->colonia;
         $this->ciudad = $socio->ciudad;
         $this->estado = $socio->estado;
-        $this->tel_fijo = $socio->tel_fijo;
-        $this->tel_celular = $socio->tel_celular;
-        $this->correo = $socio->correo;
+        $this->codigo_postal = $socio->codigo_postal;
+        $this->tel_1 = $socio->tel_1;
+        $this->tel_2 = $socio->tel_2;
+        $this->correo1 = $socio->correo1;
+        $this->correo2 = $socio->correo2;
+        $this->curp = $socio->curp;
+        $this->rfc = $socio->rfc;
         $this->clave_membresia = $resultMembresia->clave_membresia;
         $this->estado_membresia = $resultMembresia->estado;
+
         //Comprobamos el tipo de membresia para bloquear campos de integrantes
         $this->comprobar($resultMembresia->clave_membresia);
     }
@@ -107,6 +133,8 @@ class SocioForm extends Form
          */
         $this->editando_miembro_id = $miembro['id'];
         $this->editando_nombre_integrante = $miembro['nombre_integrante'];
+        $this->editando_apellido_p_integrante = $miembro['apellido_p_integrante'];
+        $this->editando_apellido_m_integrante = $miembro['apellido_m_integrante'];
         $this->editando_fecha_nac = $miembro['fecha_nac'];
         $this->editando_parentesco = $miembro['parentesco'];
     }
@@ -121,6 +149,8 @@ class SocioForm extends Form
         $this->reset(
             'editando_miembro_id',
             'editando_nombre_integrante',
+            'editando_apellido_p_integrante',
+            'editando_apellido_m_integrante',
             'editando_fecha_nac',
             'editando_parentesco',
             'editando_img_path_integrante'
@@ -134,7 +164,9 @@ class SocioForm extends Form
 
         //Validamos la informacion que se modifico
         $validated = $this->validate([
-            'editando_nombre_integrante' => "required|max:50",
+            'editando_nombre_integrante' => "required|max:30",
+            'editando_apellido_p_integrante' => "required|max:30",
+            'editando_apellido_m_integrante' => "required|max:30",
             'editando_fecha_nac' => "max:10",
             'editando_parentesco' => "required|max:20",
             'editando_img_path_integrante' => "max:255"
@@ -152,6 +184,8 @@ class SocioForm extends Form
         }
         $miembro->update([
             'nombre_integrante' => $validated['editando_nombre_integrante'],
+            'apellido_p_integrante' => $validated['editando_apellido_p_integrante'],
+            'apellido_m_integrante' => $validated['editando_apellido_m_integrante'],
             'fecha_nac' => $validated['editando_fecha_nac'],
             'parentesco' => $validated['editando_parentesco'],
             'img_path_integrante' => $validated['editando_img_path_integrante'],
@@ -233,7 +267,9 @@ class SocioForm extends Form
     {
         //Validamos las entradas
         $validated = $this->validate([
-            'nombre_integrante' => "required|max:50",
+            'nombre_integrante' => "required|max:30",
+            'apellido_p_integrante' => "required|max:30",
+            'apellido_m_integrante' => "required|max:30",
             'fecha_nac' => "max:10",
             'parentesco' => "required|max:20",
             'img_path_integrante' => "max:255"
@@ -244,7 +280,7 @@ class SocioForm extends Form
         array_push($this->integrantes, $validated);
 
         //Limpiamos los campos 
-        $this->reset('nombre_integrante', 'img_path_integrante', 'fecha_nacimiento', 'parentesco');
+        $this->reset('nombre_integrante', 'apellido_p_integrante', 'apellido_m_integrante', 'img_path_integrante', 'fecha_nacimiento', 'parentesco');
     }
     //Elimina un miembro de memoria (utilizado en la vista socios-nuevo.blade.php)
     public function quitarMiembro($temp)
@@ -289,6 +325,8 @@ class SocioForm extends Form
         //Validamos las entradas
         $validated = $this->validate([
             'nombre_integrante' => "required|max:50",
+            'apellido_p_integrante' => "required|max:50",
+            'apellido_m_integrante' => "required|max:50",
             'fecha_nac' => "max:10",
             'parentesco' => "required|max:20",
             'img_path_integrante' => "max:255"
@@ -297,7 +335,7 @@ class SocioForm extends Form
         $this->crearIntegranteBD($validated, $this->socio->id);
         //Buscamos los nuevos integrantes del socio
         $this->setIntegrantes($this->socio);
-        $this->reset('nombre_integrante', 'fecha_nac', 'parentesco', 'img_path_integrante');
+        $this->reset('nombre_integrante', 'apellido_p_integrante', 'apellido_m_integrante', 'fecha_nac', 'parentesco', 'img_path_integrante');
     }
 
     //Encargada de insertar el registro en la BD y almacenar la imagen
@@ -310,6 +348,8 @@ class SocioForm extends Form
         IntegrantesSocio::create([
             'id_socio' => $socioId,
             'nombre_integrante' => $integrante['nombre_integrante'],
+            'apellido_p_integrante' => $integrante['apellido_p_integrante'],
+            'apellido_m_integrante' => $integrante['apellido_m_integrante'],
             'fecha_nac' => $integrante['fecha_nac'],
             'parentesco' => $integrante['parentesco'],
             'img_path_integrante' => $ruta
@@ -326,7 +366,7 @@ class SocioForm extends Form
             //Comprobar si la membresia es individual, sin importar la clave
             if (strpos($membresia->descripcion, "INDIVIDUAL")) {
                 //Limpiamos los campos 
-                $this->reset('nombre_integrante', 'img_path_integrante', 'fecha_nacimiento', 'parentesco', 'integrantes');
+                $this->reset('nombre_integrante', 'apellido_p_integrante', 'apellido_m_integrante', 'img_path_integrante', 'fecha_nacimiento', 'parentesco', 'integrantes');
                 //Deshabilitamos el registro de miembros el formulario
                 $this->registro_permitido = false;
             } else {

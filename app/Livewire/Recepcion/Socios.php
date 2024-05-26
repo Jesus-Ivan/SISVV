@@ -26,6 +26,8 @@ class Socios extends Component
             ->join('membresias', 'socios_membresias.clave_membresia', '=', 'membresias.clave')
             ->select('socios.*', 'membresias.descripcion')
             ->where('socios.nombre', 'like', '%' . $this->search . '%')
+            ->orwhere('socios.apellido_p', 'like', '%' . $this->search . '%')
+            ->orwhere('socios.apellido_m', 'like', '%' . $this->search . '%')
             ->orWhere('socios.id', '=', $this->search)
             ->orderByDesc('socios.id')
             ->paginate(5);

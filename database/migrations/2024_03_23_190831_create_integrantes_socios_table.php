@@ -15,9 +15,10 @@ return new class extends Migration
             $table->integer('id')->autoIncrement()->unsigned();
             $table->integer('id_socio')->unsigned();
             $table->string('nombre_integrante', 80);
+            $table->string('apellido_p_integrante', 80);
+            $table->string('apellido_m_integrante', 80);
             $table->string('img_path_integrante', 255)->nullable();
             $table->date('fecha_nac')->nullable();
-            $table->string('sexo', 20)->nullable();
             $table->string('parentesco', 20);
 
             //Relaciones

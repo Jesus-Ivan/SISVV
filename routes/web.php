@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EdoCuentaController;
+use App\Http\Controllers\ExcelController;
 use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\SociosController;
 use GuzzleHttp\Psr7\Request;
@@ -161,17 +162,25 @@ Route::prefix('pv/{codigopv}')->middleware(['auth'])->group(function () {
 Route::prefix('sistemas')->middleware(['auth'])->group(function () {
     Route::view('/', 'sistemas.index')->name('sistemas');
 
+    //DEPARTAMENTO DE ALMACEN
     Route::prefix('catalogo')->group(function () {
         Route::view('/', 'sistemas.Almacen.catalogo')->name('sistemas.catalogo');
         Route::view('nuevo', 'sistemas.Almacen.nuevo-catalogo')->name('sistemas.almacen.nuevo');
-        //Route::view('nuevo', 'almacen.Salidas.nueva-salida')->name('almacen.salidas.nueva');
     });
-    //Route::view('catalogo', 'sistemas.Almacen.catalogo')->name('sistemas.catalogo');
-
     Route::view('proveedores', 'sistemas.proveedores')->name('sistemas.proveedores');
     Route::view('familias', 'sistemas.familias')->name('sistemas.familias');
     Route::view('categorias', 'sistemas.categorias')->name('sistemas.categorias');
     Route::view('unidades', 'sistemas.unidades')->name('sistemas.unidades');
+
+    //DEPARTAMENTO DE RECEPCION
+    Route::prefix('registros')->group(function () {
+        Route::view('/', 'sistemas.Recepcion.registros')->name('sistemas.registros');
+    });
+    Route::get('excel', [ExcelController::class, 'form'])->name('obtenerSocios');
+    Route::post('excel', [ExcelController::class, 'import'])->name('subirSocios');
+
+    //Route::view('registros', 'sistemas.Recepcion.registros')->name('sistemas.registros');
+
     
 });
 

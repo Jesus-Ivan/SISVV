@@ -4,17 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class CatalogoVistaVerde extends Model
+class TiposCatalogo extends Model
 {
     use HasFactory;
     //Nombre de la tabla
-    protected $table = 'catalogo_vista_verde';
+    protected $table = 'tipos_catalogo';
     //Desactivar los timestamps para este modelo
     public $timestamps = false;
     //Propiedades restringidas para asignacion masiva
-    protected $guarded = ['codigo'];
+    protected $guarded = ['id'];
     //Clave primaria
-    protected $primaryKey = 'codigo';
+    protected $primaryKey = 'id';
 }

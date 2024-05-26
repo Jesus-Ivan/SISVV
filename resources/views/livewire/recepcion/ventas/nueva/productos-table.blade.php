@@ -30,7 +30,7 @@
                             {{ $producto['nombre'] }}
                         </th>
                         <td class="px-6 py-4">
-                            {{ $producto['precio'] }}
+                            ${{ $producto['precio'] }}
                         </td>
                         <td class="px-6 py-4">
                             <input type="number" wire:model="productos.{{ $productoIndex }}.cantidad"

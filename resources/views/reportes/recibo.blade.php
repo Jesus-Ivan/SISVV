@@ -57,7 +57,7 @@
                 <th style="width: 45%">CONCEPTO</th>
                 <th>METODO PAGO</th>
                 <th>SALDO ANTERIOR</th>
-                <th>MONTO</th>
+                <th>ABONO</th>
                 <th>SALDO</th>
             </tr>
         </thead>
@@ -75,7 +75,10 @@
     </table>
     <hr>
     <p class="remarcardo">OBSERVACIONES : <span class="noremarcardo">{{ $cobro->observaciones }}</span></p>
-    <p class="remarcardo">MONTO TOTAL : <span
+    <p class="remarcardo">ABONO TOTAL : <span
             class="noremarcardo">${{ array_sum(array_column($detalles->toArray(), 'monto_pago')) }}</span>
     </p>
+    @if ($saldoFavor)
+        <p class="remarcardo">SALDO A FAVOR GENERADO: <span class="noremarcardo">${{ $saldoFavor->saldo }}</span></p>
+    @endif
 </div>

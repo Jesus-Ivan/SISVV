@@ -113,11 +113,6 @@ class Caja extends Component
         }
     }
 
-    public function verCaja()
-    {
-        dump($this->punto);
-    }
-
     public function render()
     {
         return view('livewire.caja');

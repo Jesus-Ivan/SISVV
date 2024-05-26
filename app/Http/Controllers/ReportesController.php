@@ -8,6 +8,7 @@ use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
 use App\Models\PuntoVenta;
 use App\Models\Recibo;
+use App\Models\SaldoFavor;
 use App\Models\Socio;
 use App\Models\TipoPago;
 use App\Models\Venta;
@@ -54,11 +55,12 @@ class ReportesController extends Controller
     //Genera reportes de ventas, con ayuda del corte de caja
     public function generarCorte(Caja $caja)
     {
-        //Buscamos los metodos de pago, permitidos.
+        //Quitamos los metodos de pago no permitidos.
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
             $query->where('descripcion', 'like', 'TRANSFERENCIA')
                 ->orWhere('descripcion', 'like', 'DEPOSITO')
-                ->orWhere('descripcion', 'like', 'CHEQUE');
+                ->orWhere('descripcion', 'like', 'CHEQUE')
+                ->orWhere('descripcion', 'like', '%SALDO%');
         })->get();
         //Array auxiliar de pagos separados por tipo
         $separados = [];
@@ -123,6 +125,13 @@ class ReportesController extends Controller
                     ->get();
                 break;
         }
+        //Buscamos si el socio tiene saldo a favor disponible;
+        $saldoFavor = DB::table('recibos')
+            ->join('saldo_favor', 'recibos.folio', '=', 'saldo_favor.folio_recibo_origen')
+            ->select('recibos.id_socio', 'saldo_favor.*')
+            ->where('id_socio', $resultSocio->id)
+            ->whereNull('aplicado_a')
+            ->get();
 
         $data = [
             'header' => $header,
@@ -130,6 +139,7 @@ class ReportesController extends Controller
             'fInicio' =>  $fInicio,
             'fFin' =>  $fFin,
             'resulEstado' => $resulEstado,
+            'saldoFavor' => $saldoFavor
         ];
 
         $pdf = Pdf::loadView('reportes.estado-cuenta', $data);
@@ -146,6 +156,7 @@ class ReportesController extends Controller
             ->where('folio_recibo', '=', $folio)
             ->get();
         $cobro = Recibo::find($folio);
+        $saldoFavor = SaldoFavor::where('folio_recibo_origen', '=', $folio)->first();
         $header = [
             'title' => 'VISTA VERDE COUNTRY CLUB',
             'rfc' => 'VVC101110AQ4',
@@ -157,6 +168,7 @@ class ReportesController extends Controller
             'header' => $header,
             'detalles' => $detalles_cobro,
             'cobro' => $cobro,
+            'saldoFavor' => $saldoFavor
         ];
 
         $pdf = Pdf::loadView('reportes.recibo', $data);

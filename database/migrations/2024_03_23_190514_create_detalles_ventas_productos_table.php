@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('detalles_ventas_productos', function (Blueprint $table) {
             $table->integer('id')->autoIncrement()->unsigned();
             $table->integer('folio_venta');
-            $table->integer('codigo_venta_producto')->nullable();
+            $table->integer('codigo_catalogo')->nullable();
             $table->smallInteger('cantidad');
             $table->decimal('precio', 10, 2);
             $table->decimal('subtotal', 10, 2);

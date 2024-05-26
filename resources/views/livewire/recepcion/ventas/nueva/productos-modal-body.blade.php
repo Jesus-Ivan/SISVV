@@ -46,20 +46,20 @@
                             class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                             <td class="w-4 p-4">
                                 <div class="flex items-center">
-                                    <input id="checkbox-table-search-{{ $producto->codigo_venta }}" type="checkbox"
-                                        wire:model="selectedProducts.{{ $producto->codigo_venta }}"
+                                    <input id="checkbox-table-search-{{ $producto->codigo }}" type="checkbox"
+                                        wire:model="selectedProducts.{{ $producto->codigo }}"
                                         class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                 </div>
                             </td>
                             <th scope="row"
                                 class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                {{ $producto->codigo_venta }}
+                                {{ $producto->codigo }}
                             </th>
                             <td class="px-6 py-4">
                                 {{ $producto->nombre }}
                             </td>
                             <td class="px-6 py-4">
-                                {{ $producto->precio_venta }}
+                                ${{ $producto->costo_unitario }}
                             </td>
                         </tr>
                     @endforeach

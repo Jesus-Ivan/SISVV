@@ -45,11 +45,12 @@
         <div class="flex">
             <div class="flex-grow"></div>
             <!--Boton de saldo a favor -->
-            <button type="button" data-modal-target="modal-saldo" data-modal-toggle="modal-saldo"
-                class="text-green-700 hover:text-white border border-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:hover:bg-green-600 dark:focus:ring-green-800">Saldo
+            <button type="button" x-data
+                x-on:click="$dispatch('open-modal', {name:'saldo-favor'})"
+                class="{{ count($this->saldoFavorDisponible) > 0 ? '' : 'opacity-30 pointer-events-none' }} text-green-700 hover:text-white border border-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:hover:bg-green-600 dark:focus:ring-green-800">Saldo
                 a favor
             </button>
-            <button type="button" data-modal-target="modal-cargos" data-modal-toggle="modal-cargos"
+            <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'agregar-cargos'})"
                 class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700 inline-flex items-center">
                 <svg class="w-5 h-5 text-white me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                     fill="currentColor" viewBox="0 0 24 24">
@@ -95,78 +96,21 @@
                 </div>
                 Aplicar cobro
             </button>
+            <button type='button' wire:click='ver'>ver datos</button>
         </div>
     </form>
     <!--Modal large cargos -->
-    <div id="modal-cargos" tabindex="-1" aria-hidden="true"
-        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-        <div class="relative p-4 w-full max-w-4xl max-h-full">
+    <x-modal name="agregar-cargos" title="Resumen de estado de cuenta">
+        <x-slot name='body'>
             @include('livewire.recepcion.cobros.nuevo.include.modal-body-cargos')
-        </div>
-    </div>
+        </x-slot>
+    </x-modal>
     <!--Modal saldo a favor -->
-    <div id="modal-saldo" tabindex="-1" aria-hidden="true"
-        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-        <div class="relative p-4 w-full max-w-2xl max-h-full">
-            <!-- Modal content -->
-            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
-                <!-- Modal header -->
-                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
-                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-                        Saldo a favor disponible
-                    </h3>
-                    <button type="button"
-                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                        data-modal-hide="modal-saldo">
-                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 14 14">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-                        </svg>
-                        <span class="sr-only">Close modal</span>
-                    </button>
-                </div>
-                <!-- Modal body -->
-                <div class="p-4 md:p-5 space-y-4">
-                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" class="px-6 py-3">
-                                    RECIBO DE ORIGEN
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    SALDO GENERADO
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                <td class="px-6 py-4">
-                                    1029
-                                </td>
-                                <td class="px-6 py-4">
-                                    $200
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr class="font-medium text-gray-700 dark:text-white">
-                                <th scope="row" class="px-6 py-3 text-base">Total generado: </th>
-                                <th scope="row" class="px-6 py-3 text-base">$200</th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-                <!-- Modal footer -->
-                <div class="flex items-center p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
-                    <button data-modal-hide="modal-saldo" type="button"
-                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Aplicar
-                        saldo</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <x-modal name="saldo-favor" title="Saldo a favor">
+        <x-slot name='body'>
+            @include('livewire.recepcion.cobros.nuevo.include.modal-body-saldo')
+        </x-slot>
+    </x-modal>
     <!--Alerts-->
     <x-action-message on='action-message-pago'>
         @if (session('success'))
@@ -198,3 +142,10 @@
         @endif
     </x-action-message>
 </div>
+@script
+    <script>
+        $wire.on('ver-recibo', (e) => {
+            window.open('http://127.0.0.1:8000/recepcion/cobros/recibo/' + e[0].folio, '_blank');
+        });
+    </script>
+@endscript

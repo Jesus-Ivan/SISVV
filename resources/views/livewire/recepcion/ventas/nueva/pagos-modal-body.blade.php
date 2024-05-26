@@ -1,12 +1,12 @@
 <div class="w-96">
     <!-- Modal body -->
     <div class="pb-4 space-y-4">
-        <div>
-            <livewire:autocomplete :params="['table_name' => 'socios', 'columns' => ['nombre', 'id']]" event='on-selected-socio-pago' primary='id'/>
+        <div class="{{ $invitado ? 'pointer-events-none' : '' }} ">
+            <livewire:autocomplete :params="['table_name' => 'socios', 'columns' => ['nombre', 'id']]" event='on-selected-socio-pago' primary='id' />
             <div class="flex">
-                <p>{{ $socio ? $socio->id : '' }}</p>
+                <p>{{ array_key_exists('id', $socio) ? $socio['id'] : '' }}</p>
                 -
-                <p>{{ $socio ? $socio->nombre : '' }}</p>
+                <p>{{ array_key_exists('nombre', $socio) ? $socio['nombre'] : '' }}</p>
             </div>
         </div>
         <div>

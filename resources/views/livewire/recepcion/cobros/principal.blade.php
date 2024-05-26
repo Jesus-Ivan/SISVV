@@ -73,22 +73,22 @@
                     <tr wire:key="{{ $index }}"
                         class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
                         <th scope="row"
-                            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                            class="px-6 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                             {{ $recibo->folio }}
                         </th>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-2">
                             {{ $recibo->id_socio }}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-2">
                             {{ $recibo->nombre }}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-2">
                             {{ $recibo->fecha }}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-2">
                             ${{ $recibo->total }}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-2">
                             <a type="button" href="{{ route('recepcion.cobros.recibo', $recibo->folio) }}" target="_blank"
                                 class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"

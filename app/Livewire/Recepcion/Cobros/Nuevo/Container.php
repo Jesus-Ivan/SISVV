@@ -204,30 +204,30 @@ class Container extends Component
             return ($cargo['id_tipo_pago'] == $metodoPago->id);
         });
 
-        //Si no tiene saldo a favor disponible
-        if (!count($this->saldoFavorDisponible) > 0) {
-            //Si existe al menos 1 en la tabla. error
-            if (count($cargosSaldoFavor) > 0) {
+        //Si existe al menos 1 cargo en la tabla con saldo a favor
+        if (count($cargosSaldoFavor) > 0) {
+            //Si no tiene saldo a favor disponible
+            if (!count($this->saldoFavorDisponible) > 0) {
                 session()->flash('fail', "No cuenta con saldo a favor");
                 $this->dispatch('action-message-pago');
                 return;
-            }
-        } else {
-            $sumaSaldoAFavor = 0;       //Variable acumuladora del saldo a favor utilizado
-            //Sumar todos los montos de pago, de los conceptos con metodo de pago 'saldo a favor'
-            array_map(function ($cargo) use (&$sumaSaldoAFavor, $metodoPago) {
-                if ($cargo['id_tipo_pago'] == $metodoPago->id) {
-                    $sumaSaldoAFavor += $cargo['monto_pago'];
-                }
-            }, $this->cargosTabla);
+            } else {
+                $sumaSaldoAFavor = 0;       //Variable acumuladora del saldo a favor utilizado
+                //Sumar todos los montos de pago, de los conceptos con metodo de pago 'saldo a favor'
+                array_map(function ($cargo) use (&$sumaSaldoAFavor, $metodoPago) {
+                    if ($cargo['id_tipo_pago'] == $metodoPago->id) {
+                        $sumaSaldoAFavor += $cargo['monto_pago'];
+                    }
+                }, $this->cargosTabla);
 
-            //Comprobar si la suma de los montos con metodo de pago 'saldo a favor' es diferente al saldo a favor disponible
-            if ($sumaSaldoAFavor != array_sum(array_column($this->saldoFavorDisponible->toArray(), 'saldo'))) {
-                //MENSAJE DE SESION
-                session()->flash('fail', "El saldo a favor debe ser aplicado en su totalidad");
-                //EVENTO PARA ABRIR EL ALERT
-                $this->dispatch('action-message-pago');
-                return;
+                //Comprobar si la suma de los montos con metodo de pago 'saldo a favor' es diferente al saldo a favor disponible
+                if ($sumaSaldoAFavor != array_sum(array_column($this->saldoFavorDisponible->toArray(), 'saldo'))) {
+                    //MENSAJE DE SESION
+                    session()->flash('fail', "El saldo a favor debe ser aplicado en su totalidad");
+                    //EVENTO PARA ABRIR EL ALERT
+                    $this->dispatch('action-message-pago');
+                    return;
+                }
             }
         }
 
@@ -244,7 +244,7 @@ class Container extends Component
             //Creamos el registro del recibo
             $result = Recibo::create([
                 'id_socio' => $this->socio->id,
-                'nombre' => $this->socio->nombre,
+                'nombre' => $this->socio->nombre . ' ' . $this->socio->apellido_p . ' ' . $this->socio->apellido_m,
                 'total' => $this->totalAbono,
                 'corte_caja' => $this->caja[0]->corte,
                 'fecha' => now()->format('Y-m-d H:i:s'),
@@ -256,9 +256,9 @@ class Container extends Component
                     $resultSaldo = SaldoFavor::find($registro->id);
                     //Se actualiza el campo 'aplicado_a' del saldo a favor disponible
                     $resultSaldo->update([
-                        'aplicado_a'=> $result->folio
+                        'aplicado_a' => $result->folio
                     ]);
-                }  
+                }
             }
             //Si genero saldo a favor, se guarda.
             if ($this->saldoFavor > 0) {
@@ -279,11 +279,14 @@ class Container extends Component
                         'id_tipo_pago' => $cargo['id_tipo_pago'],
                         'saldo_anterior' => $resultCargo->saldo,
                         'monto_pago' => $cargo['monto_pago'],
-                        'saldo' => ($cargo['monto_pago'] < $resultCargo->saldo) ? $resultCargo->saldo - $cargo['monto_pago'] :  0, //Si el monto es mayor al saldo, el saldo es 0
+                        'saldo' => ($cargo['monto_pago'] <= $resultCargo->saldo) ? $resultCargo->saldo - $cargo['monto_pago'] :  0, //Si el monto es mayor al saldo, el saldo es 0
+                        'saldo_favor_generado' => ($cargo['monto_pago'] > $resultCargo->saldo) ?  $cargo['monto_pago'] - $resultCargo->saldo :  0, //Almacenamos el saldo a favor generado, en los detalles del recibo
                     ]);
                 //Actualizamos el estado de cuenta
-                $resultCargo->saldo = ($cargo['monto_pago'] < $resultCargo->saldo) ? $resultCargo->saldo - $cargo['monto_pago'] : 0;
+                $resultCargo->saldo_favor += ($cargo['monto_pago'] > $resultCargo->saldo) ?  $cargo['monto_pago'] - $resultCargo->saldo :  0;
                 $resultCargo->abono += $cargo['monto_pago'];
+                $resultCargo->saldo = ($cargo['monto_pago'] <= $resultCargo->saldo) ? $resultCargo->saldo - $cargo['monto_pago'] : 0;
+                //dd($resultCargo);
                 $resultCargo->save();
             }
             //Emitimos evento para abrir nueva pestaña

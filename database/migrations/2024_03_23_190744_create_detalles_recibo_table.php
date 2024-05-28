@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('saldo_anterior', 10, 2);
             $table->decimal('monto_pago', 10, 2);
             $table->decimal('saldo', 10, 2);
+            $table->decimal('saldo_favor_generado', 10, 2);
             
 
             /*//Relaciones

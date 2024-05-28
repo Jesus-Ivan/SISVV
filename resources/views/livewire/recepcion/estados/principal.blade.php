@@ -92,7 +92,7 @@
                                 </div>
                                 <!-- INFO -->
                                 <div class="dark:text-white">
-                                    <div class="font-medium">{{ $socio->nombre }}</div>
+                                    <div class="font-medium">{{ $socio->nombre.' '.$socio->apellido_p.' '.$socio->apellido_m }}</div>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">No.Socio:
                                         {{ $socio->id }}
                                     </p>

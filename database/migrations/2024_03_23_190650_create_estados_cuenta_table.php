@@ -22,6 +22,7 @@ return new class extends Migration
             $table->decimal('cargo', 10, 2);
             $table->decimal('abono', 10, 2)->default(0);
             $table->decimal('saldo', 10, 2);
+            $table->decimal('saldo_favor', 10, 2)->default(0);
             $table->boolean('consumo')->nullable();
 
             /*//Relaciones

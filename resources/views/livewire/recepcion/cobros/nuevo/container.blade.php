@@ -5,11 +5,13 @@
             <!--No de socio -->
             <div class="relative max-w-lg">
                 <!--Autocomplete search component-->
-                <livewire:autocomplete :params="['table_name' => 'socios', 'columns' => ['nombre', 'id']]" event="on-selected-socio" primary='id' />
+                <livewire:autocomplete :params="[
+                    'table' => ['name' => 'socios', 'columns' => ['id', 'nombre', 'apellido_p', 'apellido_m']],
+                ]" primaryKey="id" event="on-selected-socio" />
             </div>
             <!--Info -->
             <div>
-                <p>Nombre: {{ $socio->nombre }}</p>
+                <p>Nombre: {{ $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m }}</p>
                 <p>No. de socio: {{ $socio->id }}</p>
                 @error('socio')
                     <x-input-error messages="{{ $message }}" />
@@ -45,8 +47,7 @@
         <div class="flex">
             <div class="flex-grow"></div>
             <!--Boton de saldo a favor -->
-            <button type="button" x-data
-                x-on:click="$dispatch('open-modal', {name:'saldo-favor'})"
+            <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'saldo-favor'})"
                 class="{{ count($this->saldoFavorDisponible) > 0 ? '' : 'opacity-30 pointer-events-none' }} text-green-700 hover:text-white border border-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:hover:bg-green-600 dark:focus:ring-green-800">Saldo
                 a favor
             </button>

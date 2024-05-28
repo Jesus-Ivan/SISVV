@@ -180,7 +180,8 @@ class ReportesController extends Controller
     {
         //Buscamos los metodos de pago, permitidos para el reporte de cobranza
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
-            $query->where('descripcion', 'like', 'FIRMA');
+            $query->where('descripcion', 'like', 'FIRMA')
+                ->orWhere('descripcion', 'like', '%SALDO%');
         })->get();
 
         //Array auxiliar de recibos separados por tipo
@@ -199,17 +200,23 @@ class ReportesController extends Controller
                 'detalles_recibo.id_tipo_pago',
                 'detalles_recibo.saldo_anterior',
                 'detalles_recibo.monto_pago',
-                'detalles_recibo.saldo'
+                'detalles_recibo.saldo',
+                'detalles_recibo.saldo',
+                'detalles_recibo.saldo_favor_generado',
             )
             ->where('corte_caja', $caja->corte)
             ->get();
 
-        //Obtenemos el total del corte
-        $totalCobranza = array_sum(array_column($detalles->toArray(), 'monto_pago'));
+        //Variable auxiliar que almacena el total
+        $totalCobranza = 0;
         //Separar los pagos por tipo
         foreach ($tipos_pago as $pago) {
             $separados[$pago->descripcion] = $detalles->where('id_tipo_pago', $pago->id);
+            //Acumulamos el total de 'monto_pago', de los cargos recien separados por el tipo de pago
+            $totalCobranza += array_sum(array_column($separados[$pago->descripcion]->toArray(), 'monto_pago'));
         }
+
+        //dump($separados);
         $header = [
             'title' => 'VISTA VERDE COUNTRY CLUB',
             'rfc' => 'VVC101110AQ4',

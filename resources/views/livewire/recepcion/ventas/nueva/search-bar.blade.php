@@ -1,11 +1,13 @@
 <div>
     <div class="grid grid-flow-col gap-4 {{ $invitado ? 'pointer-events-none' : '' }}">
         <!--Autocomplete search component-->
-        <livewire:autocomplete :params="['table_name' => 'socios', 'columns' => ['nombre', 'id']]" event="on-selected-socio" primary='id' />
+        <livewire:autocomplete :params="[
+            'table' => ['name' => 'socios', 'columns' => ['id', 'nombre', 'apellido_p', 'apellido_m']],
+        ]" primaryKey="id" event="on-selected-socio" />
         <!--Info -->
         <div>
             @if ($socioSeleccionado)
-                <p>Nombre: {{ $socioSeleccionado['nombre'] }}</p>
+                <p>Nombre: {{ $socioSeleccionado['nombre'].' '.$socioSeleccionado['apellido_p'].' '.$socioSeleccionado['apellido_m'] }}</p>
                 <p>No. de socio: {{ array_key_exists('id', $socioSeleccionado) ? $socioSeleccionado['id'] : '' }}</p>
             @endif
         </div>

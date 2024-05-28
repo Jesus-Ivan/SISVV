@@ -40,7 +40,8 @@
             <tbody>
                 <tr>
                     <td>Socio: </td>
-                    <td>{{ $resultSocio->id }}-{{ $resultSocio->nombre }}</td>
+                    <td>{{ $resultSocio->id }}-{{ $resultSocio->nombre . ' ' . $resultSocio->apellido_p . ' ' . $resultSocio->apellido_m }}
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -96,7 +97,8 @@
                         <td style="text-align: right;">Total:</td>
                         <td></td>
                         <td></td>
-                        <td>${{ array_sum(array_column($resulEstado->toArray(), 'saldo')) - array_sum(array_column($saldoFavor->toArray(), 'saldo')) }}</td>
+                        <td>${{ array_sum(array_column($resulEstado->toArray(), 'saldo')) - array_sum(array_column($saldoFavor->toArray(), 'saldo')) }}
+                        </td>
                     </tr>
                 @endif
             </tfoot>

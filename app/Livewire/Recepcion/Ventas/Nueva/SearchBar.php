@@ -25,16 +25,18 @@ class SearchBar extends Component
     {
         //Si desactiva el switch, borrar los datos del INVITADO
         if (!$this->invitado) {
-            $this->socioSeleccionado = null;
+            $this->socioSeleccionado = [];
             //emitir evento
-            $this->dispatch('on-invitado', false);
+            $this->dispatch('on-invitado', false, $this->socioSeleccionado);
         } else {
             //Asignar socio invitado para la venta
             $this->socioSeleccionado = [
-                'nombre' => 'INVITADO'
+                'nombre' => 'INVITADO',
+                'apellido_p' => '',
+                'apellido_m' => ''
             ];
             //emitir evento
-            $this->dispatch('on-invitado', true);
+            $this->dispatch('on-invitado', true, $this->socioSeleccionado);
         }
     }
 

@@ -21,10 +21,13 @@
     <!--Sugerencias de autocompletado -->
     @if ($this->results)
         <div class="relative z-40">
-            <div class="absolute w-full overflow-y-auto max-h-52 h-auto bg-white border">
+            <div class="absolute w-full overflow-y-auto max-h-64 h-auto bg-white border">
                 @foreach ($this->results as $result)
-                    <div class="p-2 hover:bg-slate-200" wire:click="select({{ $result->$primary }})">
-                        {{ $result->nombre }}</div>
+                    <div class="p-2 hover:bg-slate-200" wire:click="select({{ $result->$primaryKey }})">
+                        @foreach ($params['table']['columns'] as $column)
+                            {{ $result->$column }}
+                        @endforeach
+                    </div>
                 @endforeach
             </div>
         </div>

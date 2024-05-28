@@ -1,12 +1,12 @@
 <div>
     <div class="flex">
         <div class="w-full">
-            <p>Nombre: {{ $socio->nombre }}</p>
+            <p>Nombre: {{ $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m }}</p>
             <p>No.Socio:{{ $socio->id }} </p>
         </div>
         <div class="w-full">
             <p>Membresia: {{ $socioMembresia->membresia->descripcion }}</p>
-            <p>Membresia: {{ $socioMembresia }}</p>
+
         </div>
     </div>
     {{-- FECHA Y BOTON DE CARGOS --}}

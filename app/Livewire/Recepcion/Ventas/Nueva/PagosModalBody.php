@@ -27,7 +27,7 @@ class PagosModalBody extends Component
                     ->orWhere('descripcion', 'like', 'CHEQUE')
                     ->orWhere('descripcion', 'like', '%SALDO%');
             })->get();
-        }else{
+        } else {
             //Retirar firma si es invitado
             return TipoPago::whereNot(function (Builder $query) {
                 $query->where('descripcion', 'like', 'TRANSFERENCIA')
@@ -85,14 +85,12 @@ class PagosModalBody extends Component
     }
 
     #[On('on-invitado')]
-    public function onInvitado(bool $val)
+    public function onInvitado(bool $val, $invitado)
     {
-        //guardamos el valor recibido del evento, en propiedad del componente
+        //guardamos el valor recibido del evento, en propiedad del componente, para efectuar la venta de tipo 'invitado'
         $this->invitado = $val;
-        //Si se trata de un usuario invitado
-        if ($val) {
-            $this->socio = ['nombre' => 'INVITADO'];
-        }
+        //Guardamos la informacion del invitado
+        $this->socio = $invitado;
     }
 
     public function render()

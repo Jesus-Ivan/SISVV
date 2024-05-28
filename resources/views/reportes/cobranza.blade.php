@@ -1,6 +1,6 @@
 <style>
     html {
-        font-size: small
+        font-size: x-small
     }
 
     h1,
@@ -56,25 +56,34 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width:15%">Fecha</th>
-                    <th style="width:75%">Nombre</th>
-                    <th>Importe</th>
+                    <th>Recibo</th>
+                    <th>Referencia</th>
+                    <th style="width:10%">Fecha</th>
+                    <th style="width:55%">Nombre</th>
+                    <th style="width:12%">Importe</th>
+                    <th style="width:12%">S.Favor</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($cat as $detalle_cat)
                     <tr>
+                        <td>{{ $detalle_cat->folio }}</td>
+                        <td>{{ $detalle_cat->id_estado_cuenta }}</td>
                         <td>{{ substr($detalle_cat->fecha, 0, 10) }}</td>
                         <td>{{ $detalle_cat->nombre }}</td>
                         <td>{{ $detalle_cat->monto_pago }}</td>
+                        <td>{{ $detalle_cat->saldo_favor_generado }}</td>
                     </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
                     <td></td>
+                    <td></td>
+                    <td></td>
                     <td style="text-align: right">Subtotal: </td>
                     <td>$ {{ array_sum(array_column($cat->toArray(), 'monto_pago')) }}</td>
+                    <td></td>
                 </tr>
             </tfoot>
         </table>

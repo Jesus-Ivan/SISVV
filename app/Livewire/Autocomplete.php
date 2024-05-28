@@ -9,25 +9,17 @@ use Livewire\Component;
 class Autocomplete extends Component
 {
 
-    public $params, $search, $event;
-    public $primary;
+    public $params, $search, $event, $primaryKey;
 
     #[Computed]
     public function results()
     {
-        if ( $this->search != '') {
-            if (count($this->params['columns']) == 2) {
-                return DB::table($this->params['table_name'])
-                    ->where($this->params['columns'][0], 'like', '%' . $this->search . '%')
-                    ->orWhere($this->params['columns'][1], 'like', $this->search)
-                    ->take(10)
-                    ->get();
-            } else {
-                return DB::table($this->params->table_name)
-                    ->where($this->params['columns'][0], 'like', '%' . $this->search . '%')
-                    ->take(10)
-                    ->get();
-            }
+        //dd($this->params);
+        if ($this->search != '') {
+            return DB::table($this->params['table']['name'])
+                ->whereAny($this->params['table']['columns'], 'like', '%' . $this->search . '%')
+                ->take(30)
+                ->get();
         } else {
             return [];
         }

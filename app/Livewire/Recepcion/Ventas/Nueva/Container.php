@@ -87,10 +87,12 @@ class Container extends Component
             $fecha_cierre = now()->format('Y-m-d H:i:s');
             //Se calcular el total de los productos
             $total = array_sum(array_column($info['datosProductos'], 'subtotal'));
+            //Concatenamos el nombre
+            $nombre = $info['datosSocio']['nombre'] . ' ' . $info['datosSocio']['apellido_p'] . ' ' . $info['datosSocio']['apellido_m'];
             //Se crea la venta
             $resultVenta = Venta::create([
                 'id_socio' =>  $info['datosSocio']['id'],
-                'nombre' => $info['datosSocio']['nombre'],
+                'nombre' => $nombre,
                 'fecha_apertura' => $fecha_cierre,
                 'fecha_cierre' => $fecha_cierre,
                 'total' => $total,
@@ -186,14 +188,11 @@ class Container extends Component
     }
 
     #[On('on-invitado')]
-    public function onInvitado(bool $val)
+    public function onInvitado(bool $val, $invitado)
     {
         $this->invitado = $val;
-        //Si se desactivo el switch de 'invitado'
-        //Borrar los pagos del invitado
-        if (!$val) {
-            $this->reset('datosPagos');
-        }
+        //Borrar los pagos registrados
+        $this->reset('datosPagos');
     }
 
     public function render()

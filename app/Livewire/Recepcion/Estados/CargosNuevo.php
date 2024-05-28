@@ -57,6 +57,7 @@ class CargosNuevo extends Component
             //Verificamos si hay una cuota de membresia ya existente en la BD
             $resultCargos = DB::table('estados_cuenta')
                 ->join('cuotas', 'estados_cuenta.id_cuota', '=', 'cuotas.id')
+                ->where('estados_cuenta.id_socio', $this->socio->id)
                 ->whereYear('estados_cuenta.fecha', '=', $fechaCuota->year)
                 ->whereMonth('estados_cuenta.fecha', '=', $fechaCuota->month)
                 ->whereNotNull('cuotas.clave_membresia')

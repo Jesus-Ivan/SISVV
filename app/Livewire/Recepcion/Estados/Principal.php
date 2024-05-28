@@ -20,7 +20,7 @@ class Principal extends Component
     {   //Fecha del primer dia del mes actual
         $this->fechaInicio = now()->day(1)->toDateString();
         //Fecha del ultimo dia del mes actual
-        $this->fechaFin = now()->day(now()->daysInMonth)->toDateString();              
+        $this->fechaFin = now()->day(now()->daysInMonth)->toDateString();
         $this->search = '';                     //Nombre por default
         $this->radioButon = 'T';                //Radio button 'Mostrar Todos'
     }
@@ -28,7 +28,11 @@ class Principal extends Component
     #[Computed()]
     public function resultSocios()
     {
-        return Socio::with('socioMembresia')->where('nombre', 'LIKE', '%' . $this->search . '%')
+        return Socio::with('socioMembresia')->whereAny([
+            'nombre',
+            'apellido_p',
+            'apellido_m',
+        ], 'LIKE', '%' . $this->search . '%')
             ->orWhere('id', $this->search)
             ->limit(40)
             ->paginate(5);

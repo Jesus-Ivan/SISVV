@@ -49,7 +49,7 @@ new class extends Component {
                     </button>
                     <div class="py-4 overflow-y-auto">
                         <ul class="space-y-2 font-medium">
-                            <li>
+                            {{-- <li>
                                 <a href="{{ route('administracion') }}"
                                     class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                     <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
@@ -62,8 +62,8 @@ new class extends Component {
                                     </svg>
                                     <span class="ms-3">Administración</span>
                                 </a>
-                            </li>
-                            <li>
+                            </li> --}}
+                            {{-- <li>
                                 <a href="{{ route('almacen') }}"
                                     class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                     <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
@@ -77,8 +77,8 @@ new class extends Component {
 
                                     <span class="flex-1 ms-3 whitespace-nowrap">Almacén</span>
                                 </a>
-                            </li>
-                            <li>
+                            </li> --}}
+                            {{-- <li>
                                 <a href="{{ route('cocina') }}"
                                     class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                     <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
@@ -90,9 +90,9 @@ new class extends Component {
 
                                     <span class="flex-1 ms-3 whitespace-nowrap">Cocina</span>
                                 </a>
-                            </li>
-                            <!--
-                            <li>
+                            </li> --}}
+                            
+                            {{-- <li>
                                 <a href="#"
                                     class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                     <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
@@ -105,9 +105,9 @@ new class extends Component {
 
                                     <span class="flex-1 ms-3 whitespace-nowrap">Eventos</span>
                                 </a>
-                            </li>
-                            -->
-                            <li>
+                            </li> --}}
+                            
+                            {{-- <li>
                                 <button type="button"
                                     class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                                     aria-controls="dropdown-example" data-collapse-toggle="dropdown-example">
@@ -148,7 +148,8 @@ new class extends Component {
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Lockers</a>
                                     </li>
                                 </ul>
-                            </li>
+                            </li> --}}
+
                             <li>
                                 <a href="{{ route('recepcion') }}"
                                     class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">

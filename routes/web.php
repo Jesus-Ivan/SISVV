@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\EdoCuentaController;
 use App\Http\Controllers\ExcelController;
+use App\Http\Controllers\PermisosController;
 use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\SociosController;
 use GuzzleHttp\Psr7\Request;
@@ -20,9 +21,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
 
-Route::view('dashboard', 'dashboard')
+Route::view('home', 'dashboard')
     ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+    ->name('home');
 
 Route::view('profile', 'profile')
     ->middleware(['auth'])
@@ -78,8 +79,9 @@ Route::prefix('almacen')->middleware(['auth'])->group(function () {
     });
 });
 
-Route::prefix('recepcion')->middleware(['auth'])->group(function () {
-    Route::view('/', 'recepcion.index')->name('recepcion');
+Route::controller(PermisosController::class)->prefix('recepcion')->middleware(['auth'])->group(function () {
+    //Route::view('/', 'recepcion.index')->name('recepcion');
+    Route::get('/', 'index')->name('recepcion');
     Route::prefix('ventas')->group(function () {
         Route::view('/', 'recepcion.Ventas.ventas')->name('recepcion.ventas');
         Route::view('nueva', 'recepcion.Ventas.nueva-venta')->name('recepcion.ventas.nueva');

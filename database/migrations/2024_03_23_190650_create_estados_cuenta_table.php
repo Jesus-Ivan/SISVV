@@ -24,6 +24,7 @@ return new class extends Migration
             $table->decimal('saldo', 10, 2);
             $table->decimal('saldo_favor', 10, 2)->default(0);
             $table->boolean('consumo')->nullable();
+            $table->timestamps();
 
             /*//Relaciones
 

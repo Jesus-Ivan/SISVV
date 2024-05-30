@@ -10,8 +10,6 @@ class Recibo extends Model
     use HasFactory;
     //Nombre de tabla
     protected $table = 'recibos';
-    //Desactivar los timestamps para este modelo
-    public $timestamps = false;
     //Propiedades restringidas para asignacion masiva
     protected $guarded = ['folio'];
     //Clave primaria

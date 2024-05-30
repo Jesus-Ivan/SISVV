@@ -17,7 +17,7 @@ class Principal extends Component
     {
         return Recibo::where('id_socio', '=', $this->search)
             ->orWhere('nombre', 'like', '%' . $this->search . '%')
-            ->orderby('fecha', 'desc')
+            ->orderby('created_at', 'desc')
             ->paginate(10);
     }
     public function render()

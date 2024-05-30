@@ -247,7 +247,6 @@ class Container extends Component
                 'nombre' => $this->socio->nombre . ' ' . $this->socio->apellido_p . ' ' . $this->socio->apellido_m,
                 'total' => $this->totalAbono,
                 'corte_caja' => $this->caja[0]->corte,
-                'fecha' => now()->format('Y-m-d H:i:s'),
                 'observaciones' => $this->observaciones
             ]);
             //Si se utilizo saldo a favor en la tabla, se actualizan los registros utilizados 

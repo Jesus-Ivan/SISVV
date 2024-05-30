@@ -143,7 +143,7 @@ class ReportesController extends Controller
         ];
 
         $pdf = Pdf::loadView('reportes.estado-cuenta', $data);
-        return $pdf->stream('estado-cuenta.pdf');
+        return $pdf->stream("ESTADO-CUENTA-$resultSocio->id-$resultSocio->nombre.pdf");
     }
 
 

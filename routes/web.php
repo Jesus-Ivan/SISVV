@@ -172,16 +172,12 @@ Route::prefix('sistemas')->middleware(['auth'])->group(function () {
     Route::view('categorias', 'sistemas.categorias')->name('sistemas.categorias');
     Route::view('unidades', 'sistemas.unidades')->name('sistemas.unidades');
 
-    //DEPARTAMENTO DE RECEPCION
+    //HERRAMIENTAS ADICIONALES A SISTEMAS
     Route::prefix('registros')->group(function () {
-        Route::view('/', 'sistemas.Recepcion.registros')->name('sistemas.registros');
+        Route::view('/', 'sistemas.Herramientas.registros')->name('sistemas.registros');
+        Route::post('/', [ExcelController::class, 'importData'])->name('subirRegistros');
     });
-    Route::get('excel', [ExcelController::class, 'form'])->name('obtenerSocios');
-    Route::post('excel', [ExcelController::class, 'import'])->name('subirSocios');
 
-    //Route::view('registros', 'sistemas.Recepcion.registros')->name('sistemas.registros');
-
-    
 });
 
 require __DIR__ . '/auth.php';

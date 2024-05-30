@@ -48,7 +48,7 @@
     <div>
         <p class="remarcardo">SOCIO : <span class="noremarcardo">{{ $cobro->id_socio }} - {{ $cobro->nombre }}</span></p>
         <p class="remarcardo">RECIBO : <span class="noremarcardo">{{ $cobro->folio }}</span></p>
-        <p class="remarcardo">FECHA RECIBO : <span class="noremarcardo">{{ $cobro->fecha }}</span></p>
+        <p class="remarcardo">FECHA RECIBO : <span class="noremarcardo">{{ $cobro->created_at }}</span></p>
     </div>
     <br>
     <table>

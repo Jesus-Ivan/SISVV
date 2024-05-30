@@ -19,6 +19,7 @@ return new class extends Migration
             $table->decimal('monto', 10, 2)->unsigned();
             $table->decimal('propina',10,2)->unsigned()->nullable();
             $table->smallInteger('id_tipo_pago');
+            $table->timestamps();
 
             /*//Relaciones
 

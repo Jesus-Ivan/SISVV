@@ -83,7 +83,7 @@
                             {{ $recibo->nombre }}
                         </td>
                         <td class="px-6 py-2">
-                            {{ $recibo->fecha }}
+                            {{ $recibo->created_at }}
                         </td>
                         <td class="px-6 py-2">
                             ${{ $recibo->total }}

@@ -54,7 +54,7 @@ class ExcelController extends Controller
             case 'estados_cuenta':
                 try {
                     Excel::import(new EdoCuentaImport, $request->file('file_input'));
-                    return redirect()->back()->with('success', 'CARGOS DE SOCIOS REGISTRADOS CORRECTAMENTE EN LA BASE DE DATOS');
+                    return redirect()->back()->with('success', 'ESTADOS DE CUENTA REGISTRADOS CORRECTAMENTE EN LA BASE DE DATOS');
                 } catch (\Exception $e) {
                     return redirect()->back()->with('fail', 'Error al importar el archivo: ' . $e->getMessage());
                 }
@@ -62,7 +62,7 @@ class ExcelController extends Controller
                 case 'cuotas':
                     try {
                         Excel::import(new CuotasImport, $request->file('file_input'));
-                        return redirect()->back()->with('success', 'CARGOS DE SOCIOS REGISTRADOS CORRECTAMENTE EN LA BASE DE DATOS');
+                        return redirect()->back()->with('success', 'CUOTAS REGISTRADAS CORRECTAMENTE EN LA BASE DE DATOS');
                     } catch (\Exception $e) {
                         return redirect()->back()->with('fail', 'Error al importar el archivo: ' . $e->getMessage());
                     }

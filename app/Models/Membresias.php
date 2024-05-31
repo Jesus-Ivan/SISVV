@@ -15,7 +15,7 @@ class Membresias extends Model
     //Desactivar los timestamps para este modelo
     public $timestamps = false;
     //Propiedades restringidas para asignacion masiva
-    protected $guarded = ['clave'];
+    protected $guarded = [];
     //Clave primaria
     protected $primaryKey = 'clave';
     //Desactivar el autoincremento

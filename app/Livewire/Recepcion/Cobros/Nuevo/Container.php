@@ -167,11 +167,6 @@ class Container extends Component
         }
     }
 
-    public function ver()
-    {
-        dump($this->cargosSeleccionados, $this->cargosTabla, $this->saldoFavorDisponible);
-    }
-
     public function validarCargo($cargoIndex)
     {
         $this->validate([

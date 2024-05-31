@@ -97,7 +97,6 @@
                 </div>
                 Aplicar cobro
             </button>
-            <button type='button' wire:click='ver'>ver datos</button>
         </div>
     </form>
     <!--Modal large cargos -->

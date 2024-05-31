@@ -69,7 +69,7 @@
                     <tr>
                         <td>{{ $detalle_cat->folio }}</td>
                         <td>{{ $detalle_cat->id_estado_cuenta }}</td>
-                        <td>{{ substr($detalle_cat->fecha, 0, 10) }}</td>
+                        <td>{{ substr($detalle_cat->created_at, 0, 10) }}</td>
                         <td>{{ $detalle_cat->nombre }}</td>
                         <td>{{ $detalle_cat->monto_pago }}</td>
                         <td>{{ $detalle_cat->saldo_favor_generado }}</td>

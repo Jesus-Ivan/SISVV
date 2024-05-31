@@ -195,7 +195,7 @@ class ReportesController extends Controller
                 'recibos.nombre',
                 'recibos.total',
                 'recibos.corte_caja',
-                'recibos.fecha',
+                'recibos.created_at',
                 'detalles_recibo.id_estado_cuenta',
                 'detalles_recibo.id_tipo_pago',
                 'detalles_recibo.saldo_anterior',

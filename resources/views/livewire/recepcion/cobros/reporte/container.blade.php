@@ -51,7 +51,7 @@
                             {{ $cobro->nombre }}
                         </td>
                         <td class="px-6 py-4">
-                            {{ $cobro->fecha }}
+                            {{ $cobro->created_at }}
                         </td>
                         <td class="px-6 py-4">
                             ${{ $cobro->total }}

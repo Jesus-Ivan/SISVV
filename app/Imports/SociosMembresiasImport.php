@@ -17,14 +17,14 @@ class SociosMembresiasImport implements ToCollection, WithHeadingRow
                 $membresia->update([
                     'id_socio' => $row['id_socio'],
                     'clave_membresia' => $row['clave_membresia'],
-                    'clave_estado_membresia' => $row['clave_estado_membresia']
+                    'estado' => $row['estado']
                 ]);
             } else {
                 SocioMembresia::create([
                     'id' => $row['id'],
                     'id_socio' => $row['id_socio'],
                     'clave_membresia' => $row['clave_membresia'],
-                    'clave_estado_membresia' => $row['clave_estado_membresia']
+                    'estado' => $row['estado']
                 ]);
             }
         }

@@ -14,7 +14,7 @@ class Socio extends Model
     //Desactivar los timestamps para este modelo
     public $timestamps = false;
     //Propiedades restringidas para asignacion masiva
-    protected $guarded = ['id'];
+    protected $guarded = [];
     //Clave primaria
     protected $primaryKey = 'id';
 

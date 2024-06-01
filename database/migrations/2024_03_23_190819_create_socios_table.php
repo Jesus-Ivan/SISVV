@@ -26,13 +26,13 @@ return new class extends Migration
             $table->string('ciudad', 20)->nullable();
             $table->string('estado', 20)->nullable();
             $table->string('codigo_postal', 30)->nullable();
-            $table->string('tel_1', 10)->unique()->nullable();
-            $table->string('tel_2', 10)->unique()->nullable();
-            $table->string('correo1', 50)->unique()->nullable();
-            $table->string('correo2', 50)->unique()->nullable();
-            $table->string('correo3', 50)->unique()->nullable();
-            $table->string('correo4', 50)->unique()->nullable();
-            $table->string('correo5', 50)->unique()->nullable();
+            $table->string('tel_1', 10)->nullable();
+            $table->string('tel_2', 10)->nullable();
+            $table->string('correo1', 50)->nullable();
+            $table->string('correo2', 50)->nullable();
+            $table->string('correo3', 50)->nullable();
+            $table->string('correo4', 50)->nullable();
+            $table->string('correo5', 50)->nullable();
             $table->string('curp', 18)->unique()->nullable();
             $table->string('rfc', 13)->unique()->nullable();
 

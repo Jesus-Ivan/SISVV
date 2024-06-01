@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('apellido_m_integrante', 80);
             $table->string('img_path_integrante', 255)->nullable();
             $table->date('fecha_nac')->nullable();
-            $table->string('parentesco', 20);
+            $table->string('parentesco', 20)->nullable();
 
             //Relaciones
 

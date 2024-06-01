@@ -29,7 +29,7 @@
 
     .remarcardo {
         font-style: normal,
-            font-weight: bold;
+            font-weight: bold,
     }
 
     .noremarcardo {
@@ -38,17 +38,35 @@
     }
 </style>
 <div>
+    <?php
+    $path = 'storage/image001.jpg';
+    $type = pathinfo($path, PATHINFO_EXTENSION);
+    $data = file_get_contents($path);
+    $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+    ?>
     <div>
         <h2>VISTA VERDE COUNTRY CLUB</h2>
-        <p>RFC: {{ $header['rfc'] }}</p>
-        <p>{{ $header['direccion'] }}</p>
-        <p>Tel: 238{{ $header['telefono'] }}</p>
+        <table>
+            <tbody>
+                <tr>
+                    <td>
+                        <img src="<?php echo $base64; ?>" height="50" alt="logoVistaVerde" />
+                    </td>
+                    <td>
+                        <p>RFC: {{ $header['rfc'] }}</p>
+                        <p>{{ $header['direccion'] }}</p>
+                        <p>Tel: 238{{ $header['telefono'] }}</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
     <hr>
     <div>
-        <p class="remarcardo">SOCIO : <span class="noremarcardo">{{ $cobro->id_socio }} - {{ $cobro->nombre }}</span></p>
-        <p class="remarcardo">RECIBO : <span class="noremarcardo">{{ $cobro->folio }}</span></p>
-        <p class="remarcardo">FECHA RECIBO : <span class="noremarcardo">{{ $cobro->created_at }}</span></p>
+        <p class="remarcardo" style="font-size: 16px;">RECIBO : <span class="noremarcardo">{{ $cobro->folio }}</span></p>
+        <p class="remarcardo" style="font-size: 16px;">FECHA RECIBO : <span
+                class="noremarcardo">{{ $cobro->created_at }}</span></p>
+        <p class="remarcardo" style="font-size: 16px;">SOCIO : <span class="noremarcardo">{{ $cobro->id_socio }} - {{ $cobro->nombre }}</span></p>
     </div>
     <br>
     <table>

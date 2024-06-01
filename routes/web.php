@@ -104,7 +104,7 @@ Route::controller(PermisosController::class)->prefix('recepcion')->middleware(['
     Route::prefix('edo-cuenta')->group(function () {
         Route::view('/', 'recepcion.Estado-cuenta.estado-cuenta')->name('recepcion.estado');
         Route::get('nuevo-cargo/{socio}', [EdoCuentaController::class, 'showEditEdoCuenta'])->name('recepcion.estado.nuevo');
-        Route::get('reporte/{socio}/{tipo}/{fInicio}/{fFin}', [ReportesController::class, 'generarEstadoCuenta'])->name('recepcion.estado.reporte');
+        Route::get('reporte/{socio}/{tipo}/{fInicio}/{fFin}/{option}', [ReportesController::class, 'generarEstadoCuenta'])->name('recepcion.estado.reporte');
     });
 
     Route::view('caja', 'recepcion.caja.caja')->middleware(['auth'])->name('recepcion.caja');

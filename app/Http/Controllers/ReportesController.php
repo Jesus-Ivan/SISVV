@@ -89,7 +89,7 @@ class ReportesController extends Controller
         return $pdf->stream("corte{{$caja->corte}}.pdf");
     }
 
-    public function generarEstadoCuenta($socio, $tipo, $fInicio, $fFin)
+    public function generarEstadoCuenta($socio, $tipo, $fInicio, $fFin, $option)
     {
         //Buscamos el socio
         $resultSocio = Socio::find($socio);
@@ -143,6 +143,9 @@ class ReportesController extends Controller
         ];
 
         $pdf = Pdf::loadView('reportes.estado-cuenta', $data);
+        if ($option == 'd') {
+            return $pdf->download("ESTADO-CUENTA-$resultSocio->id-$resultSocio->nombre.pdf");
+        }
         return $pdf->stream("ESTADO-CUENTA-$resultSocio->id-$resultSocio->nombre.pdf");
     }
 

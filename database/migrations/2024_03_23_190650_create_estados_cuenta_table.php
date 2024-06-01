@@ -19,11 +19,11 @@ return new class extends Migration
             $table->integer('id_socio')->nullable();
             $table->string('concepto', 100);
             $table->date('fecha');
-            $table->decimal('cargo', 10, 2);
+            $table->decimal('cargo', 10, 2)->default(0);
             $table->decimal('abono', 10, 2)->default(0);
-            $table->decimal('saldo', 10, 2);
+            $table->decimal('saldo', 10, 2)->default(0);
             $table->decimal('saldo_favor', 10, 2)->default(0);
-            $table->boolean('consumo')->nullable();
+            $table->boolean('consumo')->nullable()->default(0);
             $table->timestamps();
 
             /*//Relaciones

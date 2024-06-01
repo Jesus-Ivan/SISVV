@@ -92,25 +92,27 @@
                                 </div>
                                 <!-- INFO -->
                                 <div class="dark:text-white">
-                                    <div class="font-medium">{{ $socio->nombre.' '.$socio->apellido_p.' '.$socio->apellido_m }}</div>
+                                    <div class="font-medium">
+                                        {{ $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m }}</div>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">No.Socio:
                                         {{ $socio->id }}
                                     </p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">Correo:
-                                        {{ $socio->correo ? $socio->correo : 'N/R' }}</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        <span>Correo 1: {{ $socio->correo1 ? $socio->correo1 : 'N/R' }}</span>
+                                        <span>Correo 2: {{ $socio->correo2 ? $socio->correo2 : 'N/R' }}</span>
+                                    </p>
                                 </div>
                             </div>
                         </td>
 
                         <td class="px-6 py-4 ">
                             <div>
-                                {{ $socio->socioMembresia->membresia->descripcion }}
+                                {{ $socio->socioMembresia ? $socio->socioMembresia->membresia->descripcion : 'N/R' }}
                             </div>
-                            {{ $socio->socioMembresia->estado }}
-                        </td> 
+                            {{ $socio->socioMembresia ? $socio->socioMembresia->estado : 'N/R' }}
+                        </td>
                         <td class="px-6 py-4">
-                            <a
-                                href="{{ route('recepcion.estado.nuevo',['socio' => $socio->id]) }}">
+                            <a href="{{ route('recepcion.estado.nuevo', ['socio' => $socio->id]) }}">
                                 <button type="button"
                                     class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
@@ -121,19 +123,22 @@
                                     <span class="sr-only">Ver</span>
                                 </button>
                             </a>
-                            {{-- <button type="button"
+                            <a href="{{ route('recepcion.estado.reporte', ['socio' => $socio->id, 'tipo' => $radioButon, 'fInicio' => $fechaInicio, 'fFin' => $fechaFin, 'option' => 'd']) }}"
                                 class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                    class="w-6 h-6">
-                                    <path
-                                        d="M2.038 5.61A2.01 2.01 0 0 0 2 6v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6c0-.12-.01-.238-.03-.352l-.866.65-7.89 6.032a2 2 0 0 1-2.429 0L2.884 6.288l-.846-.677Z" />
-                                    <path
-                                        d="M20.677 4.117A1.996 1.996 0 0 0 20 4H4c-.225 0-.44.037-.642.105l.758.607L12 10.742 19.9 4.7l.777-.583Z" />
+                                <svg class="w-6 h-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                    width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                    <path fill-rule="evenodd"
+                                        d="M13 11.15V4a1 1 0 1 0-2 0v7.15L8.78 8.374a1 1 0 1 0-1.56 1.25l4 5a1 1 0 0 0 1.56 0l4-5a1 1 0 1 0-1.56-1.25L13 11.15Z"
+                                        clip-rule="evenodd" />
+                                    <path fill-rule="evenodd"
+                                        d="M9.657 15.874 7.358 13H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2.358l-2.3 2.874a3 3 0 0 1-4.685 0ZM17 16a1 1 0 1 0 0 2h.01a1 1 0 1 0 0-2H17Z"
+                                        clip-rule="evenodd" />
                                 </svg>
-                                <span class="sr-only">Editar</span>
-                            </button> --}}
+
+                                <span class="sr-only">Descargar</span>
+                            </a>
                             <a type="button"
-                                href="{{ route('recepcion.estado.reporte', ['socio' => $socio->id, 'tipo' => $radioButon, 'fInicio' => $fechaInicio, 'fFin' => $fechaFin]) }}"
+                                href="{{ route('recepcion.estado.reporte', ['socio' => $socio->id, 'tipo' => $radioButon, 'fInicio' => $fechaInicio, 'fFin' => $fechaFin, 'option' => 's']) }}"
                                 target="_blank"
                                 class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"

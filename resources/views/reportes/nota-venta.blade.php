@@ -27,21 +27,31 @@
 
     th,
     td {
-        line-height:8pt;
+        line-height: 8pt;
         padding: 0pt;
         text-align: left;
     }
 </style>
-<h3>{{ $title }}</h3>
-<p>RFC: {{ $rfc }}</p>
-<p>{{ $direccion }}</p>
-<p>Tel: 238{{ $telefono }}</p>
+<?php
+$path = 'storage/image001.jpg';
+$type = pathinfo($path, PATHINFO_EXTENSION);
+$data = file_get_contents($path);
+$base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+?>
+<div>
+    <div style="text-align: center;">
+        <img src="<?php echo $base64; ?>" height="30" alt="logoVistaVerde" />
+    </div>
+    <p>RFC: {{ $rfc }}</p>
+    <p>{{ $direccion }}</p>
+    <p>Tel: 238{{ $telefono }}</p>
+</div>
 <hr>
 <table>
     <tbody>
         <tr>
             <td style="width: 20mm">Folio: {{ $folio }}</td>
-            <td >Fecha: {{ $fecha }}</td>
+            <td>Fecha: {{ $fecha }}</td>
         </tr>
         <tr>
             <td>Socio: {{ $socio_id }}</td>

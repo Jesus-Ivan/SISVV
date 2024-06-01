@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('integrantes_socios', function (Blueprint $table) {
             $table->integer('id')->autoIncrement()->unsigned();
             $table->integer('id_socio')->unsigned();
-            $table->string('nombre_integrante', 80);
-            $table->string('apellido_p_integrante', 80);
-            $table->string('apellido_m_integrante', 80);
+            $table->string('nombre_integrante', 80)->nullable();
+            $table->string('apellido_p_integrante', 80)->nullable();
+            $table->string('apellido_m_integrante', 80)->nullable();
             $table->string('img_path_integrante', 255)->nullable();
             $table->date('fecha_nac')->nullable();
             $table->string('parentesco', 20)->nullable();

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('nombre', 80);
             $table->decimal('total', 10, 2);
             $table->integer('corte_caja')->unsigned();
-            $table->string('observaciones', 50)->nullable();
+            $table->string('observaciones', 255)->nullable();
             $table->timestamps();
 
             /*//Relaciones

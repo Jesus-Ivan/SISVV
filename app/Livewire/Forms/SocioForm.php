@@ -246,11 +246,14 @@ class SocioForm extends Form
             if ($this->img_path) {
                 $validated['img_path'] = $this->img_path->store('fotos', 'public');
             }
+            //Retiramos la clave de la membresia, antes de crear el socio
+            unset($validated['clave_membresia']);
             //Creamos el socio
             $socio = Socio::create($validated);
+            //Creamos la relacion del socio-membresia
             SocioMembresia::create([
                 'id_socio' => $socio->id,
-                'clave_membresia' => $validated['clave_membresia'],
+                'clave_membresia' => $this->clave_membresia,
             ]);
 
             //Creamos cada uno de los miembros del socio

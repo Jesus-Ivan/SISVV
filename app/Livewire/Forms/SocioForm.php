@@ -306,8 +306,11 @@ class SocioForm extends Form
         if ($this->img_path) {
             //Guardamos la imagen y obtenemos la ruta relativa
             $validated['img_path'] = $this->img_path->store('fotos', 'public');
-            //Eliminamos la imagen anterior
-            Storage::disk('public')->delete($this->socio->img_path);
+            //Comprobamos si existia ruta registrada en la DB, de la imagen, para eliminarla
+            if($this->socio->img_path){
+                //Eliminamos la imagen anterior
+                Storage::disk('public')->delete($this->socio->img_path);
+            }
         } else {
             //De lo contrario, conservamos la ruta anterior de la imagen
             $validated['img_path'] = $this->socio->img_path;
@@ -319,7 +322,7 @@ class SocioForm extends Form
                 'estado' => $validated['estado_membresia'],
             ]);
         //Retiramos la clave de la membresia, antes de ACTUALIZAR el socio
-        unset($validated['clave_membresia']);
+        unset($validated['clave_membresia'], $validated['estado_membresia']);
         //Actualizamos el socio.
         $this->socio->update($validated);
     }

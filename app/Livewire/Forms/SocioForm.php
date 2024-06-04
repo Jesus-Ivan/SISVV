@@ -312,14 +312,16 @@ class SocioForm extends Form
             //De lo contrario, conservamos la ruta anterior de la imagen
             $validated['img_path'] = $this->socio->img_path;
         }
-        //Actualizamos el socio.
-        $this->socio->update($validated);
         //Actualizamos su membresia
         SocioMembresia::where('id_socio', $this->socio->id)
             ->update([
                 'clave_membresia' => $validated['clave_membresia'],
                 'estado' => $validated['estado_membresia'],
             ]);
+        //Retiramos la clave de la membresia, antes de ACTUALIZAR el socio
+        unset($validated['clave_membresia']);
+        //Actualizamos el socio.
+        $this->socio->update($validated);
     }
 
     //Este metodo sirve para registrar un integrante, hacia un socio existente

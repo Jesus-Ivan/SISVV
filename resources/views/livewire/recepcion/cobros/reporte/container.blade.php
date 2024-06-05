@@ -1,7 +1,7 @@
 <div>
     <form class="flex m-2 items-end gap-4">
+        {{-- Fecha --}}
         <div class="flex gap-4 grow">
-            {{-- Fecha --}}
             <div class="w-48">
                 <label for="fecha" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fecha</label>
                 <input type="date" id="tel-celular" wire:model="fecha"
@@ -79,7 +79,7 @@
             Regresar
         </a>
         @if ($caja)
-            <a type="button" href="{{ route('recepcion.cobros.corte', ['caja' => $caja[0]->corte]) }}"
+            <a type="button" href="{{ route('recepcion.cobros.corte-detalles', ['caja' => $caja[0]->corte]) }}"
                 target="_blank"
                 class="inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
                 <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
@@ -89,7 +89,20 @@
                         d="M8 3a2 2 0 0 0-2 2v3h12V5a2 2 0 0 0-2-2H8Zm-3 7a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h1v-4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v4h1a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2H5Zm4 11a1 1 0 0 1-1-1v-4h8v4a1 1 0 0 1-1 1H9Z"
                         clip-rule="evenodd" />
                 </svg>
-                Imprimir reporte
+                Imprimir reporte - detallado
+            </a>
+
+            <a type="button" href="{{ route('recepcion.cobros.corte-resumen', ['caja' => $caja[0]->corte]) }}"
+                target="_blank"
+                class="inline-flex items-center text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-600 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
+                <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                    viewBox="0 0 24 24">
+                    <path fill-rule="evenodd"
+                        d="M8 3a2 2 0 0 0-2 2v3h12V5a2 2 0 0 0-2-2H8Zm-3 7a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h1v-4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v4h1a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2H5Zm4 11a1 1 0 0 1-1-1v-4h8v4a1 1 0 0 1-1 1H9Z"
+                        clip-rule="evenodd" />
+                </svg>
+                Imprimir reporte - resumen
             </a>
         @endif
     </div>

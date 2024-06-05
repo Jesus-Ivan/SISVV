@@ -5,7 +5,6 @@ use App\Http\Controllers\ExcelController;
 use App\Http\Controllers\PermisosController;
 use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\SociosController;
-use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -80,7 +79,6 @@ Route::prefix('almacen')->middleware(['auth'])->group(function () {
 });
 
 Route::controller(PermisosController::class)->prefix('recepcion')->middleware(['auth'])->group(function () {
-    //Route::view('/', 'recepcion.index')->name('recepcion');
     Route::get('/', 'index')->name('recepcion');
     Route::prefix('ventas')->group(function () {
         Route::view('/', 'recepcion.Ventas.ventas')->name('recepcion.ventas');
@@ -94,7 +92,8 @@ Route::controller(PermisosController::class)->prefix('recepcion')->middleware(['
         Route::view('nuevo', 'recepcion.Cobros.nuevo-cobro')->name('recepcion.cobros.nuevo');
         Route::view('reportes', 'recepcion.Cobros.reporte-cobros')->name('recepcion.cobros.reportes');
         Route::get('recibo/{folio}', [ReportesController::class, 'generarRecibo'])->name('recepcion.cobros.recibo');
-        Route::get('corte/{caja}', [ReportesController::class, 'generarCobranza'])->name('recepcion.cobros.corte');
+        Route::get('corte-detalles/{caja}', [ReportesController::class, 'generarCobranzaDetalles'])->name('recepcion.cobros.corte-detalles');
+        Route::get('corte-resumen/{caja}', [ReportesController::class, 'generarCobranzaResumen'])->name('recepcion.cobros.corte-resumen');
     });
     Route::prefix('socios')->group(function () {
         Route::view('/', 'recepcion.Socios.socios')->name('recepcion.socios');

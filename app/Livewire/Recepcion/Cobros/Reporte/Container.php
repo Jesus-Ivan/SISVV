@@ -21,6 +21,11 @@ class Container extends Component
     #[Locked]
     public $caja;
 
+
+    public function mount(){
+        $this->fecha = now()->toDateString();
+    }
+
     public function buscar()
     {
         //Limpiamos el paginador

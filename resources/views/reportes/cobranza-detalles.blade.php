@@ -58,7 +58,7 @@
                 <tr>
                     <th>Recibo</th>
                     <th>Referencia</th>
-                    <th style="width:10%">Fecha</th>
+                    <th style="width:20%">Fecha</th>
                     <th style="width:55%">Nombre</th>
                     <th style="width:12%">Importe</th>
                     <th style="width:12%">S.Favor</th>
@@ -69,7 +69,7 @@
                     <tr>
                         <td>{{ $detalle_cat->folio }}</td>
                         <td>{{ $detalle_cat->id_estado_cuenta }}</td>
-                        <td>{{ substr($detalle_cat->created_at, 0, 10) }}</td>
+                        <td>{{ $detalle_cat->created_at }}</td>
                         <td>{{ $detalle_cat->nombre }}</td>
                         <td>{{ $detalle_cat->monto_pago }}</td>
                         <td>{{ $detalle_cat->saldo_favor_generado }}</td>

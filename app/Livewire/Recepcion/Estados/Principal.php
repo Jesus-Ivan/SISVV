@@ -38,7 +38,25 @@ class Principal extends Component
             ->paginate(5);
     }
 
-    public function buscar()
+    //hook que se ejecuta cuando una propiedad se actualizo
+    public function updated($property, $value)
+    {
+        if ($property == 'fechaInicio') {
+            //Si es cadena vacia, reseteamos
+            if ($value =="") {
+                //dump($property,$value);
+                $this->fechaInicio = now()->day(1)->toDateString();
+            }
+        }
+        if ($property == 'fechaFin') {
+            //Si la fecha de fin es cadena vacia, reseteamos
+            if ($value === "") {
+                $this->fechaFin = now()->day(now()->daysInMonth)->toDateString();
+            }
+        }
+    }
+
+    public function search()
     {
         $this->resetPage();
     }

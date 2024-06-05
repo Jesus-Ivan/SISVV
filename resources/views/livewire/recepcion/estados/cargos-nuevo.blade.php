@@ -11,7 +11,7 @@
     </div>
     {{-- FECHA Y BOTON DE CARGOS --}}
     <div
-        class="{{ $socioMembresia->estado == 'CAN' || $socioMembresia->estado == 'INA' ? 'flex opacity-50 pointer-events-none' : 'flex' }}">
+        class="{{ $socioMembresia->estado == 'CAN' ? 'flex opacity-50 pointer-events-none' : 'flex' }}">
         {{-- Fecha --}}
         <div class="w-full">
             <input type="date" id="inicio" wire:model="fechaDestino"

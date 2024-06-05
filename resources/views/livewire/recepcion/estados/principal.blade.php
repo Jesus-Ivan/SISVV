@@ -5,13 +5,13 @@
             {{-- Fecha Inicio --}}
             <div class="w-72">
                 <label for="inicio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Inicio</label>
-                <input type="date" id="inicio" wire:model.live.debounce.500ms="fechaInicio"
+                <input type="date" id="inicio" wire:model.live.debounce.800ms="fechaInicio"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
             </div>
             {{-- Fecha fin --}}
             <div class="w-72">
                 <label for="fin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fin</label>
-                <input type="date" id="fin" wire:model.live.debounce.500ms="fechaFin"
+                <input type="date" id="fin" wire:model.live.debounce.800ms="fechaFin"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
             </div>
             <!-- INPUT -->

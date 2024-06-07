@@ -6,18 +6,15 @@ use App\Models\Caja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
-use App\Models\PuntoVenta;
 use App\Models\Recibo;
 use App\Models\SaldoFavor;
 use App\Models\Socio;
 use App\Models\TipoPago;
 use App\Models\Venta;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Stringable;
 
 class ReportesController extends Controller
 {
@@ -320,6 +317,64 @@ class ReportesController extends Controller
         $pdf = Pdf::loadView('reportes.cobranza-resumen', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
         return $pdf->stream('ReporteCobranzaResumen.pdf');
+    }
+
+    public function vencidos(Request $request)
+    {
+        $fInicio = $request->input('fInicio');
+        $fFin = $request->input('fFin');
+
+        $this->validate($request,[
+            'fInicio' => 'required|date',
+            'fFin' => 'required|date',
+        ]);
+
+        $header = [
+            'title' => 'VISTA VERDE COUNTRY CLUB',
+            'rfc' => 'VVC101110AQ4',
+            'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
+            'telefono' => '3745011',
+            'fInicio' => $fInicio,
+            'fFin' => $fFin
+        ];
+
+        $estados = EstadoCuenta::whereDate('fecha', '>=', $fInicio)
+            ->whereDate('fecha', '<=', $fFin)
+            ->where('saldo', '>', 0)
+            ->get();
+
+        $totales = [];
+        foreach ($estados as $key => $estado) {
+            $result_filter = array_filter($totales, function ($row) use ($estado) {
+                return $row['id_socio'] == $estado->id_socio;
+            });
+
+            if (count($result_filter) > 0) {
+                //Buscamos la posicion del elemento en el array
+                for ($i = 0; $i < count($totales); $i++) {
+                    if ($totales[$i]['id_socio'] == $estado->id_socio) {
+                        //Si coincide con folio y tipo de pago, acumulamos el monto, en el elemento del array.
+                        $totales[$i]['monto'] += $estado->saldo;
+                    }
+                }
+            } else {
+                //Si no existe dentro del array
+                $socio = Socio::where('id', $estado->id_socio)->limit(1)->get();
+                array_push($totales, [
+                    'id_socio' => $estado->id_socio,
+                    'nombre' => count($socio) > 0 ? $socio[0]->nombre . ' ' . $socio[0]->apellido_p . ' ' . $socio[0]->apellido_m : 'N/R',
+                    'monto' => $estado->saldo,
+                ]);
+            }
+        }
+        $data = [
+            'header' => $header,
+            'totales' => $totales,
+            'total' => array_sum(array_column($totales, 'monto'))
+        ];
+        $pdf = Pdf::loadView('reportes.cartera-vencida', $data);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        return $pdf->stream('reporte-vencidos' . $fInicio . '.pdf');
     }
 
     private function calcularAltura($data)

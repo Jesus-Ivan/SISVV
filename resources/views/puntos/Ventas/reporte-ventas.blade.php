@@ -8,6 +8,6 @@
     <div>
         <!-- Title -->
         <h4 class="text-2xl font-bold dark:text-white mx-2">Reporte de ventas-{{$codigopv}}</h4>
-        <livewire:recepcion.ventas-reporte :codigopv="$codigopv"/>
+        <livewire:puntos.ventas.reporte.container :codigopv="$codigopv"/>
     </div>
 </x-app-layout>

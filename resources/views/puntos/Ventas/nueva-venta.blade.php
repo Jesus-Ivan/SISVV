@@ -5,11 +5,9 @@
      </x-slot>
 
      {{-- Contenido --}}
-     <div >
+     <div>
          <!-- Title -->
-         <h4 class="text-2xl font-bold dark:text-white mx-2">Nueva venta - {{$codigopv}}</h4>
-         <div>
-            <livewire:puntos.ventas-nueva/>
-         </div>
+         <h4 class="text-2xl font-bold dark:text-white mx-2">Nueva venta - {{ $codigopv }}</h4>
+         <livewire:puntos.ventas.nueva.container :codigopv="$codigopv" />
      </div>
  </x-app-layout>

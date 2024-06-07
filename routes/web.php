@@ -105,6 +105,8 @@ Route::prefix('recepcion')->middleware(['auth','recepcion'])->group(function () 
         Route::get('nuevo-cargo/{socio}', [EdoCuentaController::class, 'showEditEdoCuenta'])->name('recepcion.estado.nuevo');
         Route::get('reporte/{socio}/{tipo}/{fInicio}/{fFin}/{option}', [ReportesController::class, 'generarEstadoCuenta'])->name('recepcion.estado.reporte');
     });
+    Route::view('cartera', 'recepcion.Cartera.vencidos')->name('recepcion.cartera');
+    Route::post('cartera', [ReportesController::class, 'vencidos'])->name('recepcion.cartera.vencidos');
 
     Route::view('caja', 'recepcion.caja.caja')->middleware(['auth'])->name('recepcion.caja');
 });

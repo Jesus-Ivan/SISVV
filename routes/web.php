@@ -78,8 +78,8 @@ Route::prefix('almacen')->middleware(['auth'])->group(function () {
     });
 });
 
-Route::controller(PermisosController::class)->prefix('recepcion')->middleware(['auth'])->group(function () {
-    Route::get('/', 'index')->name('recepcion');
+Route::prefix('recepcion')->middleware(['auth','recepcion'])->group(function () {
+    Route::view('/', 'recepcion.index')->name('recepcion');
     Route::prefix('ventas')->group(function () {
         Route::view('/', 'recepcion.Ventas.ventas')->name('recepcion.ventas');
         Route::view('nueva', 'recepcion.Ventas.nueva-venta')->name('recepcion.ventas.nueva');
@@ -136,7 +136,7 @@ Route::prefix('cocina')->middleware(['auth'])->group(function () {
     Route::view('mermas', 'cocina.Mermas.mermas')->name('cocina.mermas');
 });
 
-Route::prefix('pv/{codigopv}')->middleware(['auth'])->group(function () {
+Route::prefix('pv/{codigopv}')->middleware(['auth','puntos'])->group(function () {
 
     Route::view('/', 'puntos.index')->name('pv.index');
 
@@ -160,7 +160,7 @@ Route::prefix('pv/{codigopv}')->middleware(['auth'])->group(function () {
     Route::view('caja', 'puntos.caja.caja')->middleware(['auth'])->name('pv.caja');
 });
 
-Route::prefix('sistemas')->middleware(['auth'])->group(function () {
+Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     Route::view('/', 'sistemas.index')->name('sistemas');
 
     //DEPARTAMENTO DE ALMACEN

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('permisos', function (Blueprint $table) {
+        Schema::create('departamentos', function (Blueprint $table) {
             $table->string('clave', 50)->primary();
             $table->string('descripcion', 80);
         });

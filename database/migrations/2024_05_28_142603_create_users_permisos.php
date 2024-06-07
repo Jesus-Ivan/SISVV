@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('users_permisos', function (Blueprint $table) {
             $table->id();
             $table->integer('id_user');
-            $table->string('clave_permiso', 50);
+            $table->string('clave_departamento', 50);
+            $table->string('clave_punto_venta', 50)->nullable();
             $table->string('clave_rol', 50)->nullable();
         });
     }

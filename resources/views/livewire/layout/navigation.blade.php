@@ -107,7 +107,7 @@ new class extends Component {
                                 </a>
                             </li> --}}
                             
-                            {{-- <li>
+                            <li>
                                 <button type="button"
                                     class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                                     aria-controls="dropdown-example" data-collapse-toggle="dropdown-example">
@@ -127,29 +127,28 @@ new class extends Component {
                                 </button>
                                 <ul id="dropdown-example" class="hidden py-2 space-y-2">
                                     <li>
-                                        <a href="{{route('pv.index', ['codigopv' => 'bar'])}}"
+                                        <a href="{{route('pv.index', ['codigopv' => 'BAR'])}}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Bar</a>
                                     </li>
                                     <li>
-                                        <a href="{{route('pv.index', ['codigopv' => 'restaurant'])}}"
+                                        <a href="{{route('pv.index', ['codigopv' => 'RES'])}}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Barra/restaurant</a>
                                     </li>
                                     <li>
-                                        <a href="{{route('pv.index', ['codigopv' => 'caddie'])}}"
+                                        <a href="{{route('pv.index', ['codigopv' => 'CAD'])}}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Caddie
                                             bar</a>
                                     </li>
                                     <li>
-                                        <a href="{{route('pv.index', ['codigopv' => 'cafeteria'])}}"
+                                        <a href="{{route('pv.index', ['codigopv' => 'CAF'])}}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Cafeteria</a>
                                     </li>
                                     <li>
-                                        <a href="{{route('pv.index', ['codigopv' => 'lockers'])}}"
+                                        <a href="{{route('pv.index', ['codigopv' => 'LOC'])}}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Lockers</a>
                                     </li>
                                 </ul>
-                            </li> --}}
-
+                            </li> 
                             <li>
                                 <a href="{{ route('recepcion') }}"
                                     class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">

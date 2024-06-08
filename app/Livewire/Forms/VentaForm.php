@@ -7,5 +7,9 @@ use Livewire\Form;
 
 class VentaForm extends Form
 {
-    //
+    public $nombre_invitado;
+    public $tipoVenta = "socio";
+
+    public $socioSeleccionado;
+
 }

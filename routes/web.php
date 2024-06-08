@@ -183,4 +183,15 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
 
 });
 
+Route::prefix('portico')->middleware(['auth'])->group(function () {
+    Route::view('/', 'portico.index')->name('portico');
+    Route::view('socios', 'portico.Socios.container')->name('portico.socios');
+
+    /* Route::prefix('catalogo')->group(function () {
+        Route::view('/', 'sistemas.Almacen.catalogo')->name('sistemas.catalogo');
+        Route::view('nuevo', 'sistemas.Almacen.nuevo-catalogo')->name('sistemas.almacen.nuevo');
+    }); */
+});
+
+
 require __DIR__ . '/auth.php';

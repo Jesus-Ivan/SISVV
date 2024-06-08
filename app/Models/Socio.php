@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Socio extends Model
@@ -18,8 +19,13 @@ class Socio extends Model
     //Clave primaria
     protected $primaryKey = 'id';
 
-   public function socioMembresia(): HasOne
-   {
-       return $this->hasOne(SocioMembresia::class, 'id_socio');
-   }
+    public function socioMembresia(): HasOne
+    {
+        return $this->hasOne(SocioMembresia::class, 'id_socio');
+    }
+
+    public function integrantesSocio(): HasMany
+    {
+        return $this->hasMany(IntegrantesSocio::class, 'id_socio');
+    }
 }

@@ -91,7 +91,7 @@ new class extends Component {
                                     <span class="flex-1 ms-3 whitespace-nowrap">Cocina</span>
                                 </a>
                             </li> --}}
-                            
+
                             {{-- <li>
                                 <a href="#"
                                     class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
@@ -106,7 +106,19 @@ new class extends Component {
                                     <span class="flex-1 ms-3 whitespace-nowrap">Eventos</span>
                                 </a>
                             </li> --}}
-                            
+                            <li>
+                                <a href="{{ route('portico') }}"
+                                    class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                                    <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                                        aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path fill-rule="evenodd"
+                                            d="M4 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4Zm10 5a1 1 0 0 1 1-1h3a1 1 0 1 1 0 2h-3a1 1 0 0 1-1-1Zm0 3a1 1 0 0 1 1-1h3a1 1 0 1 1 0 2h-3a1 1 0 0 1-1-1Zm0 3a1 1 0 0 1 1-1h3a1 1 0 1 1 0 2h-3a1 1 0 0 1-1-1Zm-8-5a3 3 0 1 1 6 0 3 3 0 0 1-6 0Zm1.942 4a3 3 0 0 0-2.847 2.051l-.044.133-.004.012c-.042.126-.055.167-.042.195.006.013.02.023.038.039.032.025.08.064.146.155A1 1 0 0 0 6 17h6a1 1 0 0 0 .811-.415.713.713 0 0 1 .146-.155c.019-.016.031-.026.038-.04.014-.027 0-.068-.042-.194l-.004-.012-.044-.133A3 3 0 0 0 10.059 14H7.942Z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="flex-1 ms-3 whitespace-nowrap">Portico</span>
+                                </a>
+                            </li>
                             <li>
                                 <button type="button"
                                     class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
@@ -127,28 +139,28 @@ new class extends Component {
                                 </button>
                                 <ul id="dropdown-example" class="hidden py-2 space-y-2">
                                     <li>
-                                        <a href="{{route('pv.index', ['codigopv' => 'BAR'])}}"
+                                        <a href="{{ route('pv.index', ['codigopv' => 'BAR']) }}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Bar</a>
                                     </li>
                                     <li>
-                                        <a href="{{route('pv.index', ['codigopv' => 'RES'])}}"
+                                        <a href="{{ route('pv.index', ['codigopv' => 'RES']) }}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Barra/restaurant</a>
                                     </li>
                                     <li>
-                                        <a href="{{route('pv.index', ['codigopv' => 'CAD'])}}"
+                                        <a href="{{ route('pv.index', ['codigopv' => 'CAD']) }}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Caddie
                                             bar</a>
                                     </li>
                                     <li>
-                                        <a href="{{route('pv.index', ['codigopv' => 'CAF'])}}"
+                                        <a href="{{ route('pv.index', ['codigopv' => 'CAF']) }}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Cafeteria</a>
                                     </li>
                                     <li>
-                                        <a href="{{route('pv.index', ['codigopv' => 'LOC'])}}"
+                                        <a href="{{ route('pv.index', ['codigopv' => 'LOC']) }}"
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Lockers</a>
                                     </li>
                                 </ul>
-                            </li> 
+                            </li>
                             <li>
                                 <a href="{{ route('recepcion') }}"
                                     class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
@@ -162,7 +174,7 @@ new class extends Component {
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ route('sistemas')}}"
+                                <a href="{{ route('sistemas') }}"
                                     class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                     <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                                         aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"

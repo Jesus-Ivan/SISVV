@@ -76,6 +76,7 @@ class SociosEditar extends Component
         //emitir evento para mostrar el action-message
         $this->dispatch('open-action-message');
     }
+    
     public function confirmarEliminacion()
     {
         try {
@@ -89,6 +90,7 @@ class SociosEditar extends Component
         //Emitir evento para cerrar el modal
         $this->dispatch('close-modal');
     }
+
     //Se ejecuta desde el front, para guardar cambios del socio
     public function saveSocio()
     {

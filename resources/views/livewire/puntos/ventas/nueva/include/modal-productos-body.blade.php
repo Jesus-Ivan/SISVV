@@ -1,6 +1,6 @@
 <div>
     <!-- Modal body -->
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <div class="shadow-md sm:rounded-lg">
         <!-- Search bar-->
         <div class="pb-4 w-full bg-white dark:bg-gray-900">
             <label for="table-search" class="sr-only">Descripcion</label>
@@ -12,78 +12,60 @@
                             d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
                     </svg>
                 </div>
-                <input type="text" id="table-search"
+                <input type="text" id="table-search" wire:model.live.debounce.500ms ="ventaForm.seachProduct"
                     class="w-full block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="Descripcion">
             </div>
         </div>
         <!-- Result table-->
-        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                    <th scope="col" class="p-4">
-                        <div class="flex items-center">
-                            <input id="checkbox-all-search" type="checkbox"
-                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                            <label for="checkbox-all-search" class="sr-only">checkbox</label>
-                        </div>
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        CODIGO
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        DESCRIPCION
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        COSTO
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr
-                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                    <td class="w-4 p-4">
-                        <div class="flex items-center">
-                            <input id="checkbox-table-search-1" type="checkbox"
-                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                            <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
-                        </div>
-                    </td>
-                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        1023
-                    </th>
-                    <td class="px-6 py-4">
-                        PASE CASA CLUB FIN DE
-                    </td>
-                    <td class="px-6 py-4">
-                        $125
-                    </td>
-                </tr>
-                <tr
-                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                    <td class="w-4 p-4">
-                        <div class="flex items-center">
-                            <input id="checkbox-table-search-1" type="checkbox"
-                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                            <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
-                        </div>
-                    </td>
-                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        1023
-                    </th>
-                    <td class="px-6 py-4">
-                        PASE CASA CLUB FIN DE
-                    </td>
-                    <td class="px-6 py-4">
-                        $125
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="overflow-y-auto h-96">
+            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" class="p-4">
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            CODIGO
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            DESCRIPCION
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            COSTO
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($this->productosResult as $producto)
+                        <tr wire:key="{{ $producto->codigo }}"
+                            class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                            <td class="w-4 p-4">
+                                <div class="flex items-center">
+                                    <input id="checkbox-{{ $producto->codigo }}" 
+                                        wire:model="ventaForm.selected.{{ $producto->codigo }}"
+                                        type="checkbox"
+                                        class="w-6 h-6 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                </div>
+                            </td>
+                            <th scope="row"
+                                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                {{ $producto->codigo }}
+                            </th>
+                            <td class="px-6 py-4">
+                                {{ $producto->nombre }}
+                            </td>
+                            <td class="px-6 py-4">
+                                ${{ $producto->costo_unitario }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
     <!-- Modal footer -->
     <div class="flex items-center mt-4 border-t border-gray-200 rounded-b dark:border-gray-600">
-        <button data-modal-hide="modal-productos" type="button"
+        <button data-modal-hide="modal-productos" type="button" wire:click='finishSelect'
             class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Aceptar</button>
     </div>
 </div>

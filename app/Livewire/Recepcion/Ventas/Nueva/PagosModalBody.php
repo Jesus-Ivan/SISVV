@@ -42,7 +42,7 @@ class PagosModalBody extends Component
     public function finishPago()
     {
         $validation_rules = [
-            'monto' => 'required|numeric|min:1',
+            'monto' => 'required|numeric',
             'pago' => 'required',
         ];
         //Validamos las entradas

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CargosController;
 use App\Http\Controllers\EdoCuentaController;
 use App\Http\Controllers\ExcelController;
 use App\Http\Controllers\PermisosController;
@@ -179,6 +180,12 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     Route::prefix('registros')->group(function () {
         Route::view('/', 'sistemas.Herramientas.registros')->name('sistemas.registros');
         Route::post('/', [ExcelController::class, 'importData'])->name('subirRegistros');
+    });
+
+    //RECEPCION
+    Route::prefix('recepcion')->group(function () {
+        Route::view('/cargo-mensualidades', 'sistemas.Recepcion.cargo-mensualidades')->name('sistemas.cargoMensualidades');
+        Route::post('/cargo-mensualidades', [CargosController::class, 'cargarMensualidades'])->name('sistemas.cargoMensualidades');
     });
 
 });

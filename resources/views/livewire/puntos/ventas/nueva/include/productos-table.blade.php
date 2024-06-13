@@ -2,7 +2,7 @@
     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
-                <th scope="col" class="px-6 py-3">
+                <th scope="col" class="w-28 px-6 py-3">
                     TIEMPO
                 </th>
                 <th scope="col" class="px-6 py-3">
@@ -11,29 +11,29 @@
                 <th scope="col" class="px-6 py-3">
                     OBSERVACIONES
                 </th>
-                <th scope="col" class="px-6 py-3">
+                <th scope="col" class="w-24 px-6 py-3">
                     PRECIO
                 </th>
-                <th scope="col" class="px-6 py-3">
+                <th scope="col" class="w-20 px-6 py-3">
                     CANTIDAD
                 </th>
-                <th scope="col" class="px-6 py-3">
+                <th scope="col" class="w-20 px-6 py-3">
                     SUBTOTAL
                 </th>
-                <th scope="col" class="px-6 py-3">
+                <th scope="col" class="w-40 px-6 py-3">
                     ACCIONES
                 </th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($this->ventaForm->productosTable as $producto)
-                <tr
+            @foreach ($this->ventaForm->productosTable as $productoIndex => $producto)
+                <tr wire:key="{{ $productoIndex }}"
                     class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
-                    <th scope="row"
-                        class="w-28 px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        <select id="tiempos"
+                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                        <select id="tiempos" wire:model="ventaForm.productosTable.{{ $productoIndex }}.tiempo"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            <option selected value="1">1</option>
+                            <option selected value="{{ null }}"></option>
+                            <option value="1">1</option>
                             <option value="2">2</option>
                             <option value="3">3</option>
                             <option value="4">4</option>
@@ -41,24 +41,27 @@
                     </th>
                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                         <div class="flex items-center">
-                            <span class="flex w-4 h-4 me-2 bg-yellow-300 rounded-full"></span>
-                            Huevos al gusto
+                            {{-- <span class="flex w-4 h-4 me-2 bg-yellow-300 rounded-full"></span> --}}
+                            <p>{{ $producto['nombre'] }}</p>
                         </div>
                     </th>
                     <td class="px-6 py-4">
                         <input type="text" id="observaciones"
+                            wire:model="ventaForm.productosTable.{{ $productoIndex }}.observaciones"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                     </td>
                     <td class="px-6 py-4">
-                        $125
+                        ${{ $producto['precio'] }}
                     </td>
                     <td class="px-6 py-4">
-                        <input type="number" id="email"
+                        <input type="number" id="cantidad" min="0" max="100"
+                            wire:model="ventaForm.productosTable.{{ $productoIndex }}.cantidad"
+                            wire:change="updateQuantity({{ $productoIndex }}, $event.target.value)"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             placeholder="1" required />
                     </td>
                     <td class="px-6 py-4">
-                        $125
+                        ${{ $producto['subtotal'] }}
                     </td>
                     <td class="px-6 py-4">
                         <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'modal-modificadores'})"
@@ -70,7 +73,7 @@
                             </svg>
                             <span class="sr-only">modificadores</span>
                         </button>
-                        <button type="button"
+                        <button type="button" wire:click="eliminarArticulo({{ $productoIndex }})"
                             class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                 class="w-5 h-5">
@@ -79,6 +82,7 @@
                                     clip-rule="evenodd" />
                             </svg>
                             <span class="sr-only">Borrar</span>
+                        </button>
                     </td>
                 </tr>
             @endforeach
@@ -90,7 +94,7 @@
                 <td class="px-6 py-3"></td>
                 <td class="px-6 py-3"></td>
                 <td class="px-6 py-3"></td>
-                <td class="px-6 py-3">$21,000</td>
+                <td class="px-6 py-3">${{ $this->ventaForm->totalVenta }}</td>
             </tr>
         </tfoot>
     </table>

@@ -171,12 +171,12 @@ class Container extends Component
     {
         $this->validate([
             'cargosTabla.' . $cargoIndex . '.id_tipo_pago' => 'required',
-            'cargosTabla.' . $cargoIndex . '.monto_pago'  => 'required|numeric|min:1'
+            'cargosTabla.' . $cargoIndex . '.monto_pago'  => 'required|numeric|min:0.01'
         ], [
             'cargosTabla.*.id_tipo_pago.required' => 'El tipo de pago es obligatorio',
             'cargosTabla.*.monto_pago.required' => 'Obligatorio',
             'cargosTabla.*.monto_pago.numeric' => 'Número',
-            'cargosTabla.*.monto_pago.min' => 'Mínimo: 1',
+            'cargosTabla.*.monto_pago.min' => 'Mínimo: 0.01',
         ]);
     }
 

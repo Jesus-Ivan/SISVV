@@ -73,7 +73,7 @@
                 </svg>
                 Cancelar
             </button>
-            <button type="button"
+            <button type="button" wire:click ='guardarVenta'
                 class="inline-flex items-center focus:outline-none text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-900">
                 <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -109,7 +109,6 @@
         </x-slot>
     </x-modal>
     <!--Modal pagos -->
-
     <x-modal name="modal-pagos" title="Agregar metodo de pago">
         <x-slot name='body'>
             @include('livewire.puntos.ventas.nueva.include.modal-pagos-body')
@@ -120,8 +119,8 @@
         <div id="alert-border-3"
             class="flex items-center p-4 mb-4 text-green-800 border-t-4 border-green-300 bg-green-50 dark:text-green-400 dark:bg-gray-800 dark:border-green-800"
             role="alert">
-            <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                fill="currentColor" viewBox="0 0 20 20">
+            <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                viewBox="0 0 20 20">
                 <path
                     d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
             </svg>

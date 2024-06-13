@@ -2,10 +2,13 @@
 
 namespace App\Livewire\Forms;
 
+use App\Models\Cuota;
 use App\Models\IntegrantesSocio;
 use App\Models\Membresias;
 use App\Models\Socio;
+use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Validate;
@@ -254,6 +257,17 @@ class SocioForm extends Form
             SocioMembresia::create([
                 'id_socio' => $socio->id,
                 'clave_membresia' => $this->clave_membresia,
+                'estado' => 'MEN'
+            ]);
+
+            //Buscamos la cuota que corresponde a la membresia, y el estado de la misma.
+            $cuota = Cuota::where('clave_membresia', $this->clave_membresia)
+                ->where('tipo', 'MEN')
+                ->get();
+            //Agregamos cuota mensual de la membresia, en la tabla socios_cuotas
+            SocioCuota::create([
+                'id_socio' => $socio->id,
+                'id_cuota' => $cuota[0]['id'],
             ]);
 
             //Creamos cada uno de los miembros del socio
@@ -307,7 +321,7 @@ class SocioForm extends Form
             //Guardamos la imagen y obtenemos la ruta relativa
             $validated['img_path'] = $this->img_path->store('fotos', 'public');
             //Comprobamos si existia ruta registrada en la DB, de la imagen, para eliminarla
-            if($this->socio->img_path){
+            if ($this->socio->img_path) {
                 //Eliminamos la imagen anterior
                 Storage::disk('public')->delete($this->socio->img_path);
             }
@@ -315,16 +329,50 @@ class SocioForm extends Form
             //De lo contrario, conservamos la ruta anterior de la imagen
             $validated['img_path'] = $this->socio->img_path;
         }
-        //Actualizamos su membresia
-        SocioMembresia::where('id_socio', $this->socio->id)
-            ->update([
-                'clave_membresia' => $validated['clave_membresia'],
-                'estado' => $validated['estado_membresia'],
-            ]);
-        //Retiramos la clave de la membresia, antes de ACTUALIZAR el socio
-        unset($validated['clave_membresia'], $validated['estado_membresia']);
-        //Actualizamos el socio.
-        $this->socio->update($validated);
+        //Iniciamos transaccion
+        DB::transaction(function () use ($validated) {
+            //Buscamos la cuota de la membresia actual del socio
+            $cuota_actual = DB::table('socios_cuotas')
+                ->join('cuotas', 'socios_cuotas.id_cuota', '=', 'cuotas.id')
+                ->select('socios_cuotas.*', 'cuotas.tipo', 'cuotas.clave_membresia')
+                ->where('socios_cuotas.id_socio', $this->socio->id)
+                ->whereNotNull('clave_membresia')
+                ->get();
+
+            //Buscamos nueva cuota de la mensualidad del socio, de la tabla 'socios_cuotas'
+            $cuota_nueva = Cuota::where('clave_membresia',  $validated['clave_membresia'])
+                ->where('tipo', $validated['estado_membresia'])
+                ->get();
+
+            //Si hayo resultado de la union para la cuota actual
+            if (count($cuota_actual) > 0) {
+                //buscamos registro actual de la membresia, desde la tabla 'socios_cuotas'
+                $socio_cuota = SocioCuota::find($cuota_actual[0]->id);
+                if (count($cuota_nueva) > 0) {
+                    //Si encontro la nueva cuota correspondiente, actualizar
+                    $socio_cuota->update(['id_cuota' => $cuota_nueva[0]->id]);
+                }
+            } else {
+                //Si no hay cuota, la creamos en la BD
+                if (count($cuota_nueva) > 0) {
+                    SocioCuota::create([
+                        'id_socio' => $this->socio->id,
+                        'id_cuota' => $cuota_nueva[0]['id']
+                    ]);
+                }
+            }
+
+            //Actualizamos su membresia
+            SocioMembresia::where('id_socio', $this->socio->id)
+                ->update([
+                    'clave_membresia' => $validated['clave_membresia'],
+                    'estado' => $validated['estado_membresia'],
+                ]);
+            //Retiramos la clave de la membresia, antes de ACTUALIZAR el socio
+            unset($validated['clave_membresia'], $validated['estado_membresia']);
+            //Actualizamos el socio.
+            $this->socio->update($validated);
+        }, 3);
     }
 
     //Este metodo sirve para registrar un integrante, hacia un socio existente

@@ -400,35 +400,4 @@ class ReportesController extends Controller
         $footer_ticket = ($font_size_p * 2) + 10;
         return  $header_ticket + $inicio_ticket + $productos_ticket + $pago_ticket + $footer_ticket;
     }
-
-    //Recibe un numero de mes y devuelve el mes en español
-    private function getMes($fecha)
-    {
-        switch ($fecha) {
-            case 1:
-                return 'Enero';
-            case 2:
-                return 'Febrero';
-            case 3:
-                return 'Marzo';
-            case 4:
-                return 'Abril';
-            case 5:
-                return 'Mayo';
-            case 6:
-                return 'Junio';
-            case 7:
-                return 'Julio';
-            case 8:
-                return 'Agosto';
-            case 9:
-                return 'Septiembre';
-            case 10:
-                return 'Octubre';
-            case 11:
-                return 'Noviembre';
-            case 12:
-                return 'Diciembre';
-        }
-    }
 }

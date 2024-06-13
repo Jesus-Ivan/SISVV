@@ -4,6 +4,8 @@ namespace App\Livewire\Recepcion\Estados;
 
 use App\Models\Cuota;
 use App\Models\EstadoCuenta;
+use App\Models\Socio;
+use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
 use Carbon\Carbon;
 use Exception;
@@ -24,6 +26,8 @@ class CargosNuevo extends Component
 
     public $search;
     public $listaCargos = [];
+    public $listaCargosFijos = [];
+    public $listaCargosEliminados = []; //Esta lista almacena los id, de los cargos fijos originales, que fueron eliminados
 
     public $fechaDestino;
 
@@ -31,6 +35,8 @@ class CargosNuevo extends Component
     {
         $this->socio = $socio;
         $this->socioMembresia = SocioMembresia::with('membresia')->where('id_socio', $socio->id)->get()[0];
+        //Buscamos los cargos fijos del socio
+        $this->listaCargosFijos = $this->obtenerCargosFijos($socio);
     }
 
     //Propiedad computarizada que pobla los resultados de busqueda
@@ -38,6 +44,16 @@ class CargosNuevo extends Component
     public function cuotas()
     {
         return Cuota::where('descripcion', 'like', '%' . $this->search . '%')->limit(10)->get();
+    }
+
+    //Propiedad computarizada que pobla los resultados de busqueda de los cargos fijos
+    #[Computed()]
+    public function cuotasFijas()
+    {
+        return Cuota::where('descripcion', 'like', '%' . $this->search . '%')
+            ->where('tipo', 'CAR')
+            ->limit(10)
+            ->get();
     }
 
     //Agrega el cargo de forma temporal al array de cargos
@@ -93,21 +109,49 @@ class CargosNuevo extends Component
         $this->listaCargos[] = $cuota;
     }
 
+    //Agregar cuota fija
+    public function addCuotaFija($cuota)
+    {
+        $this->listaCargosFijos[] = [
+            'id_socio' => $this->socio->id,
+            'id_cuota' => $cuota['id'],
+            'cuota' => [
+                'id' => $cuota['id'],
+                'descripcion' => $cuota['descripcion'],
+                'monto' => $cuota['monto'],
+                'tipo' => $cuota['tipo'],
+                'clave_membresia' => $cuota['clave_membresia'],
+            ],
+        ];
+    }
+
+    public function verDatos()
+    {
+        dump($this->listaCargosFijos);
+    }
+
     //Eliminar el cargo del array de cargos
     public function removeCuota($cargoIndex)
     {
         unset($this->listaCargos[$cargoIndex]);
     }
 
+    public function removerCargoFijo($cargoIndex)
+    {
+        //Comprobamos si el id del cargo fijo, estaba definido en el array
+        if (isset($this->listaCargosFijos[$cargoIndex]['id'])) {
+            //guardamos el id, de la cuota fija del sicio, para eliminar despues
+            array_push($this->listaCargosEliminados, $this->listaCargosFijos[$cargoIndex]['id']);
+        }
+        unset($this->listaCargosFijos[$cargoIndex]);
+    }
+
     public function guardarCambios()
     {
-        //Validamos la lista de cargos no este vacia
-        $this->validate(['listaCargos' => 'min:1']);
-
         try {
             //Creamos una transaccion para que si hay un error, no se guarden los datos
             DB::transaction(function () {
-                //Actualizamos el estado de cuenta
+                //Actualizamos el estado de cuenta con los cargos aplicados a un mes
                 foreach ($this->listaCargos as $key => $cargo) {
                     EstadoCuenta::create([
                         'id_cuota' => $cargo['id'],
@@ -118,17 +162,36 @@ class CargosNuevo extends Component
                         'saldo' => $cargo['monto'],
                     ]);
                 }
+                //Recorremos el array para crear los nuevos cargos fijos
+                foreach ($this->listaCargosFijos as $key => $cargoFijo) {
+                    if (!array_key_exists('id', $cargoFijo)) {
+                        SocioCuota::create([
+                            'id_socio' => $this->socio->id,
+                            'id_cuota' => $cargoFijo['cuota']['id'],
+                        ]);
+                    }
+                }
+                foreach ($this->listaCargosEliminados as $id) {
+                    SocioCuota::destroy($id);
+                }
+                //Volvemos a cargar la 'listaCargosFijos'
+                $this->listaCargosFijos = $this->obtenerCargosFijos($this->socio);
             });
             //Emitimos evento para abrir alert
             $this->dispatch('action-message-cargos');
             //Enviamos mensaje de sesion
             session()->flash('success', 'Cargos registrados con éxito');
-            //Limpiamos la lista
-            $this->reset(['listaCargos']);
+            //Limpiamos la listaDe cargos mensuales y de los eliminados-fijos
+            $this->reset(['listaCargos', 'listaCargosEliminados']);
         } catch (Exception $e) {
             $this->dispatch('action-message-cargos');
             session()->flash('fail', $e->getMessage());
         }
+    }
+
+    private function obtenerCargosFijos($socio)
+    {
+        return SocioCuota::with('cuota')->where('id_socio', $socio->id)->get()->toArray();
     }
     //Recibe una numero del mes y devuelve el nombre del mes en español
     private function getMes($mes)

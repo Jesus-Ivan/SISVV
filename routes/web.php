@@ -99,13 +99,13 @@ Route::controller(PermisosController::class)->prefix('recepcion')->middleware(['
         Route::view('/', 'recepcion.Socios.socios')->name('recepcion.socios');
         Route::view('nuevo', 'recepcion.Socios.nuevo-socio')->name('recepcion.socios.nuevo');
         Route::get('editar/{socio}', [SociosController::class, 'showEdit'])->name('recepcion.socios.editar');
+        Route::get('qr/{socioId}', [ReportesController::class, 'generarQR'])->name('recepcion.socios.qr');
     });
     Route::prefix('edo-cuenta')->group(function () {
         Route::view('/', 'recepcion.Estado-cuenta.estado-cuenta')->name('recepcion.estado');
         Route::get('nuevo-cargo/{socio}', [EdoCuentaController::class, 'showEditEdoCuenta'])->name('recepcion.estado.nuevo');
         Route::get('reporte/{socio}/{tipo}/{fInicio}/{fFin}/{option}', [ReportesController::class, 'generarEstadoCuenta'])->name('recepcion.estado.reporte');
     });
-
     Route::view('caja', 'recepcion.caja.caja')->middleware(['auth'])->name('recepcion.caja');
 });
 
@@ -172,6 +172,9 @@ Route::prefix('sistemas')->middleware(['auth'])->group(function () {
     Route::view('familias', 'sistemas.familias')->name('sistemas.familias');
     Route::view('categorias', 'sistemas.categorias')->name('sistemas.categorias');
     Route::view('unidades', 'sistemas.unidades')->name('sistemas.unidades');
+
+    //DEPARTAMENTO DE RECEPCIÓN
+    Route::view('membresias', 'sistemas.Recepcion.membresias')->name('sistemas.membresias');
 
     //HERRAMIENTAS ADICIONALES A SISTEMAS
     Route::prefix('registros')->group(function () {

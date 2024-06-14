@@ -28,10 +28,10 @@
                         <th scope="col" class="px-6 py-3 w-full">
                             SOCIO
                         </th>
-                        <th scope="col" class="px-6 py-3 min-w-72">
+                        <th scope="col" class="px-6 py-3 min-w-60">
                             MEMBRESIA
                         </th>
-                        <th scope="col" class="px-6 py-3 max-w-fit">
+                        <th scope="col" class="px-6 py-3 min-w-40 text-center">
                             ACCIONES
                         </th>
                     </tr>
@@ -58,10 +58,10 @@
                                 </div>
                             </td>
                             {{-- TIPO MEMBRESIA --}}
-                            <td class="min-w-72 px-6 py-4">
+                            <td class="min-w-60 px-6 py-4">
                                 {{ $socio->descripcion }}
                             </td>
-                            <td class="max-w-fit px-6 py-4">
+                            <td class="px-6 py-4 text-center">
                                 <a href="{{ route('recepcion.socios.editar', $socio->id) }}">
                                     <button type="button"
                                         class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
@@ -76,6 +76,17 @@
                                         </svg>
                                         <span class="sr-only">Editar</span>
                                     </button>
+                                </a>
+                                <a type="button" href="{{route('recepcion.socios.qr', $socio->id) }}" target="_blank"
+                                    class="text-gray-700 border border-gray-700 hover:bg-gray-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-gray-500 dark:text-gray-500 dark:hover:text-white dark:focus:ring-gray-800 dark:hover:bg-gray-500">
+                                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                        width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4h6v6H4V4Zm10 10h6v6h-6v-6Zm0-10h6v6h-6V4Zm-4 10h.01v.01H10V14Zm0 4h.01v.01H10V18Zm-3 2h.01v.01H7V20Zm0-4h.01v.01H7V16Zm-3 2h.01v.01H4V18Zm0-4h.01v.01H4V14Z" />
+                                        <path stroke="currentColor" stroke-linejoin="round" stroke-width="2"
+                                            d="M7 7h.01v.01H7V7Zm10 10h.01v.01H17V17Z" />
+                                    </svg>
+                                    <span class="sr-only">QR</span>
                                 </a>
                             </td>
                         </tr>

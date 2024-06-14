@@ -332,6 +332,7 @@ class ReportesController extends Controller
         $pdf->setPaper([0, 0, 226.772, 841.89], 'portrait');
         $pdf->setOption(['defaultFont' => 'Courier']);
         return $pdf->stream('qr' . $resultSocio->nombre . '.pdf');
+    }
 
     public function vencidos(Request $request)
     {

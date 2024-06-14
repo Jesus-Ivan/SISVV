@@ -10,8 +10,7 @@
         </div>
     </div>
     {{-- FECHA Y BOTON DE CARGOS --}}
-    <div
-        class="{{ $socioMembresia->estado == 'CAN' ? 'flex opacity-50 pointer-events-none' : 'flex' }}">
+    <div class="{{ $socioMembresia->estado == 'CAN' ? 'flex opacity-50 pointer-events-none' : 'flex' }}">
         {{-- Fecha --}}
         <div class="w-full">
             <input type="date" id="inicio" wire:model="fechaDestino"
@@ -51,7 +50,7 @@
             </thead>
             <tbody>
                 @foreach ($listaCargos as $cargoIndex => $cargo)
-                    <tr
+                    <tr wire:key="{{ $cargoIndex }}"
                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                         <th scope="row"
                             class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
@@ -83,6 +82,10 @@
             </tbody>
         </table>
     </div>
+    {{-- Seccion de cargos fijos --}}
+    <div class="{{ $socioMembresia->estado == 'CAN' ? ' opacity-50 pointer-events-none' : '' }}">
+        @include('livewire.recepcion.estados.include.cargos-fijos')
+    </div>
     <!--BOTONES DE FINALIZADO-->
     <div>
         <a type="button" href="{{ route('recepcion.estado') }}"
@@ -111,6 +114,8 @@
             </div>
             Guardar cambios
         </button>
+
+        <button wire:click='verDatos()'>ver </button>
     </div>
     <!--MODAL DE CARGOS-->
     <x-modal title="Seleccionar cargo" name="cargosModal">
@@ -174,7 +179,6 @@
                                                 <path stroke="currentColor" stroke-linecap="round"
                                                     stroke-linejoin="round" stroke-width="2" d="M5 12h14m-7 7V5" />
                                             </svg>
-
                                         </button>
                                     </td>
                                 </tr>

@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users_permisos', function (Blueprint $table) {
+        Schema::create('socios_cuotas', function (Blueprint $table) {
             $table->id();
-            $table->integer('id_user');
-            $table->string('clave_departamento', 50);
-            $table->string('clave_punto_venta', 50)->nullable();
-            $table->string('clave_rol', 50)->nullable();
+            $table->integer('id_socio');
+            $table->integer('id_cuota')->nullable();
+            $table->timestamps();
         });
     }
 
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users_permisos');
+        Schema::dropIfExists('socios_cuotas');
     }
 };

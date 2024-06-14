@@ -97,7 +97,7 @@
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Membresias</a>
                             </li>
                             <li>
-                                <a href="{{ route('almacen.ordenes') }}"
+                                <a href="{{ route('sistemas.cargoMensualidades') }}"
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Cargo de mensualidad</a>
                             </li>
                             <li>

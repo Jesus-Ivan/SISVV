@@ -11,12 +11,22 @@ class Principal extends Component
 {
     use WithPagination;
     public $search;
+    public $fecha;
+
+    public function mount(){
+        $this->fecha = now()->toDateString();
+    }
+
+    public function buscar (){
+        $this->resetPage();
+    }
+
 
     #[Computed()]
     public function recibos()
     {
-        return Recibo::where('id_socio', '=', $this->search)
-            ->orWhere('nombre', 'like', '%' . $this->search . '%')
+        return Recibo::whereDate('created_at',$this->fecha)
+            ->whereAny(['id_socio','nombre'], 'like', '%' . $this->search . '%')
             ->orderby('created_at', 'desc')
             ->paginate(10);
     }

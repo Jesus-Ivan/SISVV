@@ -6,14 +6,12 @@ use App\Models\Caja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
-use App\Models\PuntoVenta;
 use App\Models\Recibo;
 use App\Models\SaldoFavor;
 use App\Models\Socio;
 use App\Models\TipoPago;
 use App\Models\Venta;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -322,21 +320,6 @@ class ReportesController extends Controller
         return $pdf->stream('ReporteCobranzaResumen.pdf');
     }
 
-    /*public function generarQR($socio)
-    {
-        $resultSocio = Socio::find($socio);
-
-        $data = [
-            'resultSocio' => $resultSocio,
-        ];
-
-        $pdf = Pdf::loadView('reportes.qr', $data);
-        $pdf->setPaper([0, 0, 226.772, 841.89], 'portrait');
-        $pdf->setOption(['defaultFont' => 'Courier']);
-        return $pdf->stream('qr' . $resultSocio->nombre . '.pdf');
-        //return QrCode::size(200)->generate('Hola');
-    }*/
-
     public function generarQR($socio)
     {
         $resultSocio = Socio::find($socio);
@@ -349,6 +332,63 @@ class ReportesController extends Controller
         $pdf->setPaper([0, 0, 226.772, 841.89], 'portrait');
         $pdf->setOption(['defaultFont' => 'Courier']);
         return $pdf->stream('qr' . $resultSocio->nombre . '.pdf');
+
+    public function vencidos(Request $request)
+    {
+        $fInicio = $request->input('fInicio');
+        $fFin = $request->input('fFin');
+
+        $this->validate($request,[
+            'fInicio' => 'required|date',
+            'fFin' => 'required|date',
+        ]);
+
+        $header = [
+            'title' => 'VISTA VERDE COUNTRY CLUB',
+            'rfc' => 'VVC101110AQ4',
+            'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
+            'telefono' => '3745011',
+            'fInicio' => $fInicio,
+            'fFin' => $fFin
+        ];
+
+        $estados = EstadoCuenta::whereDate('fecha', '>=', $fInicio)
+            ->whereDate('fecha', '<=', $fFin)
+            ->where('saldo', '>', 0)
+            ->get();
+
+        $totales = [];
+        foreach ($estados as $key => $estado) {
+            $result_filter = array_filter($totales, function ($row) use ($estado) {
+                return $row['id_socio'] == $estado->id_socio;
+            });
+
+            if (count($result_filter) > 0) {
+                //Buscamos la posicion del elemento en el array
+                for ($i = 0; $i < count($totales); $i++) {
+                    if ($totales[$i]['id_socio'] == $estado->id_socio) {
+                        //Si coincide con folio y tipo de pago, acumulamos el monto, en el elemento del array.
+                        $totales[$i]['monto'] += $estado->saldo;
+                    }
+                }
+            } else {
+                //Si no existe dentro del array
+                $socio = Socio::where('id', $estado->id_socio)->limit(1)->get();
+                array_push($totales, [
+                    'id_socio' => $estado->id_socio,
+                    'nombre' => count($socio) > 0 ? $socio[0]->nombre . ' ' . $socio[0]->apellido_p . ' ' . $socio[0]->apellido_m : 'N/R',
+                    'monto' => $estado->saldo,
+                ]);
+            }
+        }
+        $data = [
+            'header' => $header,
+            'totales' => $totales,
+            'total' => array_sum(array_column($totales, 'monto'))
+        ];
+        $pdf = Pdf::loadView('reportes.cartera-vencida', $data);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        return $pdf->stream('reporte-vencidos' . $fInicio . '.pdf');
     }
 
     private function calcularAltura($data)
@@ -373,36 +413,5 @@ class ReportesController extends Controller
         }
         $footer_ticket = ($font_size_p * 2) + 10;
         return  $header_ticket + $inicio_ticket + $productos_ticket + $pago_ticket + $footer_ticket;
-    }
-
-    //Recibe un numero de mes y devuelve el mes en español
-    private function getMes($fecha)
-    {
-        switch ($fecha) {
-            case 1:
-                return 'Enero';
-            case 2:
-                return 'Febrero';
-            case 3:
-                return 'Marzo';
-            case 4:
-                return 'Abril';
-            case 5:
-                return 'Mayo';
-            case 6:
-                return 'Junio';
-            case 7:
-                return 'Julio';
-            case 8:
-                return 'Agosto';
-            case 9:
-                return 'Septiembre';
-            case 10:
-                return 'Octubre';
-            case 11:
-                return 'Noviembre';
-            case 12:
-                return 'Diciembre';
-        }
     }
 }

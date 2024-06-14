@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CargosController;
 use App\Http\Controllers\EdoCuentaController;
 use App\Http\Controllers\ExcelController;
 use App\Http\Controllers\PermisosController;
@@ -78,8 +79,8 @@ Route::prefix('almacen')->middleware(['auth'])->group(function () {
     });
 });
 
-Route::controller(PermisosController::class)->prefix('recepcion')->middleware(['auth'])->group(function () {
-    Route::get('/', 'index')->name('recepcion');
+Route::prefix('recepcion')->middleware(['auth','recepcion'])->group(function () {
+    Route::view('/', 'recepcion.index')->name('recepcion');
     Route::prefix('ventas')->group(function () {
         Route::view('/', 'recepcion.Ventas.ventas')->name('recepcion.ventas');
         Route::view('nueva', 'recepcion.Ventas.nueva-venta')->name('recepcion.ventas.nueva');
@@ -106,6 +107,10 @@ Route::controller(PermisosController::class)->prefix('recepcion')->middleware(['
         Route::get('nuevo-cargo/{socio}', [EdoCuentaController::class, 'showEditEdoCuenta'])->name('recepcion.estado.nuevo');
         Route::get('reporte/{socio}/{tipo}/{fInicio}/{fFin}/{option}', [ReportesController::class, 'generarEstadoCuenta'])->name('recepcion.estado.reporte');
     });
+
+    Route::view('cartera', 'recepcion.Cartera.vencidos')->name('recepcion.cartera');
+    Route::post('cartera', [ReportesController::class, 'vencidos'])->name('recepcion.cartera.vencidos');
+
     Route::view('caja', 'recepcion.caja.caja')->middleware(['auth'])->name('recepcion.caja');
 });
 
@@ -136,7 +141,7 @@ Route::prefix('cocina')->middleware(['auth'])->group(function () {
     Route::view('mermas', 'cocina.Mermas.mermas')->name('cocina.mermas');
 });
 
-Route::prefix('pv/{codigopv}')->middleware(['auth'])->group(function () {
+Route::prefix('pv/{codigopv}')->middleware(['auth','puntos'])->group(function () {
 
     Route::view('/', 'puntos.index')->name('pv.index');
 
@@ -160,7 +165,7 @@ Route::prefix('pv/{codigopv}')->middleware(['auth'])->group(function () {
     Route::view('caja', 'puntos.caja.caja')->middleware(['auth'])->name('pv.caja');
 });
 
-Route::prefix('sistemas')->middleware(['auth'])->group(function () {
+Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     Route::view('/', 'sistemas.index')->name('sistemas');
 
     //DEPARTAMENTO DE ALMACEN
@@ -182,6 +187,23 @@ Route::prefix('sistemas')->middleware(['auth'])->group(function () {
         Route::post('/', [ExcelController::class, 'importData'])->name('subirRegistros');
     });
 
+    //RECEPCION
+    Route::prefix('recepcion')->group(function () {
+        Route::view('/cargo-mensualidades', 'sistemas.Recepcion.cargo-mensualidades')->name('sistemas.cargoMensualidades');
+        Route::post('/cargo-mensualidades', [CargosController::class, 'cargarMensualidades'])->name('sistemas.cargoMensualidades');
+    });
+
 });
+
+Route::prefix('portico')->middleware(['auth'])->group(function () {
+    Route::view('/', 'portico.index')->name('portico');
+    Route::view('socios', 'portico.Socios.container')->name('portico.socios');
+
+    /* Route::prefix('catalogo')->group(function () {
+        Route::view('/', 'sistemas.Almacen.catalogo')->name('sistemas.catalogo');
+        Route::view('nuevo', 'sistemas.Almacen.nuevo-catalogo')->name('sistemas.almacen.nuevo');
+    }); */
+});
+
 
 require __DIR__ . '/auth.php';

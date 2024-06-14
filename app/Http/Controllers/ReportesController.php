@@ -15,6 +15,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Stringable;
 
 class ReportesController extends Controller
 {
@@ -145,7 +147,6 @@ class ReportesController extends Controller
         }
         return $pdf->stream("ESTADO-CUENTA-$resultSocio->id-$resultSocio->nombre.pdf");
     }
-
 
     public function generarRecibo(int $folio)
     {
@@ -318,6 +319,19 @@ class ReportesController extends Controller
         $pdf->setOption(['defaultFont' => 'Courier']);
         return $pdf->stream('ReporteCobranzaResumen.pdf');
     }
+
+    public function generarQR($socio)
+    {
+        $resultSocio = Socio::find($socio);
+        $data = [
+            'resultSocio' => $resultSocio,
+        ];
+
+        $codigoQR = QrCode::size(150)->generate($resultSocio->nombre);
+        $pdf = Pdf::loadView('reportes.qr', $data,  ["valor" => $codigoQR]);
+        $pdf->setPaper([0, 0, 226.772, 841.89], 'portrait');
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        return $pdf->stream('qr' . $resultSocio->nombre . '.pdf');
 
     public function vencidos(Request $request)
     {

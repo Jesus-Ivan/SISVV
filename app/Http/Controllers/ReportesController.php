@@ -327,7 +327,7 @@ class ReportesController extends Controller
             'resultSocio' => $resultSocio,
         ];
 
-        $codigoQR = QrCode::size(150)->generate($resultSocio->nombre);
+        $codigoQR = QrCode::size(150)->generate($resultSocio->id);
         $pdf = Pdf::loadView('reportes.qr', $data,  ["valor" => $codigoQR]);
         $pdf->setPaper([0, 0, 226.772, 841.89], 'portrait');
         $pdf->setOption(['defaultFont' => 'Courier']);

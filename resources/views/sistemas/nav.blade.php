@@ -101,8 +101,12 @@
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Cargo de mensualidad</a>
                             </li>
                             <li>
-                                <a href="{{ route('almacen.ordenes') }}"
+                                <a href="{{ route('sistemas.recargos') }}"
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Calcular recargos</a>
+                            </li>
+                            <li>
+                                <a href="{{ route('sistemas.recargos') }}"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Cargar anualidad</a>
                             </li>
                         </ul>
                     </div>

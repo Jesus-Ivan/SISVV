@@ -59,7 +59,7 @@
             </thead>
             <tbody>
                 @foreach ($resulEstado as $cargo)
-                    <tr>
+                    <tr style="{{ $cargo->vista != 'ORD' ? 'background-color: aquamarine' : '' }}">
                         <td>{{ $cargo->fecha }}</td>
                         <td style=" border-left-width: 1px; border-left-style: solid; border-left-color: black;">
                             {{ $cargo->concepto }}

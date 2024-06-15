@@ -12,6 +12,7 @@ class Principal extends Component
     use WithPagination;
     public $search;
     public $radioButon;
+    public $vista;
 
     public $fechaInicio, $fechaFin;
 
@@ -23,6 +24,7 @@ class Principal extends Component
         $this->fechaFin = now()->day(now()->daysInMonth)->toDateString();
         $this->search = '';                     //Nombre por default
         $this->radioButon = 'T';                //Radio button 'Mostrar Todos'
+        $this->vista = 'COM';                     //Select 'Mostrar Todos'
     }
 
     #[Computed()]
@@ -34,7 +36,7 @@ class Principal extends Component
             'apellido_m',
         ], 'LIKE', '%' . $this->search . '%')
             ->orWhere('id', $this->search)
-            ->limit(40)
+            ->limit(30)
             ->paginate(5);
     }
 

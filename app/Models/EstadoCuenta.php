@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EstadoCuenta extends Model
 {
@@ -14,4 +16,9 @@ class EstadoCuenta extends Model
     protected $guarded = ['id'];
     //Clave primaria
     protected $primaryKey = 'id';
+
+    public function cuota(): BelongsTo
+    {
+        return $this->belongsTo(Cuota::class, 'id_cuota', 'id');
+    }
 }

@@ -86,7 +86,7 @@ class ReportesController extends Controller
         return $pdf->stream("corte{{$caja->corte}}.pdf");
     }
 
-    public function generarEstadoCuenta($socio, $tipo, $fInicio, $fFin, $option)
+    public function generarEstadoCuenta($socio, $tipo, $vista, $fInicio, $fFin, $option)
     {
         //Buscamos el socio
         $resultSocio = Socio::find($socio);
@@ -103,6 +103,7 @@ class ReportesController extends Controller
                 $resulEstado = EstadoCuenta::where('id_socio', $resultSocio->id)
                     ->whereDate('fecha', '>=', $fInicio)
                     ->whereDate('fecha', '<=', $fFin)
+                    ->orderBy('fecha', 'asc')
                     ->get();
                 break;
             case 'P':
@@ -111,6 +112,7 @@ class ReportesController extends Controller
                     ->whereDate('fecha', '>=', $fInicio)
                     ->whereDate('fecha', '<=', $fFin)
                     ->where('saldo', '>', 0)
+                    ->orderBy('fecha', 'asc')
                     ->get();
                 break;
             case 'C':
@@ -119,8 +121,14 @@ class ReportesController extends Controller
                     ->whereDate('fecha', '>=', $fInicio)
                     ->whereDate('fecha', '<=', $fFin)
                     ->where('consumo', true)
+                    ->orderBy('fecha', 'asc')
                     ->get();
                 break;
+        }
+        if ($vista == 'ORD') {
+            $resulEstado = $resulEstado->where('vista', 'ORD');
+        } elseif ($vista == 'ESP') {
+            $resulEstado = $resulEstado->where('vista', 'ESP');
         }
         //Buscamos si el socio tiene saldo a favor disponible;
         $saldoFavor = DB::table('recibos')
@@ -324,7 +332,7 @@ class ReportesController extends Controller
         $fInicio = $request->input('fInicio');
         $fFin = $request->input('fFin');
 
-        $this->validate($request,[
+        $this->validate($request, [
             'fInicio' => 'required|date',
             'fFin' => 'required|date',
         ]);

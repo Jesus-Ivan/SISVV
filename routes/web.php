@@ -104,7 +104,7 @@ Route::prefix('recepcion')->middleware(['auth','recepcion'])->group(function () 
     Route::prefix('edo-cuenta')->group(function () {
         Route::view('/', 'recepcion.Estado-cuenta.estado-cuenta')->name('recepcion.estado');
         Route::get('nuevo-cargo/{socio}', [EdoCuentaController::class, 'showEditEdoCuenta'])->name('recepcion.estado.nuevo');
-        Route::get('reporte/{socio}/{tipo}/{fInicio}/{fFin}/{option}', [ReportesController::class, 'generarEstadoCuenta'])->name('recepcion.estado.reporte');
+        Route::get('reporte/{socio}/{tipo}/{vista}/{fInicio}/{fFin}/{option}', [ReportesController::class, 'generarEstadoCuenta'])->name('recepcion.estado.reporte');
     });
     Route::view('cartera', 'recepcion.Cartera.vencidos')->name('recepcion.cartera');
     Route::post('cartera', [ReportesController::class, 'vencidos'])->name('recepcion.cartera.vencidos');
@@ -186,6 +186,9 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     Route::prefix('recepcion')->group(function () {
         Route::view('/cargo-mensualidades', 'sistemas.Recepcion.cargo-mensualidades')->name('sistemas.cargoMensualidades');
         Route::post('/cargo-mensualidades', [CargosController::class, 'cargarMensualidades'])->name('sistemas.cargoMensualidades');
+        Route::view('/recargos', 'sistemas.Recepcion.recargos')->name('sistemas.recargos');
+        Route::post('/recargos', [CargosController::class, 'calcularRecargos'])->name('sistemas.recargos');
+
     });
 
 });

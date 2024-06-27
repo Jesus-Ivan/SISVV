@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Anualidad;
 use App\Models\Cuota;
 use App\Models\EstadoCuenta;
 use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class CargosController extends Controller
@@ -77,7 +78,7 @@ class CargosController extends Controller
                     $resta =  count($cuota_separada) - count($estado_cuenta_separado[$key]);
                     //Si hay mas cuotas del mismo 'id_cuota', que cuotas registradas en el estado de cuenta
                     if ($resta > 0) {
-                        //Verficamos si se trata de cutoa de membresia.
+                        //Verficamos si se trata de cuota de membresia.
                         if (count($cuotas->whereNotNull('clave_membresia')->where('id', $key))) {
                             //Filtramos si existe alguna cuota de membresia resgistrada, en el estado de cuenta.
                             $mensualidades_previas = array_filter($estado_cuenta->toArray(), function ($cargo) {
@@ -104,9 +105,19 @@ class CargosController extends Controller
                 }
             }
         }, 2);
-
-
         return  'todo bien, vuelve atras ;D';
+    }
+
+    public function verificarAnualidades(Request $request)
+    {
+        //Parseamos la fecha a una instancia de carbon
+        $fecha = Carbon::parse($request->input('fecha'));
+        $anualidades = Anualidad::whereYear('fecha_inicio', $fecha->year)
+            ->orWhere(function (Builder $query) use ($fecha) {
+                $query->whereYear('fecha_fin', $fecha->year);
+            })
+            ->get();
+        dd($anualidades);
     }
 
     public function calcularRecargos(Request $request)
@@ -123,14 +134,16 @@ class CargosController extends Controller
         $recargo_cuota = Cuota::where('descripcion', 'like', '%RECARGO%')->first();
 
         DB::transaction(function () use ($socios_membresias, $fecha_inicio_mes, $fecha, $recargo_cuota) {
+            //Para cada registro de membresia
             foreach ($socios_membresias as $membresia) {
+                //Obtenemos el estado de cuenta del socio, con los conceptos a deber.
                 $estado_cuenta = EstadoCuenta::where('id_socio', $membresia->id_socio)
                     ->where('vista', 'ORD')
                     ->where('saldo', '>', '0')
                     ->get();
-
+                //Separamos los conceptos que sean previos al mes al que se aplican los recargos
                 $estado_deuda_anterior = $estado_cuenta->where('fecha', '<', $fecha_inicio_mes);
-
+                //Obtenemos los conceptos del estado de cuenta, en el mes que aplican los recargos
                 $estado_mes_actual = $estado_cuenta->where('id_socio', '=', $membresia->id_socio)
                     ->where('fecha', '>=', $fecha_inicio_mes)
                     ->where('fecha', '<=', $fecha->toDateString())

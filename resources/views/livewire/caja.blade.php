@@ -1,4 +1,5 @@
 <div>
+    <p>{{$codigopv}}</p>
     {{-- Campos de busqueda --}}
     <div class="flex gap-3 items-end">
         <div>

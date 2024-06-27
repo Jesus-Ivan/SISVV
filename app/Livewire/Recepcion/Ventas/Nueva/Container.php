@@ -96,7 +96,6 @@ class Container extends Component
                 'fecha_apertura' => $fecha_cierre,
                 'fecha_cierre' => $fecha_cierre,
                 'total' => $total,
-                'status' => false,
                 'corte_caja' => $resultCaja[0]->corte,
             ]);
             //Se crea el detalle de la venta
@@ -160,7 +159,6 @@ class Container extends Component
                 'fecha_apertura' => $fecha_cierre,
                 'fecha_cierre' => $fecha_cierre,
                 'total' => $total,
-                'status' => false,
                 'corte_caja' => $resultCaja[0]->corte,
             ]);
             //Se crea el detalle de la venta

@@ -4,14 +4,21 @@ namespace App\Livewire;
 
 use App\Models\Caja as ModelsCaja;
 use App\Models\PuntoVenta;
+use App\Models\UserPermisos;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 class Caja extends Component
 {
+
+    #[Locked]
+    public $codigopv;       //Propiedad publica que recibe del exterior el codigo del PV
+
     #[Validate('required')]
     public $puntoSeleccionado;
 
@@ -27,7 +34,15 @@ class Caja extends Component
     #[Computed]
     public function puntos()
     {
-        return PuntoVenta::all();
+        /**
+         * Obtenemos todos los puntos de venta permitidos para el usuario autenticado
+         * Si tiene el rol de cajero
+        */
+        return DB::table('users_permisos')
+            ->join('puntos_venta', 'users_permisos.clave_punto_venta', '=', 'puntos_venta.clave')
+            ->where('users_permisos.id_user', auth()->user()->id)
+            ->where('users_permisos.clave_rol', 'CAJ')
+            ->get();
     }
 
     #[Computed]
@@ -93,6 +108,11 @@ class Caja extends Component
             //Emitimos evento para abrir alert
             $this->dispatch('info-caja');
         }
+    }
+
+    public function validarCaja($clave_departemento, $clave_punto, $clave_rol)
+    {
+        $result = UserPermisos::where('id_user', $this->usuario->id)->get();
     }
 
     public function cierreParcial(ModelsCaja $caja)

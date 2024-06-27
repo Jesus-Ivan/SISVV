@@ -35,6 +35,7 @@
              <h4 class="text-2xl font-bold dark:text-white mx-2">Ventas-Recepcion</h4>
          </div>
          {{-- Componente de la tabla --}}
-         <livewire:recepcion.ventas.principal />
+         {{--<livewire:recepcion.ventas.principal />--}}
+         <livewire:puntos.ventas.principal codigopv="REC" />
      </div>
  </x-app-layout>

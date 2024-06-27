@@ -5,11 +5,11 @@
     </x-slot>
 
     {{-- Contenido --}}
-    <div >
+    <div>
         <!-- Title -->
-        <h4 class="text-2xl font-bold dark:text-white mx-2">Venta {{$folioventa}} - {{$codigopv}}</h4>
+        <h4 class="text-2xl font-bold dark:text-white mx-2">Venta {{ $folioventa }} - {{ $codigopv }}</h4>
         <div>
-           <livewire:puntos.ventas-editar/>
+            <livewire:puntos.ventas.editar.container :permisospv="$permisospv" :venta="$folioventa" />
         </div>
     </div>
 </x-app-layout>

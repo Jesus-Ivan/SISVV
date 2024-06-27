@@ -13,11 +13,13 @@ class Principal extends Component
     public $search;
     public $fecha;
 
-    public function mount(){
+    public function mount()
+    {
         $this->fecha = now()->toDateString();
     }
 
-    public function buscar (){
+    public function buscar()
+    {
         $this->resetPage();
     }
 
@@ -25,8 +27,8 @@ class Principal extends Component
     #[Computed()]
     public function ventasHoy()
     {
-        return Venta::whereDate('fecha_apertura',$this->fecha)
-            ->whereAny(['id_socio','nombre'], 'like', '%' . $this->search . '%')
+        return Venta::whereAny(['id_socio', 'nombre'], 'like', '%' . $this->search . '%')
+            ->whereDate('fecha_apertura', $this->fecha)
             ->orderby('fecha_apertura', 'desc')
             ->paginate(10);
     }

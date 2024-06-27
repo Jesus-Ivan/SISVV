@@ -5,5 +5,5 @@
     </x-slot>
 
     {{-- Contenido --}}
-    <livewire:caja />
+    <livewire:caja codigopv="REC"/>
 </x-app-layout>

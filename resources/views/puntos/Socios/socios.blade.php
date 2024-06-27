@@ -8,7 +8,7 @@
         <!-- Title -->
         <h4 class="text-2xl font-bold dark:text-white m-2">Socios</h4>
         <div>
-            <livewire:puntos.socios />
+            <livewire:portico.socios.container/>
         </div>
     </div>
 </x-app-layout>

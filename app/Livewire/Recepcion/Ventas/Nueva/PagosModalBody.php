@@ -52,7 +52,7 @@ class PagosModalBody extends Component
         //El par clave-valor ('descripcion_tipo_pago' => ''), se remueve antes de insertar en la base de datos
         $this->dispatch('onFinisPago', [
             'id_socio' => array_key_exists('id', $this->socio) ? $this->socio['id'] : null,
-            'nombre' => $this->socio['nombre'],
+            'nombre' =>  array_key_exists('id', $this->socio) ? $this->socio['nombre'] . ' ' . $this->socio['apellido_p'] . ' ' . $this->socio['apellido_m'] : $this->socio['nombre'],
             'monto' => $validated['monto'],
             'propina' => $this->propina,
             'id_tipo_pago' => $this->metodo_pago->id,

@@ -18,7 +18,7 @@ class Container extends Component
     #[On('on-selected-socio')]
     public function socioSeleccionado(Socio $socio)
     {
-        $this->ventaForm->socioSeleccionado = $socio;
+        $this->ventaForm->socio = $socio;
     }
 
     #[On('selected-socio-pago')]
@@ -79,8 +79,21 @@ class Container extends Component
         }
     }
 
-    public function agregarPago(){
-        
+    public function agregarPago()
+    {
+        try {
+            //Intentamos agregar el pago seleccionado
+            $this->ventaForm->agregarPago();
+            //Emitimos evento para cerrar el componente del modal
+            $this->dispatch('close-modal');
+        } catch (\Throwable $th) {
+            dump($th->getMessage());
+        }
+    }
+
+    public function eliminarPago($pagoIndex)
+    {
+        $this->ventaForm->eliminarPago($pagoIndex);
     }
 
     public function eliminarArticulo($productoIndex)
@@ -100,7 +113,13 @@ class Container extends Component
 
     public function cerrarVenta()
     {
+        try {
+            $this->ventaForm->cerrarVenta();
+        } catch (\Throwable $th) {
+            dd($th->getMessage());
+        }
     }
+    
     public function render()
     {
         return view('livewire.puntos.ventas.nueva.container');

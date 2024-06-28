@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('ventas', function (Blueprint $table) {
             $table->integer('folio')->autoIncrement()->unsigned();
             $table->integer('id_socio')->nullable();
-            $table->string('nombre', 80);
+            $table->string('nombre', 255);
             $table->dateTime('fecha_apertura');
             $table->dateTime('fecha_cierre')->nullable();
             $table->smallInteger('descuento')->nullable();

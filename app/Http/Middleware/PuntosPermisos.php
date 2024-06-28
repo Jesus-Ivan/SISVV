@@ -19,10 +19,11 @@ class PuntosPermisos
         $result = UserPermisos::where('id_user', auth()->user()->id)
             ->where('clave_departamento', 'PV')
             ->where('clave_punto_venta', $request->route('codigopv'))
-            ->take(1)->get();
-        if (!count($result) > 0) {
+            ->first();
+        if (! $result) {
             return redirect()->route('home');
         }
+        $request->merge(['permisos_pv' => $result]);
         return $next($request);
     }
 }

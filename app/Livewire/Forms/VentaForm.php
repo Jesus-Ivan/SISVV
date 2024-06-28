@@ -30,9 +30,10 @@ class VentaForm extends Form
     public $seachProduct = '';        //Input de busqueda de productos
     public $selected = [];            //Almacena los codigos de productos seleccionados del modal.
 
-    public $productosTable = [];      //array de productos, que se muestran en la tabla
+    public $productosTable = [];      //array de productos, que se muestran en la tabla (productos agregados)
     public $pagosTable = [];          //Array de pagos que se muestran en la tabla
     public $totalVenta = 0;           //El costo total de los articulos
+
     public $totalPago = 0;            //El total de los pagos
     public $totalPropina = 0;         //El total de la propina
     public $descuento = 0;          //En caso de que se aplique un descuento a la cuenta
@@ -40,6 +41,7 @@ class VentaForm extends Form
     public $totalConDescuento = 0;  //El total de la venta final
     public $cambio = 0;
     
+
     /* Agrega los articulos seleccionados a la tabla.
         La funcion recibe el array de todos los items mostrado en el modal.
     */
@@ -88,6 +90,27 @@ class VentaForm extends Form
         //Se calcula el subtotal del producto
         $this->productosTable[$productoIndex]['subtotal'] = $this->productosTable[$productoIndex]['precio'] * $eValue;
         $this->actualizarTotal();
+    }
+
+    public function incrementarProducto($productoIndex)
+    {
+        //Definimos una variable que apunta a la direccion de memoria del producto
+        $articulo = &$this->productosTable[$productoIndex];
+        //incrementamos en 1 la cantidad
+        $articulo['cantidad']++;
+        //Obtenemos el nuevo subtotal
+        $articulo['subtotal'] = $articulo['cantidad'] * $articulo['precio'];
+    }
+
+    public function decrementarProducto($productoIndex)
+    {
+        //Definimos una variable que apunta a la direccion de memoria del producto
+        $articulo = &$this->productosTable[$productoIndex];
+        //Comprobamos si la cantidad es positiva
+        if ($articulo['cantidad'] > 1) {
+            $articulo['cantidad']--;
+            $articulo['subtotal'] = $articulo['cantidad'] * $articulo['precio'];
+        }
     }
 
     public function actualizarTotal()

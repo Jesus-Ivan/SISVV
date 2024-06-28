@@ -4,6 +4,7 @@ use App\Http\Controllers\CargosController;
 use App\Http\Controllers\EdoCuentaController;
 use App\Http\Controllers\ExcelController;
 use App\Http\Controllers\PermisosController;
+use App\Http\Controllers\PuntosController;
 use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\SociosController;
 use Illuminate\Support\Facades\Route;
@@ -79,13 +80,12 @@ Route::prefix('almacen')->middleware(['auth'])->group(function () {
     });
 });
 
-Route::prefix('recepcion')->middleware(['auth','recepcion'])->group(function () {
+Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function () {
     Route::view('/', 'recepcion.index')->name('recepcion');
     Route::prefix('ventas')->group(function () {
         Route::view('/', 'recepcion.Ventas.ventas')->name('recepcion.ventas');
         Route::view('nueva', 'recepcion.Ventas.nueva-venta')->name('recepcion.ventas.nueva');
         Route::view('reporte', 'recepcion.Ventas.reporte-ventas')->name('recepcion.ventas.reporte');
-        Route::get('ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('recepcion.ventas.ticket');
         Route::get('corte/{caja}', [ReportesController::class, 'generarCorte'])->name('recepcion.ventas.corte');
     });
     Route::prefix('cobros')->group(function () {
@@ -141,16 +141,16 @@ Route::prefix('cocina')->middleware(['auth'])->group(function () {
     Route::view('mermas', 'cocina.Mermas.mermas')->name('cocina.mermas');
 });
 
-Route::prefix('pv/{codigopv}')->middleware(['auth','puntos'])->group(function () {
+Route::prefix('pv/{codigopv}')->middleware(['auth', 'puntos'])->group(function () {
 
-    Route::view('/', 'puntos.index')->name('pv.index');
+    Route::get('/', [PuntosController::class, 'index'])->name('pv.index');
 
     Route::prefix('ventas')->group(function () {
-        Route::view('/', 'puntos.Ventas.ventas')->name('pv.ventas');
-        Route::view('/editar/{folioventa}', 'puntos.Ventas.editar-venta')->name('pv.ventas.editar');
-        Route::view('/ver/{folioventa}', 'puntos.Ventas.ver-venta')->name('pv.ventas.ver');
-        Route::view('nueva', 'puntos.Ventas.nueva-venta')->name('pv.ventas.nueva');
-        Route::view('reporte', 'puntos.Ventas.reporte-ventas')->name('pv.ventas.reporte');
+        Route::get('/', [PuntosController::class, 'ventasIndex'])->name('pv.ventas');
+        Route::get('/editar/{folioventa}', [PuntosController::class, 'editarVenta'])->name('pv.ventas.editar');
+        Route::get('/ver/{folioventa}', [PuntosController::class, 'verVenta'])->name('pv.ventas.ver');
+        Route::get('nueva', [PuntosController::class, 'nuevaVenta'])->name('pv.ventas.nueva');
+        Route::get('reporte', [PuntosController::class, 'reporteVentas'])->name('pv.ventas.reporte');
     });
 
     Route::view('inventario', 'puntos.Inventario.inventario')->name('pv.inventario');
@@ -161,8 +161,8 @@ Route::prefix('pv/{codigopv}')->middleware(['auth','puntos'])->group(function ()
         Route::view('nueva', 'puntos.Inventario.SolicitarMercancia.nueva-solicitud')->name('pv.mercancia.nueva');
     });
 
-    Route::view('socios', 'puntos.Socios.socios')->name('pv.socios');
-    Route::view('caja', 'puntos.caja.caja')->middleware(['auth'])->name('pv.caja');
+    Route::get('socios', [PuntosController::class, 'verSocios'])->name('pv.socios');
+    Route::get('caja', [PuntosController::class, 'caja'])->middleware(['auth'])->name('pv.caja');
 });
 
 Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
@@ -193,9 +193,9 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::post('/cargo-mensualidades', [CargosController::class, 'cargarMensualidades'])->name('sistemas.cargoMensualidades');
         Route::view('/recargos', 'sistemas.Recepcion.recargos')->name('sistemas.recargos');
         Route::post('/recargos', [CargosController::class, 'calcularRecargos'])->name('sistemas.recargos');
-
+        Route::view('/cargo-anualidades', 'sistemas.Recepcion.cargo-anualidades')->name('sistemas.cargoAnualidades');
+        Route::post('/verificar-anu', [CargosController::class, 'verificarAnualidades'])->name('sistemas.verificarAnualidades');
     });
-
 });
 
 Route::prefix('portico')->middleware(['auth'])->group(function () {
@@ -207,6 +207,8 @@ Route::prefix('portico')->middleware(['auth'])->group(function () {
         Route::view('nuevo', 'sistemas.Almacen.nuevo-catalogo')->name('sistemas.almacen.nuevo');
     }); */
 });
+
+Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->middleware(['auth'])->name('ventas.ticket');
 
 
 require __DIR__ . '/auth.php';

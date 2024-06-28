@@ -144,9 +144,12 @@
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Estado de
                         membresia</label>
                     <select id="estado-membresia" wire:model='form.estado_membresia'
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        class="{{ $form->estado_membresia == 'ANU' ? 'pointer-events-none opacity-70' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         <option value="MEN">Activa</option>
                         <option value="INA">Inactiva</option>
+                        @if ($form->estado_membresia == 'ANU')
+                            <option value="ANU">Anual</option>
+                        @endif
                         <option value="CAN">Cancelada</option>
                     </select>
                     @error('form.estado_membresia')
@@ -223,12 +226,13 @@
                     </div>
                 </div>
                 <div>
+                    <!-- MEMBRESIA -->
                     <div>
                         <label for="membresias"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia</label>
                         <select id="membresias" wire:model="form.clave_membresia"
                             wire:change="comprobarMembresia($event.target.value)"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            class="{{ $form->estado_membresia == 'ANU' ? 'pointer-events-none opacity-70' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                             <option selected value="{{ null }}">Seleccione</option>
                             @foreach ($this->membresias as $membresia)
                                 <option value="{{ $membresia->clave }}">{{ $membresia->descripcion }}</option>
@@ -240,6 +244,7 @@
                     </div>
                 </div>
                 <div class="flex gap-3 items-end">
+                    <!-- SUBIR FOTO SOCIO -->
                     <div class="w-full">
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                             for="file_input">Subir

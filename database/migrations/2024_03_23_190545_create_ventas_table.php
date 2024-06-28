@@ -16,11 +16,12 @@ return new class extends Migration
             $table->integer('id_socio')->nullable();
             $table->string('nombre', 255);
             $table->dateTime('fecha_apertura');
-            $table->dateTime('fecha_cierre');
+            $table->dateTime('fecha_cierre')->nullable();
             $table->smallInteger('descuento')->nullable();
             $table->decimal('total', 10, 2);
-            $table->boolean('status');
             $table->integer('corte_caja')->nullable();
+            $table->string('clave_punto_venta', 20)->nullable();
+
 
             /*//Relaciones
 

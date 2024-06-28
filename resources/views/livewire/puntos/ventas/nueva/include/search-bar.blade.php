@@ -1,5 +1,5 @@
 <div>
-    <div class="flex gap-8 items-end m-2">
+    <div class="flex gap-8 items-end">
         <!--SELECT -->
         <div>
             <label for="tipo-venta" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tipo de
@@ -9,6 +9,7 @@
                 <option value="socio" selected>Socios</option>
                 <option value="invitado">Invitados del socio</option>
                 <option value="general">Publico general</option>
+                <option value="empleado">Empleado</option>
             </select>
         </div>
         <!--Autocomplete search component-->
@@ -35,8 +36,10 @@
         @endif
     </div>
     <!--Info del socio-->
-    <div class="m-3">
-        <p>Nombre: {{ $this->ventaForm->socioSeleccionado ? $this->ventaForm->socioSeleccionado->nombre : '' }}</p>
-        <p>No. de socio: {{ $this->ventaForm->socioSeleccionado ? $this->ventaForm->socioSeleccionado->id : '' }}</p>
+    <div>
+        <p>Nombre:
+            {{ $this->ventaForm->socio ? $this->ventaForm->socio->nombre . ' ' . $this->ventaForm->socio->apellido_p . ' ' . $this->ventaForm->socio->apellido_m : '' }}
+        </p>
+        <p>No. de socio: {{ $this->ventaForm->socio ? $this->ventaForm->socio->id : '' }}</p>
     </div>
 </div>

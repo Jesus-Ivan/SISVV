@@ -5,7 +5,7 @@
      </x-slot>
 
      {{-- Contenido --}}
-     <div class="flex items-center m-2">
+     <div class="flex items-center m-2 ms-3 mx-3">
          <button id="dropdownMenuIconButton" data-dropdown-toggle="dropdownDots"
              class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
              type="button">
@@ -24,13 +24,26 @@
                          class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Nueva</a>
                  </li>
                  <li>
-                     <a href="{{ route('pv.ventas.reporte',['codigopv' => $codigopv]) }}"
+                     <a href="{{ route('pv.ventas.reporte', ['codigopv' => $codigopv]) }}"
                          class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Reportes</a>
                  </li>
              </ul>
          </div>
          <!-- Title -->
-         <h4 class="text-2xl font-bold dark:text-white mx-2">Ventas-{{ $codigopv }}</h4>
+         <h4 class="text-2xl font-bold dark:text-white mx-2">Ventas - {{ $codigopv }}</h4>
      </div>
-     <livewire:puntos.ventas.principal :codigopv="$codigopv"/>
+     <livewire:puntos.ventas.principal :codigopv="$codigopv" />
+
+     {{-- Linea divisora y boton de regresar --}}
+     <div class="ms-3 mx-3">
+         <hr class="h-px my-2 bg-gray-300 border-0 dark:bg-gray-700">
+         <a type="button" href="{{ route('almacen') }}"
+             class="my-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
+             <svg class="w-5 h-5 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                 height="24" fill="none" viewBox="0 0 24 24">
+                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                     d="M5 12h14M5 12l4-4m-4 4 4 4" />
+             </svg>Regresar
+         </a>
+     </div>
  </x-app-layout>

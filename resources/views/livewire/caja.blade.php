@@ -1,5 +1,4 @@
-<div>
-    <p>{{ $codigopv }}</p>
+<div class="m-3">
     {{-- Campos de busqueda --}}
     <div class="flex gap-3 items-end">
         <div>
@@ -32,7 +31,7 @@
         </button>
     </div>
     {{-- Tabla de cajas --}}
-    <div class="relative shadow-md sm:rounded-lg">
+    <div class="relative shadow-md sm:rounded-lg my-3">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>

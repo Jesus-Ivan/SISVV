@@ -21,6 +21,8 @@ class Container extends Component
     public $datosPagos = [];
     #[Locked]
     public $invitado = false;
+    #[Locked]
+    public $codigopv;
 
     #[Computed()]
     public function puntoVenta()
@@ -97,6 +99,7 @@ class Container extends Component
                 'fecha_cierre' => $fecha_cierre,
                 'total' => $total,
                 'corte_caja' => $resultCaja[0]->corte,
+                'clave_punto_venta' => $this->codigopv
             ]);
             //Se crea el detalle de la venta
             foreach ($info['datosProductos'] as $key => $producto) {
@@ -160,6 +163,7 @@ class Container extends Component
                 'fecha_cierre' => $fecha_cierre,
                 'total' => $total,
                 'corte_caja' => $resultCaja[0]->corte,
+                'clave_punto_venta' => $this->codigopv
             ]);
             //Se crea el detalle de la venta
             foreach ($info['datosProductos'] as $key => $producto) {

@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Caja as ModelsCaja;
 use App\Models\PuntoVenta;
 use App\Models\UserPermisos;
+use App\Models\Venta;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
@@ -37,7 +38,7 @@ class Caja extends Component
         /**
          * Obtenemos todos los puntos de venta permitidos para el usuario autenticado
          * Si tiene el rol de cajero
-        */
+         */
         return DB::table('users_permisos')
             ->join('puntos_venta', 'users_permisos.clave_punto_venta', '=', 'puntos_venta.clave')
             ->where('users_permisos.id_user', auth()->user()->id)
@@ -57,10 +58,6 @@ class Caja extends Component
             ->get();
     }
 
-    public function ver()
-    {
-        dump($this->statusCaja());
-    }
 
     public function abrirCaja()
     {
@@ -95,11 +92,19 @@ class Caja extends Component
         // Format without timezone offset
         $fechaCierre = now()->format('Y-m-d H:i:s');
         try {
+            //Verificamos si tiene cuentas abiertas
+            if (count($this->tieneCuentasAbiertas($caja))) {
+                //ABRIMOS EL MODAL PARA INFORMAR LAS CUENTAS ABIERTAS
+                $this->dispatch('open-modal',  name: 'modalAdvertencia');
+                return ;
+            }
+
             //Verificamos si la caja ya tenia fecha de cierre
             if ($caja->fecha_cierre) {
                 //lanzamos excepcion si ya esta cerrada la caja
                 throw new Exception('La caja ya esta cerrada');
             }
+
             //Actualizamos el estatus de la caja actual si no hay errores.
             $caja->update(['fecha_cierre' => $fechaCierre]);
         } catch (\Throwable $th) {
@@ -108,11 +113,6 @@ class Caja extends Component
             //Emitimos evento para abrir alert
             $this->dispatch('info-caja');
         }
-    }
-
-    public function validarCaja($clave_departemento, $clave_punto, $clave_rol)
-    {
-        $result = UserPermisos::where('id_user', $this->usuario->id)->get();
     }
 
     public function cierreParcial(ModelsCaja $caja)
@@ -132,6 +132,19 @@ class Caja extends Component
             $this->dispatch('info-caja');
         }
     }
+
+    public function pasarVentas(){
+        $resultVentas = $this->tieneCuentasAbiertas($caja);
+    }
+
+    private function tieneCuentasAbiertas($caja)
+    {
+        return Venta::where('corte_caja', $caja->corte)
+        ->whereNull('fecha_cierre')
+        ->get();
+    }
+
+
 
     public function render()
     {

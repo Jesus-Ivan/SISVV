@@ -5,6 +5,7 @@ use App\Http\Controllers\EdoCuentaController;
 use App\Http\Controllers\ExcelController;
 use App\Http\Controllers\PermisosController;
 use App\Http\Controllers\PuntosController;
+use App\Http\Controllers\RecepcionController;
 use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\SociosController;
 use Illuminate\Support\Facades\Route;
@@ -83,10 +84,9 @@ Route::prefix('almacen')->middleware(['auth'])->group(function () {
 Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function () {
     Route::view('/', 'recepcion.index')->name('recepcion');
     Route::prefix('ventas')->group(function () {
-        Route::view('/', 'recepcion.Ventas.ventas')->name('recepcion.ventas');
-        Route::view('nueva', 'recepcion.Ventas.nueva-venta')->name('recepcion.ventas.nueva');
+        Route::get('/', [RecepcionController::class, 'ventasIndex'])->name('recepcion.ventas');
+        Route::get('nueva', [RecepcionController::class, 'ventasNueva'])->name('recepcion.ventas.nueva');
         Route::view('reporte', 'recepcion.Ventas.reporte-ventas')->name('recepcion.ventas.reporte');
-        Route::get('corte/{caja}', [ReportesController::class, 'generarCorte'])->name('recepcion.ventas.corte');
     });
     Route::prefix('cobros')->group(function () {
         Route::view('/', 'recepcion.Cobros.cobros')->name('recepcion.cobros');
@@ -201,14 +201,10 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
 Route::prefix('portico')->middleware(['auth'])->group(function () {
     Route::view('/', 'portico.index')->name('portico');
     Route::view('socios', 'portico.Socios.container')->name('portico.socios');
-
-    /* Route::prefix('catalogo')->group(function () {
-        Route::view('/', 'sistemas.Almacen.catalogo')->name('sistemas.catalogo');
-        Route::view('nuevo', 'sistemas.Almacen.nuevo-catalogo')->name('sistemas.almacen.nuevo');
-    }); */
 });
 
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->middleware(['auth'])->name('ventas.ticket');
+Route::get('ventas/corte/{caja}', [ReportesController::class, 'generarCorte'])->middleware(['auth'])->name('ventas.corte');
 
 
 require __DIR__ . '/auth.php';

@@ -34,8 +34,8 @@
              <!-- Title -->
              <h4 class="text-2xl font-bold dark:text-white mx-2">Ventas-Recepcion</h4>
          </div>
-         {{-- Componente de la tabla --}}
-         {{--<livewire:recepcion.ventas.principal />--}}
-         <livewire:puntos.ventas.principal codigopv="REC" />
+         {{-- Componente de la tabla con search bar --}}
+         {{-- $codigopv, proviene del controlador --}}
+         <livewire:puntos.ventas.principal :codigopv="$codigopv->clave" />
      </div>
  </x-app-layout>

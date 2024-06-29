@@ -1,4 +1,5 @@
 <div>
+    <p>{{$permisospv}}</p>
     <form>
         <!--Info del socio-->
         <div class="m-3">
@@ -26,140 +27,6 @@
         </div>
         <!--Tabla de articulos-->
         @include('livewire.puntos.ventas.nueva.include.productos-table')
-        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                    <tr>
-                        <th scope="col" class="px-6 py-3">
-                            TIEMPO
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            DESCRIPCION
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            OBSERVACIONES
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            PRECIO
-                        </th>
-                        <th scope="col" class="px-6 py-3 w-56">
-                            CANTIDAD
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            SUBTOTAL
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            ACCIONES
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr
-                        class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
-                        <th scope="row"
-                            class="w-28 px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            1
-                        </th>
-                        <th scope="row"
-                            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            <div class="flex items-center">
-                                <span class="flex w-4 h-4 me-2 bg-yellow-300 rounded-full"></span>
-                                Huevos al gusto
-                            </div>
-                        </th>
-                        <td class="px-6 py-4">
-                            <input type="text" id="disabled-input" aria-label="disabled input"
-                                class="bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                value="Revueltos con chile" disabled>
-                        </td>
-                        <td class="px-6 py-4">
-                            $125
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex gap-3 items-center">
-                                <button type="button"
-                                    class="h-9 text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
-                                    <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                        fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2" d="M5 12h14" />
-                                    </svg>
-                                    <span class="sr-only">Restar cantidad</span>
-                                </button>
-                                <input type="number" id="disabled-input" aria-label="disabled input"
-                                    class=" bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                    value="1" disabled>
-                                <button type="button"
-                                    class="h-9 text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
-                                    <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                        fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2" d="M5 12h14m-7 7V5" />
-                                    </svg>
-                                    <span class="sr-only">Agregar cantidad</span>
-                                </button>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            $125
-                        </td>
-                        <td class="px-6 py-4">
-
-                        </td>
-                    </tr>
-                    <tr
-                        class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
-                        <th scope="row"
-                            class="w-28 px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        </th>
-                        <th scope="row"
-                            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            <div class="flex items-center">
-                                WISKY JONNY WALKER
-                            </div>
-                        </th>
-                        <td class="px-6 py-4">
-                            <input type="text" id="observaciones"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
-                        </td>
-                        <td class="px-6 py-4">
-                            $110
-                        </td>
-                        <td class="px-6 py-4">
-                            <input type="number" id="observaciones"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                value="1" />
-                        </td>
-                        <td class="px-6 py-4">
-                            $125
-                        </td>
-                        <td class="px-6 py-4">
-                            <button type="button" data-modal-target="modal-modificadores"
-                                data-modal-toggle="modal-modificadores"
-                                class="text-gray-700 border border-gray-700 hover:bg-gray-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-gray-500 dark:text-gray-500 dark:hover:text-white dark:focus:ring-gray-800 dark:hover:bg-gray-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                    class="w-[20px] h-[20px]">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-width="3"
-                                        d="M12 6h.01M12 12h.01M12 18h.01" />
-                                </svg>
-                                <span class="sr-only">modificadores</span>
-                            </button>
-
-                        </td>
-                    </tr>
-                </tbody>
-                <tfoot>
-                    <tr class="font-semibold text-gray-900 dark:text-white">
-                        <th scope="row" class="px-6 py-3 text-base">Total</th>
-                        <td class="px-6 py-3"></td>
-                        <td class="px-6 py-3"></td>
-                        <td class="px-6 py-3"></td>
-                        <td class="px-6 py-3"></td>
-                        <td class="px-6 py-3">$21,000</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
         @if ($permisospv->clave_rol != 'MES')
             <!--Linea -->
             <hr class="h-px my-4 bg-gray-300 border-0 dark:bg-gray-700">
@@ -254,7 +121,7 @@
                 </svg>
                 Cancelar
             </button>
-            <button type="button"
+            <button type="button" wire:click="guardarVentaExistente"
                 class="inline-flex items-center focus:outline-none text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-900">
                 <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -265,7 +132,7 @@
                 Guardar venta
             </button>
             @if ($permisospv->clave_rol != 'MES')
-                <button type="button"
+                <button type="button" wire:click="cerrarVentaExistente"
                     class="inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
                     <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"

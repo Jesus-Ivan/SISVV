@@ -8,6 +8,7 @@ use App\Models\DetallesVentaProducto;
 use App\Models\Socio;
 use App\Models\TipoPago;
 use App\Models\Venta;
+use Exception;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
@@ -20,9 +21,13 @@ class Container extends Component
 
     #[Locked]
     public $permisospv;
+
     #[Locked]
     public $venta;
+
     #[Locked]
+    public $codigopv;
+
 
     public function mount(Venta $venta)
     {
@@ -81,8 +86,27 @@ class Container extends Component
             $this->ventaForm->selected = [];
         }
     }
+    public function finishSelect()
+    {
+        try {
+            //Intentamos guardar los items seleccionados, para mostrarlos en la tabla
+            $this->ventaForm->agregarItems($this->productosResult);
+            //Emitimos evento para cerrar el componente del modal
+            $this->dispatch('close-modal');
+        } catch (\Throwable $th) {
+            dump($th->getMessage());
+        }
+    }
 
+    public function updateQuantity($productoIndex, $eValue)
+    {
+        $this->ventaForm->calcularSubtotal($productoIndex, $eValue);
+    }
 
+    public function eliminarArticulo($productoIndex)
+    {
+        $this->ventaForm->eliminarArticulo($productoIndex);
+    }
 
     public function incrementar($productoIndex)
     {
@@ -91,6 +115,28 @@ class Container extends Component
     public function decrementar($productoIndex)
     {
         $this->ventaForm->decrementarProducto($productoIndex);
+    }
+
+    public function cerrarVentaExistente()
+    {
+
+        try {
+            $this->ventaForm->cerrarVentaExistente($this->venta->folio);
+            $this->redirectRoute('pv.ventas');
+        } catch (Exception $e) {
+            dump($e->getMessage());
+        }
+    }
+
+    public function guardarVentaExistente()
+    {
+
+        try {
+            $this->ventaForm->guardarVentaExistente($this->venta->folio);
+            $this->redirectRoute('pv.ventas');
+        } catch (Exception $e) {
+            dump($e->getMessage());
+        }
     }
 
     public function render()

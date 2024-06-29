@@ -6,14 +6,18 @@ use App\Livewire\Forms\VentaForm;
 use App\Models\CatalogoVistaVerde;
 use App\Models\Socio;
 use App\Models\TipoPago;
+use Exception;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Livewire\Attributes\Locked;
 
 class Container extends Component
 {
     public VentaForm $ventaForm;
+    #[Locked]
+    public $codigopv;
 
     #[On('on-selected-socio')]
     public function socioSeleccionado(Socio $socio)
@@ -106,20 +110,25 @@ class Container extends Component
         $this->ventaForm->calcularSubtotal($productoIndex, $eValue);
     }
 
-    public function guardarVenta()
-    {
-        dump($this->ventaForm->productosTable);
-    }
-
-    public function cerrarVenta()
+    public function guardarVentaNueva()
     {
         try {
-            $this->ventaForm->cerrarVenta();
+            $this->ventaForm->guardarVentaNueva($this->codigopv);
+            $this->redirectRoute('pv.ventas', ['codigopv' => $this->codigopv]);
+        } catch (Exception $e) {
+            dump($e->getMessage());
+        }
+    }
+
+    public function cerrarVentaNueva()
+    {
+        try {
+            $this->ventaForm->cerrarVentaNueva($this->codigopv);
         } catch (\Throwable $th) {
             dd($th->getMessage());
         }
     }
-    
+
     public function render()
     {
         return view('livewire.puntos.ventas.nueva.container');

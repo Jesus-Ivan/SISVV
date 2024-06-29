@@ -40,7 +40,7 @@ class VentaForm extends Form
     public $totalSinDescuento = 0;  //Centa total temporal en caso que se le aplique un descuento
     public $totalConDescuento = 0;  //El total de la venta final
     public $cambio = 0;
-    
+
 
     /* Agrega los articulos seleccionados a la tabla.
         La funcion recibe el array de todos los items mostrado en el modal.
@@ -131,7 +131,7 @@ class VentaForm extends Form
         //Se agrega el pago a la tabla de pagos
         $this->pagosTable[] = [
             'id_socio' => $this->socioPago->id,
-            'nombre' => $this->socioPago->nombre .' '. $this->socioPago->apellido_p .' '. $this->socioPago->apellido_m,
+            'nombre' => $this->socioPago->nombre . ' ' . $this->socioPago->apellido_p . ' ' . $this->socioPago->apellido_m,
             'id_tipo_pago' => $this->id_pago,
             'descripcion_tipo_pago' => TipoPago::find($this->id_pago)->descripcion,
             'monto_pago' => $validated['monto_pago'],
@@ -161,15 +161,15 @@ class VentaForm extends Form
         }*/
     }
 
-    public function cerrarVenta()
+    //Se ejecuta para cerrar una venta completa, si esta es nueva
+    public function cerrarVentaNueva($codigopv)
     {
+        //Validamos la informacion de la venta
         $venta = $this->validate([
             'socio' => 'min:1',
             'productosTable' => 'min:1',
             'pagosTable' => 'min:1'
         ]);
-
-        //dd($venta);
 
         //Calculamos total de los productos
         $montoTotalVenta = array_sum(array_column($this->productosTable, 'subtotal'));
@@ -181,57 +181,128 @@ class VentaForm extends Form
             session()->flash('fail', "El monto total de pago no es el correcto");
             return;
         }
-
-        //
-        if (!$this->invitado) {
-            //Se crea la transaccion
-            $this->registrarVenta($venta);
-        }
+        //Se crea la transaccion
+        DB::transaction(function () use ($venta, $codigopv) {
+            //Si no es invitado
+            if (!$this->invitado) {
+                //Crear la venta y guardamos el resultado de la insersion en la BD.
+                $resultVenta = $this->registrarVenta($venta, $codigopv, true);
+                //crear los detalles de los productos
+                $this->registrarProductosVenta($resultVenta->folio, $venta);
+                //Crear los detalles de los pagos
+                $this->registrarPagosVenta($resultVenta->folio, $venta);
+            }
+        });
     }
 
-    private function registrarVenta($venta)
+    //Se ejecuta para guardar una venta, cuando es nueva
+    public function guardarVentaNueva($codigopv)
     {
-        DB::transaction(function () use ($venta) {
-            //Obtenemos la fecha-hora de cierre actual, con una instancia de Carbon.
-            $fecha_cierre = now()->format('Y-m-d H:i:s');
-            //Se calcular el total de los productos
-            $total = array_sum(array_column($venta['productosTable'], 'subtotal'));
-            //Concatenamos el nombre
-            $nombre = $venta['socio']['nombre'] . ' ' . $venta['socio']['apellido_p'] . ' ' . $venta['socio']['apellido_m'];
-            //Se registra la venta
-            $ventaFinal = Venta::create([
-                'id_socio' =>  $venta['socio']['id'],
-                'nombre' => $nombre,
-                'fecha_apertura' => $fecha_cierre,
-                'fecha_cierre' => $fecha_cierre,
-                'total' => $total,
-                //'corte_caja' => $resultCaja[0]->corte,
-                'clave_punto_venta' => 'RES'
-            ]);
-            //Detalles Venta
-            foreach ($venta['productosTable'] as $key => $producto) {
+        //Validamos la informacion de la venta
+        $venta = $this->validate([
+            'socio' => 'min:1',
+            'productosTable' => 'min:1',
+        ]);
+
+        //Se crea la transaccion
+        DB::transaction(function () use ($venta, $codigopv) {
+            //Si no es invitado
+            if (!$this->invitado) {
+                //Crear la venta y guardamos el resultado de la insersion en la BD.
+                $resultVenta = $this->registrarVenta($venta, $codigopv);
+                //crear los detalles de los productos
+                $this->registrarProductosVenta($resultVenta->folio, $venta);
+            }
+        });
+    }
+
+    //Cerrar una venta existente (actualiza toda la venta)
+    public function cerrarVentaExistente($folio)
+    {
+    }
+    //Actualizar una venta existente (actualiza solo la tabla de productos)
+    public function guardarVentaExistente($folio)
+    {
+        //dd($this->productosTable);
+        $inicio = now()->format('Y-m-d H:i:s');
+        //Recorremos todos los items de la tabla
+        foreach ($this->productosTable as $key => $producto) {
+            //Verificamos si el item que se itera, cuenta con un 'id' de la base de datos
+            if (array_key_exists('id', $producto)) {
+                //Actualizar el registro en la BD
+                DetallesVentaProducto::where('id', $producto['id'])
+                    ->update(
+                        ['cantidad' => $producto['cantidad'], 'subtotal' => $producto['subtotal']]
+                    );
+            } else {
+                //Crear el nuevo item
                 DetallesVentaProducto::create([
-                    'folio_venta' => $ventaFinal->folio,
+                    'folio_venta' => $folio,
                     'codigo_catalogo' => $producto['codigo_catalogo'],
                     'cantidad' => $producto['cantidad'],
                     'precio' => $producto['precio'],
                     'observaciones' => $producto['observaciones'],
                     'subtotal' => $producto['subtotal'],
-                    'inicio' => '2024-12-12',
+                    'inicio' => $inicio,
                 ]);
             }
-            //dd($venta['pagosTable']);
-            //Detalles Pago
-            foreach ($venta['pagosTable'] as $key => $pago) {
-                $resultPago = DetallesVentaPago::create([
-                    'folio_venta' => $ventaFinal->folio,
-                    'id_socio' => $pago['id_socio'],
-                    'nombre' => $pago['nombre'],
-                    'monto' => $pago['monto_pago'],
-                    'propina' => $pago['propina'],
-                    'id_tipo_pago' => $pago['id_tipo_pago'],
-                ]);
-            }
-        });
+        }
+    }
+
+
+
+    //Esta funcion registra la venta en la tabla "ventas"
+    private function registrarVenta($venta, $codigopv, $isClosed = false)
+    {
+        //Obtenemos la fecha-hora de actual, con una instancia de Carbon.
+        $fecha_cierre = now()->format('Y-m-d H:i:s');
+        //Se calcula el total de los productos
+        $total = array_sum(array_column($venta['productosTable'], 'subtotal'));
+        //Concatenamos el nombre
+        $nombre = $venta['socio']['nombre'] . ' ' . $venta['socio']['apellido_p'] . ' ' . $venta['socio']['apellido_m'];
+        //Se registra la venta
+        return Venta::create([
+            'id_socio' =>  $venta['socio']['id'],
+            'nombre' => $nombre,
+            'fecha_apertura' => $fecha_cierre,
+            'fecha_cierre' => $isClosed ? $fecha_cierre : null,
+            'total' => $total,
+            //'corte_caja' => $resultCaja[0]->corte,
+            'clave_punto_venta' => $codigopv
+        ]);
+    }
+
+    //Registra los detalles de los productos en la tabla "detalles_ventas_productos"
+    private function registrarProductosVenta($folio, $venta)
+    {
+        $inicio = now()->format('Y-m-d H:i:s');
+        //Detalles Venta
+        foreach ($venta['productosTable'] as $key => $producto) {
+            DetallesVentaProducto::create([
+                'folio_venta' => $folio,
+                'codigo_catalogo' => $producto['codigo_catalogo'],
+                'cantidad' => $producto['cantidad'],
+                'precio' => $producto['precio'],
+                'observaciones' => $producto['observaciones'],
+                'subtotal' => $producto['subtotal'],
+                'inicio' => $inicio,
+            ]);
+        }
+    }
+
+    //Registra los detalles de los productos en la tabla "detalles_ventas_pagos"
+    private function registrarPagosVenta($folio, $venta)
+    {
+        //Detalles de Pago
+        foreach ($venta['pagosTable'] as $key => $pago) {
+            DetallesVentaPago::create([
+                'folio_venta' => $folio,
+                'id_socio' => $pago['id_socio'],
+                'nombre' => $pago['nombre'],
+                'monto' => $pago['monto_pago'],
+                'propina' => $pago['propina'],
+                'id_tipo_pago' => $pago['id_tipo_pago'],
+            ]);
+        }
     }
 }

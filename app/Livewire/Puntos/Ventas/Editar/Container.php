@@ -49,7 +49,7 @@ class Container extends Component
         try {
             $this->ventaForm->setSocioPago($socio);
         } catch (\Throwable $th) {
-            //Codigo de error 1, el socio no tiene firma
+            //Codigo de error 1, el socio esta cancelado
             if ($th->getCode() == 2) {
                 session()->flash('socioActivo', $th->getMessage());
             }
@@ -67,7 +67,7 @@ class Container extends Component
     public function metodosPago()
     {
         //Si no es venta a publico general, mostrar firma
-        if ($this->ventaForm->tipoVenta != 'general') {
+        if ($this->ventaForm->tipo_venta != 'general') {
             return TipoPago::whereNot(function (Builder $query) {
                 $query->where('descripcion', 'like', 'TRANSFERENCIA')
                     ->orWhere('descripcion', 'like', 'DEPOSITO')
@@ -153,7 +153,7 @@ class Container extends Component
     {
 
         try {
-            $this->ventaForm->cerrarVentaExistente($this->venta->folio);
+            $this->ventaForm->cerrarVentaExistente($this->venta->folio, $this->codigopv);
             $this->redirectRoute('pv.ventas', ['codigopv' => $this->codigopv]);
         } catch (Exception $e) {
             dump($e->getMessage());

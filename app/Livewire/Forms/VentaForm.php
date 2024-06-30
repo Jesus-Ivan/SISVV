@@ -214,7 +214,7 @@ class VentaForm extends Form
             //crear los detalles de los productos
             $this->registrarProductosVenta($resultVenta->folio, $venta);
             //Crear los detalles de los pagos
-            $this->registrarPagosVenta($resultVenta->folio, $venta);
+            $this->registrarPagosVenta($resultVenta->folio, $venta, $codigopv);
         });
         session()->flash('success', "Venta realizada correctamente");
         $this->reset();
@@ -235,23 +235,23 @@ class VentaForm extends Form
         DB::transaction(function () use ($venta, $codigopv, $tipo_venta) {
 
             //Crear la venta y guardamos el resultado de la insersion en la BD.
-            $resultVenta = $this->registrarVenta($venta, $codigopv, tipo_venta: $tipo_venta);
+            $resultVenta = $this->registrarVenta($venta, $codigopv, false, tipo_venta: $tipo_venta);
             //crear los detalles de los productos
             $this->registrarProductosVenta($resultVenta->folio, $venta);
         });
     }
 
     //Cerrar una venta existente (actualiza toda la venta)
-    public function cerrarVentaExistente($folio)
+    public function cerrarVentaExistente($folio, $codigopv)
     {
         //Validamos que de la venta tenga metodos de pago y productos
         $venta = $this->validate([
             'productosTable' => 'min:1',
             'pagosTable' => 'min:1'
         ]);
-        DB::transaction(function () use ($folio, $venta) {
+        DB::transaction(function () use ($folio, $venta, $codigopv) {
             //Guardamos los metodos de pago
-            $this->registrarPagosVenta($folio, $venta);
+            $this->registrarPagosVenta($folio, $venta, $codigopv);
             //Guardamos los cambios de la tabla de productos
             $this->guardarVentaExistente($folio);
             //Cerramos la venta con la fecha actual
@@ -338,11 +338,13 @@ class VentaForm extends Form
     }
 
     //Registra los detalles de los productos en la tabla "detalles_ventas_pagos"
-    private function registrarPagosVenta($folio, $venta)
+    private function registrarPagosVenta($folio, $venta, $codigopv)
     {
+        //Buscamos el punto de venta.
+        $puntoVenta = PuntoVenta::find($codigopv);
         //Detalles de Pago
         foreach ($venta['pagosTable'] as $key => $pago) {
-            DetallesVentaPago::create([
+            $resultPago = DetallesVentaPago::create([
                 'folio_venta' => $folio,
                 'id_socio' => $pago['id_socio'],
                 'nombre' => $pago['nombre'],
@@ -350,6 +352,31 @@ class VentaForm extends Form
                 'propina' => $pago['propina'],
                 'id_tipo_pago' => $pago['id_tipo_pago'],
             ]);
+            //Verificamos si el tipo de pago es firma
+            if (strcasecmp('FIRMA', $pago['descripcion_tipo_pago']) == 0) {
+                //Creamos el concepto en el estado de cuenta (con abono 0)
+                EstadoCuenta::create([
+                    'id_socio' => $pago['id_socio'],
+                    'id_venta_pago' => $resultPago->id,
+                    'concepto' => 'NOTA VENTA: ' . $folio . ' - ' . $puntoVenta->nombre,
+                    'fecha' => now()->toDateString(),
+                    'cargo' => $pago['monto_pago'],
+                    'saldo' => $pago['monto_pago'],
+                    'consumo' => true
+                ]);
+            } else {
+                //Creamos el concepto en el estado de cuenta (con abono total)
+                EstadoCuenta::create([
+                    'id_socio' => $pago['id_socio'],
+                    'id_venta_pago' => $resultPago->id,
+                    'concepto' => 'NOTA VENTA: ' . $folio . ' - ' . $puntoVenta->nombre,
+                    'fecha' => now()->toDateString(),
+                    'cargo' => $pago['monto_pago'],
+                    'abono' => $pago['monto_pago'],
+                    'saldo' => 0,
+                    'consumo' => true
+                ]);
+            }
         }
     }
 

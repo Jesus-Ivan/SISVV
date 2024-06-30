@@ -400,6 +400,14 @@ class ReportesController extends Controller
         return $pdf->stream('reporte-vencidos' . $fInicio . '.pdf');
     }
 
+    public function mensual(Request $request)
+    {
+        $fInicio = $request->input('fechaInicio');
+        $fFin = $request->input('fechaFin');
+        $type = $request->input('selectedType');
+        return $fInicio . $fFin . $type;
+    }
+
     private function calcularAltura($data)
     {
         $font_size_p = 7;

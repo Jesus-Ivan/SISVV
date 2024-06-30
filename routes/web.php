@@ -186,6 +186,12 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::view('/', 'sistemas.Herramientas.registros')->name('sistemas.registros');
         Route::post('/', [ExcelController::class, 'importData'])->name('subirRegistros');
     });
+    Route::prefix('reportes')->group(function () {
+        Route::view('/', 'sistemas.Herramientas.reportes')->name('sistemas.sistemas');
+        Route::post('/', [ReportesController::class, 'mensual'])->name('sistemas.reportes');
+    });
+
+
 
     //RECEPCION
     Route::prefix('recepcion')->group(function () {

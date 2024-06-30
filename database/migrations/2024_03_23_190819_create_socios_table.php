@@ -35,7 +35,7 @@ return new class extends Migration
             $table->string('correo5', 50)->nullable();
             $table->string('curp', 18)->nullable();
             $table->string('rfc', 13)->nullable();
-            $table->boolean('firma', 1)->nullable();
+            $table->boolean('firma', 0)->nullable();
             //Relaciones
 
             //$table->foreign('clave_membresia')->references('clave')->on('membresias');

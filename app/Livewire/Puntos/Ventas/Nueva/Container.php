@@ -35,7 +35,7 @@ class Container extends Component
     public function metodosPago()
     {
         //Si no es venta a publico general, mostrar firma
-        if ($this->ventaForm->tipoVenta != 'general') {
+        if ($this->ventaForm->tipo_venta != 'general' && $this->ventaForm->tipo_venta != 'empleado') {
             return TipoPago::whereNot(function (Builder $query) {
                 $query->where('descripcion', 'like', 'TRANSFERENCIA')
                     ->orWhere('descripcion', 'like', 'DEPOSITO')
@@ -124,6 +124,7 @@ class Container extends Component
     {
         try {
             $this->ventaForm->cerrarVentaNueva($this->codigopv);
+            $this->dispatch('action-message-venta');
         } catch (\Throwable $th) {
             dd($th->getMessage());
         }

@@ -21,6 +21,7 @@ class VentaForm extends Form
     public $tipo_venta = "socio";    //El tipo de venta a realizar
     public $invitado;               //Invitado
     public $nombre_invitado;        //El nombre del invitado
+    public $nombre_empleado;        //Nombre del empleado
     public $socioSeleccionado;      //El socio seleccionado
     public $socio = [];             //Datos del socio
 
@@ -45,6 +46,29 @@ class VentaForm extends Form
     //public $totalSinDescuento = 0;  //Centa total temporal en caso que se le aplique un descuento
     //public $totalConDescuento = 0;  //El total de la venta final
 
+    public $socioVentaRules = [
+        'socio' => 'min:1',
+        'productosTable' => 'min:1',
+        'pagosTable' => 'min:1'
+    ];
+
+    public $invitadoVentaRules = [
+        'socio' => 'min:1',
+        'nombre_invitado' => 'requied',
+        'productosTable' => 'min:1',
+        'pagosTable' => 'min:1'
+    ];
+
+    public $generalVentaRules = [
+        'productosTable' => 'min:1',
+        'pagosTable' => 'min:1'
+    ];
+
+    public $empleadoVentaRules = [
+        'nombre_empleado' => 'required',
+        'productosTable' => 'min:1',
+        'pagosTable' => 'min:1'
+    ];
 
     /* Agrega los articulos seleccionados a la tabla.
         La funcion recibe el array de todos los items mostrado en el modal.
@@ -190,11 +214,22 @@ class VentaForm extends Form
     public function cerrarVentaNueva($codigopv)
     {
         //Validamos la informacion de la venta
-        $venta = $this->validate([
-            'socio' => 'min:1',
-            'productosTable' => 'min:1',
-            'pagosTable' => 'min:1'
-        ]);
+        switch ($this->tipo_venta) {
+            case 'socio':
+                $venta = $this->validate($this->socioVentaRules);
+                break;
+            case 'invitado':
+                $venta = $this->validate($this->invitadoVentaRules);
+                break;
+            case 'general':
+                $venta = $this->validate($this->generalVentaRules);
+                break;
+            case 'empleado':
+                $venta = $this->validate($this->empleadoVentaRules);
+                break;
+            default:
+                break;
+        }
 
         //Calculamos total de los productos
         $montoTotalVenta = array_sum(array_column($this->productosTable, 'subtotal'));
@@ -233,9 +268,8 @@ class VentaForm extends Form
 
         //Se crea la transaccion
         DB::transaction(function () use ($venta, $codigopv, $tipo_venta) {
-
             //Crear la venta y guardamos el resultado de la insersion en la BD.
-            $resultVenta = $this->registrarVenta($venta, $codigopv, tipo_venta: $tipo_venta);
+            $resultVenta = $this->registrarVenta($venta, $codigopv, false, tipo_venta: $tipo_venta);
             //crear los detalles de los productos
             $this->registrarProductosVenta($resultVenta->folio, $venta);
         });

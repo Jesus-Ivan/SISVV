@@ -67,7 +67,7 @@ class Container extends Component
     public function metodosPago()
     {
         //Si no es venta a publico general, mostrar firma
-        if ($this->ventaForm->tipoVenta != 'general') {
+        if ($this->ventaForm->tipo_venta != 'general') {
             return TipoPago::whereNot(function (Builder $query) {
                 $query->where('descripcion', 'like', 'TRANSFERENCIA')
                     ->orWhere('descripcion', 'like', 'DEPOSITO')

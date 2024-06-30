@@ -49,7 +49,7 @@ class Container extends Component
         try {
             $this->ventaForm->setSocioPago($socio);
         } catch (\Throwable $th) {
-            //Codigo de error 1, el socio no tiene firma
+            //Codigo de error 1, el socio esta cancelado
             if ($th->getCode() == 2) {
                 session()->flash('socioActivo', $th->getMessage());
             }
@@ -153,7 +153,7 @@ class Container extends Component
     {
 
         try {
-            $this->ventaForm->cerrarVentaExistente($this->venta->folio);
+            $this->ventaForm->cerrarVentaExistente($this->venta->folio, $this->codigopv);
             $this->redirectRoute('pv.ventas', ['codigopv' => $this->codigopv]);
         } catch (Exception $e) {
             dump($e->getMessage());

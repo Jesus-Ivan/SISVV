@@ -17,7 +17,8 @@
         <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">
             {{ $item->fecha_apertura }}
         </p>
-        <ul class="max-w-md space-y-1 text-gray-500 list-disc list-inside dark:text-gray-400">
+
+        {{-- <ul class="max-w-md space-y-1 text-gray-500 list-disc list-inside dark:text-gray-400">
             <li>
                 At least 10 characters
             </li>
@@ -27,7 +28,7 @@
             <li>
                 Inclusion of at least one special charact
             </li>
-        </ul>
+        </ul> --}}
         <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">
             Subtotal: ${{ $item->total }}
         </p>

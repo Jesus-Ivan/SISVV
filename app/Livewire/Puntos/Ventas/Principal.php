@@ -20,20 +20,7 @@ class Principal extends Component
     {
         $this->fecha = now()->toDateString();
     }
-
-    //Buscamos si el codigopv, corresponde a recepcion.
-    #[Computed()]
-    public function isReception()
-    {
-        /**
-         * Si encuentra un registro, devuelve el resgistro.
-         * de lo contrario devuelve null
-         */
-        return PuntoVenta::where('clave', $this->codigopv)
-            ->where('nombre', 'like', '%RECEPCION%')
-            ->first();
-    }
-
+    
     #[Computed()]
     public function ventasHoy()
     {

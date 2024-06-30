@@ -29,7 +29,14 @@ class Container extends Component
     #[On('selected-socio-pago')]
     public function socioSeleccionadoPago(Socio $socio)
     {
-        $this->ventaForm->socioPago = $socio;
+        try {
+            $this->ventaForm->setSocioPago($socio);
+        } catch (\Throwable $th) {
+            //Codigo de error 1, el socio no tiene firma
+            if ($th->getCode() == 2) {
+                session()->flash('socioActivo', $th->getMessage());
+            }
+        }
     }
 
     #[Computed()]

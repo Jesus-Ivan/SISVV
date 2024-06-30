@@ -191,8 +191,6 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::post('/', [ReportesController::class, 'mensual'])->name('sistemas.reportes');
     });
 
-
-
     //RECEPCION
     Route::prefix('recepcion')->group(function () {
         Route::view('/cargo-mensualidades', 'sistemas.Recepcion.cargo-mensualidades')->name('sistemas.cargoMensualidades');

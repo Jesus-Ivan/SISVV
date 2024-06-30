@@ -7,9 +7,12 @@ use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
 use App\Models\PuntoVenta;
 use App\Models\Socio;
+use App\Models\SocioMembresia;
 use App\Models\TipoPago;
 use App\Models\Venta;
+use Exception;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -23,23 +26,24 @@ class VentaForm extends Form
 
     public $socioPago;              //El socio seleccionado para agregar en metodo de pago
     public $id_pago;                //id del tipo de pago seleccionado en el modal
-    public $pagos = [];
     public $monto_pago;             //el monto a pagar
-    public $propina;               //Si dejo o no propina
+    public $propina;                //Si dejo o no propina
 
     public $seachProduct = '';        //Input de busqueda de productos
     public $selected = [];            //Almacena los codigos de productos seleccionados del modal.
 
     public $productosTable = [];      //array de productos, que se muestran en la tabla (productos agregados)
+    #[Locked]
     public $pagosTable = [];          //Array de pagos que se muestran en la tabla
+    #[Locked]
     public $totalVenta = 0;           //El costo total de los articulos
 
+    #[Locked]
     public $totalPago = 0;            //El total de los pagos
     public $totalPropina = 0;         //El total de la propina
-    public $descuento = 0;          //En caso de que se aplique un descuento a la cuenta
-    public $totalSinDescuento = 0;  //Centa total temporal en caso que se le aplique un descuento
-    public $totalConDescuento = 0;  //El total de la venta final
-    public $cambio = 0;
+    //public $descuento = 0;          //En caso de que se aplique un descuento a la cuenta
+    //public $totalSinDescuento = 0;  //Centa total temporal en caso que se le aplique un descuento
+    //public $totalConDescuento = 0;  //El total de la venta final
 
 
     /* Agrega los articulos seleccionados a la tabla.
@@ -100,6 +104,7 @@ class VentaForm extends Form
         $articulo['cantidad']++;
         //Obtenemos el nuevo subtotal
         $articulo['subtotal'] = $articulo['cantidad'] * $articulo['precio'];
+        $this->actualizarTotal();
     }
 
     public function decrementarProducto($productoIndex)
@@ -111,6 +116,7 @@ class VentaForm extends Form
             $articulo['cantidad']--;
             $articulo['subtotal'] = $articulo['cantidad'] * $articulo['precio'];
         }
+        $this->actualizarTotal();
     }
 
     public function actualizarTotal()
@@ -119,14 +125,33 @@ class VentaForm extends Form
         $this->totalVenta = array_sum(array_column($this->productosTable, 'subtotal'));
     }
 
-    public function agregarPago()
+    //Recibe una instancia del modelo 'Socio' con el registro de la BD, para el registro del pago
+    public function setSocioPago($socio)
     {
-        $validation_rules = [
-            //'metodo_pago' => 'required',
-            'monto_pago' => 'required|numeric',
-        ];
+        //Validamos si el socio no esta con una membresia cancelada
+        $resultMembresia = SocioMembresia::where('id_socio', $socio->id)->first();
+        if (!$resultMembresia) {
+            throw new Exception('No se encontro membresia registrada', 2);
+        } else if ($resultMembresia->estado == 'CAN') {
+            throw new Exception('Membresia de socio cancelada', 2);
+        }
+        $this->socioPago = $socio;
+    }
+
+    public function agregarPago($metodos_pago)
+    {
         //Validamos las entradas
-        $validated = $this->validate($validation_rules);
+        $validated = $this->validate([
+            'socioPago' => 'required',
+            'id_pago' => 'required',
+            'monto_pago' => 'required|numeric',
+        ]);
+
+        //Si de los metodos de pago, el actual seleccionado es firma.
+        if ($metodos_pago->where('descripcion', 'like', 'FIRMA')->first()->id == $this->id_pago) {
+            //Validamos si tiene firma
+            $this->validarFirma($this->socioPago->id);
+        }
 
         //Se agrega el pago a la tabla de pagos
         $this->pagosTable[] = [
@@ -137,7 +162,7 @@ class VentaForm extends Form
             'monto_pago' => $validated['monto_pago'],
             'propina' => $this->propina,
         ];
-        $this->reset('id_socio', 'id_tipo_pago', 'monto_pago', 'propina');
+        $this->reset('socioPago', 'id_pago', 'monto_pago', 'propina');
         $this->actualizarPago();
     }
 
@@ -150,7 +175,7 @@ class VentaForm extends Form
     public function actualizarPago()
     {
         //Se actualiza el total del pago
-        $this->totalSinDescuento = array_sum(array_column($this->pagosTable, 'monto_pago'));
+        $this->totalPago = array_sum(array_column($this->pagosTable, 'monto_pago'));
 
         //Aplicar descuento si es que existe
         /* if ($this->descuento > 0) {
@@ -219,34 +244,56 @@ class VentaForm extends Form
     //Cerrar una venta existente (actualiza toda la venta)
     public function cerrarVentaExistente($folio)
     {
+        //Validamos que de la venta tenga metodos de pago y productos
+        $venta = $this->validate([
+            'productosTable' => 'min:1',
+            'pagosTable' => 'min:1'
+        ]);
+        DB::transaction(function () use ($folio, $venta) {
+            //Guardamos los metodos de pago
+            $this->registrarPagosVenta($folio, $venta);
+            //Guardamos los cambios de la tabla de productos
+            $this->guardarVentaExistente($folio);
+            //Cerramos la venta con la fecha actual
+            Venta::where('folio', $folio)->update(['fecha_cierre' => now()->format('Y-m-d H:i:s')]);
+        });
     }
-    //Actualizar una venta existente (actualiza solo la tabla de productos)
+
+    //Actualizar una venta existente (actualiza la tabla de productos y total de la venta)
     public function guardarVentaExistente($folio)
     {
-        //dd($this->productosTable);
+        //Calculamos el nuevo total de la venta
+        $total = array_sum(array_column($this->productosTable, 'subtotal'));
+        //Creamos una fecha de inicio para los detalles de los productos que se van a guardar
         $inicio = now()->format('Y-m-d H:i:s');
-        //Recorremos todos los items de la tabla
-        foreach ($this->productosTable as $key => $producto) {
-            //Verificamos si el item que se itera, cuenta con un 'id' de la base de datos
-            if (array_key_exists('id', $producto)) {
-                //Actualizar el registro en la BD
-                DetallesVentaProducto::where('id', $producto['id'])
-                    ->update(
-                        ['cantidad' => $producto['cantidad'], 'subtotal' => $producto['subtotal']]
-                    );
-            } else {
-                //Crear el nuevo item
-                DetallesVentaProducto::create([
-                    'folio_venta' => $folio,
-                    'codigo_catalogo' => $producto['codigo_catalogo'],
-                    'cantidad' => $producto['cantidad'],
-                    'precio' => $producto['precio'],
-                    'observaciones' => $producto['observaciones'],
-                    'subtotal' => $producto['subtotal'],
-                    'inicio' => $inicio,
-                ]);
+
+        DB::transaction(function () use ($folio, $total, $inicio) {
+            //Recorremos todos los items de la tabla
+            foreach ($this->productosTable as $key => $producto) {
+                //Verificamos si el item que se itera, cuenta con un 'id' de la base de datos
+                if (array_key_exists('id', $producto)) {
+                    //Actualizar el registro en la BD
+                    DetallesVentaProducto::where('id', $producto['id'])
+                        ->update(
+                            ['cantidad' => $producto['cantidad'], 'subtotal' => $producto['subtotal']]
+                        );
+                } else {
+                    //Crear el nuevo item
+                    DetallesVentaProducto::create([
+                        'folio_venta' => $folio,
+                        'codigo_catalogo' => $producto['codigo_catalogo'],
+                        'cantidad' => $producto['cantidad'],
+                        'precio' => $producto['precio'],
+                        'observaciones' => $producto['observaciones'],
+                        'subtotal' => $producto['subtotal'],
+                        'inicio' => $inicio,
+                        'tiempo' => $producto['tiempo'],
+                    ]);
+                }
             }
-        }
+            //Actualizamos el total de la venta 
+            Venta::where('folio', $folio)->update(['total' => $total]);
+        });
     }
 
 
@@ -286,6 +333,7 @@ class VentaForm extends Form
                 'observaciones' => $producto['observaciones'],
                 'subtotal' => $producto['subtotal'],
                 'inicio' => $inicio,
+                'tiempo' => $producto['tiempo'],
             ]);
         }
     }
@@ -303,6 +351,16 @@ class VentaForm extends Form
                 'propina' => $pago['propina'],
                 'id_tipo_pago' => $pago['id_tipo_pago'],
             ]);
+        }
+    }
+
+    private function validarFirma($socioId)
+    {
+        //Buscamos el socio
+        $result = Socio::find($socioId);
+        //Si el socio no tiene firma
+        if (!$result->firma) {
+            throw new Exception("Este socio no tiene firma autorizada", 1);
         }
     }
 }

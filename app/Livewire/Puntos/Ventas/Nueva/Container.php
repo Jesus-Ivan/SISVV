@@ -11,6 +11,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 
 class Container extends Component
@@ -87,11 +88,17 @@ class Container extends Component
     {
         try {
             //Intentamos agregar el pago seleccionado
-            $this->ventaForm->agregarPago();
+            $this->ventaForm->agregarPago($this->metodosPago);
             //Emitimos evento para cerrar el componente del modal
             $this->dispatch('close-modal');
+        } catch (ValidationException $e) {
+            //Si es una excepcion de validacion, volverla a lanzar a la vista
+            throw $e;
         } catch (\Throwable $th) {
-            dump($th->getMessage());
+            //Codigo de error 1, el socio no tiene firma
+            if ($th->getCode() == 1) {
+                session()->flash('firma', $th->getMessage());
+            }
         }
     }
 

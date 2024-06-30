@@ -14,6 +14,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Validation\ValidationException;
 
 class Container extends Component
 {
@@ -28,23 +29,31 @@ class Container extends Component
     #[Locked]
     public $codigopv;
 
-
+    //Hook que se ejecuta al inicio de vida el componente.
     public function mount(Venta $venta)
     {
         //Guardamos la instancia del modelo, correspondiente al registro de la venta en ls BD
         $this->venta = $venta;
-        //Buscamos los detalles de los productos vendidos y guardamos en la propiedad del componente
+        //Buscamos los detalles de los productos vendidos y guardamos en el formulario
         $this->ventaForm->productosTable = DetallesVentaProducto::with('catalogoProductos')
             ->where('folio_venta', $venta->folio)
             ->get()
             ->toArray();
-        //dd($this->ventaForm->productosTable);
+        //Despues de buscar los productos, actualizarTotal
+        $this->ventaForm->actualizarTotal();
     }
 
     #[On('selected-socio-pago')]
     public function socioSeleccionadoPago(Socio $socio)
     {
-        $this->ventaForm->socioPago = $socio;
+        try {
+            $this->ventaForm->setSocioPago($socio);
+        } catch (\Throwable $th) {
+            //Codigo de error 1, el socio no tiene firma
+            if ($th->getCode() == 2) {
+                session()->flash('socioActivo', $th->getMessage());
+            }
+        }
     }
 
     #[Computed()]
@@ -108,6 +117,29 @@ class Container extends Component
         $this->ventaForm->eliminarArticulo($productoIndex);
     }
 
+    public function agregarPago()
+    {
+        try {
+            //Intentamos agregar el pago seleccionado
+            $this->ventaForm->agregarPago($this->metodosPago);
+            //Emitimos evento para cerrar el componente del modal
+            $this->dispatch('close-modal');
+        } catch (ValidationException $e) {
+            //Si es una excepcion de validacion, volverla a lanzar a la vista
+            throw $e;
+        } catch (\Throwable $th) {
+            //Codigo de error 1, el socio no tiene firma
+            if ($th->getCode() == 1) {
+                session()->flash('firma', $th->getMessage());
+            }
+        }
+    }
+
+    public function eliminarPago($pagoIndex)
+    {
+        $this->ventaForm->eliminarPago($pagoIndex);
+    }
+
     public function incrementar($productoIndex)
     {
         $this->ventaForm->incrementarProducto($productoIndex);
@@ -122,7 +154,7 @@ class Container extends Component
 
         try {
             $this->ventaForm->cerrarVentaExistente($this->venta->folio);
-            $this->redirectRoute('pv.ventas');
+            $this->redirectRoute('pv.ventas', ['codigopv' => $this->codigopv]);
         } catch (Exception $e) {
             dump($e->getMessage());
         }
@@ -133,7 +165,7 @@ class Container extends Component
 
         try {
             $this->ventaForm->guardarVentaExistente($this->venta->folio);
-            $this->redirectRoute('pv.ventas');
+            $this->redirectRoute('pv.ventas', ['codigopv' => $this->codigopv]);
         } catch (Exception $e) {
             dump($e->getMessage());
         }

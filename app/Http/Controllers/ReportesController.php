@@ -453,12 +453,100 @@ class ReportesController extends Controller
         $fInicio = $request->input('fechaInicio');
         $fFin = $request->input('fechaFin');
         $type = $request->input('selectedType');
-        
+
         if ($type == 'V') {
             return $this->ventasMes($fInicio, $fFin);
-        }elseif ($type == 'R') {
-            
+        } elseif ($type == 'R') {
+            return $this->reporteRecibos($fInicio, $fFin);
         }
+    }
+
+    private function reporteRecibos($fInicio, $fFin)
+    {
+        //Buscamos los metodos de pago, permitidos para el reporte de cobranza
+        $tipos_pago = TipoPago::whereNot(function (Builder $query) {
+            $query->where('descripcion', 'like', 'FIRMA')
+                ->orWhere('descripcion', 'like', '%SALDO%');
+        })->get();
+
+        //Variable auxiliar que almacena los totales de los recibos, por metodos de pago
+        $arrayAux = [];
+        //Obtenemos los detalles de recibos unidos con el recibos
+        $detalles_recibo = DB::table('recibos')
+            ->join('detalles_recibo', 'recibos.folio', '=', 'detalles_recibo.folio_recibo')
+            ->select(
+                'recibos.folio',
+                'recibos.id_socio',
+                'recibos.nombre',
+                'recibos.corte_caja',
+                'recibos.facturado',
+                'recibos.created_at',
+                'detalles_recibo.id_tipo_pago',
+                'detalles_recibo.monto_pago',
+            )
+            ->whereDate('created_at', '>=', $fInicio)
+            ->whereDate('created_at', '<=', $fFin)
+            ->get();
+
+
+        //Recorremos todos los detalles de los recibos
+        foreach ($detalles_recibo as $key => $detalle) {
+            //Verificamos si existe un elemento en el array con el mismo folio de recibo y tipo de pago
+            $countFilter = array_filter($arrayAux, function ($value) use ($detalle) {
+                return $value['folio'] == $detalle->folio && $value['id_tipo_pago'] == $detalle->id_tipo_pago;
+            });
+            //Si existe al menos 1, elemento en el array, con el folio y tipo de pago
+            if (count($countFilter) > 0) {
+                //Buscamos la posicion del elemento en el array
+                for ($i = 0; $i < count($arrayAux); $i++) {
+                    if ($arrayAux[$i]['folio'] == $detalle->folio &&  $arrayAux[$i]['id_tipo_pago'] == $detalle->id_tipo_pago) {
+                        //Si coincide con folio y tipo de pago, acumulamos el monto, en el elemento del array.
+                        $arrayAux[$i]['monto_pago'] += $detalle->monto_pago;
+                    }
+                }
+            } else {
+                //Si no existe dentro del array, lo agregamos
+                array_push($arrayAux, [
+                    'folio' => $detalle->folio,
+                    'id_socio' => $detalle->id_socio,
+                    'nombre' => $detalle->nombre,
+                    'id_tipo_pago' => $detalle->id_tipo_pago,
+                    'monto_pago' => $detalle->monto_pago,
+                    'facturado' => $detalle->facturado,
+                    'corte_caja' => $detalle->corte_caja,
+                    'created_at' => $detalle->created_at,
+                ]);
+            }
+        }
+
+        $separados = [];    //Array auxiliar de recibos separados por tipo
+        $totalCobranza = 0;  //Acumulador auxiliar
+        //Separar los pagos por tipo
+        foreach ($tipos_pago as $pago) {
+            //$separados[$pago->descripcion] = $detalles->where('id_tipo_pago', $pago->id);
+            $separados[$pago->descripcion] = array_filter($arrayAux, function ($row) use ($pago) {
+                return $pago->id == $row['id_tipo_pago'];
+            });
+            //Acumulamos el total de 'monto_pago', de los cargos recien separados por el tipo de pago
+            $totalCobranza += array_sum(array_column($separados[$pago->descripcion], 'monto_pago'));
+        }
+
+        $header = [
+            'title' => 'VISTA VERDE COUNTRY CLUB',
+            'rfc' => 'VVC101110AQ4',
+            'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
+            'telefono' => '3745011'
+        ];
+
+        $data = [
+            'header' => $header,
+            'detalles_recibo' => $separados,
+            'total' => $totalCobranza
+        ];
+
+        $pdf = Pdf::loadView('reportes.cobranza-resumen', $data);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        return $pdf->stream('ReporteCobranzaResumen.pdf');
     }
 
     private function calcularAltura($data)

@@ -9,7 +9,7 @@
         <!-- TITULO -->
         <h4 class="text-2xl font-bold dark:text-white mx-2">Obtener reporte mensual</h4>
     </div>
-    <form action="{{ route('sistemas.reportes') }}" method="POST">
+    <form action="{{ route('sistemas.reportes') }}" method="POST" target="_blank">
         @csrf
         <div class="max-w-sm">
             <label for="registros" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Seleccionar

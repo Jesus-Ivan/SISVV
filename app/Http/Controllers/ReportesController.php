@@ -431,6 +431,7 @@ class ReportesController extends Controller
                 'recibos.id_socio',
                 'recibos.nombre',
                 'recibos.corte_caja',
+                'recibos.facturado',
                 'recibos.created_at',
                 'detalles_recibo.id_tipo_pago',
                 'detalles_recibo.monto_pago',
@@ -463,6 +464,7 @@ class ReportesController extends Controller
                     'nombre' => $detalle->nombre,
                     'id_tipo_pago' => $detalle->id_tipo_pago,
                     'monto_pago' => $detalle->monto_pago,
+                    'facturado' => $detalle->facturado,
                     'corte_caja' => $detalle->corte_caja,
                     'created_at' => $detalle->created_at,
                 ]);

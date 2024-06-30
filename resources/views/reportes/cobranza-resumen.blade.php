@@ -64,7 +64,7 @@
             </thead>
             <tbody>
                 @foreach ($cat as $detalle_cat)
-                    <tr>
+                    <tr style="{{ $detalle_cat['facturado']  ? 'background-color: gray' : '' }}">
                         <td>{{ $detalle_cat['folio'] }}</td>
                         <td>{{ $detalle_cat['created_at'] }}</td>
                         <td>{{ $detalle_cat['nombre'] }}</td>

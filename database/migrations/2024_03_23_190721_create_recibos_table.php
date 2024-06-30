@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('total', 10, 2);
             $table->integer('corte_caja')->unsigned();
             $table->string('observaciones', 255)->nullable();
+            $table->boolean('facturado')->default(false);
             $table->timestamps();
 
             /*//Relaciones

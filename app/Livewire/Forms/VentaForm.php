@@ -18,7 +18,7 @@ use Livewire\Form;
 
 class VentaForm extends Form
 {
-    public $tipoVenta = "socio";    //El tipo de venta a realizar
+    public $tipo_venta = "socio";    //El tipo de venta a realizar
     public $invitado;               //Invitado
     public $nombre_invitado;        //El nombre del invitado
     public $socioSeleccionado;      //El socio seleccionado
@@ -206,18 +206,18 @@ class VentaForm extends Form
             session()->flash('fail', "El monto total de pago no es el correcto");
             return;
         }
+
         //Se crea la transaccion
         DB::transaction(function () use ($venta, $codigopv) {
-            //Si no es invitado
-            if (!$this->invitado) {
-                //Crear la venta y guardamos el resultado de la insersion en la BD.
-                $resultVenta = $this->registrarVenta($venta, $codigopv, true);
-                //crear los detalles de los productos
-                $this->registrarProductosVenta($resultVenta->folio, $venta);
-                //Crear los detalles de los pagos
-                $this->registrarPagosVenta($resultVenta->folio, $venta);
-            }
+            //Crear la venta y guardamos el resultado de la insersion en la BD.
+            $resultVenta = $this->registrarVenta($venta, $codigopv, true, $this->tipo_venta);
+            //crear los detalles de los productos
+            $this->registrarProductosVenta($resultVenta->folio, $venta);
+            //Crear los detalles de los pagos
+            $this->registrarPagosVenta($resultVenta->folio, $venta);
         });
+        session()->flash('success', "Venta realizada correctamente");
+        $this->reset();
     }
 
     //Se ejecuta para guardar una venta, cuando es nueva
@@ -229,15 +229,15 @@ class VentaForm extends Form
             'productosTable' => 'min:1',
         ]);
 
+        $tipo_venta = $this->tipo_venta;
+
         //Se crea la transaccion
-        DB::transaction(function () use ($venta, $codigopv) {
-            //Si no es invitado
-            if (!$this->invitado) {
-                //Crear la venta y guardamos el resultado de la insersion en la BD.
-                $resultVenta = $this->registrarVenta($venta, $codigopv);
-                //crear los detalles de los productos
-                $this->registrarProductosVenta($resultVenta->folio, $venta);
-            }
+        DB::transaction(function () use ($venta, $codigopv, $tipo_venta) {
+
+            //Crear la venta y guardamos el resultado de la insersion en la BD.
+            $resultVenta = $this->registrarVenta($venta, $codigopv, tipo_venta: $tipo_venta);
+            //crear los detalles de los productos
+            $this->registrarProductosVenta($resultVenta->folio, $venta);
         });
     }
 
@@ -296,10 +296,8 @@ class VentaForm extends Form
         });
     }
 
-
-
     //Esta funcion registra la venta en la tabla "ventas"
-    private function registrarVenta($venta, $codigopv, $isClosed = false)
+    private function registrarVenta($venta, $codigopv, $isClosed = false, $tipo_venta)
     {
         //Obtenemos la fecha-hora de actual, con una instancia de Carbon.
         $fecha_cierre = now()->format('Y-m-d H:i:s');
@@ -309,6 +307,7 @@ class VentaForm extends Form
         $nombre = $venta['socio']['nombre'] . ' ' . $venta['socio']['apellido_p'] . ' ' . $venta['socio']['apellido_m'];
         //Se registra la venta
         return Venta::create([
+            'tipo_venta' => $tipo_venta,
             'id_socio' =>  $venta['socio']['id'],
             'nombre' => $nombre,
             'fecha_apertura' => $fecha_cierre,

@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('ventas', function (Blueprint $table) {
             $table->integer('folio')->autoIncrement()->unsigned();
+            $table->string('tipo_venta', 20)->nullable();
             $table->integer('id_socio')->nullable();
             $table->string('nombre', 255);
             $table->dateTime('fecha_apertura');

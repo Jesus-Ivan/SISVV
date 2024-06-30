@@ -395,9 +395,57 @@ class ReportesController extends Controller
             'totales' => $totales,
             'total' => array_sum(array_column($totales, 'monto'))
         ];
+
         $pdf = Pdf::loadView('reportes.cartera-vencida', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
         return $pdf->stream('reporte-vencidos' . $fInicio . '.pdf');
+    }
+
+    public function ventasMes($fInicio, $fFin)
+    {
+        //Quitamos los metodos de pago no permitidos.
+        $tipos_pago = TipoPago::whereNot(function (Builder $query) {
+            $query->where('descripcion', 'like', 'TRANSFERENCIA')
+                ->orWhere('descripcion', 'like', 'DEPOSITO')
+                ->orWhere('descripcion', 'like', 'CHEQUE')
+                ->orWhere('descripcion', 'like', '%SALDO%');
+        })->get();
+        //Array auxiliar de pagos separados por tipo
+        $separados = [];
+        //Consulta que obtiene los detalles de los pagos con su corte de caja
+        $detalles_pago = DB::table('detalles_ventas_pagos')
+            ->join('ventas', 'detalles_ventas_pagos.folio_venta', '=', 'ventas.folio')
+            ->select('detalles_ventas_pagos.*', 'ventas.*')
+            ->whereDate('fecha_apertura', '>=',  $fInicio)
+            ->whereDate('fecha_apertura', '<=',  $fFin)
+            ->get();
+
+        //Obtenemos el total del corte
+        $totalVenta = array_sum(array_column($detalles_pago->toArray(), 'monto'));
+        //Separar los pagos por tipo
+        foreach ($tipos_pago as $pago) {
+            $separados[$pago->descripcion] = $detalles_pago->where('id_tipo_pago', $pago->id);
+        }
+
+        $header = [
+            'title' => 'VISTA VERDE COUNTRY CLUB',
+            'rfc' => 'VVC101110AQ4',
+            'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
+            'telefono' => '3745011',
+            'fInicio' => $fInicio,
+            'fFin' => $fFin
+        ];
+
+        //Almacenamos la informacion en un array, para la vista del resporte
+        $data = [
+            'header' => $header,
+            'detalles_pagos' => $separados,
+            'totalVenta' => $totalVenta
+        ];
+
+        $pdf = Pdf::loadView('reportes.ventas', $data);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        return $pdf->stream("reporteMensual.pdf");
     }
 
     public function mensual(Request $request)
@@ -405,7 +453,12 @@ class ReportesController extends Controller
         $fInicio = $request->input('fechaInicio');
         $fFin = $request->input('fechaFin');
         $type = $request->input('selectedType');
-        return $fInicio . $fFin . $type;
+        
+        if ($type == 'V') {
+            return $this->ventasMes($fInicio, $fFin);
+        }elseif ($type == 'R') {
+            
+        }
     }
 
     private function calcularAltura($data)

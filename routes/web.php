@@ -191,8 +191,6 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::post('/', [ReportesController::class, 'mensual'])->name('sistemas.reportes');
     });
 
-
-
     //RECEPCION
     Route::prefix('recepcion')->group(function () {
         Route::view('/cargo-mensualidades', 'sistemas.Recepcion.cargo-mensualidades')->name('sistemas.cargoMensualidades');
@@ -202,8 +200,6 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::view('/cargo-anualidades', 'sistemas.Recepcion.cargo-anualidades')->name('sistemas.cargoAnualidades');
         Route::post('/verificar-anu', [CargosController::class, 'verificarAnualidades'])->name('sistemas.verificarAnualidades');
     });
-
-    Route::view('reportes', 'sistemas.Reportes.reportes')->name('sistemas.reportes');
 });
 
 Route::prefix('portico')->middleware(['auth'])->group(function () {

@@ -1,5 +1,4 @@
 <div>
-    <p>{{$permisospv}}</p>
     <form>
         <!--Info del socio-->
         <div class="m-3">
@@ -27,6 +26,7 @@
         </div>
         <!--Tabla de articulos-->
         @include('livewire.puntos.ventas.nueva.include.productos-table')
+        {{--SECCION DE PAGOS--}}
         @if ($permisospv->clave_rol != 'MES')
             <!--Linea -->
             <hr class="h-px my-4 bg-gray-300 border-0 dark:bg-gray-700">
@@ -49,7 +49,7 @@
                         </div>
                     </div>
                     <!--Boton de metodos de pago -->
-                    <button type="button" data-modal-target="modal-pagos" data-modal-toggle="modal-pagos"
+                    <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'modal-pagos'})"
                         class=" inline-flex items-center focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
                         <svg class="w-6 h-6 text-white dark:text-gray-800 me-2" aria-hidden="true"
                             xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -66,47 +66,7 @@
                 </div>
             </div>
             <!--Tabla de metodos de pagos -->
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-                <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                        <tr>
-                            <th scope="col" class="px-6 py-3">
-                                NO.SOCIO
-                            </th>
-                            <th scope="col" class="px-6 py-3">
-                                METODO DE PAGO
-                            </th>
-                            <th scope="col" class="px-6 py-3">
-                                PROPINA
-                            </th>
-                            <th scope="col" class="px-6 py-3">
-                                SUBTOTAL
-                            </th>
-                            <th scope="col" class="px-6 py-3">ACCIONES
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-
-                    </tbody>
-                    <tfoot>
-                        <tr class="font-semibold text-gray-900 dark:text-white">
-                            <th scope="row" class="px-6 py-3 text-base">
-                                <p>Descuento</p>
-                                <p>Total</p>
-                                <p>Cambios</p>
-                            </th>
-                            <td class="px-6 py-3"></td>
-                            <td class="px-6 py-3"></td>
-                            <td class="px-6 py-3">
-                                <p>$0</p>
-                                <p>$110</p>
-                                <p>$0</p>
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+            @include('livewire.puntos.ventas.nueva.include.pagos-table')
         @endif
         <!--Botones de navegacion (cancelar, guardar, cerrar venta)-->
         <div class="m-2">

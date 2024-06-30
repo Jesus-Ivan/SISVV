@@ -2,11 +2,13 @@
     <!-- Modal body -->
     <div>
         {{-- Autocomplete --}}
-        <div class="grid grid-flow-col">
+        <div>
             <livewire:autocomplete :params="[
                 'table' => ['name' => 'socios', 'columns' => ['id', 'nombre', 'apellido_p', 'apellido_m']],
             ]" primaryKey="id" event="selected-socio-pago" />
-
+            @if (session('socioActivo'))
+                <x-input-error messages="{{ session('socioActivo') }}" />
+            @endif
         </div>
         {{-- Info de socio --}}
         <div>
@@ -14,6 +16,9 @@
                 {{ $this->ventaForm->socioPago->id }} -
                 {{ $this->ventaForm->socioPago->nombre . ' ' . $this->ventaForm->socioPago->apellido_p . ' ' . $this->ventaForm->socioPago->apellido_m }}
             @endif
+            @error('ventaForm.socioPago')
+                <x-input-error messages="{{ $message }}" />
+            @enderror
         </div>
         {{-- Metodo de pago --}}
         <div>
@@ -24,20 +29,25 @@
                 @foreach ($this->metodosPago as $metodo)
                     <option value="{{ $metodo->id }}">{{ $metodo->descripcion }}</option>
                 @endforeach
-                @error('id_pago')
-                    <x-input-error messages="{{ $message }}" />
-                @enderror
             </select>
+            @error('ventaForm.id_pago')
+                <x-input-error messages="{{ $message }}" />
+            @enderror
+            @if (session('firma'))
+                <x-input-error messages="{{ session('firma') }}" />
+            @endif
         </div>
         {{-- Monto y propina --}}
-        <div class="grid grid-flow-col">
-            <input type="number" id="monto_pago" wire:model='ventaForm.monto_pago'
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder="Monto" required />
-            <input type="number" id="propina" wire:model='ventaForm.propina'
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder="Propina" required />
-            @error('monto_pago')
+        <div>
+            <div class="grid grid-flow-col">
+                <input type="number" id="monto_pago" wire:model='ventaForm.monto_pago'
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    placeholder="Monto" required />
+                <input type="number" id="propina" wire:model='ventaForm.propina'
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    placeholder="Propina" required />
+            </div>
+            @error('ventaForm.monto_pago')
                 <x-input-error messages="{{ $message }}" />
             @enderror
         </div>

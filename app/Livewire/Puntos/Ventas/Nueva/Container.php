@@ -165,6 +165,12 @@ class Container extends Component
         $this->dispatch('action-message-venta');
     }
 
+    public function resetVentas()
+    {
+        $this->ventaForm->resetVentas();
+    }
+
+
     public function render()
     {
         return view('livewire.puntos.ventas.nueva.container');

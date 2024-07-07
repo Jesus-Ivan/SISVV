@@ -21,6 +21,7 @@ class VentaForm extends Form
     public $tipo_venta = "socio";    //El tipo de venta a realizar
     public $invitado;               //Invitado
     public $nombre_invitado;        //El nombre del invitado
+    public $nombre_p_general;       //Nombre del cliente cuanso selecciona publico general
     public $nombre_empleado;        //Nombre del empleado
     public $socioSeleccionado;      //El socio seleccionado
     public $socio = [];             //Datos del socio
@@ -46,29 +47,41 @@ class VentaForm extends Form
     //public $totalSinDescuento = 0;  //Centa total temporal en caso que se le aplique un descuento
     //public $totalConDescuento = 0;  //El total de la venta final
 
+    //REGLAS PARA VENTA AL SOCIO
     public $socioVentaRules = [
         'socio' => 'min:1',
         'productosTable' => 'min:1',
         'pagosTable' => 'min:1'
     ];
 
+    //REGLAS PARA VENTA AL INVITADO
     public $invitadoVentaRules = [
         'socio' => 'min:1',
-        'nombre_invitado' => 'requied',
+        'nombre_invitado' => 'required',
         'productosTable' => 'min:1',
         'pagosTable' => 'min:1'
     ];
 
+    //REGLAS PARA VENTA AL PUBLICO GENERAL
     public $generalVentaRules = [
+        'nombre_p_general' => 'required',
         'productosTable' => 'min:1',
         'pagosTable' => 'min:1'
     ];
 
+    //REGLAS PARA VENTA AL EMPLEADO
     public $empleadoVentaRules = [
         'nombre_empleado' => 'required',
         'productosTable' => 'min:1',
         'pagosTable' => 'min:1'
     ];
+
+    //RESETEAR VALORES DEL SELECT Y TABLA DE PAGOS
+    public function resetVentas()
+    {
+        $this->reset(['socio', 'nombre_invitado', 'nombre_p_general', 'nombre_empleado']);
+        $this->reset(['pagosTable']);
+    }
 
     /* Agrega los articulos seleccionados a la tabla.
         La funcion recibe el array de todos los items mostrado en el modal.
@@ -165,27 +178,52 @@ class VentaForm extends Form
     public function agregarPago($metodos_pago)
     {
         //Validamos las entradas
-        $validated = $this->validate([
-            'socioPago' => 'required',
+        $reglas = [
             'id_pago' => 'required',
             'monto_pago' => 'required|numeric',
-        ]);
+        ];
+
+        if ($this->tipo_venta == 'socio' || $this->tipo_venta == 'invitado') {
+            $reglas['socioPago'] = 'required'; // Validar número de socio si es venta para socio
+        }
+
+        $validated = $this->validate($reglas);
 
         //Si de los metodos de pago, el actual seleccionado es firma.
-        if ($metodos_pago->where('descripcion', 'like', 'FIRMA')->first()->id == $this->id_pago) {
+        /*if ($metodos_pago->where('descripcion', 'like', 'FIRMA')->first()->id == $this->id_pago) {
             //Validamos si tiene firma
             $this->validarFirma($this->socioPago->id);
+        }*/
+
+        $id_socio = $this->socioPago ? $this->socioPago->id : null; //Si es venta para socio, se obtiene el id del socio
+
+        switch ($this->tipo_venta) {
+            case 'socio':
+                $nombre = $this->socioPago->nombre . ' ' . $this->socioPago->apellido_p . ' ' . $this->socioPago->apellido_m;
+                break;
+            case 'invitado':
+                $nombre = $this->nombre_invitado;
+                break;
+            case 'empleado':
+                $nombre = $this->nombre_empleado;
+                break;
+            case 'general':
+                $nombre = $this->nombre_p_general;
+                break;
+            default:
+                break;
         }
 
         //Se agrega el pago a la tabla de pagos
         $this->pagosTable[] = [
-            'id_socio' => $this->socioPago->id,
-            'nombre' => $this->socioPago->nombre . ' ' . $this->socioPago->apellido_p . ' ' . $this->socioPago->apellido_m,
+            'id_socio' => $id_socio,
+            'nombre' => $nombre,
             'id_tipo_pago' => $this->id_pago,
             'descripcion_tipo_pago' => TipoPago::find($this->id_pago)->descripcion,
             'monto_pago' => $validated['monto_pago'],
             'propina' => $this->propina,
         ];
+
         $this->reset('socioPago', 'id_pago', 'monto_pago', 'propina');
         $this->actualizarPago();
     }
@@ -246,11 +284,13 @@ class VentaForm extends Form
         DB::transaction(function () use ($venta, $codigopv) {
             //Crear la venta y guardamos el resultado de la insersion en la BD.
             $resultVenta = $this->registrarVenta($venta, $codigopv, true, $this->tipo_venta);
+            //dd($resultVenta);
             //crear los detalles de los productos
             $this->registrarProductosVenta($resultVenta->folio, $venta);
             //Crear los detalles de los pagos
             $this->registrarPagosVenta($resultVenta->folio, $venta, $codigopv);
         });
+
         session()->flash('success', "Venta realizada correctamente");
         $this->reset();
     }
@@ -337,12 +377,33 @@ class VentaForm extends Form
         $fecha_cierre = now()->format('Y-m-d H:i:s');
         //Se calcula el total de los productos
         $total = array_sum(array_column($venta['productosTable'], 'subtotal'));
-        //Concatenamos el nombre
-        $nombre = $venta['socio']['nombre'] . ' ' . $venta['socio']['apellido_p'] . ' ' . $venta['socio']['apellido_m'];
+
+        //Si el socio tiene un id, lo concatenamos al nombre
+        //$nombre = isset($venta['socio']['id']) ? $venta['socio']['nombre'] . ' ' . $venta['socio']['apellido_p'] . ' ' . $venta['socio']['apellido_m'] : null;
+
+        switch ($this->tipo_venta) {
+            case 'socio':
+                $nombre = $venta['socio']['nombre'] . ' ' . $venta['socio']['apellido_p'] . ' ' . $venta['socio']['apellido_m'];
+                break;
+            case 'invitado':
+                $nombre = $venta['nombre_invitado'];
+                break;
+            case 'general':
+                $nombre = $venta['nombre_p_general'];
+                break;
+            case 'empleado':
+                $nombre = $venta['nombre_empleado'];
+                break;
+            default:
+                $nombre = null;
+        }
+
+        //dd($venta);
+
         //Se registra la venta
         return Venta::create([
             'tipo_venta' => $tipo_venta,
-            'id_socio' =>  $venta['socio']['id'],
+            'id_socio' =>  $venta['socio']['id'] ?? null,
             'nombre' => $nombre,
             'fecha_apertura' => $fecha_cierre,
             'fecha_cierre' => $isClosed ? $fecha_cierre : null,
@@ -377,6 +438,7 @@ class VentaForm extends Form
         //Buscamos el punto de venta.
         $puntoVenta = PuntoVenta::find($codigopv);
         //Detalles de Pago
+        //dd($venta['pagosTable']);
         foreach ($venta['pagosTable'] as $key => $pago) {
             $resultPago = DetallesVentaPago::create([
                 'folio_venta' => $folio,

@@ -2,7 +2,8 @@
     <!-- Modal body -->
     <div>
         {{-- Autocomplete --}}
-        <div>
+        <div
+            class="{{ $this->ventaForm->tipo_venta == 'general' || $this->ventaForm->tipo_venta == 'empleado' ? 'opacity-50 pointer-events-none' : 'opacity-100' }}">
             <livewire:autocomplete :params="[
                 'table' => ['name' => 'socios', 'columns' => ['id', 'nombre', 'apellido_p', 'apellido_m']],
             ]" primaryKey="id" event="selected-socio-pago" />

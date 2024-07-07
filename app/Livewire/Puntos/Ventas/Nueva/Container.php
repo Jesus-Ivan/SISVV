@@ -136,13 +136,22 @@ class Container extends Component
 
     public function cerrarVentaNueva()
     {
-        try {
-            $this->ventaForm->cerrarVentaNueva($this->codigopv);
+
+        $this->ventaForm->cerrarVentaNueva($this->codigopv);
             $this->dispatch('action-message-venta');
+        try {
+            //$this->ventaForm->cerrarVentaNueva($this->codigopv);
+            //$this->dispatch('action-message-venta');
         } catch (\Throwable $th) {
             dd($th->getMessage());
         }
     }
+
+    public function resetVentas()
+    {
+        $this->ventaForm->resetVentas();
+    }
+
 
     public function render()
     {

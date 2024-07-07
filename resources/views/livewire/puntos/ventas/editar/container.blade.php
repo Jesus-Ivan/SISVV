@@ -26,8 +26,8 @@
         </div>
         <!--Tabla de articulos-->
         @include('livewire.puntos.ventas.nueva.include.productos-table')
-        {{--SECCION DE PAGOS--}}
-        @if ($permisospv->clave_rol != 'MES')
+        {{-- SECCION DE PAGOS --}}
+        @if ($this->ventaForm->permisospv->clave_rol != 'MES')
             <!--Linea -->
             <hr class="h-px my-4 bg-gray-300 border-0 dark:bg-gray-700">
             <!--Metodo de pagos -->
@@ -70,7 +70,7 @@
         @endif
         <!--Botones de navegacion (cancelar, guardar, cerrar venta)-->
         <div class="m-2">
-            <button type="button"
+            <a href="{{ route('pv.ventas', ['codigopv' => $codigopv]) }}"
                 class="inline-flex items-center focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
                 <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -80,8 +80,8 @@
                         clip-rule="evenodd" />
                 </svg>
                 Cancelar
-            </button>
-            <button type="button" wire:click="guardarVentaExistente"
+            </a>
+            <button type="button" wire:click="guardarVentaExistente" wire:loading.attr="disabled" wire:target='guardarVentaExistente'
                 class="inline-flex items-center focus:outline-none text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-900">
                 <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -91,8 +91,8 @@
                 </svg>
                 Guardar venta
             </button>
-            @if ($permisospv->clave_rol != 'MES')
-                <button type="button" wire:click="cerrarVentaExistente"
+            @if ($this->ventaForm->permisospv->clave_rol != 'MES')
+                <button type="button" wire:click="cerrarVentaExistente" wire:loading.attr="disabled" wire:target='cerrarVentaExistente'
                     class="inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
                     <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -106,6 +106,21 @@
             @endif
         </div>
     </form>
+
+    <!--INDICADOR DE CARGA, DE VENTA-->
+    <div wire:loading.delay.long wire:target='cerrarVentaExistente, guardarVentaExistente'>
+        <x-loading-screen name='loading'>
+            <x-slot name='body'>
+                <div class="flex">
+                    <div class="me-4">
+                        @include('livewire.utils.loading', ['w' => 6, 'h' => 6])
+                    </div>
+                    <p>Procesando venta</p>
+                </div>
+            </x-slot>
+        </x-loading-screen>
+    </div>
+
     <!--Modal productos -->
     <x-modal name="modal-productos" title="Agregar productos">
         <x-slot name='body'>
@@ -125,29 +140,35 @@
         </x-slot>
     </x-modal>
     <!--Alerts-->
-    <div class="fixed bottom-0 left-1">
-        <div id="alert-border-3"
-            class="flex items-center p-4 mb-4 text-green-800 border-t-4 border-green-300 bg-green-50 dark:text-green-400 dark:bg-gray-800 dark:border-green-800"
-            role="alert">
-            <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                fill="currentColor" viewBox="0 0 20 20">
-                <path
-                    d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-            </svg>
-            <div class="ms-3 text-sm font-medium">
-                A simple success alert with an <a href="#"
-                    class="font-semibold underline hover:no-underline">example link</a>. Give it a click if you like.
-            </div>
-            <button type="button"
-                class="ms-auto -mx-1.5 -my-1.5 bg-green-50 text-green-500 rounded-lg focus:ring-2 focus:ring-green-400 p-1.5 hover:bg-green-200 inline-flex items-center justify-center h-8 w-8 dark:bg-gray-800 dark:text-green-400 dark:hover:bg-gray-700"
-                data-dismiss-target="#alert-border-3" aria-label="Close">
-                <span class="sr-only">Dismiss</span>
-                <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
-                    viewBox="0 0 14 14">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+    <x-action-message on='action-message-venta'>
+        @if (session('success'))
+            <div id="alert-exito"
+                class="flex items-center p-4 mb-4 text-green-800 border-t-4 border-green-300 bg-green-50 dark:text-green-400 dark:bg-gray-800 dark:border-green-800"
+                role="alert">
+                <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                        d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
                 </svg>
-            </button>
-        </div>
-    </div>
+                <div class="ms-3 text-sm font-medium">
+                    {{ session('success') }}
+                </div>
+            </div>
+        @else
+            <div id="alert-error"
+                class="flex items-center p-4 mb-4 text-red-800 border-t-4 border-red-300 bg-red-50 dark:text-red-400 dark:bg-gray-800 dark:border-red-800"
+                role="alert">
+                <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                        d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                </svg>
+                <div class="ms-3 text-sm font-medium">
+                    {{ session('fail') }}
+                </div>
+            </div>
+        @endif
+    </x-action-message>
+    <!--Script para imprimir el ticket-->
+    @include('livewire.puntos.ventas.include.print-script')
 </div>

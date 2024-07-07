@@ -67,4 +67,7 @@
             </tr>
         </tfoot>
     </table>
+    @error('ventaForm.pagosTable')
+        <x-input-error messages="{{ $message }}" />
+    @enderror
 </div>

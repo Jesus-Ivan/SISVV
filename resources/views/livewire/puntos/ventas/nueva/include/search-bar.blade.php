@@ -36,6 +36,7 @@
                         placeholder="Nombre del invitado">
                 </div>
             @break
+
             @case('general')
                 <div class="relative">
                     <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
@@ -82,4 +83,7 @@
             <p>No. de socio: {{ $this->ventaForm->socio ? $this->ventaForm->socio->id : '' }}</p>
         @endif
     </div>
+    @error('ventaForm.socio')
+        <x-input-error messages="{{ $message }}" />
+    @enderror
 </div>

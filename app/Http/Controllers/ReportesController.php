@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\SociosExport;
 use App\Models\Caja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
+use App\Models\PuntoVenta;
 use App\Models\Recibo;
 use App\Models\SaldoFavor;
 use App\Models\Socio;
@@ -15,6 +17,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Stringable;
 
@@ -26,6 +29,7 @@ class ReportesController extends Controller
         $productos = DetallesVentaProducto::with('catalogoProductos')->where('folio_venta', $venta->folio)->get();
         $pagos = DetallesVentaPago::with('tipoPago')->where('folio_venta', $venta->folio)->get();
         $caja = Caja::with('users')->where('corte', $venta->corte_caja)->limit(1)->get();
+        $puntoVenta = PuntoVenta::where('clave', $venta->clave_punto_venta)->first();
         //Enviamos los datos a la vista
         $data = [
             'title' => 'VISTA VERDE COUNTRY CLUB',
@@ -33,6 +37,7 @@ class ReportesController extends Controller
             'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
             'telefono' => '3745011',
             'folio' => $venta->folio,
+            'tipo_venta' => $venta->tipo_venta,
             'fecha' => $venta->fecha_apertura,
             'socio_id' => $venta->id_socio,
             'socio_nombre' => $venta->nombre,
@@ -40,6 +45,7 @@ class ReportesController extends Controller
             'pagos' => $pagos,
             'total' => $venta->total,
             'caja' => $caja,
+            'puntoVenta' => $puntoVenta,
         ];
 
         //$altura = $this->calcularAltura($data);
@@ -54,6 +60,11 @@ class ReportesController extends Controller
     //Genera reportes de ventas, con ayuda del corte de caja
     public function generarCorte(Caja $caja)
     {
+        //Comprobamos si la caja no esta cerrada
+        if (!$caja->fecha_cierre && $caja->clave_punto_venta != 'REC') {
+            return redirect()->route('home');
+        }
+
         //Quitamos los metodos de pago no permitidos.
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
             $query->where('descripcion', 'like', 'TRANSFERENCIA')
@@ -461,6 +472,10 @@ class ReportesController extends Controller
         }
     }
 
+    public function socios()
+    {
+        return Excel::download(new SociosExport, 'socios(val_cuot).xlsx');
+    }
     private function reporteRecibos($fInicio, $fFin)
     {
         //Buscamos los metodos de pago, permitidos para el reporte de cobranza

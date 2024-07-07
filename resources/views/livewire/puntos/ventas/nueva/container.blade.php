@@ -24,45 +24,48 @@
         @include('livewire.puntos.ventas.nueva.include.productos-table')
         <!--Linea -->
         <hr class="h-px my-4 bg-gray-300 border-0 dark:bg-gray-700">
-        <!--Metodo de pagos -->
-        <div>
-            <!--Titulo de metodo de pago-->
-            <h5 class="my-2 text-xl font-bold dark:text-white">Metodo de pago: </h5>
-            <!--Input y button-->
-            <div class="flex items-center my-4">
-                <!--Input descuento-->
-                <div class="flex flex-grow">
-                    <div>
-                        <label for="descuento"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descuento por consumo
-                            (%)</label>
-                        <input type="number" id="descuento"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                            value="0" />
+        @if ($this->ventaForm->permisospv->clave_rol != 'MES')
+            <!--Metodo de pagos -->
+            <div>
+                <!--Titulo de metodo de pago-->
+                <h5 class="my-2 text-xl font-bold dark:text-white">Metodo de pago: </h5>
+                <!--Input y button-->
+                <div class="flex items-center my-4">
+                    <!--Input descuento-->
+                    <div class="flex flex-grow">
+                        <div>
+                            <label for="descuento"
+                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descuento por
+                                consumo
+                                (%)</label>
+                            <input type="number" id="descuento"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                value="0" />
+                        </div>
                     </div>
+                    <!--Boton de metodos de pago -->
+                    <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'modal-pagos'})"
+                        class=" inline-flex items-center focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                        <svg class="w-6 h-6 text-white dark:text-gray-800 me-2" aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path fill-rule="evenodd"
+                                d="M12 14a3 3 0 0 1 3-3h4a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-4a3 3 0 0 1-3-3Zm3-1a1 1 0 1 0 0 2h4v-2h-4Z"
+                                clip-rule="evenodd" />
+                            <path fill-rule="evenodd"
+                                d="M12.293 3.293a1 1 0 0 1 1.414 0L16.414 6h-2.828l-1.293-1.293a1 1 0 0 1 0-1.414ZM12.414 6 9.707 3.293a1 1 0 0 0-1.414 0L5.586 6h6.828ZM4.586 7l-.056.055A2 2 0 0 0 3 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2h-4a5 5 0 0 1 0-10h4a2 2 0 0 0-1.53-1.945L17.414 7H4.586Z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        Añadir pago
+                    </button>
                 </div>
-                <!--Boton de metodos de pago -->
-                <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'modal-pagos'})"
-                    class=" inline-flex items-center focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-                    <svg class="w-6 h-6 text-white dark:text-gray-800 me-2" aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
-                        viewBox="0 0 24 24">
-                        <path fill-rule="evenodd"
-                            d="M12 14a3 3 0 0 1 3-3h4a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-4a3 3 0 0 1-3-3Zm3-1a1 1 0 1 0 0 2h4v-2h-4Z"
-                            clip-rule="evenodd" />
-                        <path fill-rule="evenodd"
-                            d="M12.293 3.293a1 1 0 0 1 1.414 0L16.414 6h-2.828l-1.293-1.293a1 1 0 0 1 0-1.414ZM12.414 6 9.707 3.293a1 1 0 0 0-1.414 0L5.586 6h6.828ZM4.586 7l-.056.055A2 2 0 0 0 3 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2h-4a5 5 0 0 1 0-10h4a2 2 0 0 0-1.53-1.945L17.414 7H4.586Z"
-                            clip-rule="evenodd" />
-                    </svg>
-                    Añadir pago
-                </button>
             </div>
-        </div>
-        <!--Tabla de metodos de pagos -->
-        @include('livewire.puntos.ventas.nueva.include.pagos-table')
+            <!--Tabla de metodos de pagos -->
+            @include('livewire.puntos.ventas.nueva.include.pagos-table')
+        @endif
         <!--Botones de navegacion (cancelar, guardar, cerrar venta)-->
         <div class="my-3">
-            <button type="button"
+            <a href="{{ route('pv.ventas', ['codigopv' => $codigopv]) }}"
                 class="inline-flex items-center focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
                 <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -72,8 +75,8 @@
                         clip-rule="evenodd" />
                 </svg>
                 Cancelar
-            </button>
-            <button type="button" wire:click ='guardarVentaNueva'
+            </a>
+            <button type="button" wire:click ='guardarVentaNueva' wire:loading.attr="disabled" wire:target='guardarVentaNueva'
                 class="inline-flex items-center focus:outline-none text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-900">
                 <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -83,17 +86,19 @@
                 </svg>
                 Guardar venta
             </button>
-            <button type="button" wire:click='cerrarVentaNueva'
-                class="inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
-                    viewBox="0 0 24 24">
-                    <path fill-rule="evenodd"
-                        d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm13.707-1.293a1 1 0 0 0-1.414-1.414L11 12.586l-1.793-1.793a1 1 0 0 0-1.414 1.414l2.5 2.5a1 1 0 0 0 1.414 0l4-4Z"
-                        clip-rule="evenodd" />
-                </svg>
-                Cerrar venta
-            </button>
+            @if ($this->ventaForm->permisospv->clave_rol != 'MES')
+                <button type="button" wire:click='cerrarVentaNueva' wire:loading.attr="disabled" wire:target='cerrarVentaNueva'
+                    class="inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                    <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                        viewBox="0 0 24 24">
+                        <path fill-rule="evenodd"
+                            d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm13.707-1.293a1 1 0 0 0-1.414-1.414L11 12.586l-1.793-1.793a1 1 0 0 0-1.414 1.414l2.5 2.5a1 1 0 0 0 1.414 0l4-4Z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Cerrar venta
+                </button>
+            @endif
         </div>
         <x-action-message on='action-message-venta'>
             @if (session('success'))
@@ -126,6 +131,20 @@
         </x-action-message>
     </form>
 
+    <!--INDICADOR DE CARGA, DE VENTA-->
+    <div wire:loading.delay.long wire:target='cerrarVentaNueva, guardarVentaNueva'>
+        <x-loading-screen name='loading'>
+            <x-slot name='body'>
+                <div class="flex">
+                    <div class="me-4">
+                        @include('livewire.utils.loading', ['w' => 6, 'h' => 6])
+                    </div>
+                    <p>Procesando venta</p>
+                </div>
+            </x-slot>
+        </x-loading-screen>
+    </div>
+
     <!--Modal productos -->
     <x-modal name="modal-productos" title="Agregar productos">
         <x-slot name='body'>
@@ -146,5 +165,6 @@
             @include('livewire.puntos.ventas.nueva.include.modal-pagos-body')
         </x-slot>
     </x-modal>
-
+    <!--Script para imprimir el ticket-->
+    @include('livewire.puntos.ventas.include.print-script')
 </div>

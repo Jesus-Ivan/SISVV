@@ -37,7 +37,7 @@
         </button>
     </form>
     {{-- TABLA DE VENTAS --}}
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg ms-3 mx-3 my-3">
+    <div wire:poll class="relative overflow-x-auto shadow-md sm:rounded-lg ms-3 mx-3 my-3">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
@@ -129,4 +129,38 @@
         </table>
         <div>{{ $this->ventasHoy->links() }}</div>
     </div>
+
+    {{-- Linea divisora, regresar , pasar venta --}}
+    <div class="ms-3 mx-3">
+        <hr class="h-px my-2 bg-gray-300 border-0 dark:bg-gray-700">
+        <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'modalAdvertencia'})"
+            class="my-2 text-green-700 hover:text-white border border-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:hover:bg-green-500 dark:focus:ring-green-800">
+            Pasar ventas
+        </button>
+    </div>
+
+    {{-- MODAL DE ADVERTENCIA DE TRASPASO DE VENTAS --}}
+    <x-modal title="Pasar ventas" name="modalAdvertencia">
+        <x-slot name='body'>
+            <div class="text-center">
+                <svg class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¡¡ Advertencia !!
+                </h3>
+                <p  class="text-gray-500 dark:text-gray-400 w-96">
+                    ¿Realmente deseas traspasar las ventas abiertas al siguiente turno?
+                </p>
+                <p id="status">
+                    {{$status_message}}
+                </p>
+            </div>
+            <button type="button" wire:click ="pasarVentas"
+                class="mt-3 focus:outline-none text-white bg-yellow-500 hover:bg-yellow-600 focus:ring-4 focus:ring-yellow-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900">
+                Confirmar trapaso y cerrar caja
+            </button>
+        </x-slot>
+    </x-modal>
 </div>

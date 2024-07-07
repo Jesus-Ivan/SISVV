@@ -20,6 +20,7 @@ class PrincipalMesero extends Component
         return Venta::whereAny(['id_socio', 'nombre'], 'like', '%' . $this->search . '%')
             ->whereDate('fecha_apertura', now()->toDateString())
             ->where('clave_punto_venta', $this->codigopv)
+            ->whereNull('fecha_cierre')
             ->orderby('fecha_apertura', 'desc')
             ->paginate(10);
     }

@@ -20,6 +20,13 @@ class Container extends Component
     #[Locked]
     public $codigopv;
 
+    public function mount($codigopv, $permisospv){
+        //Guardamos el codigo del pv en el componente
+        $this->codigopv = $codigopv;
+        //Guardamos los permisos del usuario en el formulario
+        $this->ventaForm->permisospv = $permisospv;
+    }
+
     #[On('on-selected-socio')]
     public function socioSeleccionado(Socio $socio)
     {
@@ -127,21 +134,35 @@ class Container extends Component
     public function guardarVentaNueva()
     {
         try {
+            //Guardamos la venta
             $this->ventaForm->guardarVentaNueva($this->codigopv);
-            $this->redirectRoute('pv.ventas', ['codigopv' => $this->codigopv]);
+            //Emitimos mensaje de sesion 
+            session()->flash('success', 'Venta guardada correctamente');
+        } catch (ValidationException $th) {
+            //Si es una excepcion de validacion, volverla a lanzar a la vista
+            throw $th;
         } catch (Exception $e) {
-            dump($e->getMessage());
+            session()->flash('fail', $e->getMessage());
         }
+        $this->dispatch('action-message-venta');
     }
 
     public function cerrarVentaNueva()
     {
         try {
-            $this->ventaForm->cerrarVentaNueva($this->codigopv);
-            $this->dispatch('action-message-venta');
-        } catch (\Throwable $th) {
-            dd($th->getMessage());
+            //Guardamos la venta completa
+            $folioVenta = $this->ventaForm->cerrarVentaNueva($this->codigopv);
+            //Emitimos evento para abrir el ticket en nueva pestaña
+            $this->dispatch('ver-ticket', ['venta' => $folioVenta]);
+            //Mensaje de sesion para el alert
+            session()->flash('success', 'Venta cerrada correctamente');
+        } catch (ValidationException $th) {
+            //Si es una excepcion de validacion, volverla a lanzar a la vista
+            throw $th;
+        } catch (\Throwable $e) {
+            session()->flash('fail', $e->getMessage());
         }
+        $this->dispatch('action-message-venta');
     }
 
     public function render()

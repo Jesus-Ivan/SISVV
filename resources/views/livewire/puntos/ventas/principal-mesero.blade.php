@@ -1,4 +1,4 @@
-<div class="m-3">
+<div class="m-3" wire:poll>
     {{-- SEARCH BAR --}}
     <div class="max-w-md">
         <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Buscar</label>
@@ -24,5 +24,4 @@
         @endforeach
     </div>
     <div>{{$this->ventasHoy->links()}}</div>
-
 </div>

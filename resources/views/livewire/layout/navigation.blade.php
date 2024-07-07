@@ -156,8 +156,12 @@ new class extends Component {
                                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Cafeteria</a>
                                     </li>
                                     <li>
+                                        <a href="{{ route('pv.index', ['codigopv' => 'LOD']) }}"
+                                            class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Lockers Damas</a>
+                                    </li>
+                                    <li>
                                         <a href="{{ route('pv.index', ['codigopv' => 'LOC']) }}"
-                                            class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Lockers</a>
+                                            class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Lockers Caballeros</a>
                                     </li>
                                 </ul>
                             </li>

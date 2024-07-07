@@ -21,19 +21,20 @@ class Container extends Component
     public VentaForm $ventaForm;
 
     #[Locked]
-    public $permisospv;
-
-    #[Locked]
     public $venta;
 
     #[Locked]
     public $codigopv;
 
     //Hook que se ejecuta al inicio de vida el componente.
-    public function mount(Venta $venta)
+    public function mount(Venta $venta, $permisospv, $codigopv)
     {
         //Guardamos la instancia del modelo, correspondiente al registro de la venta en ls BD
         $this->venta = $venta;
+        //Guardamos en las propiedades del componente, el codigodel punto de venta
+        $this->codigopv = $codigopv;
+        //Guardamos los permisos del usuario en el formulario
+        $this->ventaForm->permisospv = $permisospv;
         //Buscamos los detalles de los productos vendidos y guardamos en el formulario
         $this->ventaForm->productosTable = DetallesVentaProducto::with('catalogoProductos')
             ->where('folio_venta', $venta->folio)
@@ -151,23 +152,32 @@ class Container extends Component
 
     public function cerrarVentaExistente()
     {
-
         try {
+            //Efectuamos los cambios para guardar la venta
             $this->ventaForm->cerrarVentaExistente($this->venta->folio, $this->codigopv);
+            //Emitimos evento para abrir el ticket en nueva pestaña
+            $this->dispatch('ver-ticket', ['venta' => $this->venta->folio]);
+            //redirigir al usuario
             $this->redirectRoute('pv.ventas', ['codigopv' => $this->codigopv]);
+        } catch (ValidationException $th) {
+            //Lanzar la excepcion de validacion a la vista
+            throw $th;
         } catch (Exception $e) {
-            dump($e->getMessage());
+            session()->flash('fail', $e->getMessage());
+            $this->dispatch('action-message-venta');
         }
     }
 
     public function guardarVentaExistente()
     {
-
         try {
             $this->ventaForm->guardarVentaExistente($this->venta->folio);
             $this->redirectRoute('pv.ventas', ['codigopv' => $this->codigopv]);
+        } catch (ValidationException $th) {
+            throw $th;
         } catch (Exception $e) {
-            dump($e->getMessage());
+            session()->flash('fail', $e->getMessage());
+            $this->dispatch('action-message-venta');
         }
     }
 

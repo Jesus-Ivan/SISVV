@@ -103,6 +103,7 @@
                 @endforeach
             </tbody>
         </table>
+        <dir>{{ $this->statusCaja->links() }}</dir>
     </div>
     <!--Alerts-->
     <x-action-message on='info-caja'>
@@ -149,12 +150,6 @@
                     Actualmente tienes cuentas abiertas, te recomendamos cerrar la ventas primero.
                 </p>
             </div>
-        </x-slot>
-        <x-slot name='footer'>
-            <button type="button" wire:click='pasarVentas({{}})'
-                class="text-white bg-green-600 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
-                Pasar ventas
-            </button>
         </x-slot>
     </x-modal>
 </div>

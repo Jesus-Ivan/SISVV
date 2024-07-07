@@ -32,10 +32,9 @@ class Container extends Component
         $resultCaja = Caja::whereDate('fecha_apertura', $this->fecha)
             ->where('id_usuario', auth()->user()->id)
             ->where('clave_punto_venta', $this->codigopv)
-            ->take(1)
-            ->get();
+            ->first();
         //Si existe un registro de caja
-        if (count($resultCaja) > 0) {
+        if ($resultCaja) {
             $this->caja = $resultCaja;
         } else {
             $this->caja = null;
@@ -45,7 +44,7 @@ class Container extends Component
     {
         if ($this->caja) {
             return view('livewire.puntos.ventas.reporte.container', [
-                'ventas' => Venta::where('corte_caja', $this->caja[0]->corte)->paginate(10)
+                'ventas' => Venta::where('corte_caja', $this->caja->corte)->paginate(10)
             ]);
         } else {
             return view('livewire.puntos.ventas.reporte.container', [

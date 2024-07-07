@@ -3,20 +3,18 @@
 namespace App\Livewire;
 
 use App\Models\Caja as ModelsCaja;
-use App\Models\PuntoVenta;
-use App\Models\UserPermisos;
 use App\Models\Venta;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
-use Livewire\Attributes\On;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Caja extends Component
 {
-
+    use WithPagination;
     #[Locked]
     public $codigopv;       //Propiedad publica que recibe del exterior el codigo del PV
 
@@ -50,39 +48,51 @@ class Caja extends Component
     public function statusCaja()
     {
         $hoy = now();
-        $ayer = now()->yesterday();
-        //Buscamos al menos 1 registro de caja abierta, con el usuario autenticado, en el punto actual.
-        return ModelsCaja::whereDate('fecha_apertura', '<=', $hoy->format('Y-m-d'))
-            ->whereDate('fecha_apertura', '>=', $ayer->format('Y-m-d'))
-            ->where('id_usuario', $this->usuario->id)
-            ->get();
+        //Buscamos todas las cajas abiertas en el mes, por el usuario autenticado (sin importar el punto de venta)
+        return ModelsCaja::where('id_usuario', $this->usuario->id)
+            ->whereMonth('fecha_apertura', $hoy->month)
+            ->paginate(5);
     }
 
 
     public function abrirCaja()
     {
         $validated = $this->validate();
-
-        //Buscamos las cajas del usuario, en un punto determinado, en el dia actual.
-        $resultCajaHoy = ModelsCaja::where('id_usuario', $this->usuario->id)
-            ->whereDate('fecha_apertura', '=', now()->format('Y-m-d'))
+        //Buscar si el usuario trata de abrir dos veces caja, en el mismo dia, en el mismo punto
+        $cajaPrevia = ModelsCaja::whereDate('fecha_apertura', '=', now()->format('Y-m-d'))
             ->where('clave_punto_venta', $this->puntoSeleccionado)
+            ->where('id_usuario', $this->usuario->id)
+            ->first();
+
+        //Buscamos las cajas abiertas, en un punto determinado, en el dia actual.
+        $resultCajaHoy = ModelsCaja::whereNull('fecha_cierre')
+            ->where('clave_punto_venta', $this->puntoSeleccionado)
+            ->whereDate('fecha_apertura', '=', now()->format('Y-m-d'))
             ->get();
 
-        //Comprobamos si intenta abrir caja en el mismo dia
-        if (count($resultCajaHoy) == 0) {
-            // Format without timezone offset
-            $fechaApertura = now()->format('Y-m-d H:i:s');
-            ModelsCaja::create([
-                'fecha_apertura' => $fechaApertura,
-                'id_usuario' => $this->usuario->id,
-                'cambio_inicial' => $validated['cambio'],
-                'clave_punto_venta' => $validated['puntoSeleccionado']
-            ]);
-            session()->flash('success', 'Caja abierta correctamente');
-            $this->reset();
+        //Si no se encontro una caja previa del usuario, en el punto, en el dia actual.
+        if (!$cajaPrevia) {
+            //Si no hay caja abierta en el punto
+            if (!count($resultCajaHoy)) {
+                DB::transaction(function () use ($validated) {
+                    // Format without timezone offset
+                    $fechaApertura = now()->format('Y-m-d H:i:s');
+                    $caja = ModelsCaja::create([
+                        'fecha_apertura' => $fechaApertura,
+                        'id_usuario' => $this->usuario->id,
+                        'cambio_inicial' => $validated['cambio'],
+                        'clave_punto_venta' => $validated['puntoSeleccionado']
+                    ]);
+                    //Retomamos las ventas del turno anterior
+                    $this->retomarVentas($caja->corte);
+                });
+                session()->flash('success', 'Caja abierta correctamente');
+                $this->reset();
+            } else {
+                session()->flash('fail', 'Ya hay una caja abierta por otro usuario');
+            }
         } else {
-            session()->flash('fail', 'No se pudo abrir la caja');
+            session()->flash('fail', 'No puedes abrir caja dos veces');
         }
         $this->dispatch('info-caja');
     }
@@ -96,7 +106,7 @@ class Caja extends Component
             if (count($this->tieneCuentasAbiertas($caja))) {
                 //ABRIMOS EL MODAL PARA INFORMAR LAS CUENTAS ABIERTAS
                 $this->dispatch('open-modal',  name: 'modalAdvertencia');
-                return ;
+                return;
             }
 
             //Verificamos si la caja ya tenia fecha de cierre
@@ -133,15 +143,26 @@ class Caja extends Component
         }
     }
 
-    public function pasarVentas(){
-        $resultVentas = $this->tieneCuentasAbiertas($caja);
-    }
-
     private function tieneCuentasAbiertas($caja)
     {
         return Venta::where('corte_caja', $caja->corte)
-        ->whereNull('fecha_cierre')
-        ->get();
+            ->whereNull('fecha_cierre')
+            ->get();
+    }
+
+    private function retomarVentas($cajaCorte)
+    {
+        $hoy = now()->toDateString();
+        //Buscar todas las ventas sin corte de caja, en el dia actual, en el punto actual.
+        $ventasPendientes = Venta::whereNull('corte_caja')
+            ->whereDate('fecha_apertura', $hoy)
+            ->where('clave_punto_venta', $this->codigopv)
+            ->get();
+
+        foreach ($ventasPendientes as $key => $value) {
+            $value->corte_caja = $cajaCorte;
+            $value->save();
+        }
     }
 
 

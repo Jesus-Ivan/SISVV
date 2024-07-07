@@ -2,7 +2,7 @@
     {{-- Contenido --}}
     <form wire:submit="cerrarVenta">
         <!-- Title -->
-        <h4 class="text-2xl font-bold dark:text-white mx-2">Nueva venta-Recepcion</h4>
+        <h4 class="text-2xl font-bold dark:text-white mx-2">NUEVA VENTA - RECEPCION</h4>
         <!-- Search Bar -->
         <livewire:recepcion.ventas.nueva.search-bar wire:model='datosSocio' />
         @error('datosSocio')

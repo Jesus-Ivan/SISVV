@@ -9,6 +9,10 @@
         margin-bottom: 2pt;
     }
 
+    .mayus{
+        text-transform: uppercase;
+    }
+
     h1,
     h2,
     h3,
@@ -51,7 +55,7 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
     <tbody>
         <tr>
             <td style="width: 20mm">Folio: {{ $folio }}</td>
-            <td>Fecha: {{ $fecha }}</td>
+            <td>{{ $fecha }}</td>
         </tr>
         <tr>
             <td>Socio: {{ $socio_id }}</td>
@@ -59,11 +63,15 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
         </tr>
         <tr>
             <td>Vendedor:</td>
-            <td>{{ count($caja) > 0 ? $caja[0]->users->name : 'ERR' }}</td>
+            <td class="mayus">{{ count($caja) > 0 ? $caja[0]->users->name : 'ERR' }}</td>
         </tr>
         <tr>
             <td>Punto:</td>
-            <td>{{ count($caja) > 0 ? $caja[0]->puntoVenta->nombre : 'ERRPV' }}</td>
+            <td>{{ $puntoVenta ? $puntoVenta->nombre : 'ERRPV' }}</td>
+        </tr>
+        <tr>
+            <td>Tipo de venta:</td>
+            <td class="mayus">{{ $tipo_venta ? $tipo_venta : 'ERRTV' }}</td>
         </tr>
     </tbody>
 </table>
@@ -88,8 +96,8 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
         @endforeach
     </tbody>
 </table>
-
 <hr>
+<p style="text-align: right;">TOTAL: ${{ array_sum(array_column($productos->toArray(), 'subtotal')) }}</p>
 <h4>DETALLES DE PAGO</h4>
 <table>
     <thead>

@@ -190,6 +190,8 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::view('/', 'sistemas.Herramientas.reportes')->name('sistemas.sistemas');
         Route::post('/', [ReportesController::class, 'mensual'])->name('sistemas.reportes');
     });
+    //Reporte de socios en excel
+    Route::get('socios', [ReportesController::class, 'socios'])->name('sistemas.socios');
 
     //RECEPCION
     Route::prefix('recepcion')->group(function () {
@@ -207,7 +209,7 @@ Route::prefix('portico')->middleware(['auth'])->group(function () {
     Route::view('socios', 'portico.Socios.container')->name('portico.socios');
 });
 
-Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->middleware(['auth'])->name('ventas.ticket');
+Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');
 Route::get('ventas/corte/{caja}', [ReportesController::class, 'generarCorte'])->middleware(['auth'])->name('ventas.corte');
 
 

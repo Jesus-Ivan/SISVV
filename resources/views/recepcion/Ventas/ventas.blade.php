@@ -5,9 +5,9 @@
      </x-slot>
 
      {{-- Contenido --}}
-     <div>
-         <!--Boton de acciones de ventas-->
-         <div class="flex items-center m-2">
+     <!--Boton de acciones de ventas-->
+     <div class="flex items-center m-2">
+         <div>
              <button id="dropdownMenuIconButton" data-dropdown-toggle="dropdownDots"
                  class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
                  type="button">
@@ -31,11 +31,12 @@
                      </li>
                  </ul>
              </div>
-             <!-- Title -->
-             <h4 class="text-2xl font-bold dark:text-white mx-2">Ventas-Recepcion</h4>
          </div>
-         {{-- Componente de la tabla con search bar --}}
-         {{-- $codigopv, proviene del controlador --}}
-         <livewire:puntos.ventas.principal :codigopv="$codigopv->clave" />
+         <!-- Title -->
+         <h4 class="text-2xl font-bold dark:text-white mx-2">VENTAS-RECEPCION</h4>
      </div>
+
+     {{-- Componente de la tabla con search bar --}}
+     {{-- $codigopv, proviene del controlador --}}
+     <livewire:puntos.ventas.principal :codigopv="$codigopv->clave" />
  </x-app-layout>

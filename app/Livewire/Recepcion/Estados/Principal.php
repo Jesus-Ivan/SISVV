@@ -19,7 +19,7 @@ class Principal extends Component
     //Iniciamos los valores por defecto
     public function mount()
     {   //Fecha del primer dia del mes actual
-        $this->fechaInicio = now()->day(1)->toDateString();
+        $this->fechaInicio = '2020-01-01';
         //Fecha del ultimo dia del mes actual
         $this->fechaFin = now()->day(now()->daysInMonth)->toDateString();
         $this->search = '';                     //Nombre por default

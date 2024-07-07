@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Forms;
 
+use App\Models\Caja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
@@ -45,6 +46,8 @@ class VentaForm extends Form
     //public $descuento = 0;          //En caso de que se aplique un descuento a la cuenta
     //public $totalSinDescuento = 0;  //Centa total temporal en caso que se le aplique un descuento
     //public $totalConDescuento = 0;  //El total de la venta final
+
+    public $permisospv;               //Almacena los permisos del usuario en el punto
 
     public $socioVentaRules = [
         'socio' => 'min:1',
@@ -231,28 +234,26 @@ class VentaForm extends Form
                 break;
         }
 
-        //Calculamos total de los productos
-        $montoTotalVenta = array_sum(array_column($this->productosTable, 'subtotal'));
-        //Calculamos total de los pagos
-        $montoTotalPago = array_sum(array_column($this->pagosTable, 'monto_pago'));
-        //Si los totales no coinciden, error.
-        if ($montoTotalPago != $montoTotalVenta) {
-            //Mandamos mensaje de sesion al alert
-            session()->flash('fail', "El monto total de pago no es el correcto");
-            return;
-        }
+        //Verificamos si el total de pago, es el mismo que el total de los productos
+        $this->verificarMontos();
 
+        //Variable auxiliar para almacenar el folio resultado de la venta
+        $folioVenta = 0;
         //Se crea la transaccion
-        DB::transaction(function () use ($venta, $codigopv) {
-            //Crear la venta y guardamos el resultado de la insersion en la BD.
+        DB::transaction(function () use ($venta, $codigopv, &$folioVenta) {
+            //Crear la venta y guardamos el resultado de la insersion en la BD, en la variable 'resultVenta'
             $resultVenta = $this->registrarVenta($venta, $codigopv, true, $this->tipo_venta);
+            //Obtenemos el folio
+            $folioVenta = $resultVenta->folio;
             //crear los detalles de los productos
-            $this->registrarProductosVenta($resultVenta->folio, $venta);
+            $this->registrarProductosVenta($folioVenta, $venta);
             //Crear los detalles de los pagos
-            $this->registrarPagosVenta($resultVenta->folio, $venta, $codigopv);
+            $this->registrarPagosVenta($folioVenta, $venta, $codigopv);
         });
-        session()->flash('success', "Venta realizada correctamente");
-        $this->reset();
+        //Limpiamos atributos
+        $this->limpiarComponente();
+        //Devolvemos objeto del resultado al componente
+        return $folioVenta;
     }
 
     //Se ejecuta para guardar una venta, cuando es nueva
@@ -273,29 +274,14 @@ class VentaForm extends Form
             //crear los detalles de los productos
             $this->registrarProductosVenta($resultVenta->folio, $venta);
         });
-    }
-
-    //Cerrar una venta existente (actualiza toda la venta)
-    public function cerrarVentaExistente($folio, $codigopv)
-    {
-        //Validamos que de la venta tenga metodos de pago y productos
-        $venta = $this->validate([
-            'productosTable' => 'min:1',
-            'pagosTable' => 'min:1'
-        ]);
-        DB::transaction(function () use ($folio, $venta, $codigopv) {
-            //Guardamos los metodos de pago
-            $this->registrarPagosVenta($folio, $venta, $codigopv);
-            //Guardamos los cambios de la tabla de productos
-            $this->guardarVentaExistente($folio);
-            //Cerramos la venta con la fecha actual
-            Venta::where('folio', $folio)->update(['fecha_cierre' => now()->format('Y-m-d H:i:s')]);
-        });
+        $this->limpiarComponente();
     }
 
     //Actualizar una venta existente (actualiza la tabla de productos y total de la venta)
     public function guardarVentaExistente($folio)
     {
+        //Verificamos si la venta no esta cerrada
+        $this->validarVentaCerrada($folio);
         //Calculamos el nuevo total de la venta
         $total = array_sum(array_column($this->productosTable, 'subtotal'));
         //Creamos una fecha de inicio para los detalles de los productos que se van a guardar
@@ -330,9 +316,34 @@ class VentaForm extends Form
         });
     }
 
+    //Cerrar una venta existente (actualiza toda la venta)
+    public function cerrarVentaExistente($folio, $codigopv)
+    {
+        //Verificamos si la venta no esta cerrada
+        $this->validarVentaCerrada($folio);
+        //Validamos que de la venta tenga metodos de pago y productos
+        $venta = $this->validate([
+            'productosTable' => 'min:1',
+            'pagosTable' => 'min:1'
+        ]);
+        //Verificamos si el total de pago, es el mismo que el total de los productos
+        $this->verificarMontos();
+
+        DB::transaction(function () use ($folio, $venta, $codigopv) {
+            //Guardamos los metodos de pago
+            $this->registrarPagosVenta($folio, $venta, $codigopv);
+            //Guardamos los cambios de la tabla de productos
+            $this->guardarVentaExistente($folio);
+            //Cerramos la venta con la fecha actual
+            Venta::where('folio', $folio)->update(['fecha_cierre' => now()->format('Y-m-d H:i:s')]);
+        });
+    }
+
     //Esta funcion registra la venta en la tabla "ventas"
     private function registrarVenta($venta, $codigopv, $isClosed = false, $tipo_venta)
     {
+        //Buscamos cajas disponibles en el punto de venta actual
+        $resultCaja = $this->buscarCaja();
         //Obtenemos la fecha-hora de actual, con una instancia de Carbon.
         $fecha_cierre = now()->format('Y-m-d H:i:s');
         //Se calcula el total de los productos
@@ -347,7 +358,7 @@ class VentaForm extends Form
             'fecha_apertura' => $fecha_cierre,
             'fecha_cierre' => $isClosed ? $fecha_cierre : null,
             'total' => $total,
-            //'corte_caja' => $resultCaja[0]->corte,
+            'corte_caja' => $resultCaja->corte,
             'clave_punto_venta' => $codigopv
         ]);
     }
@@ -422,5 +433,65 @@ class VentaForm extends Form
         if (!$result->firma) {
             throw new Exception("Este socio no tiene firma autorizada", 1);
         }
+    }
+
+    private function validarVentaCerrada($folioVenta)
+    {
+        //Buscamos la venta
+        $result = Venta::find($folioVenta);
+        //Si la venta tiene fecha de cierre
+        if ($result->fecha_cierre) {
+            throw new Exception("Esta venta esta cerrada", 1);
+        }
+    }
+
+    private function buscarCaja()
+    {
+        //Buscamos caja abrierta en el punto actual, en el dia actual
+        $result = Caja::where('clave_punto_venta', $this->permisospv->clave_punto_venta)
+            ->whereDate('fecha_apertura', now()->toDateString())
+            ->whereNull('fecha_cierre')
+            ->first();
+        //Si no hay caja
+        if (!$result) {
+            throw new Exception("No hay caja abierta para este punto de venta");
+        }
+        return  $result;
+    }
+
+    private function verificarMontos()
+    {
+        //Calculamos total de los productos
+        $montoTotalVenta = array_sum(array_column($this->productosTable, 'subtotal'));
+        //Calculamos total de los pagos
+        $montoTotalPago = array_sum(array_column($this->pagosTable, 'monto_pago'));
+        //Si los totales no coinciden, error.
+        if ($montoTotalPago != $montoTotalVenta) {
+            //Mandamos mensaje de sesion al alert
+            throw new Exception("El monto total de pago no es el correcto");
+        }
+    }
+
+    private function limpiarComponente()
+    {
+        $this->reset(
+            'tipo_venta',
+            'invitado',
+            'nombre_invitado',
+            'nombre_empleado',
+            'socioSeleccionado',
+            'socio',
+            'socioPago',
+            'id_pago',
+            'monto_pago',
+            'propina',
+            'seachProduct',
+            'selected',
+            'productosTable',
+            'pagosTable',
+            'totalVenta',
+            'totalPago',
+            'totalPropina'
+        );
     }
 }

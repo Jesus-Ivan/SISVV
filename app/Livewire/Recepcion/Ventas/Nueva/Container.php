@@ -99,7 +99,8 @@ class Container extends Component
                 'fecha_cierre' => $fecha_cierre,
                 'total' => $total,
                 'corte_caja' => $resultCaja[0]->corte,
-                'clave_punto_venta' => $this->codigopv
+                'clave_punto_venta' => $this->codigopv,
+                'tipo_venta' => 'socio'
             ]);
             //Se crea el detalle de la venta
             foreach ($info['datosProductos'] as $key => $producto) {
@@ -163,7 +164,8 @@ class Container extends Component
                 'fecha_cierre' => $fecha_cierre,
                 'total' => $total,
                 'corte_caja' => $resultCaja[0]->corte,
-                'clave_punto_venta' => $this->codigopv
+                'clave_punto_venta' => $this->codigopv,
+                'tipo_venta' => 'general'
             ]);
             //Se crea el detalle de la venta
             foreach ($info['datosProductos'] as $key => $producto) {

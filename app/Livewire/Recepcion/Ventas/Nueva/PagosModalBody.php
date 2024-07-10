@@ -45,11 +45,14 @@ class PagosModalBody extends Component
             'monto' => 'required|numeric',
             'pago' => 'required',
         ];
+
         //Validamos las entradas
         $validated = $this->validate($validation_rules);
 
         try {
-            $this->validarFirma($this->socio['id']);
+            //Si no esta activada la opcion de invitado
+            if (!$this->invitado)
+                $this->validarFirma($this->socio['id']);        //Validar la firma del socio
         } catch (\Throwable $th) {
             session()->flash('fail_firma', $th->getMessage());
             return;

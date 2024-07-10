@@ -5,10 +5,15 @@
             <livewire:autocomplete :params="[
                 'table' => ['name' => 'socios', 'columns' => ['id', 'nombre', 'apellido_p', 'apellido_m']],
             ]" primaryKey="id" event='on-selected-socio-pago' />
+            {{-- Error de socio cancelado --}}
+            @if (session('fail_socio'))
+                <x-input-error messages="{{ session('fail_socio') }}" />
+            @endif
             <div class="flex">
                 <p>{{ array_key_exists('id', $socio) ? $socio['id'] : '' }}</p>
                 -
-                <p>{{ array_key_exists('nombre', $socio) ? $socio['nombre']. ' ' . $socio['apellido_p'] . ' ' . $socio['apellido_m'] : '' }}</p>
+                <p>{{ array_key_exists('nombre', $socio) ? $socio['nombre'] . ' ' . $socio['apellido_p'] . ' ' . $socio['apellido_m'] : '' }}
+                </p>
             </div>
         </div>
         <div>
@@ -20,9 +25,14 @@
                     <option value="{{ $tipo->id }}">{{ $tipo->descripcion }}</option>
                 @endforeach
             </select>
+            {{--Error de validacion de datos--}}
             @error('pago')
                 <x-input-error messages="{{ $message }}" />
             @enderror
+            {{--Error de firma--}}
+            @if (session('fail_firma'))
+                <x-input-error messages="{{ session('fail_firma') }}" />
+            @endif
         </div>
         <div class="flex align-top">
             <div class="w-full">

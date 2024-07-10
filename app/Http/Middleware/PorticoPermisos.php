@@ -7,7 +7,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class SistemasPermisos
+class PorticoPermisos
 {
     /**
      * Handle an incoming request.
@@ -17,10 +17,10 @@ class SistemasPermisos
     public function handle(Request $request, Closure $next): Response
     {
         $result = UserPermisos::where('id_user', auth()->user()->id)
-            ->where('clave_departamento', 'SIS')
+            ->where('clave_departamento', 'PORT')
             ->take(1)->get();
         if (!count($result) > 0) {
-            return redirect()->route('home')->with('error_permisos','No tienes permisos para sistemas');
+            return redirect()->route('home')->with('error_permisos', 'No tienes permisos para portico');
         }
         return $next($request);
     }

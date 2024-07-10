@@ -3,6 +3,8 @@
 namespace App\Livewire\Recepcion\Ventas\Nueva;
 
 use App\Models\Socio;
+use App\Models\SocioMembresia;
+use Exception;
 use Livewire\Attributes\Modelable;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -17,7 +19,18 @@ class SearchBar extends Component
     #[On('on-selected-socio')]
     public function onSelectedInput(Socio $socioId)
     {
-        $this->socioSeleccionado = $socioId->toArray();
+        try {
+            //Validamos si el socio no esta con una membresia cancelada
+            $resultMembresia = SocioMembresia::where('id_socio', $socioId->id)->first();
+            if (!$resultMembresia) {
+                throw new Exception("No se encontro membresia registrada");
+            } else if ($resultMembresia->estado == 'CAN') {
+                throw new Exception("Membresia de socio $socioId->id cancelada");
+            }
+            $this->socioSeleccionado = $socioId->toArray();
+        } catch (\Throwable $th) {
+            session()->flash('fail_socio',  $th->getMessage());
+        }
     }
 
     //hook, que se ejecuta despues de actualizar la propiedad invitado desde el front

@@ -1,6 +1,6 @@
 <div class="m-3">
     {{-- Campos de busqueda --}}
-    <div class="flex gap-3 items-end">
+    <div class="flex gap-3 ">
         <div>
             <label for="cambio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Cambio
                 inicial</label>
@@ -26,12 +26,16 @@
             @enderror
         </div>
         <button wire:click='abrirCaja'
-            class="max-h-12 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Abrir
-            caja
+            class="mt-7 flex items-center max-h-10 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+            {{-- Loading indicator --}}
+            <div class="me-2" wire:loading.delay wire:target='abrirCaja'>
+                @include('livewire.utils.loading', ['w' => 4, 'h' => 4])
+            </div>
+            Abrir caja
         </button>
     </div>
     {{-- Tabla de cajas --}}
-    <div class="relative shadow-md sm:rounded-lg my-3">
+    <div wire:loading.class='animate-pulse' class="relative shadow-md sm:rounded-lg my-3" wire:target='cierreParcial, cerrarCaja'>
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>

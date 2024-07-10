@@ -20,7 +20,7 @@ class RecepcionPermisos
             ->where('clave_departamento', 'RECEP')
             ->take(1)->get();
         if (!count($result) > 0) {
-            return redirect()->route('home');
+            return redirect()->route('home')->with('error_permisos','No tienes permisos para recepcion');
         }
         return $next($request);
     }

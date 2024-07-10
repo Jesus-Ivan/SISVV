@@ -29,9 +29,19 @@ class Container extends Component
     //Hook que se ejecuta al inicio de vida el componente.
     public function mount(Venta $venta, $permisospv, $codigopv)
     {
-        //Guardamos la instancia del modelo, correspondiente al registro de la venta en ls BD
+        //Guardamos la instancia del modelo, correspondiente al registro de la venta(BD)
         $this->venta = $venta;
-        //Guardamos en las propiedades del componente, el codigodel punto de venta
+        $this->ventaForm->tipo_venta = $venta->tipo_venta;      //Guardamos el tipo de venta en el form
+        //Si la venta es de tipo socio
+        if ($venta->tipo_venta == 'invitado') {
+            //guardar el socio, en el metodo del pago
+            $this->ventaForm->socioPago = Socio::find($venta->id_socio);
+        }
+
+        $this->ventaForm->nombre_p_general = $venta->nombre;    //Guardamos el nombre del cliente en el form
+        $this->ventaForm->nombre_invitado = $venta->nombre;     //Guardamos el nombre del INVITADO en el form
+
+        //Guardamos en las propiedades del componente, el codigo del punto de venta
         $this->codigopv = $codigopv;
         //Guardamos los permisos del usuario en el formulario
         $this->ventaForm->permisospv = $permisospv;
@@ -70,16 +80,14 @@ class Container extends Component
         //Si no es venta a publico general, mostrar firma
         if ($this->ventaForm->tipo_venta != 'general') {
             return TipoPago::whereNot(function (Builder $query) {
-                $query->where('descripcion', 'like', 'TRANSFERENCIA')
-                    ->orWhere('descripcion', 'like', 'DEPOSITO')
+                $query->where('descripcion', 'like', 'DEPOSITO')
                     ->orWhere('descripcion', 'like', 'CHEQUE')
                     ->orWhere('descripcion', 'like', '%SALDO%');
             })->get();
         } else {
             //Retirar firma
             return TipoPago::whereNot(function (Builder $query) {
-                $query->where('descripcion', 'like', 'TRANSFERENCIA')
-                    ->orWhere('descripcion', 'like', 'DEPOSITO')
+                $query->where('descripcion', 'like', 'DEPOSITO')
                     ->orWhere('descripcion', 'like', 'CHEQUE')
                     ->orWhere('descripcion', 'like', '%SALDO%')
                     ->orWhere('descripcion', 'like', 'FIRMA');

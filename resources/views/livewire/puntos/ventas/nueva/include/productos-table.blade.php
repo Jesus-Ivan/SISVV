@@ -67,15 +67,17 @@
                     <td class="px-6 py-4">
                         @if (array_key_exists('catalogo_productos', $producto))
                             <div class="flex gap-1 items-center">
-                                <button type="button" wire:click="decrementar({{ $productoIndex }})"
-                                    class="h-9 text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
-                                    <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                        fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2" d="M5 12h14" />
-                                    </svg>
-                                    <span class="sr-only">Restar cantidad</span>
-                                </button>
+                                @if ($this->ventaForm->permisospv->clave_rol != 'MES')
+                                    <button type="button" wire:click="decrementar({{ $productoIndex }})"
+                                        class="h-9 text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
+                                        <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                            fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                                stroke-width="2" d="M5 12h14" />
+                                        </svg>
+                                        <span class="sr-only">Restar cantidad</span>
+                                    </button>
+                                @endif
                                 <input type="number" id="disabled-input" aria-label="disabled input"
                                     value="{{ $producto['cantidad'] }}"
                                     class=" bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"

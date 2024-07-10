@@ -3,7 +3,6 @@
 use App\Http\Controllers\CargosController;
 use App\Http\Controllers\EdoCuentaController;
 use App\Http\Controllers\ExcelController;
-use App\Http\Controllers\PermisosController;
 use App\Http\Controllers\PuntosController;
 use App\Http\Controllers\RecepcionController;
 use App\Http\Controllers\ReportesController;
@@ -204,13 +203,13 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     });
 });
 
-Route::prefix('portico')->middleware(['auth'])->group(function () {
+Route::prefix('portico')->middleware(['auth', 'portico'])->group(function () {
     Route::view('/', 'portico.index')->name('portico');
     Route::view('socios', 'portico.Socios.container')->name('portico.socios');
 });
 
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');
-Route::get('ventas/corte/{caja}', [ReportesController::class, 'generarCorte'])->middleware(['auth'])->name('ventas.corte');
+Route::get('ventas/corte/{caja}/{codigopv?}', [ReportesController::class, 'generarCorte'])->middleware(['auth'])->name('ventas.corte');
 
 
 require __DIR__ . '/auth.php';

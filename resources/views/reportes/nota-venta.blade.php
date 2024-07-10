@@ -9,7 +9,7 @@
         margin-bottom: 2pt;
     }
 
-    .mayus{
+    .mayus {
         text-transform: uppercase;
     }
 
@@ -58,7 +58,7 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
             <td>{{ $fecha }}</td>
         </tr>
         <tr>
-            <td>Socio: {{ $socio_id }}</td>
+            <td>Cliente: {{ $socio_id }}</td>
             <td>{{ $socio_nombre }}</td>
         </tr>
         <tr>
@@ -98,25 +98,30 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
 </table>
 <hr>
 <p style="text-align: right;">TOTAL: ${{ array_sum(array_column($productos->toArray(), 'subtotal')) }}</p>
-<h4>DETALLES DE PAGO</h4>
-<table>
-    <thead>
-        <tr>
-            <th style="width: 40mm">Socio</th>
-            <th>Monto</th>
-            <th>T.Pago</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach ($pagos as $pago)
+@if (count($pagos))
+    <h4>DETALLES DE PAGO</h4>
+    <table>
+        <thead>
             <tr>
-                <td>{{ $pago->nombre }}</td>
-                <td>{{ $pago->monto }}</td>
-                <td>{{ $pago->tipoPago->descripcion }}</td>
+                <th style="width: 40mm">Cliente</th>
+                <th>Monto</th>
+                <th>T.Pago</th>
             </tr>
-        @endforeach
-    </tbody>
-</table>
-<hr>
-<p style="text-align: right;"> TOTAL: ${{ $total }}</p>
-<h3>GRACIAS POR SU COMPRA</h3>
+        </thead>
+        <tbody>
+            @foreach ($pagos as $pago)
+                <tr>
+                    <td>{{ $pago->nombre }}</td>
+                    <td>{{ $pago->monto }}</td>
+                    <td>{{ $pago->tipoPago->descripcion }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+    <hr>
+    <p style="text-align: right;"> TOTAL: ${{ $total }}</p>
+    <h3>GRACIAS POR SU COMPRA</h3>
+@else
+    <br>
+    <h4>IMPRESION NO VALIDA COMO COMPROBANTE DE PAGO</h4>
+@endif

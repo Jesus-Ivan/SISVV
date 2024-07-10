@@ -21,7 +21,7 @@ class PuntosPermisos
             ->where('clave_punto_venta', $request->route('codigopv'))
             ->first();
         if (! $result) {
-            return redirect()->route('home');
+            return redirect()->route('home')->with('error_permisos','No tienes permisos para el punto de venta');;
         }
         $request->merge(['permisos_pv' => $result]);
         return $next($request);

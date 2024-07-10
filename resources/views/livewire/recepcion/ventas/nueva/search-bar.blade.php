@@ -7,11 +7,16 @@
         <!--Info -->
         <div>
             @if ($socioSeleccionado)
-                <p>Nombre: {{ $socioSeleccionado['nombre'].' '.$socioSeleccionado['apellido_p'].' '.$socioSeleccionado['apellido_m'] }}</p>
+                <p>Nombre:
+                    {{ $socioSeleccionado['nombre'] . ' ' . $socioSeleccionado['apellido_p'] . ' ' . $socioSeleccionado['apellido_m'] }}
+                </p>
                 <p>No. de socio: {{ array_key_exists('id', $socioSeleccionado) ? $socioSeleccionado['id'] : '' }}</p>
             @endif
         </div>
     </div>
+    @if (session('fail_socio'))
+        <x-input-error messages="{{ session('fail_socio') }}" />
+    @endif
     <!--Toggle switch -->
     <label class="inline-flex items-center m-2 cursor-pointer">
         <input type="checkbox" class="sr-only peer" wire:model.live ="invitado">

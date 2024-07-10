@@ -68,11 +68,10 @@ class PuntosController extends Controller
             return view('puntos.Ventas.editar-venta', [
                 'codigopv' => $codigopv,
                 'permisospv' => $permisospv,
-                'folioventa' => $folioVenta
+                'venta' => $venta
             ]);
         } else {
-            return redirect()->route('pv.ventas', ['codigopv' => $codigopv])
-                ->with('error_venta', 'La venta ' . $folioVenta . ' ya estaba cerrada.');
+            return redirect()->route('pv.ventas', ['codigopv' => $codigopv]);
         }
     }
 

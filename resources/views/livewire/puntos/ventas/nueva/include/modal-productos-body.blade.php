@@ -1,4 +1,4 @@
-<div  class="max-w-2xl">
+<div class="max-w-2xl" wire:loading.class='pointer-events-none' wire:target='finishSelect'>
     <!-- Modal body -->
     <div class="shadow-md sm:rounded-lg">
         <!-- Search bar-->
@@ -6,7 +6,8 @@
             <label for="table-search" class="sr-only">Descripcion</label>
             <div class="relative mt-1">
                 <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
-                    <svg wire:loading.remove.delay.long wire:target='ventaForm.seachProduct' class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                    <svg wire:loading.remove.delay.long wire:target='ventaForm.seachProduct'
+                        class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
@@ -68,7 +69,13 @@
     </div>
     <!-- Modal footer -->
     <div class="flex items-center mt-4 border-t border-gray-200 rounded-b dark:border-gray-600">
+
         <button type="button" wire:click='finishSelect'
-            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Aceptar</button>
+            class="flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+            <div wire:loading.delay wire:target='finishSelect' class="me-4">
+                @include('livewire.utils.loading', ['w' => 4, 'h' => 4])
+            </div>
+            Aceptar
+        </button>
     </div>
 </div>

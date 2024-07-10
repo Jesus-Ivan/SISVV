@@ -80,7 +80,7 @@
     </div>
     <!--Botones de navegacion (regresar y imprimir reporte)-->
     <div>
-        <a type="button" href="{{ route('pv.ventas',['codigopv'=>$codigopv]) }}"
+        <a type="button" href="{{ route('pv.ventas', ['codigopv' => $codigopv]) }}"
             class="inline-flex items-center focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
             <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -92,7 +92,7 @@
         </a>
         @if ($caja)
             @if ($caja->fecha_cierre)
-                <a type="button" href="{{ route('ventas.corte', ['caja' => $caja->corte]) }}"
+                <a type="button" href="{{ route('ventas.corte', ['caja' => $caja->corte, 'codigopv' => $codigopv]) }}"
                     target="_blank"
                     class="inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
                     <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"

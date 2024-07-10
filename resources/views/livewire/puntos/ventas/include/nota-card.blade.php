@@ -7,7 +7,7 @@
         </h4>
         <h3 class="font-bold tracking-tight text-gray-900 dark:text-white">
             <div class="grid col-span-2 grid-cols-2">
-                <p>Venta: {{ $item->folio }}</p>
+                <p>Venta: {{ $item->folio }} - {{ $item->tipo_venta }}</p>
                 <p>Socio: {{ $item->id_socio ? $item->id_socio : '' }}</p>
             </div>
         </h3>

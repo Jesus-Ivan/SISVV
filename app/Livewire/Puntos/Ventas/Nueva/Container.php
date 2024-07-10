@@ -5,6 +5,7 @@ namespace App\Livewire\Puntos\Ventas\Nueva;
 use App\Livewire\Forms\VentaForm;
 use App\Models\CatalogoVistaVerde;
 use App\Models\Socio;
+use App\Models\SocioMembresia;
 use App\Models\TipoPago;
 use Exception;
 use Livewire\Attributes\Computed;
@@ -20,7 +21,8 @@ class Container extends Component
     #[Locked]
     public $codigopv;
 
-    public function mount($codigopv, $permisospv){
+    public function mount($codigopv, $permisospv)
+    {
         //Guardamos el codigo del pv en el componente
         $this->codigopv = $codigopv;
         //Guardamos los permisos del usuario en el formulario
@@ -30,7 +32,24 @@ class Container extends Component
     #[On('on-selected-socio')]
     public function socioSeleccionado(Socio $socio)
     {
-        $this->ventaForm->socio = $socio;
+        try {
+            //Validamos si el socio no esta con una membresia cancelada
+            $resultMembresia = SocioMembresia::where('id_socio', $socio->id)->first();
+            if (!$resultMembresia) {
+                throw new Exception("No se encontro membresia registrada");
+            } else if ($resultMembresia->estado == 'CAN') {
+                throw new Exception("Membresia de socio $socio->id cancelada");
+            }
+            //Si la venta es a un invitado del socio
+            if ($this->ventaForm->tipo_venta == 'invitado') {
+                //Repetir el socio seleccionado al principio, como socio para metodo de pago
+                $this->ventaForm->socioPago = $socio;
+            }
+            //Guardar el socio en el form. para el header del ticket de venta
+            $this->ventaForm->socio = $socio;
+        } catch (\Throwable $th) {
+            session()->flash('fail_socio',  $th->getMessage());
+        }
     }
 
     #[On('selected-socio-pago')]
@@ -39,7 +58,7 @@ class Container extends Component
         try {
             $this->ventaForm->setSocioPago($socio);
         } catch (\Throwable $th) {
-            //Codigo de error 1, el socio no tiene firma
+            //Codigo de error 2, el no esta activo
             if ($th->getCode() == 2) {
                 session()->flash('socioActivo', $th->getMessage());
             }
@@ -52,16 +71,14 @@ class Container extends Component
         //Si no es venta a publico general, mostrar firma
         if ($this->ventaForm->tipo_venta != 'general' && $this->ventaForm->tipo_venta != 'empleado') {
             return TipoPago::whereNot(function (Builder $query) {
-                $query->where('descripcion', 'like', 'TRANSFERENCIA')
-                    ->orWhere('descripcion', 'like', 'DEPOSITO')
+                $query->where('descripcion', 'like', 'DEPOSITO')
                     ->orWhere('descripcion', 'like', 'CHEQUE')
                     ->orWhere('descripcion', 'like', '%SALDO%');
             })->get();
         } else {
             //Retirar firma
             return TipoPago::whereNot(function (Builder $query) {
-                $query->where('descripcion', 'like', 'TRANSFERENCIA')
-                    ->orWhere('descripcion', 'like', 'DEPOSITO')
+                $query->where('descripcion', 'like', 'DEPOSITO')
                     ->orWhere('descripcion', 'like', 'CHEQUE')
                     ->orWhere('descripcion', 'like', '%SALDO%')
                     ->orWhere('descripcion', 'like', 'FIRMA');
@@ -102,7 +119,7 @@ class Container extends Component
     {
         try {
             //Intentamos agregar el pago seleccionado
-            $this->ventaForm->agregarPago($this->metodosPago);
+            $this->ventaForm->agregarPago();
             //Emitimos evento para cerrar el componente del modal
             $this->dispatch('close-modal');
         } catch (ValidationException $e) {

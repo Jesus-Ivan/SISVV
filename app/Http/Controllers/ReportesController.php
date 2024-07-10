@@ -19,7 +19,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use Stringable;
 
 class ReportesController extends Controller
 {
@@ -58,7 +57,7 @@ class ReportesController extends Controller
     }
 
     //Genera reportes de ventas, con ayuda del corte de caja
-    public function generarCorte(Caja $caja)
+    public function generarCorte(Caja $caja, $codigopv = null)
     {
         //Comprobamos si la caja no esta cerrada
         if (!$caja->fecha_cierre && $caja->clave_punto_venta != 'REC') {
@@ -67,8 +66,7 @@ class ReportesController extends Controller
 
         //Quitamos los metodos de pago no permitidos.
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
-            $query->where('descripcion', 'like', 'TRANSFERENCIA')
-                ->orWhere('descripcion', 'like', 'DEPOSITO')
+            $query->where('descripcion', 'like', 'DEPOSITO')
                 ->orWhere('descripcion', 'like', 'CHEQUE')
                 ->orWhere('descripcion', 'like', '%SALDO%');
         })->get();
@@ -94,8 +92,13 @@ class ReportesController extends Controller
             'totalVenta' => $totalVenta
         ];
 
-        $pdf = Pdf::loadView('reportes.ventas', $data);
-        $pdf->setOption(['defaultFont' => 'Courier']);
+        if ($codigopv) {
+            $pdf = Pdf::loadView('reportes.ventas-puntos', $data);
+            //Tamaño predeterminado de papel del ticket (80mm x 297mm)
+            $pdf->setPaper([0, 0, 226.772, 841.89], 'portrait');
+        } else {
+            $pdf = Pdf::loadView('reportes.ventas', $data);
+        }
         return $pdf->stream("corte{{$caja->corte}}.pdf");
     }
 

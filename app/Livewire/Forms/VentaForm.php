@@ -83,7 +83,7 @@ class VentaForm extends Form
     public function resetVentas()
     {
         $this->reset(['socio', 'nombre_invitado', 'nombre_p_general', 'nombre_empleado']);
-        $this->reset(['pagosTable']);
+        $this->reset(['pagosTable','id_pago','monto_pago','socioPago','propina']);
     }
 
     /* Agrega los articulos seleccionados a la tabla.
@@ -178,7 +178,7 @@ class VentaForm extends Form
         $this->socioPago = $socio;
     }
 
-    public function agregarPago($metodos_pago)
+    public function agregarPago()
     {
         //Validamos las entradas
         $reglas = [
@@ -187,17 +187,12 @@ class VentaForm extends Form
         ];
 
         if ($this->tipo_venta == 'socio' || $this->tipo_venta == 'invitado') {
-            $reglas['socioPago'] = 'required'; // Validar número de socio si es venta para socio
+            $reglas['socioPago'] = 'required';          // Agregar validacion de número de socio si es venta para socio
         }
 
-        $validated = $this->validate($reglas);
+        $validated = $this->validate($reglas);                                 //Validamos los atributos
 
-        //Si de los metodos de pago, el actual seleccionado es firma.
-        /*if ($metodos_pago->where('descripcion', 'like', 'FIRMA')->first()->id == $this->id_pago) {
-            //Validamos si tiene firma
-            $this->validarFirma($this->socioPago->id);
-        }*/
-
+        $this->validarFirma($validated);                                       //Validamos la firma
         $id_socio = $this->socioPago ? $this->socioPago->id : null; //Si es venta para socio, se obtiene el id del socio
 
         switch ($this->tipo_venta) {
@@ -226,8 +221,14 @@ class VentaForm extends Form
             'monto_pago' => $validated['monto_pago'],
             'propina' => $this->propina,
         ];
+        //si es una venta diferente de invitado, limpiamos el socioPago
+        if ($this->tipo_venta != 'invitado') {
+            //Limpiar todos los campos del modal del pago
+            $this->reset('socioPago');
+        }
+        //Continuamos limpiando el resto de propiedades del modal de pago
+        $this->reset('id_pago', 'monto_pago', 'propina');
 
-        $this->reset('socioPago', 'id_pago', 'monto_pago', 'propina');
         $this->actualizarPago();
     }
 
@@ -300,10 +301,36 @@ class VentaForm extends Form
     public function guardarVentaNueva($codigopv)
     {
         //Validamos la informacion de la venta
-        $venta = $this->validate([
-            'socio' => 'min:1',
-            'productosTable' => 'min:1',
-        ]);
+        switch ($this->tipo_venta) {
+            case 'socio':
+                $venta = $this->validate([
+                    'socio' => 'min:1',
+                    'productosTable' => 'min:1',
+                ]);
+                break;
+            case 'invitado':
+                $venta = $this->validate([
+                    'socio' => 'min:1',
+                    'nombre_invitado' => 'required',
+                    'productosTable' => 'min:1',
+                ]);
+                break;
+            case 'general':
+                $venta = $this->validate([
+                    'nombre_p_general' => 'required',
+                    'productosTable' => 'min:1',
+                ]);
+                break;
+            case 'empleado':
+                $venta = $this->validate([
+                    'nombre_empleado' => 'required',
+                    'productosTable' => 'min:1',
+                ]);
+                break;
+            default:
+                break;
+        }
+
 
         $tipo_venta = $this->tipo_venta;
 
@@ -409,8 +436,6 @@ class VentaForm extends Form
                 $nombre = null;
         }
 
-        //dd($venta);
-
         //Se registra la venta
         return Venta::create([
             'tipo_venta' => $tipo_venta,
@@ -449,7 +474,6 @@ class VentaForm extends Form
         //Buscamos el punto de venta.
         $puntoVenta = PuntoVenta::find($codigopv);
         //Detalles de Pago
-        //dd($venta['pagosTable']);
         foreach ($venta['pagosTable'] as $key => $pago) {
             $resultPago = DetallesVentaPago::create([
                 'folio_venta' => $folio,
@@ -459,41 +483,55 @@ class VentaForm extends Form
                 'propina' => $pago['propina'],
                 'id_tipo_pago' => $pago['id_tipo_pago'],
             ]);
-            //Verificamos si el tipo de pago es firma
-            if (strcasecmp('FIRMA', $pago['descripcion_tipo_pago']) == 0) {
-                //Creamos el concepto en el estado de cuenta (con abono 0)
-                EstadoCuenta::create([
-                    'id_socio' => $pago['id_socio'],
-                    'id_venta_pago' => $resultPago->id,
-                    'concepto' => 'NOTA VENTA: ' . $folio . ' - ' . $puntoVenta->nombre,
-                    'fecha' => now()->toDateString(),
-                    'cargo' => $pago['monto_pago'],
-                    'saldo' => $pago['monto_pago'],
-                    'consumo' => true
-                ]);
-            } else {
-                //Creamos el concepto en el estado de cuenta (con abono total)
-                EstadoCuenta::create([
-                    'id_socio' => $pago['id_socio'],
-                    'id_venta_pago' => $resultPago->id,
-                    'concepto' => 'NOTA VENTA: ' . $folio . ' - ' . $puntoVenta->nombre,
-                    'fecha' => now()->toDateString(),
-                    'cargo' => $pago['monto_pago'],
-                    'abono' => $pago['monto_pago'],
-                    'saldo' => 0,
-                    'consumo' => true
-                ]);
+
+            //Verificamos que el tipo de venta sea socio o invitado de socio (para cargarlo al estado de cuenta)
+            if ($this->tipo_venta == 'socio' ||  $this->tipo_venta == 'invitado') {
+                //Verificamos si el tipo de pago es firma 
+                if (strcasecmp('FIRMA', $pago['descripcion_tipo_pago']) == 0) {
+                    //Creamos el concepto en el estado de cuenta (con abono 0)
+                    EstadoCuenta::create([
+                        'id_socio' => $pago['id_socio'],
+                        'id_venta_pago' => $resultPago->id,
+                        'concepto' => 'NOTA VENTA: ' . $folio . ' - ' . $puntoVenta->nombre,
+                        'fecha' => now()->toDateString(),
+                        'cargo' => $pago['monto_pago'],
+                        'saldo' => $pago['monto_pago'],
+                        'consumo' => true
+                    ]);
+                } else {
+                    //Creamos el concepto en el estado de cuenta (con abono total)
+                    EstadoCuenta::create([
+                        'id_socio' => $pago['id_socio'],
+                        'id_venta_pago' => $resultPago->id,
+                        'concepto' => 'NOTA VENTA: ' . $folio . ' - ' . $puntoVenta->nombre,
+                        'fecha' => now()->toDateString(),
+                        'cargo' => $pago['monto_pago'],
+                        'abono' => $pago['monto_pago'],
+                        'saldo' => 0,
+                        'consumo' => true
+                    ]);
+                }
             }
         }
     }
 
-    private function validarFirma($socioId)
+    private function validarFirma($validated)
     {
-        //Buscamos el socio
-        $result = Socio::find($socioId);
-        //Si el socio no tiene firma
-        if (!$result->firma) {
-            throw new Exception("Este socio no tiene firma autorizada", 1);
+        //Verificamos el tipo de venta sea a un socio o invitado del mismo
+        if ($this->tipo_venta == 'socio' || $this->tipo_venta == 'invitado') {
+            //Verificar si el metodo actual seleccionado es firma.
+            $tipo_pago = TipoPago::where('id', $validated['id_pago'])
+                ->where('descripcion', 'like', 'FIRMA')
+                ->first();
+            //Si la consulta devuelve valor diferente de null
+            if ($tipo_pago) {
+                //Buscamos el socio
+                $result = Socio::find($validated['socioPago']['id']);
+                //Si el socio no tiene firma
+                if (!$result->firma) {
+                    throw new Exception("Este socio no tiene firma autorizada", 1);
+                }
+            }
         }
     }
 

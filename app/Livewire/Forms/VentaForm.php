@@ -83,7 +83,7 @@ class VentaForm extends Form
     public function resetVentas()
     {
         $this->reset(['socio', 'nombre_invitado', 'nombre_p_general', 'nombre_empleado']);
-        $this->reset(['pagosTable','id_pago','monto_pago','socioPago','propina']);
+        $this->reset(['pagosTable', 'id_pago', 'monto_pago', 'socioPago', 'propina']);
     }
 
     /* Agrega los articulos seleccionados a la tabla.
@@ -290,7 +290,7 @@ class VentaForm extends Form
             $this->registrarProductosVenta($folioVenta, $venta);
             //Crear los detalles de los pagos
             $this->registrarPagosVenta($folioVenta, $venta, $codigopv);
-        });
+        }, 2);
         //Limpiamos atributos
         $this->limpiarComponente();
         //Devolvemos objeto del resultado al componente
@@ -340,7 +340,7 @@ class VentaForm extends Form
             $resultVenta = $this->registrarVenta($venta, $codigopv, false, tipo_venta: $tipo_venta);
             //crear los detalles de los productos
             $this->registrarProductosVenta($resultVenta->folio, $venta);
-        });
+        }, 2);
         $this->limpiarComponente();
     }
 
@@ -380,7 +380,7 @@ class VentaForm extends Form
             }
             //Actualizamos el total de la venta 
             Venta::where('folio', $folio)->update(['total' => $total]);
-        });
+        }, 2);
     }
 
     //Cerrar una venta existente (actualiza toda la venta)
@@ -403,7 +403,7 @@ class VentaForm extends Form
             $this->guardarVentaExistente($folio);
             //Cerramos la venta con la fecha actual
             Venta::where('folio', $folio)->update(['fecha_cierre' => now()->format('Y-m-d H:i:s')]);
-        });
+        }, 2);
     }
 
     //Esta funcion registra la venta en la tabla "ventas"

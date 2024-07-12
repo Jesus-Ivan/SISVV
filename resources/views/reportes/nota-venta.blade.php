@@ -1,7 +1,8 @@
 <style>
     html {
         margin: 10pt;
-        font-size: 7pt;
+        font-size: x-small;
+        font-weight: bold;
     }
 
     p {
@@ -11,6 +12,16 @@
 
     .mayus {
         text-transform: uppercase;
+    }
+    .puntos {
+        max-width: 40pt;
+        text-align: left;
+        overflow: hidden;
+        /* Oculta el contenido que no cabe */
+        white-space: nowrap;
+        /* Evita que el texto se envuelva en varias líneas */
+        text-overflow: ellipsis;
+        /* Muestra "..." al final del texto */
     }
 
     h1,
@@ -26,13 +37,13 @@
         width: 100%;
         border-collapse: collapse;
         justify-content: initial;
-        padding: 0pt;
+        padding: 1pt;
     }
 
     th,
     td {
         line-height: 8pt;
-        padding: 0pt;
+        padding: 1pt;
         text-align: left;
     }
 </style>
@@ -97,7 +108,7 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
     </tbody>
 </table>
 <hr>
-<p style="text-align: right;">TOTAL: ${{ array_sum(array_column($productos->toArray(), 'subtotal')) }}</p>
+<p style="text-align: right; margin-right: 10pt; font-size: 11pt">TOTAL: ${{ array_sum(array_column($productos->toArray(), 'subtotal')) }}</p>
 @if (count($pagos))
     <h4>DETALLES DE PAGO</h4>
     <table>
@@ -113,13 +124,13 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
                 <tr>
                     <td>{{ $pago->nombre }}</td>
                     <td>{{ $pago->monto }}</td>
-                    <td>{{ $pago->tipoPago->descripcion }}</td>
+                    <td class="puntos">{{ $pago->tipoPago->descripcion }}</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
     <hr>
-    <p style="text-align: right;"> TOTAL: ${{ $total }}</p>
+    <p style="text-align: right; margin-right: 10pt; font-size: 11pt"> TOTAL: ${{ $total }}</p>
     <h3>GRACIAS POR SU COMPRA</h3>
 @else
     <br>

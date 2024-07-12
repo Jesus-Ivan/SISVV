@@ -43,7 +43,7 @@
                 <tbody>
                     @foreach ($this->productosResult as $producto)
                         <tr wire:key="{{ $producto->codigo }}"
-                            class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                            class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600">
                             <td class="w-4 p-4">
                                 <div class="flex items-center">
                                     <input id="checkbox-{{ $producto->codigo }}"
@@ -55,10 +55,10 @@
                                 class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                 {{ $producto->codigo }}
                             </th>
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 font-medium text-gray-900  dark:text-white">
                                 {{ $producto->nombre }}
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
                                 ${{ $producto->costo_unitario }}
                             </td>
                         </tr>
@@ -69,7 +69,6 @@
     </div>
     <!-- Modal footer -->
     <div class="flex items-center mt-4 border-t border-gray-200 rounded-b dark:border-gray-600">
-
         <button type="button" wire:click='finishSelect'
             class="flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
             <div wire:loading.delay wire:target='finishSelect' class="me-4">

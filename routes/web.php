@@ -6,7 +6,9 @@ use App\Http\Controllers\ExcelController;
 use App\Http\Controllers\PuntosController;
 use App\Http\Controllers\RecepcionController;
 use App\Http\Controllers\ReportesController;
+use App\Http\Controllers\SistemasController;
 use App\Http\Controllers\SociosController;
+use App\Http\Middleware\SistemasPermisos;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -176,6 +178,12 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     Route::view('familias', 'sistemas.familias')->name('sistemas.familias');
     Route::view('categorias', 'sistemas.categorias')->name('sistemas.categorias');
     Route::view('unidades', 'sistemas.unidades')->name('sistemas.unidades');
+
+    //DEPARTAMENTO DE PUNTOS DE VENTA
+    Route::prefix('PV')->group(function () {
+        Route::get('/prod-vendidos', [SistemasController::class, 'prodVendidos'])->name('sistemas.pv.prod-vendidos');
+        Route::post('/prod-vendidos', [SistemasController::class, 'getReporteVendidos'])->name('sistemas.pv.prod-vendidos');
+    });
 
     //DEPARTAMENTO DE RECEPCIÓN
     Route::view('membresias', 'sistemas.Recepcion.membresias')->name('sistemas.membresias');

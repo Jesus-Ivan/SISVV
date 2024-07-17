@@ -160,7 +160,7 @@
                 </p>
             </div>
             <button type="button" wire:click ="pasarVentas"
-                class="mt-3 focus:outline-none text-white bg-yellow-500 hover:bg-yellow-600 focus:ring-4 focus:ring-yellow-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900">
+                class="mt-3 focus:outline-none text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-green-900">
                 Confirmar trapaso y cerrar caja
             </button>
         </x-slot>

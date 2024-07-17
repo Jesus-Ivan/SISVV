@@ -13,6 +13,7 @@
     .mayus {
         text-transform: uppercase;
     }
+
     .puntos {
         max-width: 40pt;
         text-align: left;
@@ -108,7 +109,8 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
     </tbody>
 </table>
 <hr>
-<p style="text-align: right; margin-right: 10pt; font-size: 11pt">TOTAL: ${{ array_sum(array_column($productos->toArray(), 'subtotal')) }}</p>
+<p style="text-align: right; margin-right: 10pt; font-size: 11pt">TOTAL:
+    ${{ array_sum(array_column($productos->toArray(), 'subtotal')) }}</p>
 @if (count($pagos))
     <h4>DETALLES DE PAGO</h4>
     <table>
@@ -133,6 +135,16 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
     <p style="text-align: right; margin-right: 10pt; font-size: 11pt"> TOTAL: ${{ $total }}</p>
     <h3>GRACIAS POR SU COMPRA</h3>
 @else
+    <div style="width: 100%">
+        <table style="width: 60%; justify-content: right">
+            <tr>
+                <td>Propina: </td>
+                <td
+                    style="border-bottom: 1pt; width: 100%; border-bottom-color: black; border-width: 1pt; border-bottom-style: double">
+                </td>
+            </tr>
+        </table>
+    </div>
     <br>
     <h4>IMPRESION NO VALIDA COMO COMPROBANTE DE PAGO</h4>
 @endif

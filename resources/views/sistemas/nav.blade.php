@@ -3,6 +3,7 @@
         <div class="hidden w-full md:block md:w-auto" id="navbar-dropdown">
             <ul
                 class="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
+                {{--ALMACEN--}}
                 <li>
                     <button id="almacen" data-dropdown-toggle="dropdownAlmacen"
                         class="flex items-center justify-between w-full py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 md:w-auto dark:text-white md:dark:hover:text-blue-500 dark:focus:text-white dark:border-gray-700 dark:hover:bg-gray-700 md:dark:hover:bg-transparent">Almacén
@@ -39,6 +40,7 @@
                         </ul>
                     </div>
                 </li>
+                {{--COCINA--}}
                 <li>
                     <button id="cocina" data-dropdown-toggle="dropdownCocina"
                         class="flex items-center justify-between w-full py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 md:w-auto dark:text-white md:dark:hover:text-blue-500 dark:focus:text-white dark:border-gray-700 dark:hover:bg-gray-700 md:dark:hover:bg-transparent">Cocina
@@ -59,6 +61,7 @@
                         </ul>
                     </div>
                 </li>
+                {{--PUNTOS DE VENTA--}}
                 <li>
                     <button id="pv" data-dropdown-toggle="dropdownPv"
                         class="flex items-center justify-between w-full py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 md:w-auto dark:text-white md:dark:hover:text-blue-500 dark:focus:text-white dark:border-gray-700 dark:hover:bg-gray-700 md:dark:hover:bg-transparent">Puntos
@@ -73,14 +76,22 @@
                     <div id="dropdownPv"
                         class="z-10 hidden font-normal bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600">
                         <ul class="py-2 text-sm text-gray-700 dark:text-gray-400" aria-labelledby="dropdownLargeButton">
+                            {{--NOTAS DE VENTA--}}
                             <li>
                                 <a href="{{ route('almacen.ordenes') }}"
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Notas
                                     de venta</a>
                             </li>
+                            {{--REPORTE DE PRODUCTOS VENDIDOS--}}
+                            <li>
+                                <a href="{{ route('sistemas.pv.prod-vendidos') }}"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                    Rep.Prod.Vendidos</a>
+                            </li>
                         </ul>
                     </div>
                 </li>
+                {{--RECEPCION--}}
                 <li>
                     <button id="recepcion" data-dropdown-toggle="dropdownRecepcion"
                         class="flex items-center justify-between w-full py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 md:w-auto dark:text-white md:dark:hover:text-blue-500 dark:focus:text-white dark:border-gray-700 dark:hover:bg-gray-700 md:dark:hover:bg-transparent">Recepción
@@ -116,6 +127,7 @@
                         </ul>
                     </div>
                 </li>
+                {{--HERRAMIENTAS--}}
                 <li>
                     <button id="herramientas" data-dropdown-toggle="dropdownHerramientas"
                         class="flex items-center justify-between w-full py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 md:w-auto dark:text-white md:dark:hover:text-blue-500 dark:focus:text-white dark:border-gray-700 dark:hover:bg-gray-700 md:dark:hover:bg-transparent">Herramientas

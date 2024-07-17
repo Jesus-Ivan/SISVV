@@ -22,16 +22,7 @@ class Container extends Component
     #[Locked]
     public $invitado = false;
     #[Locked]
-    public $codigopv;
-
-    #[Computed()]
-    public function puntoVenta()
-    {
-        //Obtenemos el punto de venta actual
-        return PuntoVenta::where('nombre', 'LIKE', '%RECEP%')
-            ->limit(1)
-            ->get()[0];
-    }
+    public $pv;
 
     public function cerrarVenta()
     {
@@ -56,7 +47,7 @@ class Container extends Component
         //Consultamos la BD para obtener la caja abierta
         $resultCaja = Caja::where('fecha_cierre', null)
             ->where('id_usuario', auth()->user()->id)
-            ->where('clave_punto_venta', $this->puntoVenta->clave)
+            ->where('clave_punto_venta', $this->pv->clave)
             ->limit(1)
             ->get();
 
@@ -66,15 +57,13 @@ class Container extends Component
             if (!$this->invitado) {
                 //Se crea la transaccion
                 $this->registrarVenta($resultCaja, $info);
+                $this->reset('datosSocio', 'datosProductos', 'datosPagos');
             } else {
                 //Si es invitado, se crea una venta de invitado
                 $this->registrarVentaInvitado($resultCaja, $info);
+                $this->reset('datosProductos', 'datosPagos');
             }
             session()->flash('success', "Se registro la venta correctamente");
-            //Se re-establece el atributo que guarda el estado del switch de venta 'Invitado'
-            $this->invitado = false;
-            //Se limpian los datos
-            $this->reset();
         } else {
             //Si no hay cajas abiertas
             session()->flash('fail', "No hay caja abierta");
@@ -99,7 +88,7 @@ class Container extends Component
                 'fecha_cierre' => $fecha_cierre,
                 'total' => $total,
                 'corte_caja' => $resultCaja[0]->corte,
-                'clave_punto_venta' => $this->codigopv,
+                'clave_punto_venta' => $this->pv->clave,
                 'tipo_venta' => 'socio'
             ]);
             //Se crea el detalle de la venta
@@ -129,7 +118,7 @@ class Container extends Component
                     EstadoCuenta::create([
                         'id_socio' => $pago['id_socio'],
                         'id_venta_pago' => $resultPago->id,
-                        'concepto' => 'Nota venta: ' . $resultVenta->folio . ' - ' . $this->puntoVenta->nombre,
+                        'concepto' => 'NOTA VENTA: ' . $resultVenta->folio . ' - ' . $this->pv->nombre,
                         'cargo' => $pago['monto'],
                         'saldo' => $pago['monto'],
                         'fecha' => $fecha_cierre,
@@ -139,7 +128,7 @@ class Container extends Component
                     EstadoCuenta::create([
                         'id_socio' => $pago['id_socio'],
                         'id_venta_pago' => $resultPago->id,
-                        'concepto' => 'Nota venta: ' . $resultVenta->folio . ' - ' . $this->puntoVenta->nombre,
+                        'concepto' => 'NOTA VENTA: ' . $resultVenta->folio . ' - ' . $this->pv->nombre,
                         'cargo' => $pago['monto'],
                         'abono' => $pago['monto'],
                         'saldo' => 0,
@@ -164,7 +153,7 @@ class Container extends Component
                 'fecha_cierre' => $fecha_cierre,
                 'total' => $total,
                 'corte_caja' => $resultCaja[0]->corte,
-                'clave_punto_venta' => $this->codigopv,
+                'clave_punto_venta' => $this->pv->clave,
                 'tipo_venta' => 'general'
             ]);
             //Se crea el detalle de la venta

@@ -51,6 +51,7 @@ class Caja extends Component
         //Buscamos todas las cajas abiertas en el mes, por el usuario autenticado (sin importar el punto de venta)
         return ModelsCaja::where('id_usuario', $this->usuario->id)
             ->whereMonth('fecha_apertura', $hoy->month)
+            ->orderBy('fecha_apertura', 'desc')
             ->paginate(5);
     }
 

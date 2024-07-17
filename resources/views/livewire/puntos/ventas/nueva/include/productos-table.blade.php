@@ -1,5 +1,17 @@
+<style>
+    input[type="number"] {
+        -webkit-appearance: none;
+        /* Desactiva la apariencia predeterminada */
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        display: none;
+        /* Oculta los botones */
+    }
+</style>
 <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 ">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
                 <th scope="col" class=" px-6 py-3">
@@ -14,7 +26,7 @@
                 <th scope="col" class="px-6 py-3">
                     PRECIO
                 </th>
-                <th scope="col" class="w-56 px-6 py-3">
+                <th scope="col" class="w-32 px-6 py-3">
                     CANTIDAD
                 </th>
                 <th scope="col" class=" px-6 py-3">
@@ -29,6 +41,7 @@
             @foreach ($this->ventaForm->productosTable as $productoIndex => $producto)
                 <tr wire:key="{{ $productoIndex }}"
                     class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                    {{--TIEMPO--}}
                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                         @if (array_key_exists('catalogo_productos', $producto))
                             {{ $producto['tiempo'] }}
@@ -43,6 +56,7 @@
                             </select>
                         @endif
                     </th>
+                    {{--DESCRIPCION--}}
                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                         <div class="flex items-center">
                             {{-- <span class="flex w-4 h-4 me-2 bg-yellow-300 rounded-full"></span> --}}
@@ -64,6 +78,7 @@
                     <td class="px-6 py-4">
                         ${{ $producto['precio'] }}
                     </td>
+                    {{-- INPUTS DE CANTIDAD --}}
                     <td class="px-6 py-4">
                         @if (array_key_exists('catalogo_productos', $producto))
                             <div class="flex gap-1 items-center">
@@ -95,7 +110,7 @@
                         @else
                             <input type="number" id="cantidad" min="0" max="100"
                                 wire:model="ventaForm.productosTable.{{ $productoIndex }}.cantidad"
-                                wire:change="updateQuantity({{ $productoIndex }}, $event.target.value)"
+                                wire:change.debounce.400ms="updateQuantity({{ $productoIndex }}, $event.target.value)"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="1" required />
                         @endif
@@ -104,7 +119,7 @@
                         ${{ $producto['subtotal'] }}
                     </td>
                     <td class="px-6 py-4">
-                        <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'modal-modificadores'})"
+                        {{-- <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'modal-modificadores'})"
                             class="text-gray-700 border border-gray-700 hover:bg-gray-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-gray-500 dark:text-gray-500 dark:hover:text-white dark:focus:ring-gray-800 dark:hover:bg-gray-500">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                 class="w-[20px] h-[20px]">
@@ -112,7 +127,7 @@
                                     d="M12 6h.01M12 12h.01M12 18h.01" />
                             </svg>
                             <span class="sr-only">modificadores</span>
-                        </button>
+                        </button> --}}
                         @if (!array_key_exists('catalogo_productos', $producto))
                             <button type="button" wire:click="eliminarArticulo({{ $productoIndex }})"
                                 class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">

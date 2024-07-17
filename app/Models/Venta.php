@@ -21,11 +21,16 @@ class Venta extends Model
 
     public function detallesVentasPago(): HasMany
     {
-        return $this->hasMany(DetallesVentaPago::class,'folio_venta');
+        return $this->hasMany(DetallesVentaPago::class, 'folio_venta');
     }
 
     public function caja(): BelongsTo
     {
         return $this->belongsTo(Caja::class, 'corte_caja');
+    }
+
+    public function puntoVenta(): BelongsTo
+    {
+        return $this->belongsTo(PuntoVenta::class, 'clave_punto_venta');
     }
 }

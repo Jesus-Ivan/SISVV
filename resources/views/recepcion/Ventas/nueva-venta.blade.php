@@ -4,5 +4,5 @@
          @include('recepcion.nav')
      </x-slot>
      {{-- $codigopv, proviene del controlador --}}
-     <livewire:recepcion.ventas.nueva.container :codigopv="$codigopv->clave" />
+     <livewire:recepcion.ventas.nueva.container :pv="$codigopv" />
  </x-app-layout>

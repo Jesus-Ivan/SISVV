@@ -1,4 +1,4 @@
-<div>
+<div @keyup.ctrl.window="$dispatch('open-modal', {name:'modal-productos'})">
     <form>
         @include('livewire.puntos.ventas.nueva.include.search-bar')
         <!--Linea -->
@@ -131,8 +131,7 @@
                 </div>
             @endif
         </x-action-message>
-    </form>
-
+    </form> 
     <!--INDICADOR DE CARGA, DE VENTA-->
     <div wire:loading.delay.long wire:target='cerrarVentaNueva, guardarVentaNueva'>
         <x-loading-screen name='loading'>

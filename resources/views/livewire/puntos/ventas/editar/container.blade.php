@@ -1,4 +1,4 @@
-<div>
+<div @keyup.ctrl.window="$dispatch('open-modal', {name:'modal-productos'})">
     <form>
         <!--Info del socio-->
         <div class="m-3">

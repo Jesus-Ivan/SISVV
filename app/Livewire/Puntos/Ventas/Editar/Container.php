@@ -118,6 +118,12 @@ class Container extends Component
 
     public function updateQuantity($productoIndex, $eValue)
     {
+        //Si el nuevo valor es cero o vacio
+        if (!$eValue) {
+            //Calcular el subtotal pero con cantidad de 1
+            $this->ventaForm->calcularSubtotal($productoIndex, 1);
+            return;
+        }
         $this->ventaForm->calcularSubtotal($productoIndex, $eValue);
     }
 

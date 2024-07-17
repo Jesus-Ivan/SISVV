@@ -91,13 +91,13 @@ class Container extends Component
     {
         //Propiedad que almacena todos los items que coincidan con la busqueda.
         return CatalogoVistaVerde::where('nombre', 'like', '%' . $this->ventaForm->seachProduct . '%')
-        ->orderBy('nombre', 'asc')
-        ->limit(40)
-        ->get();
+            ->orderBy('nombre', 'asc')
+            ->limit(40)
+            ->get();
     }
 
     //hook que monitorea la actualizacion del componente
-    public function updated($property)
+    public function updated($property, $value)
     {
         //Si se actualizo el campo de busqueda
         if ($property === 'ventaForm.seachProduct') {
@@ -146,8 +146,15 @@ class Container extends Component
         $this->ventaForm->eliminarArticulo($productoIndex);
     }
 
+    //Funcion que se llama, cada vez que el input de cantidad de la venta nueva, cambia
     public function updateQuantity($productoIndex, $eValue)
     {
+        //Si el nuevo valor es cero o vacio
+        if (!$eValue) {
+            //Calcular el subtotal pero con cantidad de 1
+            $this->ventaForm->calcularSubtotal($productoIndex, 1);
+            return;
+        }
         $this->ventaForm->calcularSubtotal($productoIndex, $eValue);
     }
 

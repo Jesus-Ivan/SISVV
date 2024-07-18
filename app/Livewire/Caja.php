@@ -118,6 +118,11 @@ class Caja extends Component
 
             //Actualizamos el estatus de la caja actual si no hay errores.
             $caja->update(['fecha_cierre' => $fechaCierre]);
+            //Si la caja es diferente del punto de recepcion
+            if ($caja->clave_punto_venta != 'REC') {
+                //Emitimos evento para abrir el corte de caja en una pestaña nueva
+                $this->dispatch('generar-corte', $caja);
+            }
         } catch (\Throwable $th) {
             //Enviamos mensaje de sesion en livewire
             session()->flash('fail', $th->getMessage());

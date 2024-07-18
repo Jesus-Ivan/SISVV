@@ -35,7 +35,8 @@
         </button>
     </div>
     {{-- Tabla de cajas --}}
-    <div wire:loading.class='animate-pulse' class="relative shadow-md sm:rounded-lg my-3" wire:target='cierreParcial, cerrarCaja'>
+    <div wire:loading.class='animate-pulse' class="relative shadow-md sm:rounded-lg my-3"
+        wire:target='cierreParcial, cerrarCaja'>
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
@@ -157,3 +158,11 @@
         </x-slot>
     </x-modal>
 </div>
+@script
+    <script>
+        $wire.on('generar-corte', (e) => {
+            window.open('http://127.0.0.1:8000/ventas/corte/' + e[0].corte + '/' + e[0].clave_punto_venta, '_blank');
+            console.log(e);
+        });
+    </script>
+@endscript

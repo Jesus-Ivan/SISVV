@@ -12,6 +12,7 @@ use App\Models\Recibo;
 use App\Models\SaldoFavor;
 use App\Models\Socio;
 use App\Models\TipoPago;
+use App\Models\User;
 use App\Models\Venta;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\Database\Eloquent\Builder;
@@ -467,25 +468,38 @@ class ReportesController extends Controller
         $fInicio = $request->input('fechaInicio');
         $fFin = $request->input('fechaFin');
         $type = $request->input('selectedType');
+        $user = $request->input('user');
 
         if ($type == 'V') {
             return $this->ventasMes($fInicio, $fFin);
         } elseif ($type == 'R') {
-            return $this->reporteRecibos($fInicio, $fFin);
+            return $this->reporteRecibos($fInicio, $fFin, $user);
         }
     }
 
-    public function socios()
-    {
-        return Excel::download(new SociosExport, 'socios(val_cuot).xlsx');
-    }
-    private function reporteRecibos($fInicio, $fFin)
+    private function reporteRecibos($fInicio, $fFin, $user = null)
     {
         //Buscamos los metodos de pago, permitidos para el reporte de cobranza
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
             $query->where('descripcion', 'like', 'FIRMA')
                 ->orWhere('descripcion', 'like', '%SALDO%');
         })->get();
+
+        //Si se paso un id de usuario
+        if ($user) {
+            //Buscamos los cortes de caja del usuario
+            $cortesResult = Caja::where('id_usuario', $user)
+                ->whereDate('fecha_apertura', '>=', $fInicio)
+                ->whereDate('fecha_apertura', '<=', $fFin)
+                ->get();
+        } else {
+            //Buscamos todos los cortes de caja, sin importar el usuario
+            $cortesResult = Caja::whereDate('fecha_apertura', '>=', $fInicio)
+                ->whereDate('fecha_apertura', '<=', $fFin)
+                ->get();
+        }
+        //Obtenemos unicamente el campo de corte de caja.
+        $cortes = array_column($cortesResult->toArray(), 'corte');
 
         //Variable auxiliar que almacena los totales de los recibos, por metodos de pago
         $arrayAux = [];
@@ -502,8 +516,7 @@ class ReportesController extends Controller
                 'detalles_recibo.id_tipo_pago',
                 'detalles_recibo.monto_pago',
             )
-            ->whereDate('created_at', '>=', $fInicio)
-            ->whereDate('created_at', '<=', $fFin)
+            ->whereIn('corte_caja', $cortes)
             ->get();
 
 
@@ -553,7 +566,10 @@ class ReportesController extends Controller
             'title' => 'VISTA VERDE COUNTRY CLUB',
             'rfc' => 'VVC101110AQ4',
             'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
-            'telefono' => '3745011'
+            'telefono' => '3745011',
+            'fInicio' => $fInicio,
+            'fFin' => $fFin,
+            'usuarioCorte' => User::find($user)
         ];
 
         $data = [
@@ -562,7 +578,7 @@ class ReportesController extends Controller
             'total' => $totalCobranza
         ];
 
-        $pdf = Pdf::loadView('reportes.cobranza-resumen', $data);
+        $pdf = Pdf::loadView('reportes.cobranza-resumen-mensual', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
         return $pdf->stream('ReporteCobranzaResumen.pdf');
     }

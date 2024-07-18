@@ -194,11 +194,9 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::post('/', [ExcelController::class, 'importData'])->name('subirRegistros');
     });
     Route::prefix('reportes')->group(function () {
-        Route::view('/', 'sistemas.Herramientas.reportes')->name('sistemas.sistemas');
+        Route::get('/',[SistemasController::class, 'reportesIndex'])->name('sistemas.reportes');
         Route::post('/', [ReportesController::class, 'mensual'])->name('sistemas.reportes');
     });
-    //Reporte de socios en excel
-    Route::get('socios', [ReportesController::class, 'socios'])->name('sistemas.socios');
 
     //RECEPCION
     Route::prefix('recepcion')->group(function () {

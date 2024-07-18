@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\ProductosVendExport;
 use App\Models\PuntoVenta;
+use App\Models\User;
 use App\Models\Venta;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -48,4 +49,10 @@ class SistemasController extends Controller
             'Productos vendidos ' . $codigopv . ' - ' . $fInicio . ' - ' . $fFin . '.xlsx'
         );
     }
+
+    public function reportesIndex()
+    {
+        return view('sistemas.Herramientas.reportes', ['users' => User::all()]);
+    }
+
 }

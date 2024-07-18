@@ -11,14 +11,27 @@
     </div>
     <form action="{{ route('sistemas.reportes') }}" method="POST" target="_blank">
         @csrf
-        <div class="max-w-sm">
-            <label for="registros" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Seleccionar
-                tipo</label>
-            <select id="registros" name="selectedType"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-fit p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                <option value="V" selectd>VENTAS</option>
-                <option value="R">RECIBOS</option>
-            </select>
+        <div class="flex gap-4">
+            <div class="max-w-sm">
+                <label for="registros" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Seleccionar
+                    tipo</label>
+                <select id="registros" name="selectedType"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-fit p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option value="V" selectd>VENTAS</option>
+                    <option value="R">RECIBOS</option>
+                </select>
+            </div>
+            <div class="max-w-sm">
+                <label for="user" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Seleccionar
+                    usuario</label>
+                <select id="user" name="user"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-fit p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option value="{{ null }}" selectd>Seleccione</option>
+                    @foreach ($users as $user)
+                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                    @endforeach
+                </select>
+            </div>
         </div>
         <input type="date" id="fechaInicio" name="fechaInicio">
         <input type="date" id="fechaFin" name="fechaFin">

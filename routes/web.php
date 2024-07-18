@@ -217,7 +217,7 @@ Route::prefix('portico')->middleware(['auth', 'portico'])->group(function () {
 });
 
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');
-Route::get('ventas/corte/{caja}/{codigopv?}', [ReportesController::class, 'generarCorte'])->middleware(['auth'])->name('ventas.corte');
+Route::get('ventas/corte/{caja}/{codigopv?}', [ReportesController::class, 'generarCorte'])->name('ventas.corte');
 
 
 require __DIR__ . '/auth.php';

@@ -21,16 +21,11 @@
         border-top: 1px solid black;
         border-bottom: 1px solid black;
     }
-
-    td {
-        border-bottom: 1px solid black;
-    }
 </style>
 
-
-
 <h3>VISTA VERDE COUNTRY CLUB</h3>
-<h5>Reporte de ventas</h5>
+<h3>Reporte de ventas</h3>
+<h3>{{$header['fInicio']}}</h3>
 @if (@isset($caja))
     <table>
         <tbody>
@@ -50,35 +45,47 @@
     </table>
 @endif
 @foreach ($detalles_pagos as $key => $pagos)
-    <p>{{ $key }}</p>
+    <h2>{{ $key }}</h2>
     <table>
         <thead>
             <tr>
-                <th style="width: 50pt">F.Venta</th>
+                <th>Folio</th>
+                <th style="width: 50pt">Fecha</th>
+                <th style="width: 60pt">Tipo Venta</th>
+                <th></th>
                 <th style="width: 100%">Socio</th>
-                <th>Subtotal</th>
+                <th>Total</th>
                 <th>Propina</th>
+                <th>Zona</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($pagos as $pago)
                 <tr>
                     <td>{{ $pago->folio_venta }}</td>
-                    <td>{{ $pago->nombre }}</td>
-                    <td>{{ $pago->monto }}</td>
-                    <td>{{ $pago->propina }}</td>
+                    <td>{{ substr($pago->fecha_apertura, 0, 10) }}</td>
+                    <td style="text-transform: uppercase">{{ $pago->tipo_venta }}</td>
+                    <td style="text-align: right">{{ $pago->id_socio }}</td>
+                    <td style="text-transform: uppercase">{{ $pago->nombre }}</td>
+                    <td style="text-align: right">{{ $pago->monto }}</td>
+                    <td style="text-align: right">{{ $pago->propina }}</td>
+                    <td style="text-align: right">{{ $puntos_venta[$pago->clave_punto_venta] }}</td>
                 </tr>
             @endforeach
         </tbody>
         <tfoot>
+            <br>
             <tr>
                 <td style="border: 0px"></td>
-                <td style="text-align: right; border: 0px ">Total:</td>
-                <td style="border: 0px">${{ array_sum(array_column($pagos->toArray(), 'monto')) }}</td>
                 <td style="border: 0px"></td>
+                <td style="border: 0px"></td>
+                <td style="border: 0px"></td>
+                <td style="text-align: right; font-size: 14px; font-weight: bold;">TOTAL:</td>
+                <td style="text-align: right; font-size: 14px; font-weight: bold;">${{ array_sum(array_column($pagos->toArray(), 'monto')) }}</td>
+                <td style="text-align: right; font-size: 14px; font-weight: bold;">${{ array_sum(array_column($pagos->toArray(), 'propina')) }}</td>
             </tr>
         </tfoot>
     </table>
 @endforeach
 <hr>
-<p>Total de venta: ${{ $totalVenta }}</p>
+<h3>TOTAL DE VENTA: ${{ $totalVenta }}</h3>

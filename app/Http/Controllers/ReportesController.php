@@ -419,6 +419,7 @@ class ReportesController extends Controller
 
     public function ventasMes($fInicio, $fFin)
     {
+        
         //Quitamos los metodos de pago no permitidos.
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
             $query->where('descripcion', 'like', 'TRANSFERENCIA')
@@ -426,6 +427,13 @@ class ReportesController extends Controller
                 ->orWhere('descripcion', 'like', 'CHEQUE')
                 ->orWhere('descripcion', 'like', '%SALDO%');
         })->get();
+
+        //REALIZAMOS UNA BUSQEUDA INDEXADA
+        $puntos_venta = [];
+        foreach (PuntoVenta::all()->toArray() as $key => $value) {
+            $puntos_venta[$value['clave']] = $value['nombre'];
+        }
+
         //Array auxiliar de pagos separados por tipo
         $separados = [];
         //Consulta que obtiene los detalles de los pagos con su corte de caja
@@ -456,7 +464,8 @@ class ReportesController extends Controller
         $data = [
             'header' => $header,
             'detalles_pagos' => $separados,
-            'totalVenta' => $totalVenta
+            'totalVenta' => $totalVenta,
+            'puntos_venta' => $puntos_venta
         ];
 
         $pdf = Pdf::loadView('reportes.ventas', $data);

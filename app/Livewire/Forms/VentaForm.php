@@ -498,6 +498,19 @@ class VentaForm extends Form
                         'saldo' => $pago['monto_pago'],
                         'consumo' => true
                     ]);
+                    //Verificamos si tiene propina
+                    if ($pago['propina']) {
+                        //Creamos el concepto de la propina en el estado de cuenta
+                        EstadoCuenta::create([
+                            'id_socio' => $pago['id_socio'],
+                            'id_venta_pago' => $resultPago->id,
+                            'concepto' => 'PROPINA NOTA VENTA: ' . $folio . ' - ' . $puntoVenta->nombre,
+                            'fecha' => now()->toDateString(),
+                            'cargo' => $pago['propina'],
+                            'saldo' => $pago['propina'],
+                            'consumo' => false
+                        ]);
+                    }
                 } else {
                     //Creamos el concepto en el estado de cuenta (con abono total)
                     EstadoCuenta::create([

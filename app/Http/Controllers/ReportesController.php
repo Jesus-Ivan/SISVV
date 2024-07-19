@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\SociosExport;
+
+use App\Exports\VentasExport;
 use App\Models\Caja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
@@ -425,13 +426,12 @@ class ReportesController extends Controller
         return $pdf->stream('reporte-vencidos' . $fInicio . '.pdf');
     }
 
-    public function ventasMes($fInicio, $fFin)
+    public function ventasMes($fInicio, $fFin, $type_file)
     {
 
         //Quitamos los metodos de pago no permitidos.
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
-            $query->where('descripcion', 'like', 'TRANSFERENCIA')
-                ->orWhere('descripcion', 'like', 'DEPOSITO')
+            $query->where('descripcion', 'like', 'DEPOSITO')
                 ->orWhere('descripcion', 'like', 'CHEQUE')
                 ->orWhere('descripcion', 'like', '%SALDO%');
         })->get();
@@ -476,9 +476,20 @@ class ReportesController extends Controller
             'puntos_venta' => $puntos_venta
         ];
 
-        $pdf = Pdf::loadView('reportes.ventas', $data);
-        $pdf->setOption(['defaultFont' => 'Courier']);
-        return $pdf->stream("reporteMensual.pdf");
+        //dd($fInicio, $fFin, $type_file);
+
+        if ($type_file == 'PDF') {
+            $pdf = Pdf::loadView('reportes.ventas', $data);
+            $pdf->setOption(['defaultFont' => 'Courier']);
+            return $pdf->download("reporteMensual.pdf");
+        } else {
+            //dd($data);
+            //Devolvemos el excel
+            return Excel::download(
+                new VentasExport($data),
+                'Ventas - ' . $fInicio . ' - ' . $fFin . '.xlsx'
+            );
+        }
     }
 
     public function mensual(Request $request)
@@ -487,9 +498,10 @@ class ReportesController extends Controller
         $fFin = $request->input('fechaFin');
         $type = $request->input('selectedType');
         $user = $request->input('user');
+        $type_file = $request->input('type_file');
 
         if ($type == 'V') {
-            return $this->ventasMes($fInicio, $fFin);
+            return $this->ventasMes($fInicio, $fFin, $type_file);
         } elseif ($type == 'R') {
             return $this->reporteRecibos($fInicio, $fFin, $user);
         }

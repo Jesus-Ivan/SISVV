@@ -32,19 +32,9 @@
                     @endforeach
                 </select>
             </div>
-            <div class="max-w-sm">
-                <label for="type_file" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Seleccionar
-                    tipo</label>
-                <select id="type_file" name="type_file"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-fit p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                    <option value="PDF" selectd>PDF</option>
-                    <option value="XLS">EXCEL</option>
-                </select>
-            </div>
         </div>
         <input type="date" id="fechaInicio" name="fechaInicio">
         <input type="date" id="fechaFin" name="fechaFin">
-
         <button type="submit">Generar</button>
     </form>
     <div class="ms-3 mx-3 my-2">

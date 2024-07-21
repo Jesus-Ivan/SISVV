@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ProductosVendExport;
+use App\Models\Caja;
 use App\Models\PuntoVenta;
 use App\Models\User;
 use App\Models\Venta;
@@ -28,18 +29,20 @@ class SistemasController extends Controller
             'fInicio' => ['required'],
             'fFin' => ['required']
         ]);
-
+        //Buscamos TODAS las cajas que coincidan entre las fechas deseadas.
+        $cajas = Caja::whereDate('fecha_apertura', '>=', $fInicio)
+            ->whereDate('fecha_apertura', '<=', $fFin)
+            ->get()
+            ->toArray();
         if ($codigopv == 'ALL') {
-            //Buscar las ventas de todos los puntos
+            //Buscar las ventas de todos los puntos EN BASE A LOS CORTES DE CAJA
             $ventas = Venta::with('puntoVenta')
-                ->whereDate('fecha_apertura', '>=', $fInicio)
-                ->whereDate('fecha_apertura', '<=', $fFin)
+                ->whereIn('corte_caja', array_column($cajas, 'corte'))
                 ->get();
         } else {
             //Solo la venta de un punto especifico
             $ventas = Venta::with('puntoVenta')
-                ->whereDate('fecha_apertura', '>=', $fInicio)
-                ->whereDate('fecha_apertura', '<=', $fFin)
+                ->whereIn('corte_caja', array_column($cajas, 'corte'))
                 ->where('clave_punto_venta', $codigopv)
                 ->get();
         }
@@ -54,5 +57,4 @@ class SistemasController extends Controller
     {
         return view('sistemas.Herramientas.reportes', ['users' => User::all()]);
     }
-
 }

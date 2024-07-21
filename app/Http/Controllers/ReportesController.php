@@ -426,7 +426,7 @@ class ReportesController extends Controller
         return $pdf->stream('reporte-vencidos' . $fInicio . '.pdf');
     }
 
-    public function ventasMes($fInicio, $fFin, $type_file)
+    public function ventasMes($fInicio, $fFin)
     {
 
         //Quitamos los metodos de pago no permitidos.
@@ -476,20 +476,9 @@ class ReportesController extends Controller
             'puntos_venta' => $puntos_venta
         ];
 
-        //dd($fInicio, $fFin, $type_file);
-
-        if ($type_file == 'PDF') {
-            $pdf = Pdf::loadView('reportes.ventas', $data);
-            $pdf->setOption(['defaultFont' => 'Courier']);
-            return $pdf->download("reporteMensual.pdf");
-        } else {
-            //dd($data);
-            //Devolvemos el excel
-            return Excel::download(
-                new VentasExport($data),
-                'Ventas - ' . $fInicio . ' - ' . $fFin . '.xlsx'
-            );
-        }
+        $pdf = Pdf::loadView('reportes.ventas', $data);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        return $pdf->download("reporteMensual.pdf");
     }
 
     public function mensual(Request $request)
@@ -498,10 +487,9 @@ class ReportesController extends Controller
         $fFin = $request->input('fechaFin');
         $type = $request->input('selectedType');
         $user = $request->input('user');
-        $type_file = $request->input('type_file');
 
         if ($type == 'V') {
-            return $this->ventasMes($fInicio, $fFin, $type_file);
+            return $this->ventasMes($fInicio, $fFin);
         } elseif ($type == 'R') {
             return $this->reporteRecibos($fInicio, $fFin, $user);
         }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 
+use App\Exports\SociosExport;
+
 use App\Exports\VentasExport;
 use App\Models\Caja;
 use App\Models\DetallesVentaPago;
@@ -426,8 +428,13 @@ class ReportesController extends Controller
         return $pdf->stream('reporte-vencidos' . $fInicio . '.pdf');
     }
 
-    public function ventasMes($fInicio, $fFin)
+    public function ventasMes($fInicio, $fFin, $type_file)
     {
+        //Buscamos las cajas que coincidan entre las fechas
+        $cajas = Caja::whereDate('fecha_apertura', '>=', $fInicio)
+            ->whereDate('fecha_apertura', '<=', $fFin)
+            ->get()
+            ->toArray();
 
         //Quitamos los metodos de pago no permitidos.
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
@@ -436,10 +443,16 @@ class ReportesController extends Controller
                 ->orWhere('descripcion', 'like', '%SALDO%');
         })->get();
 
-        //REALIZAMOS UNA BUSQEUDA INDEXADA
+        //REALIZAMOS UNA BUSQEUDA INDEXADA PARA OBTENER EL PUNTO DE VENTA
         $puntos_venta = [];
         foreach (PuntoVenta::all()->toArray() as $key => $value) {
             $puntos_venta[$value['clave']] = $value['nombre'];
+        }
+
+        //REALIZAMOS UNA BUSQEUDA INDEXADA PARA OBTENER EL TIPO DE PAGO
+        $metodo_pago = [];
+        foreach (TipoPago::all()->toArray() as $key => $value) {
+            $metodo_pago[$value['id']] = $value['descripcion'];
         }
 
         //Array auxiliar de pagos separados por tipo
@@ -448,8 +461,7 @@ class ReportesController extends Controller
         $detalles_pago = DB::table('detalles_ventas_pagos')
             ->join('ventas', 'detalles_ventas_pagos.folio_venta', '=', 'ventas.folio')
             ->select('detalles_ventas_pagos.*', 'ventas.*')
-            ->whereDate('fecha_apertura', '>=',  $fInicio)
-            ->whereDate('fecha_apertura', '<=',  $fFin)
+            ->whereIn('corte_caja', array_column($cajas, 'corte'))
             ->get();
 
         //Obtenemos el total del corte
@@ -476,9 +488,18 @@ class ReportesController extends Controller
             'puntos_venta' => $puntos_venta
         ];
 
-        $pdf = Pdf::loadView('reportes.ventas', $data);
-        $pdf->setOption(['defaultFont' => 'Courier']);
-        return $pdf->download("reporteMensual.pdf");
+        if ($type_file == 'PDF') {
+            //GENERAMOS EL REPORTE EN PDF
+            $pdf = Pdf::loadView('reportes.ventas', $data);
+            $pdf->setOption(['defaultFont' => 'Courier']);
+            return $pdf->stream("reporteMensual.pdf");
+        }else {
+            //GENERAMOS EL REPORTE EN EXCEL
+            return Excel::download(
+                new VentasExport($data, $puntos_venta, $metodo_pago),
+                'Ventas - ' . $fInicio . ' - ' . $fFin . '.xlsx'
+            );
+        }
     }
 
     public function mensual(Request $request)
@@ -487,9 +508,10 @@ class ReportesController extends Controller
         $fFin = $request->input('fechaFin');
         $type = $request->input('selectedType');
         $user = $request->input('user');
+        $type_file = $request->input('type_file');
 
         if ($type == 'V') {
-            return $this->ventasMes($fInicio, $fFin);
+            return $this->ventasMes($fInicio, $fFin, $type_file);
         } elseif ($type == 'R') {
             return $this->reporteRecibos($fInicio, $fFin, $user);
         }

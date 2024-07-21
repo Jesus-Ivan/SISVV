@@ -44,7 +44,6 @@
         </div>
         <input type="date" id="fechaInicio" name="fechaInicio">
         <input type="date" id="fechaFin" name="fechaFin">
-
         <button type="submit">Generar</button>
     </form>
     <div class="ms-3 mx-3 my-2">

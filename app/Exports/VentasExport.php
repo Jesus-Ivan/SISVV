@@ -48,3 +48,4 @@ class VentasExport implements FromArray
         return $ventasDia;
     }
 }
+

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Exports\SociosExport;
+
 use App\Exports\VentasExport;
 use App\Models\Caja;
 use App\Models\DetallesVentaPago;
@@ -77,9 +79,15 @@ class ReportesController extends Controller
         //Consulta que obtiene los detalles de los pagos con su corte de caja
         $detalles_pago = DB::table('detalles_ventas_pagos')
             ->join('ventas', 'detalles_ventas_pagos.folio_venta', '=', 'ventas.folio')
-            ->select('detalles_ventas_pagos.*', 'ventas.corte_caja')
+            ->select('detalles_ventas_pagos.*', 'ventas.*')
             ->where('corte_caja', $caja->corte)
             ->get();
+
+        //CREAMOS ARRAY DE PUNTOS DE VENTA, PARA LA BUSQUEDA INDEXADA EN LA VIEW DEL REPORTE 'reportes.ventas'
+        $puntos_venta = [];
+        foreach (PuntoVenta::all()->toArray() as $key => $value) {
+            $puntos_venta[$value['clave']] = $value['nombre'];
+        }
 
         //Obtenemos el total del corte
         $totalVenta = array_sum(array_column($detalles_pago->toArray(), 'monto'));
@@ -91,7 +99,8 @@ class ReportesController extends Controller
         $data = [
             'caja' => $caja,
             'detalles_pagos' => $separados,
-            'totalVenta' => $totalVenta
+            'totalVenta' => $totalVenta,
+            'puntos_venta' => $puntos_venta
         ];
 
         if ($codigopv) {

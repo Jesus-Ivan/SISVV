@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\SociosExport;
+
+use App\Exports\VentasExport;
 use App\Models\Caja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
@@ -430,8 +431,7 @@ class ReportesController extends Controller
 
         //Quitamos los metodos de pago no permitidos.
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
-            $query->where('descripcion', 'like', 'TRANSFERENCIA')
-                ->orWhere('descripcion', 'like', 'DEPOSITO')
+            $query->where('descripcion', 'like', 'DEPOSITO')
                 ->orWhere('descripcion', 'like', 'CHEQUE')
                 ->orWhere('descripcion', 'like', '%SALDO%');
         })->get();
@@ -478,7 +478,7 @@ class ReportesController extends Controller
 
         $pdf = Pdf::loadView('reportes.ventas', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
-        return $pdf->stream("reporteMensual.pdf");
+        return $pdf->download("reporteMensual.pdf");
     }
 
     public function mensual(Request $request)

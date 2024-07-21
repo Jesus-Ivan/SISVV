@@ -38,7 +38,7 @@ class VentasExport implements FromArray
                     'tipo_venta' => $item->tipo_venta,
                     'id_socio' => $item->id_socio,
                     'nombre_socio' => $item->nombre,
-                    'total' => $item->total,
+                    'total' => $item->monto,
                     'propina' => $item->propina,
                     'tipo_pago' => $this->metodo_pago[$item->id_tipo_pago],
                     'clave_punto_venta' => $this->puntos_venta[$item->clave_punto_venta]

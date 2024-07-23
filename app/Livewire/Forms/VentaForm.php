@@ -118,13 +118,13 @@ class VentaForm extends Form
 
         //Limpiamos las propiedades
         $this->selected = [];    //Productos seleccionados
-        $this->actualizarTotal();
+        $this->recalcularSubtotales();
     }
 
     public function eliminarArticulo($productoIndex)
     {
         unset($this->productosTable[$productoIndex]);
-        $this->actualizarTotal();
+        $this->recalcularSubtotales();
     }
 
     public function calcularSubtotal($productoIndex, $eValue)
@@ -255,6 +255,8 @@ class VentaForm extends Form
     //Se ejecuta para cerrar una venta completa, si esta es nueva
     public function cerrarVentaNueva($codigopv)
     {
+        //Recalculamos cada subtotal de la tabla. (por si hubo un fallo de red en alguna peticion hacia el metodo 'calcularSubtotal')
+        $this->recalcularSubtotales();
         //Validamos la informacion de la venta
         switch ($this->tipo_venta) {
             case 'socio':
@@ -300,6 +302,8 @@ class VentaForm extends Form
     //Se ejecuta para guardar una venta, cuando es nueva
     public function guardarVentaNueva($codigopv)
     {
+        //Recalculamos cada subtotal de la tabla. (por si hubo un fallo de red en alguna peticion hacia el metodo 'calcularSubtotal')
+        $this->recalcularSubtotales();
         //Validamos la informacion de la venta
         switch ($this->tipo_venta) {
             case 'socio':
@@ -330,8 +334,7 @@ class VentaForm extends Form
             default:
                 break;
         }
-
-
+        //Duplicamos variable para pasarla a la funcion anonima de la transaccion
         $tipo_venta = $this->tipo_venta;
 
         //Se crea la transaccion
@@ -349,12 +352,12 @@ class VentaForm extends Form
     {
         //Verificamos si la venta no esta cerrada
         $this->validarVentaCerrada($folio);
-        //Calculamos el nuevo total de la venta
-        $total = array_sum(array_column($this->productosTable, 'subtotal'));
+        //Recalculamos cada subtotal de la tabla. (por si hubo un fallo de red en alguna peticion hacia el metodo 'calcularSubtotal')
+        $this->recalcularSubtotales();
         //Creamos una fecha de inicio para los detalles de los productos que se van a guardar
         $inicio = now()->format('Y-m-d H:i:s');
 
-        DB::transaction(function () use ($folio, $total, $inicio) {
+        DB::transaction(function () use ($folio, $inicio) {
             //Recorremos todos los items de la tabla
             foreach ($this->productosTable as $key => $producto) {
                 //Verificamos si el item que se itera, cuenta con un 'id' de la base de datos
@@ -379,13 +382,15 @@ class VentaForm extends Form
                 }
             }
             //Actualizamos el total de la venta 
-            Venta::where('folio', $folio)->update(['total' => $total]);
+            Venta::where('folio', $folio)->update(['total' => $this->totalVenta]);
         }, 2);
     }
 
     //Cerrar una venta existente (actualiza toda la venta)
     public function cerrarVentaExistente($folio, $codigopv)
     {
+        //Recalculamos cada subtotal de la tabla. (por si hubo un fallo de red en alguna peticion hacia el metodo 'calcularSubtotal')
+        $this->recalcularSubtotales();
         //Verificamos si la venta no esta cerrada
         $this->validarVentaCerrada($folio);
         //Validamos que de la venta tenga metodos de pago y productos
@@ -413,11 +418,6 @@ class VentaForm extends Form
         $resultCaja = $this->buscarCaja();
         //Obtenemos la fecha-hora de actual, con una instancia de Carbon.
         $fecha_cierre = now()->format('Y-m-d H:i:s');
-        //Se calcula el total de los productos
-        $total = array_sum(array_column($venta['productosTable'], 'subtotal'));
-
-        //Si el socio tiene un id, lo concatenamos al nombre
-        //$nombre = isset($venta['socio']['id']) ? $venta['socio']['nombre'] . ' ' . $venta['socio']['apellido_p'] . ' ' . $venta['socio']['apellido_m'] : null;
 
         switch ($this->tipo_venta) {
             case 'socio':
@@ -443,7 +443,7 @@ class VentaForm extends Form
             'nombre' => $nombre,
             'fecha_apertura' => $fecha_cierre,
             'fecha_cierre' => $isClosed ? $fecha_cierre : null,
-            'total' => $total,
+            'total' => $this->totalVenta,
             'corte_caja' => $resultCaja->corte,
             'clave_punto_venta' => $codigopv
         ]);
@@ -606,5 +606,15 @@ class VentaForm extends Form
             'totalPago',
             'totalPropina'
         );
+    }
+
+    private function recalcularSubtotales()
+    {
+        //Calculamos el subtotal de cada producto de la tabla
+        foreach ($this->productosTable as $key => $producto) {
+            //Se calcula el subtotal del producto
+            $this->productosTable[$key]['subtotal'] = $producto['precio'] * $producto['cantidad'];
+        }
+        $this->actualizarTotal();
     }
 }

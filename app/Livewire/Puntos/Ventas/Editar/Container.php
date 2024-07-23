@@ -32,7 +32,7 @@ class Container extends Component
         //Guardamos la instancia del modelo, correspondiente al registro de la venta(BD)
         $this->venta = $venta;
         $this->ventaForm->tipo_venta = $venta->tipo_venta;      //Guardamos el tipo de venta en el form
-        //Si la venta es de tipo socio
+        //Si la venta es de tipo invitado del socio
         if ($venta->tipo_venta == 'invitado') {
             //guardar el socio, en el metodo del pago
             $this->ventaForm->socioPago = Socio::find($venta->id_socio);

@@ -52,9 +52,4 @@ class SistemasController extends Controller
             'Productos vendidos ' . $codigopv . ' - ' . $fInicio . ' - ' . $fFin . '.xlsx'
         );
     }
-
-    public function reportesIndex()
-    {
-        return view('sistemas.Herramientas.reportes', ['users' => User::all()]);
-    }
 }

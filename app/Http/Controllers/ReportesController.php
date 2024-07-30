@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Exports\RecibosExport;
 use App\Exports\SociosExport;
 
 use App\Exports\VentasExport;
@@ -18,6 +18,7 @@ use App\Models\TipoPago;
 use App\Models\User;
 use App\Models\Venta;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -373,6 +374,7 @@ class ReportesController extends Controller
     {
         $fInicio = $request->input('fInicio');
         $fFin = $request->input('fFin');
+        $consumosMesFin = $request->input('consumosMesFin');
 
         $this->validate($request, [
             'fInicio' => 'required|date',
@@ -387,11 +389,23 @@ class ReportesController extends Controller
             'fInicio' => $fInicio,
             'fFin' => $fFin
         ];
+        if ($consumosMesFin) {
+            $estados = EstadoCuenta::whereDate('fecha', '>=', $fInicio)
+                ->whereDate('fecha', '<=', $fFin)
+                ->where('saldo', '>', 0)
+                ->get();
+        } else {
+            $estados = EstadoCuenta::whereDate('fecha', '>=', $fInicio)
+                ->whereDate('fecha', '<=', $fFin)
+                ->where('saldo', '>', 0)
+                ->whereNot(function (Builder $query) use ($fFin) {
+                    $query->whereMonth('fecha', Carbon::parse($fFin)->month)
+                        ->whereYear('fecha', Carbon::parse($fFin)->year)
+                        ->whereNotNull('id_venta_pago');
+                })
+                ->get();
+        }
 
-        $estados = EstadoCuenta::whereDate('fecha', '>=', $fInicio)
-            ->whereDate('fecha', '<=', $fFin)
-            ->where('saldo', '>', 0)
-            ->get();
 
         $totales = [];
         foreach ($estados as $key => $estado) {
@@ -420,7 +434,8 @@ class ReportesController extends Controller
         $data = [
             'header' => $header,
             'totales' => $totales,
-            'total' => array_sum(array_column($totales, 'monto'))
+            'total' => array_sum(array_column($totales, 'monto')),
+            'consumosMesFin' => $consumosMesFin
         ];
 
         $pdf = Pdf::loadView('reportes.cartera-vencida', $data);
@@ -428,8 +443,12 @@ class ReportesController extends Controller
         return $pdf->stream('reporte-vencidos' . $fInicio . '.pdf');
     }
 
-    public function ventasMes($fInicio, $fFin, $type_file)
+    public function ventasMes(Request $request)
     {
+        $fInicio = $request->input('fechaInicio');
+        $fFin = $request->input('fechaFin');
+        $type_file = $request->input('type_file');
+
         //Buscamos las cajas que coincidan entre las fechas
         $cajas = Caja::whereDate('fecha_apertura', '>=', $fInicio)
             ->whereDate('fecha_apertura', '<=', $fFin)
@@ -493,7 +512,7 @@ class ReportesController extends Controller
             $pdf = Pdf::loadView('reportes.ventas', $data);
             $pdf->setOption(['defaultFont' => 'Courier']);
             return $pdf->stream("reporteMensual.pdf");
-        }else {
+        } else {
             //GENERAMOS EL REPORTE EN EXCEL
             return Excel::download(
                 new VentasExport($data, $puntos_venta, $metodo_pago),
@@ -502,23 +521,17 @@ class ReportesController extends Controller
         }
     }
 
-    public function mensual(Request $request)
+    /** 
+     * Este metodo genera un pdf, donde muestran todos los recibos cobrados por un usuario
+     * en un rango de fechas dadas. 
+     * Principalmente utilizando en recepcion - reportes.
+     */
+    public function reporteRecibos(Request $request)
     {
         $fInicio = $request->input('fechaInicio');
         $fFin = $request->input('fechaFin');
-        $type = $request->input('selectedType');
         $user = $request->input('user');
-        $type_file = $request->input('type_file');
 
-        if ($type == 'V') {
-            return $this->ventasMes($fInicio, $fFin, $type_file);
-        } elseif ($type == 'R') {
-            return $this->reporteRecibos($fInicio, $fFin, $user);
-        }
-    }
-
-    private function reporteRecibos($fInicio, $fFin, $user = null)
-    {
         //Buscamos los metodos de pago, permitidos para el reporte de cobranza
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
             $query->where('descripcion', 'like', 'FIRMA')
@@ -623,27 +636,23 @@ class ReportesController extends Controller
         return $pdf->stream('ReporteCobranzaResumen.pdf');
     }
 
-    private function calcularAltura($data)
+    /**
+     * Metodo que genera un excel para el reporte de los recibos, segun las fechas dadas.
+     * El reporte es detallado, utilizado en sistemas - herramientas - reportes
+     */
+    public function recibosMes(Request $request)
     {
-        $font_size_p = 7;
-        $line = 6;
+        $fInicio = $request->input('fechaInicio');
+        $fFin = $request->input('fechaFin');
 
-        $header_ticket = (76);
+        $recibos = Recibo::whereDate('created_at', '>=', $fInicio)
+            ->whereDate('created_at', '<=', $fFin)
+            ->get();
 
-        $inicio_ticket = (3 * $font_size_p) + (ceil(mb_strlen($data['socio_nombre']) / 25) * $font_size_p) + $line;
-
-        $productos_ticket = 10;
-        foreach ($data['productos'] as $key => $producto) {
-            $letras = mb_strlen($producto->catalogoProductos->nombre);
-            $productos_ticket = $productos_ticket + ((ceil($letras / 23)) * $font_size_p);
-        }
-
-        $pago_ticket = 20 + $line;
-        foreach ($data['pagos'] as $key => $pago) {
-            $letras = mb_strlen($pago->nombre);
-            $pago_ticket = $pago_ticket + ((ceil($letras / 26)) * $font_size_p);
-        }
-        $footer_ticket = ($font_size_p * 2) + 10;
-        return  $header_ticket + $inicio_ticket + $productos_ticket + $pago_ticket + $footer_ticket;
+        //Devolvemos el excel
+        return Excel::download(
+            new RecibosExport($recibos->toArray()),
+            'Reporte recibos ' . $fInicio . ' - ' . $fFin . '.xlsx'
+        );
     }
 }

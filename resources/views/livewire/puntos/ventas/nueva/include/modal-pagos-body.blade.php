@@ -1,4 +1,5 @@
 <form id="modal-pago-body" class="w-96" wire:submit='agregarPago()'>
+    @csrf
     <!-- Modal body -->
     <div>
         {{-- Autocomplete --}}

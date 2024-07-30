@@ -46,7 +46,12 @@
 <div>
     <div>
         <h2>VISTA VERDE COUNTRY CLUB</h2>
-        <h3>Cartera de clientes vencidos del {{ $header['fInicio'] }} al {{ $header['fFin'] }}</h3>
+        @if ($consumosMesFin)
+            <h3>Cuentas por cobrar {{ $header['fInicio'] }} al {{ $header['fFin'] }}</h3>
+        @else
+            <h3>Cartera de clientes vencidos del {{ $header['fInicio'] }} al {{ $header['fFin'] }}</h3>
+        @endif
+
         <p>RFC: {{ $header['rfc'] }}</p>
         <p>{{ $header['direccion'] }}</p>
         <p>Tel: 238{{ $header['telefono'] }}</p>
@@ -63,13 +68,13 @@
         <tbody>
             @foreach ($totales as $item)
                 <tr>
-                    <td>{{$item['id_socio']}}</td>
-                    <td>{{$item['nombre']}}</td>
-                    <td>${{$item['monto']}}</td>
+                    <td>{{ $item['id_socio'] }}</td>
+                    <td>{{ $item['nombre'] }}</td>
+                    <td>${{ $item['monto'] }}</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
     <br>
-    <p style="font-size: larger">Total: ${{$total}}</p>
+    <p style="font-size: larger">Total: ${{ $total }}</p>
 </div>

@@ -55,7 +55,6 @@ class Caja extends Component
             ->paginate(5);
     }
 
-
     public function abrirCaja()
     {
         $validated = $this->validate();

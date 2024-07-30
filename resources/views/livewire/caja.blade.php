@@ -66,9 +66,13 @@
             <tbody>
                 @foreach ($this->statusCaja as $index => $item)
                     <tr wire:key="{{ $index }}"
-                        class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                        class="@if ($item->fecha_cierre) 
+                            odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700
+                        @else 
+                            bg-red-100 text-red-700 font-semibold 
+                        @endif">
                         <th scope="row"
-                            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                            class=" px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                             {{ $item->corte }}
                         </th>
                         <td class="px-6 py-4">

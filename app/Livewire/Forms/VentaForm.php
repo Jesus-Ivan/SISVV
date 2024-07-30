@@ -562,7 +562,6 @@ class VentaForm extends Form
     {
         //Buscamos caja abrierta en el punto actual, en el dia actual
         $result = Caja::where('clave_punto_venta', $this->permisospv->clave_punto_venta)
-            ->whereDate('fecha_apertura', now()->toDateString())
             ->whereNull('fecha_cierre')
             ->first();
         //Si no hay caja

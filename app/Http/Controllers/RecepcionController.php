@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PuntoVenta;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class RecepcionController extends Controller
@@ -13,6 +14,11 @@ class RecepcionController extends Controller
         $punto_venta = $this->getPunto();
         //Devolvemos la vista de blade al usuario, anexando la informacion obtenida
         return view('recepcion.Ventas.ventas', ['codigopv' => $punto_venta]);
+    }
+
+    public function reportesIndex()
+    {
+        return view('recepcion.Reportes.principal', ['users' => User::all()]);
     }
 
     public function ventasNueva()

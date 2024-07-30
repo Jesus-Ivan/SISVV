@@ -109,8 +109,8 @@ Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function ()
         Route::get('reporte/{socio}/{tipo}/{vista}/{fInicio}/{fFin}/{option}', [ReportesController::class, 'generarEstadoCuenta'])->name('recepcion.estado.reporte');
     });
 
-    Route::view('cartera', 'recepcion.Cartera.vencidos')->name('recepcion.cartera');
-    Route::post('cartera', [ReportesController::class, 'vencidos'])->name('recepcion.cartera.vencidos');
+    Route::get('reportes', [RecepcionController::class, 'reportesIndex'])->name('recepcion.reportes');
+    Route::post('reportes', [ReportesController::class, 'vencidos'])->name('recepcion.reportes.vencidos');
 
     Route::view('caja', 'recepcion.caja.caja')->middleware(['auth'])->name('recepcion.caja');
 });
@@ -194,8 +194,9 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::post('/', [ExcelController::class, 'importData'])->name('subirRegistros');
     });
     Route::prefix('reportes')->group(function () {
-        Route::get('/',[SistemasController::class, 'reportesIndex'])->name('sistemas.reportes');
-        Route::post('/', [ReportesController::class, 'mensual'])->name('sistemas.reportes');
+        Route::view('/', 'sistemas.Herramientas.reportes')->name('sistemas.reportes');
+        Route::post('/ventas', [ReportesController::class, 'ventasMes'])->name('sistemas.reportes.ventas');
+        Route::post('/recibos-mes', [ReportesController::class, 'recibosMes'])->name('sistemas.reportes.recibos');
     });
 
     //RECEPCION
@@ -206,7 +207,6 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::post('/recargos', [CargosController::class, 'calcularRecargos'])->name('sistemas.recargos');
         Route::view('/cargo-anualidades', 'sistemas.Recepcion.cargo-anualidades')->name('sistemas.cargoAnualidades');
         Route::post('/verificar-anu', [CargosController::class, 'verificarAnualidades'])->name('sistemas.verificarAnualidades');
-        
     });
 });
 
@@ -217,6 +217,6 @@ Route::prefix('portico')->middleware(['auth', 'portico'])->group(function () {
 
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');
 Route::get('ventas/corte/{caja}/{codigopv?}', [ReportesController::class, 'generarCorte'])->name('ventas.corte');
-
+Route::post('reportes', [ReportesController::class, 'reporteRecibos'])->name('reportes.recibos');
 
 require __DIR__ . '/auth.php';

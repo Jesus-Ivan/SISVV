@@ -8,6 +8,7 @@ use App\Models\EstadoCuenta;
 use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -174,6 +175,62 @@ class CargosController extends Controller
         }, 2);
 
         return 'se cargaron los recargos del 3%';
+    }
+
+    public function cargarDiferencias(Request $request)
+    {
+        //Recuperamos la fecha de la peticion post
+        $fecha = $request->input('fecha');
+        //Creamos una fecha de carbon con el dia 1 del mes anterior.
+        $fechaAnterior = Carbon::parse($fecha)->day(1)->subMonth();
+        //Obtenemos todas las membresias 'MEN', junto a su consumo minimo (por socio)
+        $membresias = DB::table('socios_membresias')
+            ->join('membresias', 'socios_membresias.clave_membresia', '=', 'membresias.clave')
+            ->where('socios_membresias.estado', 'MEN')
+            ->select('socios_membresias.*', 'membresias.consumo_minimo')
+            ->get();
+        //Buscamos la cuota correspondiente a la diferencia de consumo (multa)
+        $cuota = Cuota::where('tipo', 'MUL')
+            ->where('descripcion', 'like', '%CONSUMO%')
+            ->first();
+        //Si no hay cuota en la BD, error
+        if (!$cuota) {
+            throw new Exception("No se encontro la cuota de diferencia de consumo", 1);
+        }
+
+        //Creamos la transaccion
+        DB::transaction(function () use ($membresias, $fechaAnterior, $fecha, $cuota) {
+            //Para cada registro de membresias
+            foreach ($membresias as $key => $membresia) {
+                //Si la membresia no tiene consumo minimo, omitir iteracion
+                if (!$membresia->consumo_minimo)
+                    continue;
+                //Obtenemos el consumo del mes previo del socio
+                $consumo_anterior = EstadoCuenta::where('id_socio', $membresia->id_socio)
+                    ->where('consumo', 1)
+                    ->whereYear('fecha',  $fechaAnterior->year)
+                    ->whereMonth('fecha', $fechaAnterior->month)
+                    ->get();
+                //Calculamos el consumo total del mes anterior
+                $consumo = array_sum(array_column($consumo_anterior->toArray(), 'cargo'));
+                //Realizamos la diferencia
+                $diferencia = $membresia->consumo_minimo - $consumo;
+                //Si la diferencia es mayor a 0, creamos un nuevo estado de cuenta
+                if ($diferencia > 0) {
+                    EstadoCuenta::create([
+                        'id_cuota' => $cuota->id,
+                        'id_socio' => $membresia->id_socio,
+                        'concepto' => $cuota->descripcion . ' DE: ' . $this->getMes($fechaAnterior->month) . ' ' . $fechaAnterior->year,
+                        'fecha' => $fecha,
+                        'cargo' => $diferencia,
+                        'abono' => 0,
+                        'saldo' => $diferencia,
+                        'consumo' => 0,
+                    ]);
+                }
+            }
+        }, 2);
+        return 'Todo ha ido bien con las diferencias de consumo';
     }
 
     //Recibe un numero de mes y devuelve el mes en español

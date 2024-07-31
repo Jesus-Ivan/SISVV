@@ -207,6 +207,9 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::post('/recargos', [CargosController::class, 'calcularRecargos'])->name('sistemas.recargos');
         Route::view('/cargo-anualidades', 'sistemas.Recepcion.cargo-anualidades')->name('sistemas.cargoAnualidades');
         Route::post('/verificar-anu', [CargosController::class, 'verificarAnualidades'])->name('sistemas.verificarAnualidades');
+        Route::view('/cargo-dif-consumos', 'sistemas.Recepcion.cargo-diferencias')->name('sistemas.cargoDifConsumos');
+        Route::post('/cargo-dif-consumos', [CargosController::class, 'cargarDiferencias'])->name('sistemas.cargoDifConsumos');
+
     });
 });
 

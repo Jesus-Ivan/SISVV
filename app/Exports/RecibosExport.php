@@ -36,7 +36,6 @@ class RecibosExport implements FromArray
             'OBSERVACIONES' => 'OBSERVACIONES',
             'TOTAL' => 'TOTAL',
             'CUOTA MEMBRESIA MENSUAL' => 'CUOTA MEMBRESIA MENSUAL',
-            'DIFERENCIA MEMBRESIA' => 'DIFERENCIA MEMBRESIA',
             'MEMBRESIA ANUAL' => 'MEMBRESIA ANUAL',
             'LOCKER MENSUAL' => 'LOCKER MENSUAL',
             'LOCKER ANUAL' => 'LOCKER ANUAL',
@@ -104,7 +103,6 @@ class RecibosExport implements FromArray
                     'OBSERVACIONES' => $recibo['observaciones'],
                     'TOTAL' => $recibo['total'],
                     'CUOTA MEMBRESIA MENSUAL' => $this->totalCuotas($cuotas_mensualidades, $detalles_filtrados),
-                    'DIFERENCIA MEMBRESIA' => $this->totalCuota(30, $detalles_filtrados),   //30 : diferencia de membresia (tabla cuotas)
                     'MEMBRESIA ANUAL' => $this->totalCuotas($cuotas_membresia_anual, $detalles_filtrados),
                     'LOCKER MENSUAL' => $this->totalCuota(1, $detalles_filtrados),    // el id de cuota del locker es: 1
                     'LOCKER ANUAL' => $this->totalCuota(40, $detalles_filtrados),    // el id de cuota del locker es: 40

@@ -1,5 +1,5 @@
 <div class="m-2">
-    <form>
+    <div>
         <!-- Search bar -->
         <div class="grid grid-flow-col">
             <!--No de socio -->
@@ -98,7 +98,7 @@
                 Aplicar cobro
             </button>
         </div>
-    </form>
+    </div>
     <!--Modal large cargos -->
     <x-modal name="agregar-cargos" title="Resumen de estado de cuenta">
         <x-slot name='body'>

@@ -1,65 +1,44 @@
 <div class="m-2">
     {{-- Search bar --}}
-    <div class="flex gap-3">
-        <livewire:autocomplete :params="[
-            'table' => ['name' => 'socios', 'columns' => ['id', 'nombre', 'apellido_p', 'apellido_m']],
-        ]" primaryKey="id" event="on-selected-socio" />
+    <div>
+        <div class="max-w-screen-sm">
+            <livewire:autocomplete :params="[
+                'table' => ['name' => 'socios', 'columns' => ['id', 'nombre', 'apellido_p', 'apellido_m']],
+            ]" primaryKey="id" event="on-selected-socio" />
+        </div>
         <div class="w-5/6">
-            <p>No.Socio {{ $socio ? $socio['id'] : '' }}</p>
-            <p>Nombre: {{ $socio ? $socio['nombre'] . ' ' . $socio['apellido_p'] . ' ' . $socio['apellido_m'] : '' }}
-            </p>
+            <div class="grid grid-cols-2">
+                <p>
+                    No.Socio: {{ $socio ? $socio['id'] : '' }}
+                </p>
+                <p>
+                    Nombre:
+                    {{ $socio ? $socio['nombre'] . ' ' . $socio['apellido_p'] . ' ' . $socio['apellido_m'] : '' }}
+                </p>
+            </div>
+            <div class="grid grid-cols-2">
+                <p>
+                    Membresia: {{ $this->socio_membresia ? $this->socio_membresia->membresia->descripcion : '' }}
+                </p>
+                <p>
+                    Estado: {{ $this->socio_membresia ? $this->socio_membresia->estado : '' }}
+                </p>
+            </div>
             @error('socio')
                 <x-input-error messages="{{ $message }}" />
             @enderror
         </div>
     </div>
     {{-- line --}}
-    <hr class="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700">
-    {{-- Inputs, fecha inicio, tasa de incremento, descuento --}}
+    <hr class="h-1 my-8 bg-gray-200 border-0 dark:bg-gray-700">
+    {{-- Inputs, fecha inicio, Boton de cuotas --}}
     <div class="flex justify-between gap-3">
         <div>
-            <label for="inicio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                Inicio de la anualidad
-            </label>
-            <input type="date" id="inicio" wire:model="fInicio"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                required />
-            @error('fInicio')
-                <x-input-error messages="{{ $message }}" />
-            @enderror
+            <p class="text-lg font-bold text-gray-900 dark:text-white">Cuotas</p>
         </div>
-        <div>
-            <label for="incremento" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                Tasa de incremento anual (%)
-            </label>
-            <input type="number" id="incremento" wire:model="incrementoAnual"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                required placeholder="5" />
-            @error('incrementoAnual')
-                <x-input-error messages="{{ $message }}" />
-            @enderror
-
-        </div>
-        <div>
-            <label for="descuento" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                Descuento sobre membresia (%)
-            </label>
-            <input type="number" id="descuento" wire:model="descuento"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                required />
-            @error('descuento')
-                <x-input-error messages="{{ $message }}" />
-            @enderror
-        </div>
-    </div>
-    {{-- line --}}
-    <hr class="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700">
-    {{-- Tittle cuotas y button --}}
-    <div class="flex justify-between items-center">
-        <p class="text-lg font-bold text-gray-900 dark:text-white">Cuotas</p>
         <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'cargosFijosModal'})"
             class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
-            Añadir cuota
+            Buscar cuotas
         </button>
     </div>
     {{-- Tabla cuotas --}}
@@ -102,24 +81,78 @@
                 @endforeach
             </tbody>
         </table>
+        @error('listaCuotas')
+            <x-input-error messages="{{ $message }}" />
+        @enderror
     </div>
     {{-- line --}}
-    <hr class="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700">
+    <hr class="h-1 my-8 bg-gray-200 border-0 dark:bg-gray-700">
     {{-- Tittle resultados y button calcular --}}
     <div class="flex justify-between items-center">
-        <p class="text-lg font-bold text-gray-900 dark:text-white">Resultados</p>
-        <button type="button" wire:click='calcular'
-            class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
-            Calcular
-        </button>
+        <div class="flex gap-2">
+            <div>
+                <label for="inicio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                    Inicio de la anualidad
+                </label>
+                <input type="date" id="inicio" wire:model="fInicio"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    required />
+                @error('fInicio')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
+            </div>
+            <div>
+                <label for="membresias" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia
+                    al
+                    finalizar</label>
+                <select id="membresias" wire:model='membresia_finalizar'
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option value="{{ null }}" selected>Seleccione</option>
+                    @foreach ($this->membresias as $membresia)
+                        <option value="{{ $membresia->clave }}">{{ $membresia->descripcion }}</option>
+                    @endforeach
+                </select>
+                @error('membresia_finalizar')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
+            </div>
+            <div>
+                <label for="estado_finalizar"
+                    class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Estado al
+                    finalizar</label>
+                <select id="estado_finalizar" wire:model='estado_finalizar'
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option selected value="MEN">Mensual</option>
+                    <option value="INA">Inactiva</option>
+                    <option value="ANU">Anual</option>
+                    <option value="CAN">Cancelada</option>
+                </select>
+                @error('estado_finalizar')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button type="button" wire:click='calcularAnterior'
+                class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
+                Anterior
+            </button>
+            <button type="button" wire:click='calcularSiguiente'
+                class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
+                Siguiente
+            </button>
+        </div>
     </div>
     {{-- Tabla resultados --}}
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <div class="relative overflow-y-auto max-h-80 shadow-md sm:rounded-lg">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                     <th scope="col" class="px-6 py-3 w-32">
                         CLAVE
+                    </th>
+                    <th scope="col" class="px-6 py-3 w-32">
+                        FECHA APLICADA
                     </th>
                     <th scope="col" class="px-6 py-3 ">
                         CONCEPTO
@@ -128,17 +161,23 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($listaResultados as $item)
-                    <tr
+                @foreach ($listaResultados as $cargoIndex => $item)
+                    <tr wire:key = "{{ $cargoIndex }}"
                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                         <td class="px-6 py-2">
                             {{ $item['id_cuota'] }}
                         </td>
                         <td class="px-6 py-2 ">
+                            {{ $item['fecha'] }}
+                        </td>
+                        <td class="px-6 py-2 ">
                             {{ $item['descripcion'] }}
                         </td>
-                        <td class="px-6 py-2 h-14">
-                            ${{ $item['monto'] }}
+                        <td class="px-6 py-2 h-14 flex items-center">
+                            $
+                            <input id="small-input" type="number"
+                                wire:model="listaResultados.{{ $cargoIndex }}.monto" wire:change="updateTotal()"
+                                class="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         </td>
                     </tr>
                 @endforeach
@@ -147,7 +186,7 @@
     </div>
     <div class="text-right">
         <p class="text-lg font-semibold text-gray-900 dark:text-white">Total: $
-            {{ array_sum(array_column($listaResultados, 'monto')) }}</p>
+            {{ $total }}</p>
     </div>
     {{-- Finalizar o cancelar --}}
     <div>
@@ -166,7 +205,36 @@
             </div>
         </button>
     </div>
-
+    {{-- ALERT MESSAGE --}}
+    <x-action-message on='action-message-venta'>
+        @if (session('success'))
+            <div id="alert-exito"
+                class="flex items-center p-4 mb-4 text-green-800 border-t-4 border-green-300 bg-green-50 dark:text-green-400 dark:bg-gray-800 dark:border-green-800"
+                role="alert">
+                <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                        d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                </svg>
+                <div class="ms-3 text-sm font-medium">
+                    {{ session('success') }}
+                </div>
+            </div>
+        @else
+            <div id="alert-error"
+                class="flex items-center p-4 mb-4 text-red-800 border-t-4 border-red-300 bg-red-50 dark:text-red-400 dark:bg-gray-800 dark:border-red-800"
+                role="alert">
+                <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                        d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                </svg>
+                <div class="ms-3 text-sm font-medium">
+                    {{ session('fail') }}
+                </div>
+            </div>
+        @endif
+    </x-action-message>
     <!--MODAL DE CUOTAS-->
     <x-modal title="Seleccionar cuota" name="cargosFijosModal">
         <x-slot name="body">

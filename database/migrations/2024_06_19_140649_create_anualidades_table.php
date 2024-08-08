@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('anualidades', function (Blueprint $table) {
             $table->id();
             $table->integer('id_socio');
-            $table->decimal('incremento_anual', 10, 2);
-            $table->decimal('descuento_membresia', 10, 2);
-            $table->string('clave_memb_org', 10);
-            $table->string('estado_mem_org', 20);
+            $table->decimal('incremento_anual', 10, 2)->nullable();
+            $table->decimal('descuento_membresia', 10, 2)->nullable();
+            $table->string('clave_mem_f', 10)->nullable();
+            $table->string('estado_mem_f', 20)->nullable();
             $table->date('fecha_inicio');
             $table->date('fecha_fin');
             $table->decimal('total', 10, 2);

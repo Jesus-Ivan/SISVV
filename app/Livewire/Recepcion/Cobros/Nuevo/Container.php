@@ -285,7 +285,7 @@ class Container extends Component
             }
             //Emitimos evento para abrir nueva pestaña
             $this->dispatch('ver-recibo', ['folio' => $result->folio]);
-        });
+        }, 2);
         //LIMPIAR LOS ATRIBUTOS
         $this->reset();
         $this->socio = new Socio();

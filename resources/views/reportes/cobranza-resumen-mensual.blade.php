@@ -31,6 +31,11 @@
     p {
         margin: 0;
     }
+    a{
+        text-decoration: none;
+        color: black;
+        font-weight: bold;
+    }
 
     .remarcardo {
         font-style: normal,
@@ -68,7 +73,11 @@
             <tbody>
                 @foreach ($cat as $detalle_cat)
                     <tr style="{{ $detalle_cat['facturado'] ? 'background-color: gray' : '' }}">
-                        <td>{{ $detalle_cat['folio'] }}</td>
+                        <td>
+                            <a href="http://localhost:8000/recepcion/cobros/recibo/{{ $detalle_cat['folio'] }}">
+                                {{ $detalle_cat['folio'] }}
+                            </a>
+                        </td>
                         <td>{{ $detalle_cat['created_at'] }}</td>
                         <td>{{ $detalle_cat['nombre'] }}</td>
                         <td>{{ $detalle_cat['monto_pago'] }}</td>

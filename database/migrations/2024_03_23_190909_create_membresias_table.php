@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('membresias', function (Blueprint $table) {
             $table->string('clave', 10)->primary();
             $table->string('descripcion', 80);
-            $table->decimal('consumo_minimo', 10, 2);
+            $table->decimal('consumo_minimo', 10, 2)->nullable();
         });
     }
 

@@ -19,106 +19,64 @@ class CargosController extends Controller
     {
         //Parseamos la fecha a una instancia de carbon
         $fecha = Carbon::parse($request->input('fecha'));
+        //Creamos fecha del mes inmediato anterior
+        $fecha_previa = Carbon::parse($request->input('fecha'))->subMonth();
         //Obtenemos todos los socios, cuyas membresias no esten canceladas
         $socios_membresias = SocioMembresia::whereNot('estado', '=', 'CAN')
-            ->whereNot('clave_membresia', '=', 'EVE')
+            ->whereNot([
+                ['clave_membresia', '=', 'EVE'],
+                ['clave_membresia', '=', 'INT']
+            ])
             ->get();
-        //obtenemos todas las cutoas disponibles 
-        $cuotas = Cuota::all();
 
         //Iniciamos transaccion
-        DB::transaction(function () use ($fecha, $socios_membresias, $cuotas) {
+        DB::transaction(function () use ($fecha, $fecha_previa, $socios_membresias) {
+            $expresiones = [
+                'membresias' => "(ANUALIDAD (CC-I|CC-F|CG-I|CG-F)|INACTIVA|MENSUALIDAD)",
+                'lockers' => "(LOKER|LOCKER|CASILLERO)",
+                'resguardo' => "(RESGUARDO CARRITO)",
+            ];
             //Para cada registro de la tabla 'socios_membresias'
             foreach ($socios_membresias as $key => $socio) {
+                //Activamos anualidad si esta disponible
+                $this->activarAnualidad($fecha, $socio->id_socio);
+                //Desactivamos anualidad si tenia una activa previamente
+                $this->desactivarAnualidad($fecha_previa, $socio->id_socio);
+
                 //buscamos registros del estado de cuenta del socio, correspondiente al mes dado por la fecha.
-                $estado_cuenta = EstadoCuenta::with('cuota')->where('id_socio', $socio->id_socio)
+                $estado_cuenta = EstadoCuenta::where('id_socio', $socio->id_socio)
                     ->whereYear('fecha', $fecha->year)
                     ->whereMonth('fecha', $fecha->month)
                     ->whereNotNull('id_cuota')
-                    ->get();
+                    ->get()
+                    ->toArray();
 
                 //Obtenemos todas las cuotas fijas (que se cargan mensualmente) del socio.
-                $socio_cuotas = SocioCuota::where('id_socio', $socio->id_socio)->get();
+                $socio_cuotas = SocioCuota::with('cuota')
+                    ->where('id_socio', $socio->id_socio)
+                    ->get()
+                    ->toArray();
 
-                $estado_cuenta_separado = [];     //se encarga de almacenar los cargos del estado de cuenta, agrupados por 'id_cuota'
+                foreach ($expresiones as $name => $exp) {
+                    $cuotas_fijas = $this->contarCargosFijos($exp, $socio_cuotas);
+                    $cuotas_estado = $this->contarEstadoCuenta($exp, $estado_cuenta);
 
-                //Para cada cuota existente, ingresar su par-valor al array.
-                foreach ($cuotas as $index => $cuota) {
-                    $estado_cuenta_separado[$cuota->id] = $estado_cuenta->where('id_cuota', $cuota->id);
-                }
-                /**
-                 * Se obtiene un resultado como:
-                 *  [
-                 *    '1':[{},{}],
-                 *    '2':[],
-                 *    '3':[],
-                 *  ]
-                 *  Donde cada 'key' del array asociativo, es el 'id' de cuota de la tabla 'cuotas' y el valor es un array,
-                 *  que son los todos los registros de la tabla 'estados_cuenta', que coinciden en el campo 'id_cuota' 
-                 */
-
-                $socio_cuotas_separado = [];     //se encarga de almacenar los cargos fijos del socio, agrupados por 'id_cuota'
-                foreach ($cuotas as $index => $cuota) {
-                    //Para cada cuota existente, ingresar el par key-value
-                    $socio_cuotas_separado[$cuota->id] = $socio_cuotas->where('id_cuota', $cuota->id);
-                }
-                /**
-                 * Se obtiene un resultado como:
-                 *  [
-                 *    '1':[{},{}],
-                 *    '2':[],
-                 *    '3':[],
-                 *  ]
-                 *  Donde cada 'key' del array asociativo, es el 'id' de cuota de la tabla 'cuotas' y el valor es un array,
-                 *  que son los todos los cargos fijos de la tabla 'socios_cuotas', que coinciden en el campo 'id_cuota' 
-                 */
-
-                //Para cada elemento del array 'socio_cuotas_separado'
-                foreach ($socio_cuotas_separado as $key => $cuota_separada) {
-                    //restar cantidad de (cuotas fijas - cuotas en el estado de cuenta), con la misma "id_cuota"
-                    $resta =  count($cuota_separada) - count($estado_cuenta_separado[$key]);
-                    //Si hay mas cuotas del mismo 'id_cuota', que cuotas registradas en el estado de cuenta
-                    if ($resta > 0) {
-                        //Verficamos si se trata de cuota de membresia.
-                        if (count($cuotas->whereNotNull('clave_membresia')->where('id', $key))) {
-                            //Filtramos si existe alguna cuota de membresia resgistrada, en el estado de cuenta.
-                            $mensualidades_previas = array_filter($estado_cuenta->toArray(), function ($cargo) {
-                                return $cargo['cuota']['clave_membresia'];
-                            });
-                            //Si hay al menos una cuota registrada previamente, saltar ejecucion
-                            if (count($mensualidades_previas)) {
-                                continue;
-                            }
-                        }
-
-                        for ($i = 0; $i < $resta; $i++) {
-                            EstadoCuenta::create([
-                                'id_cuota' => $key,
-                                'id_socio' => $socio->id_socio,
-                                'concepto' => $cuotas->find($key)->descripcion . ' ' . $this->getMes($fecha->month) . '-' . $fecha->year,
-                                'fecha' => $fecha->toDateString(),
-                                'cargo' => $cuotas->find($key)->monto,
-                                'abono' => 0,
-                                'saldo' => $cuotas->find($key)->monto,
-                            ]);
-                        }
+                    for ($i = 0; $i < (count($cuotas_fijas) - count($cuotas_estado)); $i++) {
+                        $cuota = reset($cuotas_fijas);
+                        EstadoCuenta::create([
+                            'id_cuota' => $cuota['id_cuota'],
+                            'id_socio' => $socio->id_socio,
+                            'concepto' => $cuota['cuota']['descripcion'] . ' ' . $this->getMes($fecha->month) . '-' . $fecha->year,
+                            'fecha' => $fecha->toDateString(),
+                            'cargo' => $cuota['cuota']['monto'],
+                            'abono' => 0,
+                            'saldo' => $cuota['cuota']['monto'],
+                        ]);
                     }
                 }
             }
         }, 2);
         return  'todo bien, vuelve atras ;D';
-    }
-
-    public function verificarAnualidades(Request $request)
-    {
-        //Parseamos la fecha a una instancia de carbon
-        $fecha = Carbon::parse($request->input('fecha'));
-        $anualidades = Anualidad::whereYear('fecha_inicio', $fecha->year)
-            ->orWhere(function (Builder $query) use ($fecha) {
-                $query->whereYear('fecha_fin', $fecha->year);
-            })
-            ->get();
-        dd($anualidades);
     }
 
     public function calcularRecargos(Request $request)
@@ -264,5 +222,101 @@ class CargosController extends Controller
             default:
                 return 'error';
         }
+    }
+
+    //Esta funcion se encarga de revisar si la fecha dada como parametro, entra en la anualidad y activarla
+    private function activarAnualidad(Carbon $fecha_mensualidad, $idSocio)
+    {
+        //Ajustamos el dia en 1
+        $fecha_mensualidad->day(1);
+        //Buscamos si existe anualidad para el socio, dada la fecha de la mensualidad
+        $anualidad = Anualidad::where('id_socio', $idSocio)
+            ->whereDate('fecha_inicio', '<=', $fecha_mensualidad->toDateString())
+            ->whereDate('fecha_fin', '>=', $fecha_mensualidad->toDateString())
+            ->first();
+        //Si existe la anualidad
+        if ($anualidad) {
+            //Buscamos el estado de la membresia del socio
+            $socio_membresia = SocioMembresia::where('id_socio', $idSocio)
+                ->first();
+            //Si no hay registro
+            if (!$socio_membresia)
+                throw new Exception("No se encontro registro en la tabla socios_membresias para el socio: " . $idSocio);
+            //Actualizamos el estado de la membresia a anual
+            $socio_membresia->estado = 'ANU';
+            $socio_membresia->save();
+        }
+    }
+
+    private function desactivarAnualidad(Carbon $fecha_previa, $idSocio)
+    {
+        //Creamos una fecha de carbon, correspondiente al mes inmediato anterior, dado el parametro fecha
+        $fecha_previa->day(1);
+        //Buscamos una anualidad cuya fecha_fin corresponda al mes anterior.
+        $anualidad = Anualidad::where('id_socio', $idSocio)
+            ->whereYear('fecha_fin', $fecha_previa->year)
+            ->whereMonth('fecha_fin', $fecha_previa->month)
+            ->first();
+        //Si existe algun registro, cambiar estado de la membresia
+        if ($anualidad) {
+            //Buscamos el estado de la membresia del socio
+            $socio_membresia = SocioMembresia::where('id_socio', $idSocio)
+                ->first();
+            //Si no hay registro
+            if (!$socio_membresia)
+                throw new Exception("No hay registro en la tabla socios_membresias para el socio: " . $idSocio);
+            //Actualizamos el estado de la membresia a mensual
+            $socio_membresia->estado = $anualidad->estado_mem_f;
+            $socio_membresia->clave_membresia = $anualidad->clave_mem_f;
+            $socio_membresia->save();
+            //Actualizamos los cargos fijos
+            if ($anualidad->estado_mem_f != 'ANU' && $anualidad->estado_mem_f != 'CAN') {
+                //Buscamos los cargos fijos
+                $cargos_fijos = SocioCuota::with('cuota')
+                    ->where('id_socio', $idSocio)
+                    ->get();
+                //Si no hay cargos fijos para el socio
+                if (!count($cargos_fijos))
+                    throw new Exception("No hay cargos fijos para el socio: " . $idSocio);
+
+                //Filtramos de los cargos fijos, el que corresponde a la membresia
+                $cuota_mensual = array_filter($cargos_fijos->toArray(), function ($cargo) {
+                    return $cargo['cuota']['clave_membresia'];
+                });
+                //Si no hay cuota mensual fija previamente agregrada como cargo fijo
+                if (!count($cuota_mensual))
+                    throw new Exception("No hay cuota de membresia fija para el socio: " . $idSocio);
+
+                //Buscar la nueva cuota
+                $cuota_mensual_nuevo = Cuota::where([
+                    ['tipo', '=', $anualidad->estado_mem_f],
+                    ['clave_membresia', '=', $anualidad->clave_mem_f],
+                ])->first();
+                //Si no hay cuota nueva para el socio
+                if (!$cuota_mensual_nuevo)
+                    throw new Exception("No se encontro cuota; estado de membresia " . $anualidad->estado_mem_f . ', clave de membresia ' . $anualidad->clave_mem_f);
+
+                //Actualizamos el cargo fijo de la cuota
+                SocioCuota::where('id', $cuota_mensual[0]['id'])
+                    ->update(['id_cuota' => $cuota_mensual_nuevo->id]);
+            }
+        }
+    }
+
+    private function contarEstadoCuenta($exp_reg, $estado_cuenta)
+    {
+        $patron = "/$exp_reg/i";
+        $estado_filtrado = array_filter($estado_cuenta, function ($cargo) use ($patron) {
+            return preg_match($patron, $cargo['concepto']);
+        });
+        return $estado_filtrado;
+    }
+    private function contarCargosFijos($exp_reg, $socio_cuotas)
+    {
+        $patron = "/$exp_reg/i";
+        $estado_filtrado = array_filter($socio_cuotas, function ($cargo) use ($patron) {
+            return preg_match($patron, $cargo['cuota']['descripcion']);
+        });
+        return $estado_filtrado;
     }
 }

@@ -39,8 +39,15 @@
         <table>
             <tbody>
                 <tr>
-                    <td>Socio: </td>
-                    <td>{{ $resultSocio->id }}-{{ $resultSocio->nombre . ' ' . $resultSocio->apellido_p . ' ' . $resultSocio->apellido_m }}
+                    <td style="width: 70pt; font-weight: bold">Socio: </td>
+                    <td>
+                        {{ $resultSocio->id }}-{{ $resultSocio->nombre . ' ' . $resultSocio->apellido_p . ' ' . $resultSocio->apellido_m }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:70pt; font-weight: bold">Consultado el: </td>
+                    <td>
+                        {{ now() }}
                     </td>
                 </tr>
             </tbody>

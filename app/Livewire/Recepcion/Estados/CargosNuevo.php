@@ -4,18 +4,14 @@ namespace App\Livewire\Recepcion\Estados;
 
 use App\Models\Cuota;
 use App\Models\EstadoCuenta;
-use App\Models\Socio;
 use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
-
-use function PHPUnit\Framework\throwException;
 
 class CargosNuevo extends Component
 {

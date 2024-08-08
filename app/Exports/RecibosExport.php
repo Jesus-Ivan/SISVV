@@ -113,7 +113,7 @@ class RecibosExport implements FromArray
                     'RECARGOS 3%' => $this->totalCuota(16, $detalles_filtrados),      // 16: recargo 3%
                     'BAR' => $this->totalConcepto($detalles_filtrados, "(BAR LOUNGE|\d+ - BAR)"),
                     'CADDIE' => $this->totalConcepto($detalles_filtrados, "CADDIE"),
-                    'CAFETERIA' => $this->totalConcepto($detalles_filtrados, "CAFETERIA|CAFETERÍA"),
+                    'CAFETERIA' => $this->totalConcepto($detalles_filtrados, "(CAFETERIA|CAFETERÍA)"),
                     'LOCKERS' => $this->totalConcepto($detalles_filtrados, "LOCKER"),
                     'RECEPCION' => $this->totalConcepto($detalles_filtrados, "RECEPCION"),
                     'RESTAURANT' => $this->totalConcepto($detalles_filtrados, "RESTAURANT"),

@@ -64,9 +64,12 @@
     <hr>
     <div>
         <p class="remarcardo" style="font-size: 16px;">RECIBO : <span class="noremarcardo">{{ $cobro->folio }}</span></p>
-        <p class="remarcardo" style="font-size: 16px;">FECHA RECIBO : <span
-                class="noremarcardo">{{ $cobro->created_at }}</span></p>
-        <p class="remarcardo" style="font-size: 16px;">SOCIO : <span class="noremarcardo">{{ $cobro->id_socio }} - {{ $cobro->nombre }}</span></p>
+        <p class="remarcardo" style="font-size: 16px; display: flex;">
+            FECHA RECIBO : <span class="noremarcardo" style="margin-right:18%">{{ $cobro->created_at }}</span>
+            CONSULTADO : <span class="noremarcardo">{{ now() }}</span>
+        </p>
+        <p class="remarcardo" style="font-size: 16px;">SOCIO : <span class="noremarcardo">{{ $cobro->id_socio }} -
+                {{ $cobro->nombre }}</span></p>
     </div>
     <br>
     <table>
@@ -93,7 +96,7 @@
     </table>
     <hr>
     <p class="remarcardo">OBSERVACIONES : <span class="noremarcardo">{{ $cobro->observaciones }}</span></p>
-    <p class="remarcardo">ABONO TOTAL : <span
+    <p class="remarcardo" style="font-size: 16px;">ABONO TOTAL : <span
             class="noremarcardo">${{ array_sum(array_column($detalles->toArray(), 'monto_pago')) }}</span>
     </p>
     @if ($saldoFavor)

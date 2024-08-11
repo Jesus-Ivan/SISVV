@@ -47,6 +47,17 @@
             <button type="submit">Generar</button>
         </form>
     </div>
+    {{-- REPORTE DE SOCIOS --}}
+    <div>
+        <div class="flex items-center m-2">
+            <!-- TITULO -->
+            <h4 class="text-2xl font-bold dark:text-white mx-2">Reporte mensual de SOCIOS</h4>
+        </div>
+        <form action="{{ route('sistemas.reportes.socios') }}" method="POST" target="_blank">
+            @csrf
+            <button type="submit" class="bg-slate-600 p-2 text-white rounded-md">Generar</button>
+        </form>
+    </div>
     {{-- Boton de regresar --}}
     <a type="button" href="{{ route('sistemas.reportes') }}"
         class="my-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">

@@ -655,4 +655,14 @@ class ReportesController extends Controller
             'Reporte recibos ' . $fInicio . ' - ' . $fFin . '.xlsx'
         );
     }
+
+    public function socios(Request $request)
+    {
+        $hoy = now()->toDateString();
+        //Devolvemos el excel
+        return Excel::download(
+            new SociosExport(),
+            'Reporte Socios ' .  $hoy . '.xlsx'
+        );
+    }
 }

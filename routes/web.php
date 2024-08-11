@@ -197,6 +197,7 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::view('/', 'sistemas.Herramientas.reportes')->name('sistemas.reportes');
         Route::post('/ventas', [ReportesController::class, 'ventasMes'])->name('sistemas.reportes.ventas');
         Route::post('/recibos-mes', [ReportesController::class, 'recibosMes'])->name('sistemas.reportes.recibos');
+        Route::post('/socios-actuales', [ReportesController::class, 'socios'])->name('sistemas.reportes.socios');
     });
 
     //RECEPCION

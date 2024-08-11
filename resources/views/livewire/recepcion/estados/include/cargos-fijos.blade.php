@@ -84,7 +84,7 @@
                                 @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
                             </div>
                         </div>
-                        <input type="text" id="table-search" wire:model.live.debounce.500ms="search"
+                        <input type="text" id="table-search" wire:model.live.debounce.500ms="search_fijos"
                             class="w-full block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             placeholder="Descripcion">
                     </div>
@@ -131,16 +131,6 @@
                     </table>
                 </div>
             </div>
-        </x-slot>
-        <x-slot name='footer'>
-            <!--Loading indicator-->
-            <div wire:loading.delay wire:target='addCuota'
-                class="px-3 py-1 text-xs font-medium leading-none text-center text-blue-800 bg-blue-200 rounded-full animate-pulse dark:bg-blue-900 dark:text-blue-200">
-                Verificando cargos registrados ...
-            </div>
-            @if (session('fail'))
-                <x-input-error messages="{{ session('fail') }}" wire:loading.remove wire:target='addCuota' />
-            @endif
         </x-slot>
     </x-modal>
 </div>

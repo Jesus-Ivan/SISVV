@@ -21,6 +21,7 @@ class CargosNuevo extends Component
     public $socioMembresia;
 
     public $search;
+    public $search_fijos;
     public $listaCargos = [];
     public $listaCargosFijos = [];
     public $listaCargosEliminados = []; //Esta lista almacena los id, de los cargos fijos originales, que fueron eliminados
@@ -39,15 +40,21 @@ class CargosNuevo extends Component
     #[Computed()]
     public function cuotas()
     {
-        return Cuota::where('descripcion', 'like', '%' . $this->search . '%')->limit(10)->get();
+        return Cuota::where('descripcion', 'like', '%' . $this->search . '%')
+            ->whereNot('tipo', 'LIKE', '%ANU%')
+            ->limit(10)
+            ->get();
     }
 
     //Propiedad computarizada que pobla los resultados de busqueda de los cargos fijos
     #[Computed()]
     public function cuotasFijas()
     {
-        return Cuota::where('descripcion', 'like', '%' . $this->search . '%')
-            ->where('tipo', 'CAR')
+        return Cuota::where('descripcion', 'like', '%' . $this->search_fijos . '%')
+            ->where([
+                ['tipo', 'LIKE', '%CAR%'],
+                ['tipo', 'LIKE', '%MEN%'],
+            ])
             ->limit(10)
             ->get();
     }
@@ -119,11 +126,6 @@ class CargosNuevo extends Component
                 'clave_membresia' => $cuota['clave_membresia'],
             ],
         ];
-    }
-
-    public function verDatos()
-    {
-        dump($this->listaCargosFijos);
     }
 
     //Eliminar el cargo del array de cargos

@@ -183,11 +183,12 @@ class Container extends Component
     public function aplicarCobro()
     {
         //Validamos datos previos
-        $this->validate([
+        $validated = $this->validate([
             'socio' => 'required',
             'cargosTabla' => 'min:1'
         ], $this->messages());
-        foreach ($this->cargosTabla as $cargoIndex => $cargo) {
+
+        foreach ($validated['cargosTabla'] as $cargoIndex => $cargo) {
             //Validamos el tipo de pago de cada uno de los cargos
             $this->validarCargo($cargoIndex);
         }
@@ -195,7 +196,7 @@ class Container extends Component
         $metodoPago = TipoPago::where('descripcion', 'like', '%SALDO%')->get()[0];  //buscar el metodo de pago de saldo a favor
 
         //Filtramos los cargos en la tabla, con metodo de pago, saldo a favor
-        $cargosSaldoFavor = array_filter($this->cargosTabla, function ($cargo) use ($metodoPago) {
+        $cargosSaldoFavor = array_filter($validated['cargosTabla'], function ($cargo) use ($metodoPago) {
             return ($cargo['id_tipo_pago'] == $metodoPago->id);
         });
 
@@ -213,7 +214,7 @@ class Container extends Component
                     if ($cargo['id_tipo_pago'] == $metodoPago->id) {
                         $sumaSaldoAFavor += $cargo['monto_pago'];
                     }
-                }, $this->cargosTabla);
+                }, $validated['cargosTabla']);
 
                 //Comprobar si la suma de los montos con metodo de pago 'saldo a favor' es diferente al saldo a favor disponible
                 if ($sumaSaldoAFavor != array_sum(array_column($this->saldoFavorDisponible->toArray(), 'saldo'))) {
@@ -235,11 +236,19 @@ class Container extends Component
             return;
         }
 
-        DB::transaction(function () use ($cargosSaldoFavor) {
+        //Obtenemos el estado de cuenta original, antes de las modificaciones.
+        $edo_cuenta = EstadoCuenta::where(
+            [
+                ['id_socio', '=', $validated['socio']['id']],
+                ['saldo', '>', 0]
+            ]
+        )->get();
+
+        DB::transaction(function () use ($cargosSaldoFavor, $validated, $edo_cuenta) {
             //Creamos el registro del recibo
             $result = Recibo::create([
-                'id_socio' => $this->socio->id,
-                'nombre' => $this->socio->nombre . ' ' . $this->socio->apellido_p . ' ' . $this->socio->apellido_m,
+                'id_socio' => $validated['socio']['id'],
+                'nombre' => $validated['socio']['nombre'] . ' ' . $validated['socio']['apellido_p'] . ' ' . $validated['socio']['apellido_m'],
                 'total' => $this->totalAbono,
                 'corte_caja' => $this->caja[0]->corte,
                 'observaciones' => $this->observaciones
@@ -262,7 +271,7 @@ class Container extends Component
                 ]);
             }
             //Creamos los registros de los cargos
-            foreach ($this->cargosTabla as $cargoIndex => $cargo) {
+            foreach ($validated['cargosTabla'] as $cargoIndex => $cargo) {
                 //Buscamos el cargo del estado de cuenta
                 $resultCargo = EstadoCuenta::find($cargo['id']);
                 //Creamos el detalle del recibo, con el saldo anterior y el nuevo saldo.
@@ -280,9 +289,10 @@ class Container extends Component
                 $resultCargo->saldo_favor += ($cargo['monto_pago'] > $resultCargo->saldo) ?  $cargo['monto_pago'] - $resultCargo->saldo :  0;
                 $resultCargo->abono += $cargo['monto_pago'];
                 $resultCargo->saldo = ($cargo['monto_pago'] <= $resultCargo->saldo) ? $resultCargo->saldo - $cargo['monto_pago'] : 0;
-                //dd($resultCargo);
                 $resultCargo->save();
             }
+            //Verificamos el estado de cuenta
+            $this->verificar_estado_cuenta($edo_cuenta, $validated['cargosTabla']);
             //Emitimos evento para abrir nueva pestaña
             $this->dispatch('ver-recibo', ['folio' => $result->folio]);
         }, 2);
@@ -344,6 +354,71 @@ class Container extends Component
             $this->saldoFavor = 0;
         }
     }
+
+    private function verificar_estado_cuenta($estado_cuenta_original, $cargos_recibo)
+    {
+        /*
+        *Filtramos los cargos repetidos del recibo
+        */
+        //Array que almacenara los cargos sin repetir
+        $cargos_filtrados = [];
+        //Recorrer todo el array de los cargos del recibo
+        foreach ($cargos_recibo as $cargo) {
+            //Filtramos la lista de 'cargos filtrados', aquellos cargos que coincidan en 'id' con el cargo actual de la iteracion
+            $aux = array_filter($cargos_filtrados, function ($filtrado) use ($cargo) {
+                return $filtrado['id'] == $cargo['id'];
+            });
+            //Si no se econtro ningun cargo con el id, el la lista filtrada
+            if (!count($aux)) {
+                //Agregarmos el cargo
+                $cargos_filtrados[] = $cargo;
+            }
+        }
+
+        //Obtenemos estado de cuenta nuevo
+        $estado_cuenta = EstadoCuenta::whereIn('id', array_column($cargos_filtrados, 'id'))
+            ->get();
+
+        /**
+         * Realizamos la comprobacion para cada cargo del recibo (no repetidos).
+         */
+        foreach ($cargos_filtrados as  $cargo) {
+            //Filtramos todos los cargos del recibo, que coincidan en 'id' con el cargo actual de la iteracion
+            $total_abono = array_filter($cargos_recibo, function ($cargo_recibo) use ($cargo) {
+                return $cargo['id'] == $cargo_recibo['id'];
+            });
+            //Calculamos el total abonado
+            $total_abono = array_sum(array_column($total_abono, 'monto_pago'));
+            //Obtenemos el concepto original del estado de cuenta 
+            $cargo_edo_cuenta_original = $estado_cuenta_original->find($cargo['id']);
+            //Obtenemos el concepto actualizado, despues de aplicar el recibo.
+            $cargo_edo_cuenta_actual = $estado_cuenta->find($cargo['id']);
+
+            //Verificamos si el abono al concepto es mayor que el saldo original
+            if ($total_abono > $cargo_edo_cuenta_original->saldo) {
+                //Comprobamos si el saldo actual no es 0
+                if ($cargo_edo_cuenta_actual->saldo != 0) {
+                    //Ajustamos el saldo actual
+                    $cargo_edo_cuenta_actual->saldo = 0;
+                    //Ajustamos el abono actual, al total del cargo
+                    $cargo_edo_cuenta_actual->abono = $cargo_edo_cuenta_actual->cargo;
+                    $cargo_edo_cuenta_actual->save();
+                }
+            } else {
+                //Restamos el abono al saldo del concepto original
+                $saldo_comprobado = $cargo_edo_cuenta_original->saldo - $total_abono;
+                //Si el saldo del concepto actual no coincide con el saldo comprobado, ajustar el saldo
+                if ($cargo_edo_cuenta_actual->saldo != $saldo_comprobado) {
+                    //Ajustamos el saldo
+                    $cargo_edo_cuenta_actual->saldo = $saldo_comprobado;
+                    //Ajustamos el abono actual de acuerdo 
+                    $cargo_edo_cuenta_actual->abono += $total_abono;
+                    $cargo_edo_cuenta_actual->save();
+                }
+            }
+        }
+    }
+
     public function render()
     {
         return view('livewire.recepcion.cobros.nuevo.container');

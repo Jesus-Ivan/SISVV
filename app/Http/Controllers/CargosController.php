@@ -9,7 +9,7 @@ use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,7 +19,7 @@ class CargosController extends Controller
     {
         //Parseamos la fecha a una instancia de carbon
         $fecha = Carbon::parse($request->input('fecha'));
-        //Creamos fecha del mes inmediato anterior
+        //Creamos fecha del mes inmediato anterior (usado para descativar anualidades)
         $fecha_previa = Carbon::parse($request->input('fecha'))->subMonth();
         //Obtenemos todos los socios, cuyas membresias no esten canceladas
         $socios_membresias = SocioMembresia::whereNot('estado', '=', 'CAN')
@@ -56,12 +56,15 @@ class CargosController extends Controller
                     ->where('id_socio', $socio->id_socio)
                     ->get()
                     ->toArray();
-
+                //Para cada expresion regular
                 foreach ($expresiones as $name => $exp) {
+                    //Contamos los cargos fijos que tiene el socio que coincidan con la espresion
                     $cuotas_fijas = $this->contarCargosFijos($exp, $socio_cuotas);
+                    //contamos los cargos que estan en el estado de cuenta, que coinciden con la expresion
                     $cuotas_estado = $this->contarEstadoCuenta($exp, $estado_cuenta);
 
                     for ($i = 0; $i < (count($cuotas_fijas) - count($cuotas_estado)); $i++) {
+                        //Obtenemos el primer elemento del array asociativo (y reincia el punterto interno)
                         $cuota = reset($cuotas_fijas);
                         EstadoCuenta::create([
                             'id_cuota' => $cuota['id_cuota'],
@@ -86,9 +89,12 @@ class CargosController extends Controller
 
         $fecha_inicio_mes = Carbon::create($fecha->year, $fecha->month, 1)->toDateString();
 
-        //Obtenemos todos los socios, cuyas membresias no esten canceladas
-        $socios_membresias = SocioMembresia::whereNot('estado', '=', 'CAN')
-            ->get();
+        //Obtenemos todos los socios (excluyendo los internos y los cancelados)
+        $socios_membresias = SocioMembresia::orWhere(function (Builder $query) {
+            $query->whereNot('estado', '=', 'CAN')
+                ->whereNot('clave_membresia', '=', 'INT');
+        })->get();
+
         //Obtenemos el registro correspondiente al recargo de la tabla 'cuotas'
         $recargo_cuota = Cuota::where('descripcion', 'like', '%RECARGO%')->first();
 

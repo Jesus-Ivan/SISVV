@@ -33,7 +33,7 @@
                     {{ $item['concepto'] }}
                 </td>
                 <td scope="col" class="px-6 py-3">
-                    <select id="tipo_pago" wire:model="cargosTabla.{{ $index }}.id_tipo_pago"
+                    <select wire:model="cargosTabla.{{ $index }}.id_tipo_pago"
                         wire:loading.attr="disabled"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         <option value="{{ null }}" selected>Seleccione</option>
@@ -51,7 +51,7 @@
                 <td class="px-6 py-4">
                     <div class="inline-flex items-center">
                         $
-                        <input type="number" id="monto" wire:model="cargosTabla.{{ $index }}.monto_pago"
+                        <input type="number" wire:model="cargosTabla.{{ $index }}.monto_pago"
                             wire:loading.attr="disabled" wire:change="calcularTotales()"
                             class="min-w-20 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             placeholder="0" />

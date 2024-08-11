@@ -122,8 +122,6 @@
             </div>
             Guardar cambios
         </button>
-
-        <button wire:click='verDatos()'>ver </button>
     </div>
     <!--MODAL DE CARGOS-->
     <x-modal title="Seleccionar cargo" name="cargosModal">

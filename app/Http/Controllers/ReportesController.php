@@ -208,6 +208,7 @@ class ReportesController extends Controller
 
         $pdf = Pdf::loadView('reportes.recibo', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
+        $pdf->setPaper([0, 0, 609.449, 396.85]);
         return $pdf->stream('recibo' . $folio . '.pdf');
     }
 
@@ -634,6 +635,36 @@ class ReportesController extends Controller
         $pdf = Pdf::loadView('reportes.cobranza-resumen-mensual', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
         return $pdf->stream('ReporteCobranzaResumen.pdf');
+    }
+
+    /**
+     * Genera un pdf con todos los recibos existentes de un socio determinado
+     */
+    public function reporteRecibosSocio(Request $request)
+    {
+        //Obtenemos el id del socio, de la peticion post
+        $id_socio = $request->input('no_socio');
+        //Obtenemos todos los recibos
+        $recibos = Recibo::with('caja')->where('id_socio', $id_socio)->get();
+
+        $header = [
+            'title' => 'VISTA VERDE COUNTRY CLUB',
+            'rfc' => 'VVC101110AQ4',
+            'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
+            'telefono' => '3745011',
+        ];
+
+        $data = [
+            'id_socio' => $id_socio,
+            'header' => $header,
+            'recibos' => $recibos,
+        ];
+
+        //dd($data);
+
+        $pdf = Pdf::loadView('reportes.recibos-socio', $data);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        return $pdf->stream('Reporte-recibos.pdf');
     }
 
     /**

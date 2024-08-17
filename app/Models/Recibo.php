@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Recibo extends Model
 {
@@ -14,4 +15,9 @@ class Recibo extends Model
     protected $guarded = ['folio'];
     //Clave primaria
     protected $primaryKey = 'folio';
+
+    public function caja(): BelongsTo
+    {
+        return $this->belongsTo(Caja::class, 'corte_caja', 'corte');
+    }
 }

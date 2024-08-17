@@ -110,7 +110,9 @@ Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function ()
     });
 
     Route::get('reportes', [RecepcionController::class, 'reportesIndex'])->name('recepcion.reportes');
-    Route::post('reportes', [ReportesController::class, 'vencidos'])->name('recepcion.reportes.vencidos');
+    Route::post('reportes-vencidos', [ReportesController::class, 'vencidos'])->name('recepcion.reportes.vencidos');
+    Route::post('reportes-recibos', [ReportesController::class, 'reporteRecibos'])->name('reportes.recibos');
+    Route::post('reportes-recibo-socio', [ReportesController::class, 'reporteRecibosSocio'])->name('reportes.recibos-socio');
 
     Route::view('caja', 'recepcion.caja.caja')->middleware(['auth'])->name('recepcion.caja');
 });
@@ -220,6 +222,6 @@ Route::prefix('portico')->middleware(['auth', 'portico'])->group(function () {
 
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');
 Route::get('ventas/corte/{caja}/{codigopv?}', [ReportesController::class, 'generarCorte'])->name('ventas.corte');
-Route::post('reportes', [ReportesController::class, 'reporteRecibos'])->name('reportes.recibos');
+
 
 require __DIR__ . '/auth.php';

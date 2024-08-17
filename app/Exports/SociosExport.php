@@ -45,8 +45,10 @@ class SociosExport implements FromArray
         //Buscamos las cuotas de membresia
         $cuotas_membresias = Cuota::whereNotNull('clave_membresia')->get()->toArray();
 
+
         foreach ($socios as $socio) {
             $cuotas = SocioCuota::with('cuota')->where('id_socio', $socio->id)->get();
+
             $final[] = [
                 'id' => $socio->id,
                 'nombre' =>  $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m,

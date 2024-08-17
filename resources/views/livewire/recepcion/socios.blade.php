@@ -1,7 +1,7 @@
 <div>
-    <div class="ms-3 mx-3">
+    <div class="flex gap-2  items-center ms-3 mx-3">
         <!-- BARRA DE BUSQUEDA -->
-        <div class="max-w-sm">
+        <div class="w-full max-w-sm">
             <label for="default-search"
                 class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
             <div class="relative">
@@ -14,8 +14,12 @@
                 </div>
                 <input wire:model.live.debounce.500ms="search" type="text" id="default-search"
                     class="block w-full p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    placeholder="Nombre o numero de socio" value="" />
+                    placeholder="Nombre o numero de socio"/>
             </div>
+        </div>
+        <!--Loading indicator-->
+        <div wire:loading>
+            @include('livewire.utils.loading', ['w' => 6, 'h' => 6])
         </div>
     </div>
 
@@ -77,7 +81,7 @@
                                         <span class="sr-only">Editar</span>
                                     </button>
                                 </a>
-                                <a type="button" href="{{route('recepcion.socios.qr', $socio->id) }}" target="_blank"
+                                <a type="button" href="{{ route('recepcion.socios.qr', $socio->id) }}" target="_blank"
                                     class="text-gray-700 border border-gray-700 hover:bg-gray-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-gray-500 dark:text-gray-500 dark:hover:text-white dark:focus:ring-gray-800 dark:hover:bg-gray-500">
                                     <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                                         width="24" height="24" fill="none" viewBox="0 0 24 24">

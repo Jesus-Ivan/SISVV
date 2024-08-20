@@ -41,7 +41,7 @@
     }
 
     .opacidad {
-        opacity: 0;
+        opacity: 0.5;
     }
 </style>
 
@@ -116,7 +116,7 @@
     </table>
     <br>
     {{-- TABLE CARGOS --}}
-    <table style= "margin-top: 6pt; margin-bottom: 6pt; height: 190pt;">
+    <table style= "margin-bottom: 6pt; height: 190pt;">
         <thead>
             <tr style="background: green; color: white">
                 <th class="opacidad" style="width: 50%">CONCEPTO</th>

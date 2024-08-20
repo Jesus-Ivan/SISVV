@@ -99,15 +99,16 @@
             </tr>
         </tbody>
     </table>
-    <table>
+    {{--Datos del socio y fecha y hora--}}
+    <table style="margin-top: 2pt">
         <tbody>
             <tr>
-                <td style="width: 80%">
+                <td >
                     <div style="font-size: 14pt">
                         {{ $cobro->id_socio }} - {{ $cobro->nombre }}
                     </div>
                 </td>
-                <td>
+                <td style="width: 19%">
                     {{ $cobro->created_at }}
                 </td>
             </tr>

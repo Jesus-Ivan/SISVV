@@ -123,22 +123,49 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
         </thead>
         <tbody>
             @foreach ($pagos as $pago)
-                <tr>
-                    <td>{{ $pago->nombre }}</td>
-                    <td>{{ $pago->monto }}</td>
-                    <td class="puntos">{{ $pago->tipoPago->descripcion }}</td>
-                </tr>
+                @if ($pago->monto != 0)
+                    <tr>
+                        <td>{{ $pago->nombre }}</td>
+                        <td>{{ $pago->monto }}</td>
+                        <td class="puntos">{{ $pago->tipoPago->descripcion }}</td>
+                    </tr>
+                @endif
             @endforeach
         </tbody>
     </table>
     <hr>
     <p style="text-align: right; margin-right: 10pt; font-size: 11pt"> TOTAL: ${{ $total }}</p>
+    @if ($pagos->where('propina', '>', 0)->count() > 0)
+        <br>
+        <h4>PROPINA</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40mm">Cliente</th>
+                    <th>Monto</th>
+                    <th>T.Pago</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($pagos as $pago)
+                    @if ($pago->propina > 0)
+                        <tr>
+                            <td>{{ $pago->nombre }}</td>
+                            <td class="puntos">{{ $pago->propina }}</td>
+                            <td>{{ $pago->tipoPago->descripcion }}</td>
+                        </tr>
+                    @endif
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+    <br>
     <h3>GRACIAS POR SU COMPRA</h3>
 @else
     <div style="width: 100%">
         <table style="width: 60%; justify-content: right">
             <tr>
-                <td>Propina: </td>
+                <td>PROPINA: </td>
                 <td
                     style="border-bottom: 1pt; width: 100%; border-bottom-color: black; border-width: 1pt; border-bottom-style: double">
                 </td>

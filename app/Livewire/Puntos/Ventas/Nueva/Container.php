@@ -91,6 +91,7 @@ class Container extends Component
     {
         //Propiedad que almacena todos los items que coincidan con la busqueda.
         return CatalogoVistaVerde::where('nombre', 'like', '%' . $this->ventaForm->seachProduct . '%')
+            ->whereNot('estado', 0)
             ->orderBy('nombre', 'asc')
             ->limit(40)
             ->get();

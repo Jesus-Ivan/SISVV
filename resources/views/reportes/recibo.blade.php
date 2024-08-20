@@ -1,7 +1,10 @@
 <style>
     html {
         font-size: x-small;
-        margin: 12pt;
+        margin-top: 12pt;
+        margin-bottom: 12pt;
+        margin-left: 16pt;
+        margin-right: 14pt;
     }
 
     h1,
@@ -28,17 +31,17 @@
     }
 
     .remarcardo {
-        font-style: normal,
-            font-weight: bold,
+        font-style: normal;
+        font-weight: bold;
     }
 
     .noremarcardo {
-        font-style: normal,
-            font-weight: normal;
+        font-style: normal;
+        font-weight: normal;
     }
 
-    .cuerpoTabla {
-        min-height: 100vh;
+    .opacidad {
+        opacity: 0;
     }
 </style>
 
@@ -54,16 +57,17 @@
         <tbody>
             <tr>
                 <td style="display: flex ;align-items: flex-start">
-                    <img src="<?php echo $base64; ?>" height="47" alt="logoVistaVerde" />
+                    <img src="<?php echo $base64; ?>" height="47" alt="logoVistaVerde" class="opacidad" />
                 </td>
                 <td style="width: 100%">
                     <div>
-                        <p style="color: green; font-size: 28pt; font-weight: bolder; text-align: center">RECIBO DE CAJA
+                        <p style="color: green; font-size: 28pt; font-weight: bolder; text-align: center"
+                            class="opacidad">RECIBO DE CAJA
                         </p>
                     </div>
                 </td>
                 <td style="display: flex ;align-items: flex-start">
-                    <div
+                    <div class="opacidad"
                         style="text-align: center; padding: 2pt; width: 105pt; font-weight: bolder; background: green; color: white">
                         <p>FOLIO</p>
                     </div>
@@ -76,7 +80,7 @@
         <tbody>
             <tr>
                 <td>
-                    <div
+                    <div class="opacidad"
                         style="text-align: center; padding: 2pt; width: 109pt; font-weight: bolder; background: green; color: white">
                         <p>RECIBIMOS DE:</p>
                     </div>
@@ -87,7 +91,7 @@
                     </div>
                 </td>
                 <td>
-                    <div
+                    <div class="opacidad"
                         style="text-align: center; padding: 2pt; width: 105pt; font-weight: bolder; background: green; color: white">
                         <p>FECHA</p>
                     </div>
@@ -98,7 +102,7 @@
     <table>
         <tbody>
             <tr>
-                <td style="width: 85%">
+                <td style="width: 80%">
                     <div style="font-size: 14pt">
                         {{ $cobro->id_socio }} - {{ $cobro->nombre }}
                     </div>
@@ -113,15 +117,15 @@
     {{-- TABLE CARGOS --}}
     <table style= "margin-top: 6pt; margin-bottom: 6pt; height: 190pt;">
         <thead>
-            <tr style="background: green">
-                <th style="width: 45%">CONCEPTO</th>
-                <th>METODO PAGO</th>
-                <th>SALDO ANTERIOR</th>
-                <th style="width: 10%">ABONO</th>
-                <th style="width: 10%">SALDO</th>
+            <tr style="background: green; color: white">
+                <th class="opacidad" style="width: 50%">CONCEPTO</th>
+                <th class="opacidad">METODO PAGO</th>
+                <th class="opacidad" style="width: 10%">S.ANTERIOR</th>
+                <th class="opacidad" style="width: 10%">ABONO</th>
+                <th class="opacidad" style="width: 10%">SALDO</th>
             </tr>
         </thead>
-        <tbody class="cuerpoTabla">
+        <tbody >
             @foreach ($detalles as $detalle)
                 <tr>
                     <td>{{ $detalle->concepto }}</td>
@@ -132,45 +136,36 @@
                 </tr>
             @endforeach
         </tbody>
-        <tfoot style="height: 32pt">
-            <tr>
-                <td></td>
-                <td></td>
-                <td style="font-weight: bolder">TOTAL: </td>
-                <td style="border-top: 2px; border-top-style: solid; border-top-color: black; font-weight: bolder">
-                    ${{ array_sum(array_column($detalles->toArray(), 'monto_pago')) }}</td>
-                <td></td>
-            </tr>
-        </tfoot>
     </table>
-
     {{-- Footer del recibo --}}
     <table>
         <thead>
             <tr style="color: white; font-weight: bolder">
-                <td style="background: green; padding: 2pt; text-align: center">CANTIDAD CON LETRA</td>
-                <td style="width:50%"></td>
-                <td style="background: green; padding: 2pt; text-align: center">CAJA</td>
+                <td class="opacidad" style="background: green; padding: 2pt; text-align: center">CANTIDAD CON LETRA</td>
+                <td style="width:50%; color: black; text-align: center; font-size: 12pt">TOTAL:
+                    ${{ array_sum(array_column($detalles->toArray(), 'monto_pago')) }}</td>
+                <td class="opacidad" style="background: green; padding: 2pt; text-align: center">CAJA</td>
             </tr>
         </thead>
+    </table>
+    <table>
         <tbody>
             <tr>
-                <td></td>
-                <td></td>
-                <td>
-                    <div>
-                        <p>{{ $cobro->folio }}</p>
-                        <p>{{ now() }}</p>
-                    </div>
+                <td style="display: flex; align-items: flex-start">{{$total_letras}}</td>
+                <td style="width: 125pt">
+                    <p>{{ $cobro->folio }}</p>
+                    <p>{{ now() }}</p>
+                    @if ($saldoFavor)
+                        <p class="remarcardo">S.FAVOR: <span class="noremarcardo">${{ $saldoFavor->saldo }}</span>
+                        </p>
+                    @endif
                 </td>
             </tr>
         </tbody>
     </table>
     <div>
-        <p style="text-align: center; font-weight: bolder; color: green">"EVITE RECARGOS, PAGUE ANTES DEL DÍA 10 DE CADA
+        <p class="opacidad" style="text-align: center; font-weight: bolder; color: green">"EVITE RECARGOS, PAGUE ANTES
+            DEL DÍA 10 DE CADA
             MES"</p>
     </div>
-    @if ($saldoFavor)
-        <p class="remarcardo">SALDO A FAVOR GENERADO: <span class="noremarcardo">${{ $saldoFavor->saldo }}</span></p>
-    @endif
 </div>

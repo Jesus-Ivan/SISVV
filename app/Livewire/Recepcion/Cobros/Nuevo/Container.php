@@ -14,13 +14,15 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
+
 class Container extends Component
 {
     #[Locked]
     public Socio $socio;
 
-    public $cargosSeleccionados = [];   //Los cargos que se seleccionan en el modal
-    public $totalSeleccionado;          //La suma total de saldo, de los cargos seleccionados
+    public $cargosSeleccionados = [];   //Todos los cargos que se han seleccionado en el modal
+    public $cargosFiltrados = [];       //los cargos del modal, que esten seleccionados (activos)
+    public $totalSeleccionado;          //La suma total de saldo, de los cargos seleccionados (activos)
 
     public $cargosTabla = [];           //Los cargos que se muestran en la tabla
     public $metodoPagoGeneral;          //El metodo de pago que se selecciona para aplicar a todos los cargos
@@ -77,13 +79,13 @@ class Container extends Component
     public function updatedCargosSeleccionados()
     {
         //Filtramos los cargos seleccionados, cuyo valor sea true
-        $cargosFiltrados = array_filter($this->cargosSeleccionados, function ($val) {
+        $this->cargosFiltrados = array_filter($this->cargosSeleccionados, function ($val) {
             return $val;
         });
         //Creamos array auxiliar
         $resultCargos = [];
-        //Recorremos todos los cargos filtrados y los agregamos al array.
-        foreach ($cargosFiltrados as $key => $value) {
+        //Recorremos todos los cargos filtrados y los agregamos al array. para obtener su costo
+        foreach ($this->cargosFiltrados as $key => $value) {
             array_push($resultCargos, $this->listaCargos->find($key)->toArray());
         }
         $this->totalSeleccionado = array_sum(array_column($resultCargos, 'cargo'));
@@ -131,6 +133,15 @@ class Container extends Component
                         return $cargo['id'] == $key;
                     });
 
+                    //Si hay 11 cargos o mas en la tabla, error
+                    if (count($this->cargosTabla) >= 10) {
+                        //MENSAJE DE SESION
+                        session()->flash('fail', "No puedes agregar mas de 10 conceptos");
+                        //EVENTO PARA ABRIR EL ALERT
+                        $this->dispatch('action-message-pago');
+                        break;
+                    }
+
                     //Si el cargo existe al almenos una vez
                     if (count($result) > 0) {
                         //comprobar la sumatoria de sus montos de pago
@@ -163,7 +174,7 @@ class Container extends Component
 
             //Calculamos el total de los cargos seleccionados
             $this->calcularTotales();
-            $this->reset('cargosSeleccionados');
+            $this->reset('cargosSeleccionados', 'cargosFiltrados', 'totalSeleccionado');
         }
     }
 

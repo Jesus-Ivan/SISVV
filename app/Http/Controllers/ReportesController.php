@@ -24,6 +24,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Luecano\NumeroALetras\NumeroALetras;
 
 class ReportesController extends Controller
 {
@@ -199,16 +200,27 @@ class ReportesController extends Controller
             'telefono' => '3745011'
         ];
 
+        $formatter = new NumeroALetras();
+        $total_letras = $formatter->toMoney(
+            array_sum(array_column($detalles_cobro->toArray(), 'monto_pago')),
+            2,
+            'PESOS',
+            'CENTAVOS'
+        );
+
         $data = [
             'header' => $header,
             'detalles' => $detalles_cobro,
             'cobro' => $cobro,
-            'saldoFavor' => $saldoFavor
+            'saldoFavor' => $saldoFavor,
+            'total_letras' => $total_letras
         ];
+
+
 
         $pdf = Pdf::loadView('reportes.recibo', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
-        $pdf->setPaper([0, 0, 609.449, 396.85]);
+        //$pdf->setPaper([0, 0, 609.449, 396.85]);
         return $pdf->stream('recibo' . $folio . '.pdf');
     }
 

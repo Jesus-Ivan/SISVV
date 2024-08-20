@@ -220,7 +220,7 @@ class ReportesController extends Controller
 
         $pdf = Pdf::loadView('reportes.recibo', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
-        //$pdf->setPaper([0, 0, 609.449, 396.85]);
+        $pdf->setPaper([0, 0, 612.283, 792]); // Tamaño aproximado del US LETTER (216 x 279.4) mm
         return $pdf->stream('recibo' . $folio . '.pdf');
     }
 

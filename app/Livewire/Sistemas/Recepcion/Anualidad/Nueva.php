@@ -36,6 +36,9 @@ class Nueva extends Component
     public $estado_finalizar = 'MEN';
     public $membresia_finalizar;
 
+    public $incremento, $descuento, $iva, $membresia_anterior, $membresia_nueva;
+    public $saldo_cero = false;     //checkbox que indica si la anualidad debe registrase liquidada.
+
     #[On('on-selected-socio')]
     public function selectedSocio(Socio $socio)
     {
@@ -133,6 +136,7 @@ class Nueva extends Component
 
     public function aplicarAnualidad()
     {
+
         $validatedInfo = $this->verificar();     //Revisamos si los campos de inicio no estan vacios
         //Validamos la lista de resultados antes de agregarlos
         $validatedResultados = $this->validate([
@@ -144,8 +148,11 @@ class Nueva extends Component
                 //Insertamos la informacion de la anualidad
                 $anualidad = Anualidad::create([
                     'id_socio' => $validatedInfo['socio']['id'],
-                    'incremento_anual' => null,
-                    'descuento_membresia' => null,
+                    'membresia_anterior' => $this->membresia_anterior,
+                    'incremento_anual' => $this->incremento,
+                    'membresia_nueva' => $this->membresia_nueva,
+                    'descuento_membresia' => $this->descuento,
+                    'iva' => $this->iva,
                     'clave_mem_f' => $validatedInfo['membresia_finalizar'],
                     'estado_mem_f' => $validatedInfo['estado_finalizar'],
                     'fecha_inicio' => $validatedResultados['listaResultados'][0]['fecha'],
@@ -168,8 +175,8 @@ class Nueva extends Component
                         'concepto' => $cargo['descripcion'],
                         'fecha' => $cargo['fecha'],
                         'cargo' => $cargo['monto'],
-                        'abono' => 0,
-                        'saldo' => $cargo['monto'],
+                        'abono' => $this->saldo_cero ? $cargo['monto'] : 0,
+                        'saldo' => $this->saldo_cero ? 0 : $cargo['monto'],
                     ]);
                 }
                 //Mensage de sesion para el alert-message

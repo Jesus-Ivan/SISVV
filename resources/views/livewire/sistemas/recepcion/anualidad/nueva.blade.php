@@ -31,59 +31,113 @@
     </div>
     {{-- line --}}
     <hr class="h-1 my-8 bg-gray-200 border-0 dark:bg-gray-700">
-    {{-- Inputs, fecha inicio, Boton de cuotas --}}
-    <div class="flex justify-between gap-3">
+    <div class="grid grid-cols-2 gap-4">
+        {{-- Inputs --}}
         <div>
-            <p class="text-lg font-bold text-gray-900 dark:text-white">Cuotas</p>
+            <div class="flex gap-4 mt-5">
+                {{-- Membresia anterior  --}}
+                <div class="w-full">
+                    <label for="mem_ant"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia anterior</label>
+                    <input type="number" id="mem_ant" wire:model='membresia_anterior'
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        placeholder="$0" />
+                </div>
+                {{-- incremento  --}}
+                <div class="w-full">
+                    <label for="incremento"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Incremento
+                        anual</label>
+                    <input type="number" id="incremento" wire:model='incremento'
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        placeholder="$0" />
+                </div>
+                {{-- Membresia nueva  --}}
+                <div class="w-full">
+                    <label for="mem_nueva"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia nueva</label>
+                    <input type="number" id="mem_nueva" wire:model='membresia_nueva'
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        placeholder="$0" />
+                </div>
+            </div>
+            <div class="flex gap-4">
+                {{-- descuento  --}}
+                <div class="w-full">
+                    <label for="descuento"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descuento
+                        membresia</label>
+                    <input type="number" id="descuento" wire:model='descuento'
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        placeholder="$0" />
+                </div>
+                {{-- iva  --}}
+                <div class="w-full">
+                    <label for="iva"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">IVA</label>
+                    <input type="number" id="iva" wire:model='iva'
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        placeholder="$0" />
+                </div>
+            </div>
         </div>
-        <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'cargosFijosModal'})"
-            class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
-            Buscar cuotas
-        </button>
-    </div>
-    {{-- Tabla cuotas --}}
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                    <th scope="col" class="px-6 py-3 w-32">
-                        CLAVE
-                    </th>
-                    <th scope="col" class="px-6 py-3 ">
-                        CONCEPTO
-                    </th>
-                    <th scope="col" class="px-6 py-3 w-32">ACCIONES</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($listaCuotas as $index => $cuota)
-                    <tr wire:click='{{ $index }}'
-                        class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <td class="px-6 py-2">
-                            {{ $cuota['id'] }}
-                        </td>
-                        <td class="px-6 py-2 ">
-                            {{ $cuota['descripcion'] }}
-                        </td>
-                        <td class="px-6 py-2 h-14">
-                            <button type="button" wire:click="removeCuota({{ $index }})"
-                                class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                    class="w-5 h-5">
-                                    <path fill-rule="evenodd"
-                                        d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                <span class="sr-only">Borrar</span>
-                            </button>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-        @error('listaCuotas')
-            <x-input-error messages="{{ $message }}" />
-        @enderror
+        {{-- Tabla de cuotas para cargar --}}
+        <div>
+            {{-- tittle cuotas y Boton de cuotas --}}
+            <div class="flex justify-between gap-3">
+                <div>
+                    <p class="text-lg font-bold text-gray-900 dark:text-white">Cuotas</p>
+                </div>
+                <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'cargosFijosModal'})"
+                    class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
+                    Buscar cuotas
+                </button>
+            </div>
+            {{-- Tabla cuotas --}}
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 w-32">
+                                CLAVE
+                            </th>
+                            <th scope="col" class="px-6 py-3 ">
+                                CONCEPTO
+                            </th>
+                            <th scope="col" class="px-6 py-3 w-32">ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($listaCuotas as $index => $cuota)
+                            <tr wire:click='{{ $index }}'
+                                class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <td class="px-6 py-2">
+                                    {{ $cuota['id'] }}
+                                </td>
+                                <td class="px-6 py-2 ">
+                                    {{ $cuota['descripcion'] }}
+                                </td>
+                                <td class="px-6 py-2 h-14">
+                                    <button type="button" wire:click="removeCuota({{ $index }})"
+                                        class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                            class="w-5 h-5">
+                                            <path fill-rule="evenodd"
+                                                d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                        <span class="sr-only">Borrar</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @error('listaCuotas')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
+            </div>
+        </div>
     </div>
     {{-- line --}}
     <hr class="h-1 my-8 bg-gray-200 border-0 dark:bg-gray-700">
@@ -189,7 +243,7 @@
             {{ $total }}</p>
     </div>
     {{-- Finalizar o cancelar --}}
-    <div>
+    <div class="flex gap-4">
         <button type="button"
             class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
             Cancelar
@@ -204,6 +258,11 @@
                 @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
             </div>
         </button>
+        <div class="flex items-center">
+            <input id="pagado" type="checkbox" wire:model ='saldo_cero'
+                class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+            <label for="pagado" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Saldo cero</label>
+        </div>
     </div>
     {{-- ALERT MESSAGE --}}
     <x-action-message on='action-message-venta'>

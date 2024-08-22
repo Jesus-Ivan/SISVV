@@ -37,8 +37,8 @@
             <div class="flex gap-4 mt-5">
                 {{-- Membresia anterior  --}}
                 <div class="w-full">
-                    <label for="mem_ant"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia anterior</label>
+                    <label for="mem_ant" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia
+                        anterior</label>
                     <input type="number" id="mem_ant" wire:model='membresia_anterior'
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                         placeholder="$0" />
@@ -104,6 +104,9 @@
                             <th scope="col" class="px-6 py-3 ">
                                 CONCEPTO
                             </th>
+                            <th scope="col" class="px-6 py-3 w-36">
+                                Monto
+                            </th>
                             <th scope="col" class="px-6 py-3 w-32">ACCIONES</th>
                         </tr>
                     </thead>
@@ -116,6 +119,12 @@
                                 </td>
                                 <td class="px-6 py-2 ">
                                     {{ $cuota['descripcion'] }}
+                                </td>
+                                <td class="px-6 py-2 ">
+                                    <input type="number" id="monto-{{ $index }}"
+                                        wire:model='listaCuotas.{{ $index }}.monto'
+                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                        placeholder="$0" />
                                 </td>
                                 <td class="px-6 py-2 h-14">
                                     <button type="button" wire:click="removeCuota({{ $index }})"

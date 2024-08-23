@@ -38,6 +38,7 @@ class Nueva extends Component
 
     public $incremento, $descuento, $iva, $membresia_anterior, $membresia_nueva;
     public $saldo_cero = false;     //checkbox que indica si la anualidad debe registrase liquidada.
+    public $no_corrida = 12;
 
     #[On('on-selected-socio')]
     public function selectedSocio(Socio $socio)
@@ -192,6 +193,12 @@ class Nueva extends Component
         }
     }
 
+    public function corrida()
+    {
+        for ($i = 0; $i < $this->no_corrida; $i++) {
+            $this->calcularSiguiente();
+        }
+    }
     public function verificar()
     {
         $validated = $this->validate([

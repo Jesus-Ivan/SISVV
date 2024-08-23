@@ -150,9 +150,10 @@
     </div>
     {{-- line --}}
     <hr class="h-1 my-8 bg-gray-200 border-0 dark:bg-gray-700">
-    {{-- Tittle resultados y button calcular --}}
+    {{-- inicio anualidad, membresia al finalizar, estado al finalizar, botones de calculo --}}
     <div class="flex justify-between items-center">
         <div class="flex gap-2">
+            {{-- inicio --}}
             <div>
                 <label for="inicio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                     Inicio de la anualidad
@@ -164,6 +165,7 @@
                     <x-input-error messages="{{ $message }}" />
                 @enderror
             </div>
+            {{-- membresia al finalizar --}}
             <div>
                 <label for="membresias" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia
                     al
@@ -179,6 +181,7 @@
                     <x-input-error messages="{{ $message }}" />
                 @enderror
             </div>
+            {{-- estado al finalizar --}}
             <div>
                 <label for="estado_finalizar"
                     class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Estado al
@@ -194,15 +197,30 @@
                     <x-input-error messages="{{ $message }}" />
                 @enderror
             </div>
+            {{-- No de meses --}}
+            <div>
+                <label for="inicio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                    No. de meses
+                </label>
+                <input type="number" id="inicio" wire:model="no_corrida"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    required />
+                @error('fInicio')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
+            </div>
+            {{-- Boton de corrida --}}
+            <button wire:click='corrida()' type="button"
+                class="px-5 font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Corrida</button>
         </div>
         <div class="flex gap-2">
             <button type="button" wire:click='calcularAnterior'
                 class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
-                Anterior
+                -
             </button>
             <button type="button" wire:click='calcularSiguiente'
                 class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
-                Siguiente
+                +
             </button>
         </div>
     </div>

@@ -21,4 +21,9 @@ class EstadoCuenta extends Model
     {
         return $this->belongsTo(Cuota::class, 'id_cuota', 'id');
     }
+
+    public function socio(): BelongsTo
+    {
+        return $this->belongsTo(Socio::class, 'id_socio', 'id');
+    }
 }

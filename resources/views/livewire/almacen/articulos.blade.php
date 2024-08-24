@@ -30,7 +30,7 @@
                             CATEGORÍA
                         </th>
                         <th scope="col" class="px-20 py-3">
-                            DESCRIPCIÓN
+                            NOMBRE
                         </th>
                         <th scope="col" class="px-6 py-3">
                             UNIDAD
@@ -71,34 +71,34 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($listaArticulos as $ipa_inventario_principal)
-                        <tr wire:key={{ $ipa_inventario_principal->codigo }}
+                    @foreach ($listaArticulos as $catalogo_vista_verde)
+                        <tr wire:key={{ $catalogo_vista_verde->codigo }}
                             class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                             <td class="px-6 py-4">
-                                {{ $ipa_inventario_principal->codigo }}
+                                {{ $catalogo_vista_verde->codigo }}
                             </td>
                             <td class="px-6 py-4 uppercase">
-                                {{ $ipa_inventario_principal->familia }}
+                                {{ $catalogo_vista_verde->familia }}
                             </td>
                             <td class="px-6 py-4 uppercase">
-                                {{ $ipa_inventario_principal->categoria }}
+                                {{ $catalogo_vista_verde->categoria }}
                             </td>
                             <td class="px-6 py-4 uppercase">
-                                {{ $ipa_inventario_principal->nombre }}
+                                {{ $catalogo_vista_verde->nombre }}
                             </td>
                             <td class="px-6 py-4 uppercase">
-                                {{ $ipa_inventario_principal->unidad }}
+                                {{ $catalogo_vista_verde->unidad }}
                             </td>
                             <td class="px-6 py-4 uppercase">
-                                {{ $ipa_inventario_principal->proveedor }}
+                                {{ $catalogo_vista_verde->proveedor }}
                             </td>
                             <td class="px-6 py-4 uppercase">
-                                {{ $ipa_inventario_principal->punto_venta }}
+                                {{ $catalogo_vista_verde->punto_venta }}
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <span
                                     class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">
-                                    {{ $ipa_inventario_principal->stock }}
+                                    {{ $catalogo_vista_verde->stock }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-center">
@@ -127,10 +127,10 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4">
-                                ${{ $ipa_inventario_principal->costo_unitario}}
+                                ${{ $catalogo_vista_verde->costo_unitario}}
                             </td>
                             <td class="px-6 py-4">
-                                @if ($ipa_inventario_principal->estado == '1')
+                                @if ($catalogo_vista_verde->estado == '1')
                                     <span
                                         class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">ACTIVO
                                     </span>
@@ -141,10 +141,10 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                @if ($ipa_inventario_principal->estado == '1')
+                                @if ($catalogo_vista_verde->estado == '1')
                                     <div class="flex">
                                         <button type="button"
-                                            wire:click="edit({{ $ipa_inventario_principal->codigo }})"
+                                            wire:click="edit({{ $catalogo_vista_verde->codigo }})"
                                             class="text-green-700 hover:text-white border border-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:hover:bg-green-600 dark:focus:ring-green-800">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                                                 fill="currentColor" class="w-5 h-5">
@@ -155,7 +155,7 @@
                                             </svg>
                                         </button>
                                         <button type="button"
-                                            wire:click="delete({{ $ipa_inventario_principal->codigo }})"
+                                            wire:click="delete({{ $catalogo_vista_verde->codigo }})"
                                             class="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                                                 fill="currentColor" class="w-5 h-5">
@@ -168,7 +168,7 @@
                                 @else
                                     <div class="flex">
                                         <button type="button"
-                                            wire:click="reingresar({{ $ipa_inventario_principal->codigo }})"
+                                            wire:click="reingresar({{ $catalogo_vista_verde->codigo }})"
                                             class="text-gray-700 hover:text-white border border-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 dark:border-gray-500 dark:text-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-900">
                                             <svg class="w-5 h-5" aria-hidden="true"
                                                 xmlns="http://www.w3.org/2000/svg" width="24" height="24"
@@ -327,7 +327,7 @@
     </x-modal>
 
     {{-- Modal para modificar un articulo --}}
-    @if ($inventarioPrincipal)
+    @if ($catalogoVV)
         <x-modal name="modificarAr" title="MODIFICAR ARTICULO">
             <x-slot:body>
                 <form class="p-4 md:p-5">
@@ -467,7 +467,7 @@
     @endif
 
     {{-- Modal para eliminar articulo --}}
-    @if ($inventarioPrincipal)
+    @if ($catalogoVV)
         <x-modal name="eliminarAr" title="ELIMINAR ARTÍCULO">
             <x-slot:body>
                 <div class="text-center">
@@ -477,7 +477,7 @@
                             d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
                     <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¿Desea eliminar
-                        {{ $inventarioPrincipal->nombre }}?
+                        {{ $catalogoVV->nombre }}?
                     </h3>
                     <p class="text-gray-500 dark:text-gray-400">El artículo no se eliminara de la base de datos, solo
                         pasara a un estado inactivo.</p>
@@ -495,7 +495,7 @@
     @endif
 
     {{-- Modal para reingresar la categoria --}}
-    @if ($inventarioPrincipal)
+    @if ($catalogoVV)
         <x-modal name="reingresarAr" title="REINGRESAR ARTÍCULO">
             <x-slot:body>
                 <div class="text-center">
@@ -505,7 +505,7 @@
                             d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
                     <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¿Desea reingresar
-                        {{ $inventarioPrincipal->nombre }}?
+                        {{ $catalogoV->nombre }}?
                     </h3>
                     <p class="text-gray-500 dark:text-gray-400">El artículo pasará nuevamente a un estado Activo</p>
                 </div>

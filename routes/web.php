@@ -113,7 +113,7 @@ Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function ()
     Route::post('reportes-vencidos', [ReportesController::class, 'vencidos'])->name('recepcion.reportes.vencidos');
     Route::post('reportes-recibos', [ReportesController::class, 'reporteRecibos'])->name('reportes.recibos');
     Route::post('reportes-recibo-socio', [ReportesController::class, 'reporteRecibosSocio'])->name('reportes.recibos-socio');
-
+    Route::post('reportes-cartera-excel', [ReportesController::class, 'vencidosExcel'])->name('reportes.cartera-excel');
     Route::view('caja', 'recepcion.caja.caja')->middleware(['auth'])->name('recepcion.caja');
 });
 

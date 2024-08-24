@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\CarteraVencidaExport;
 use App\Exports\RecibosExport;
 use App\Exports\SociosExport;
 
@@ -706,6 +707,16 @@ class ReportesController extends Controller
         return Excel::download(
             new SociosExport(),
             'Reporte Socios ' .  $hoy . '.xlsx'
+        );
+    }
+
+    public function vencidosExcel(Request $request)
+    {
+        $hoy = now()->toDateString();
+        //Devolvemos el excel
+        return Excel::download(
+            new CarteraVencidaExport(),
+            'Cartera Vencida ' . $hoy . '.xlsx'
         );
     }
 }

@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Almacen;
 
+use App\Models\CatalogoVistaVerde;
 use App\Models\Categoria;
 use App\Models\Familia;
-use App\Models\InventarioPrincipal;
 use App\Models\Proveedor;
 use App\Models\Unidad;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +17,7 @@ class Articulos extends Component
 {
     use WithPagination;
     public $search;
-    public InventarioPrincipal $inventarioPrincipal;
+    public CatalogoVistaVerde $catalogoVV;
     public $codigo;
     public $stock;
 
@@ -74,7 +74,7 @@ class Articulos extends Component
     {
         $validated = $this->validate();
         //dd($validated);
-        InventarioPrincipal::create($validated);
+        CatalogoVistaVerde::create($validated);
         $this->reset(
             'id_familia',
             'id_categoria',
@@ -93,10 +93,10 @@ class Articulos extends Component
     }
 
     //EDITAMOS ARTICULO DE LA BASE DE DATOS
-    public function edit(InventarioPrincipal $articulo)
+    public function edit(CatalogoVistaVerde $articulo)
     {
         $this->dispatch('open-modal',  name: 'modificarAr'); //SE ABRE EL MODAL PARA PODER EDITAR
-        $this->inventarioPrincipal = $articulo;
+        $this->catalogoVV = $articulo;
         //SE GUARDAN LOS DATOS EN LAS VARIABLES PARA PODER EDITAR
         $this->codigo = $articulo->codigo;
         $this->id_familia = $articulo->id_familia;
@@ -114,7 +114,7 @@ class Articulos extends Component
     public function updateAr()
     {
         $validated = $this->validate();
-        $this->inventarioPrincipal->update($validated);
+        $this->catalogoVV->update($validated);
         $this->reset(
             'id_familia',
             'id_categoria',
@@ -148,34 +148,34 @@ class Articulos extends Component
     }
 
     //ELIMINAMOS ARTICULO DE LA BASE DE DATOS
-    public function delete(InventarioPrincipal $codigo)
+    public function delete(CatalogoVistaVerde $codigo)
     {
         $this->dispatch('open-modal',  name: 'eliminarAr'); //ABRIMOS EL MODAL PARA PODER ELIMINAR
-        $this->inventarioPrincipal = $codigo;
+        $this->catalogoVV = $codigo;
     }
 
     //CONFIRMAMOS LA ELIMINACION DEL ARTICULO
     public function confirmDelete()
     {
-        $this->inventarioPrincipal->estado = 0;
-        $this->inventarioPrincipal->save();
+        $this->catalogoVV->estado = 0;
+        $this->catalogoVV->save();
         $this->dispatch('close-modal');
         session()->flash('fail', "Artículo inactivado correctamente"); //MENSAJE DE ALERTA CUANDO SE ELIMINE CORRECTAMENTE
         $this->dispatch('open-action-message');
     }
 
     //REINGRESAMOS EL ARTICULO 
-    public function reingresar(InventarioPrincipal $codigo)
+    public function reingresar(CatalogoVistaVerde $codigo)
     {
         $this->dispatch('open-modal',  name: 'reingresarAr'); //ABRIMOS EL MODAL PARA PODER REINGRESAR
-        $this->inventarioPrincipal = $codigo;
+        $this->catalogoVV = $codigo;
     }
 
     //CONFIRMAMOS EL REINGRESO DEL ARTICULO
     public function confirmReingreso()
     {
-        $this->inventarioPrincipal->estado = 1;
-        $this->inventarioPrincipal->save();
+        $this->catalogoVV->estado = 1;
+        $this->catalogoVV->save();
         $this->dispatch('close-modal');
         session()->flash('success', "Artículo reingresado con exito"); //MENSAJE DE ALERTA CUANDO SE REINGRESE CORRECTAMENTE
         $this->dispatch('open-action-message');
@@ -190,29 +190,29 @@ class Articulos extends Component
 
     public function render()
     {
-        $result = DB::table('ipa_inventario_principal')
-            ->join('familias', 'ipa_inventario_principal.id_familia', '=', 'familias.id')
-            ->join('categorias', 'ipa_inventario_principal.id_categoria', '=', 'categorias.id')
-            ->join('unidades', 'ipa_inventario_principal.id_unidad', '=', 'unidades.id')
-            ->join('proveedores', 'ipa_inventario_principal.id_proveedor', '=', 'proveedores.id')
+        $result = DB::table('catalogo_vista_verde')
+            ->join('familias', 'catalogo_vista_verde.id_familia', '=', 'familias.id')
+            ->join('categorias', 'catalogo_vista_verde.id_categoria', '=', 'categorias.id')
+            ->join('unidades', 'catalogo_vista_verde.id_unidad', '=', 'unidades.id')
+            ->join('proveedores', 'catalogo_vista_verde.id_proveedor', '=', 'proveedores.id')
             ->where('nombre', 'like', '%' . $this->search . '%')->orWhere('codigo', '=', $this->search)
             ->select([
                 //COLUMNAS DE LA TABLA PRINCIPAL
-                'ipa_inventario_principal.codigo',
-                'ipa_inventario_principal.nombre',
-                'ipa_inventario_principal.punto_venta',
-                'ipa_inventario_principal.costo_unitario',
-                'ipa_inventario_principal.stock',
-                'ipa_inventario_principal.st_min',
-                'ipa_inventario_principal.st_max',
-                'ipa_inventario_principal.estado',
+                'catalogo_vista_verde.codigo',
+                'catalogo_vista_verde.nombre',
+                'catalogo_vista_verde.punto_venta',
+                'catalogo_vista_verde.costo_unitario',
+                'catalogo_vista_verde.stock',
+                'catalogo_vista_verde.st_min',
+                'catalogo_vista_verde.st_max',
+                'catalogo_vista_verde.estado',
                 //SOLO INCLUYE LAS COLUMNAS DESEADAS DE LAS TABLAS UNIDAS
                 'familias.familia',
                 'categorias.categoria',
                 'unidades.unidad',
                 'proveedores.proveedor',
             ])
-            ->orderByRaw('ipa_inventario_principal.codigo')
+            ->orderByRaw('catalogo_vista_verde.codigo')
             ->paginate(5);
 
         return view('livewire.almacen.articulos', [

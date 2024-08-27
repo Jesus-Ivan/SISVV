@@ -41,7 +41,7 @@ Route::prefix('administracion')->middleware(['auth'])->group(function () {
     Route::view('reportes-cobranza', 'administracion.reportes-cobranza')->name('administracion.reportes-cobranza');
 });
 
-Route::prefix('almacen')->middleware(['auth'])->group(function () {
+Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
     Route::view('/', 'almacen.index')->name('almacen');
 
     Route::view('articulos', 'almacen.articulos')->name('almacen.articulos');
@@ -210,7 +210,6 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::view('/cargo-anualidades', 'sistemas.Recepcion.cargo-anualidades')->name('sistemas.cargoAnualidades');
         Route::view('/cargo-dif-consumos', 'sistemas.Recepcion.cargo-diferencias')->name('sistemas.cargoDifConsumos');
         Route::post('/cargo-dif-consumos', [CargosController::class, 'cargarDiferencias'])->name('sistemas.cargoDifConsumos');
-
     });
 });
 

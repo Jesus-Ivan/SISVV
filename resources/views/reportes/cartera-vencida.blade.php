@@ -47,14 +47,14 @@
     <div>
         <h2>VISTA VERDE COUNTRY CLUB</h2>
         @if ($consumosMesFin)
-            <h3>Cuentas por cobrar {{ $header['fInicio'] }} al {{ $header['fFin'] }}</h3>
+            <h3>Cuentas por cobrar</h3>
         @else
-            <h3>Cartera de clientes vencidos del {{ $header['fInicio'] }} al {{ $header['fFin'] }}</h3>
+            <h3>Cartera de clientes vencidos</h3>
         @endif
-
         <p>RFC: {{ $header['rfc'] }}</p>
         <p>{{ $header['direccion'] }}</p>
         <p>Tel: 238{{ $header['telefono'] }}</p>
+        <p>Consultado el: {{ now() }}</p>
     </div>
     <hr>
     <table>

@@ -12,15 +12,23 @@ class CarteraVencidaExport implements FromArray
 {
     public $cuotas;
     public $socios;
+    public $consumosMesFin;
 
-    public function __construct()
+    public function __construct($consumosMesFin, $cancelados)
     {
         $this->cuotas = Cuota::all();
+        $this->consumosMesFin = $consumosMesFin;
         $sociosTemp = Socio::with('socioMembresia')->get()->toArray();
-        $this->socios = array_filter($sociosTemp, function ($socio) {
-            return $socio['socio_membresia']['estado'] != 'CAN';
-        });
-        //dd($this->socios);
+
+        //Si queremos la cartera con los socios cancelados
+        if ($cancelados) {
+            $this->socios = $sociosTemp;
+        } else {
+            //de lo contrario, filtrar los socios cancelados
+            $this->socios = array_filter($sociosTemp, function ($socio) {
+                return $socio['socio_membresia']['estado'] != 'CAN';
+            });
+        }
     }
 
 
@@ -47,22 +55,24 @@ class CarteraVencidaExport implements FromArray
         foreach ($this->socios as $key => $socio) {
             $estado_cuenta = EstadoCuenta::where('id_socio', $socio['id'])
                 ->where('saldo', '>',  0)->get();
-            //SI no hay ningun concepto que deba, omitir iteracion
-            if (! count($estado_cuenta)) {
-                continue;
+
+            //Si debe algun concepto
+            if (count($estado_cuenta)) {
+                $total_deuda = $this->obtenerNotas($estado_cuenta, "NOTA");
+
+                $row_aux = [
+                    'NO.SOCIO' => $socio['id'],
+                    'NOMBRE' => $socio['nombre'] . ' ' . $socio['apellido_p'] . ' ' . $socio['apellido_m'],
+                    'NOTAS VENTAS' => $total_deuda,
+                ];
+                foreach ($this->cuotas as $key => $cuota) {
+                    $totalCuota = $this->obtenerTotalCuota($estado_cuenta, $key + 1);
+                    $row_aux[$key] = $totalCuota;
+                    $total_deuda += $totalCuota;
+                }
+                if ($total_deuda)
+                    $data[] = $row_aux;
             }
-            $row_aux = [
-                'NO.SOCIO' => $socio['id'],
-                'NOMBRE' => $socio['nombre'] . ' ' . $socio['apellido_p'] . ' ' . $socio['apellido_m'],
-                'NOTAS VENTAS' => $this->obtenerNotas($estado_cuenta, "NOTA"),
-            ];
-
-            foreach ($this->cuotas as $key => $cuota) {
-                $row_aux[$key] = $this->obtenerTotalCuota($estado_cuenta, $key + 1);
-            }
-
-
-            $data[] = $row_aux;
         }
 
         //dd($data);
@@ -74,10 +84,16 @@ class CarteraVencidaExport implements FromArray
         $patron = "/$exp_reg/i";
         $acu = 0;
         $hoy = now();
+
         foreach ($estado_cuenta as $key => $row) {
-            if (preg_match($patron, $row->concepto)) {
+            if (preg_match($patron, $row->concepto) &&  is_null($row->id_cuota)) {
                 $fecha_concepto = Carbon::parse($row->fecha);
-                if ($fecha_concepto->year <= $hoy->year && $fecha_concepto->month < $hoy->month) {
+                //Si la opcion de incluir consumos esta activada
+                if ($this->consumosMesFin) {
+                    $acu += $row->saldo;
+                } elseif ($fecha_concepto->year < $hoy->year) {
+                    $acu += $row->saldo;
+                } elseif ($fecha_concepto->year == $hoy->year && $fecha_concepto->month < $hoy->month) {
                     $acu += $row->saldo;
                 }
             }

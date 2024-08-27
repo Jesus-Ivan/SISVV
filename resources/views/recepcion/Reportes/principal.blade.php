@@ -89,7 +89,7 @@
                 </button>
             </div>
         </form>
-        {{-- REPORTE GENERAL DE RECIBOS POR SOCIO --}}
+        {{-- REPORTE DE RECIBOS POR SOCIO --}}
         <form action="{{ route('reportes.recibos-socio') }}" method="POST" target="_blank">
             @csrf
             <!-- Title -->
@@ -104,19 +104,6 @@
                         required />
                 </div>
                 <!--Boton de busqueda -->
-                <button type="submit"
-                    class="w-32 h-11 justify-center text-center inline-flex items-center text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">
-                    Buscar
-                </button>
-            </div>
-        </form>
-
-
-        <form action="{{ route('reportes.cartera-excel') }}" method="POST" target="_blank">
-            @csrf
-            <!-- Title -->
-            <h4 class="text-2xl font-bold dark:text-white p-2">CARTERA VENCIDA EN EXCEL </h4>
-            <div class="flex gap-4 items-end">
                 <button type="submit"
                     class="w-32 h-11 justify-center text-center inline-flex items-center text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">
                     Buscar

@@ -384,77 +384,33 @@ class ReportesController extends Controller
         return $pdf->stream('qr' . $resultSocio->nombre . '.pdf');
     }
 
+    /**
+     * Permite generar una cartera vencida, en diferentes formatos
+     */
     public function vencidos(Request $request)
     {
-        $fInicio = $request->input('fInicio');
-        $fFin = $request->input('fFin');
-        $consumosMesFin = $request->input('consumosMesFin');
-
-        $this->validate($request, [
-            'fInicio' => 'required|date',
-            'fFin' => 'required|date',
+        //Validamos el tipo de archivo
+        $validated = $this->validate($request, [
+            'typeFile' => 'required',
         ]);
+        //Agregamos el key para los consumos del mes
+        $validated['consumosMesFin'] = $request->input('consumosMesFin', null);
+        //Agregamos el key para indicar si agregar los socios cancelados o no
+        $validated['cancelados'] = $request->input('cancelados', null);
 
-        $header = [
-            'title' => 'VISTA VERDE COUNTRY CLUB',
-            'rfc' => 'VVC101110AQ4',
-            'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
-            'telefono' => '3745011',
-            'fInicio' => $fInicio,
-            'fFin' => $fFin
-        ];
-        if ($consumosMesFin) {
-            $estados = EstadoCuenta::whereDate('fecha', '>=', $fInicio)
-                ->whereDate('fecha', '<=', $fFin)
-                ->where('saldo', '>', 0)
-                ->get();
-        } else {
-            $estados = EstadoCuenta::whereDate('fecha', '>=', $fInicio)
-                ->whereDate('fecha', '<=', $fFin)
-                ->where('saldo', '>', 0)
-                ->whereNot(function (Builder $query) use ($fFin) {
-                    $query->whereMonth('fecha', Carbon::parse($fFin)->month)
-                        ->whereYear('fecha', Carbon::parse($fFin)->year)
-                        ->whereNotNull('id_venta_pago');
-                })
-                ->get();
+        switch ($validated['typeFile']) {
+            case 'XLS':
+                $result = $this->vencidosExcel($validated['consumosMesFin'], $validated['cancelados']);
+                break;
+            case 'PDF':
+                $result = $this->vencidosPdf($validated['consumosMesFin'], $validated['cancelados']);
+                break;
+            default:
+                $result = 'Algo ha ido mal, prueba denuevo';
+                break;
         }
 
-
-        $totales = [];
-        foreach ($estados as $key => $estado) {
-            $result_filter = array_filter($totales, function ($row) use ($estado) {
-                return $row['id_socio'] == $estado->id_socio;
-            });
-
-            if (count($result_filter) > 0) {
-                //Buscamos la posicion del elemento en el array
-                for ($i = 0; $i < count($totales); $i++) {
-                    if ($totales[$i]['id_socio'] == $estado->id_socio) {
-                        //Si coincide con folio y tipo de pago, acumulamos el monto, en el elemento del array.
-                        $totales[$i]['monto'] += $estado->saldo;
-                    }
-                }
-            } else {
-                //Si no existe dentro del array
-                $socio = Socio::where('id', $estado->id_socio)->limit(1)->get();
-                array_push($totales, [
-                    'id_socio' => $estado->id_socio,
-                    'nombre' => count($socio) > 0 ? $socio[0]->nombre . ' ' . $socio[0]->apellido_p . ' ' . $socio[0]->apellido_m : 'N/R',
-                    'monto' => $estado->saldo,
-                ]);
-            }
-        }
-        $data = [
-            'header' => $header,
-            'totales' => $totales,
-            'total' => array_sum(array_column($totales, 'monto')),
-            'consumosMesFin' => $consumosMesFin
-        ];
-
-        $pdf = Pdf::loadView('reportes.cartera-vencida', $data);
-        $pdf->setOption(['defaultFont' => 'Courier']);
-        return $pdf->stream('reporte-vencidos' . $fInicio . '.pdf');
+        return $result;
     }
 
     public function ventasMes(Request $request)
@@ -710,13 +666,82 @@ class ReportesController extends Controller
         );
     }
 
-    public function vencidosExcel(Request $request)
+    private function vencidosExcel($consumosMesFin, $cancelados)
     {
         $hoy = now()->toDateString();
         //Devolvemos el excel
         return Excel::download(
-            new CarteraVencidaExport(),
+            new CarteraVencidaExport($consumosMesFin, $cancelados),
             'Cartera Vencida ' . $hoy . '.xlsx'
         );
+    }
+
+    private function vencidosPdf($consumosMesFin, $cancelados)
+    {
+        $mes_actual = now();
+        $header = [
+            'title' => 'VISTA VERDE COUNTRY CLUB',
+            'rfc' => 'VVC101110AQ4',
+            'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
+            'telefono' => '3745011'
+        ];
+        if ($consumosMesFin) {
+            $estados = EstadoCuenta::where('saldo', '>', 0)
+                ->orderBy('id_socio', 'asc')
+                ->get();
+        } else {
+            $estados = EstadoCuenta::where('saldo', '>', 0)
+                ->whereNot(function (Builder $query) use ($mes_actual) {
+                    $query->whereMonth('fecha', $mes_actual->month)
+                        ->whereYear('fecha', $mes_actual->year)
+                        ->whereNotNull('id_venta_pago');
+                })
+                ->orderBy('id_socio', 'asc')
+                ->get();
+        }
+
+
+        $totales = [];
+        foreach ($estados as $key => $estado) {
+            $result_filter = array_filter($totales, function ($row) use ($estado) {
+                return $row['id_socio'] == $estado->id_socio;
+            });
+
+            if (count($result_filter) > 0) {
+                //Buscamos la posicion del elemento en el array
+                for ($i = 0; $i < count($totales); $i++) {
+                    if ($totales[$i]['id_socio'] == $estado->id_socio) {
+                        //Si coincide con folio y tipo de pago, acumulamos el monto, en el elemento del array.
+                        $totales[$i]['monto'] += $estado->saldo;
+                    }
+                }
+            } else {
+                //Si no existe dentro del array
+                $socio = Socio::with('socioMembresia')->where('id', $estado->id_socio)->first();
+                //creamos los datos del socio que se van a agregar a la tabla
+                $dataSocio = [
+                    'id_socio' => $estado->id_socio,
+                    'nombre' => $socio ? $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m : 'N/R',
+                    'monto' => $estado->saldo,
+                ];
+                //Si se selecciono la opcion de incluir cancelados
+                if ($cancelados) {
+                    array_push($totales, $dataSocio);   //Agregar directamente al array
+                } elseif ($socio->socioMembresia->estado != 'CAN') {
+                    //agregar al array solo si es diferente de cancelado
+                    array_push($totales, $dataSocio);
+                }
+            }
+        }
+        $data = [
+            'header' => $header,
+            'totales' => $totales,
+            'total' => array_sum(array_column($totales, 'monto')),
+            'consumosMesFin' => $consumosMesFin
+        ];
+
+        $pdf = Pdf::loadView('reportes.cartera-vencida', $data);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        return $pdf->stream('reporte-vencidos' . $mes_actual . '.pdf');
     }
 }

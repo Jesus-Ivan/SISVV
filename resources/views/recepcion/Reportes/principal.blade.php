@@ -10,26 +10,35 @@
             @csrf
             <!-- Title -->
             <h4 class="text-2xl font-bold dark:text-white p-2">Cartera de clientes vencidos</h4>
-            <div class="flex gap-2">
-                {{-- Fecha Inicio --}}
+            <div class="flex gap-2 items-center">
+                {{-- Tipo de archivo --}}
                 <div class="w-72">
-                    <label for="inicio"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Inicio</label>
-                    <input type="date" name="fInicio"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                    <div>
+                        <label for="typeFile"
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Formato</label>
+                        <select id="typeFile" name="typeFile"
+                            class="block w-full p-2.5 mb-3 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            <option selected value="PDF">PDF</option>
+                            <option value="XLS">EXCEL</option>
+                        </select>
+                    </div>
                 </div>
-                {{-- Fecha fin --}}
-                <div class="w-72">
-                    <label for="fin"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fin</label>
-                    <input type="date" name="fFin"
-                        class="mb-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                {{--Check box--}}
+                <div>
                     {{-- CASILLA DE CUENTAS X COBRAR --}}
                     <div class="flex items-center">
                         <input id="consumosMesFin" type="checkbox" name="consumosMesFin"
                             class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                         <label for="consumosMesFin" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-                            Incluir consumos
+                            Incluir notas del mes actual
+                        </label>
+                    </div>
+                    {{-- CASILLA DE CANCELADOS --}}
+                    <div class="flex items-center mt-1">
+                        <input id="cancelados" type="checkbox" name="cancelados"
+                            class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                        <label for="cancelados" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                            Incluir socios cancelados
                         </label>
                     </div>
                 </div>
@@ -88,7 +97,8 @@
             <div class="flex gap-4 items-end">
                 {{-- ID SOCIO --}}
                 <div>
-                    <label for="no_socio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">No. Socio</label>
+                    <label for="no_socio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">No.
+                        Socio</label>
                     <input type="number" id="no_socio" name="no_socio"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                         required />

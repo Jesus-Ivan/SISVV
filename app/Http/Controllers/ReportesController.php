@@ -413,6 +413,10 @@ class ReportesController extends Controller
         return $result;
     }
 
+    /**
+     * Dado un rango de fechas genera un PDF o XLS, que contiene todos los detalles de pago de las ventas en los puntos;
+     * Folio de venta, socio, nombre, tipo de pago, monto, fecha de venta
+     */
     public function ventasMes(Request $request)
     {
         $fInicio = $request->input('fechaInicio');
@@ -449,9 +453,21 @@ class ReportesController extends Controller
         //Consulta que obtiene los detalles de los pagos con su corte de caja
         $detalles_pago = DB::table('detalles_ventas_pagos')
             ->join('ventas', 'detalles_ventas_pagos.folio_venta', '=', 'ventas.folio')
-            ->select('detalles_ventas_pagos.*', 'ventas.*')
+            ->select(
+                'ventas.folio',
+                'ventas.tipo_venta',
+                'ventas.fecha_apertura',
+                'ventas.corte_caja',
+                'ventas.clave_punto_venta',
+                'detalles_ventas_pagos.id_socio', 
+                'detalles_ventas_pagos.nombre', 
+                'detalles_ventas_pagos.monto', 
+                'detalles_ventas_pagos.propina', 
+                'detalles_ventas_pagos.id_tipo_pago', 
+                )
             ->whereIn('corte_caja', array_column($cajas, 'corte'))
             ->get();
+        
 
         //Obtenemos el total del corte
         $totalVenta = array_sum(array_column($detalles_pago->toArray(), 'monto'));

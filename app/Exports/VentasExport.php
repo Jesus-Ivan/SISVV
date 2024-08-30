@@ -33,7 +33,7 @@ class VentasExport implements FromArray
         foreach ($this->data['detalles_pagos'] as $tipo_pago) {
             foreach ($tipo_pago as $key => $item) {
                 $ventasDia[] = [
-                    'folio' => $item->folio_venta,
+                    'folio' => $item->folio,
                     'fecha' => $item->fecha_apertura,
                     'tipo_venta' => $item->tipo_venta,
                     'id_socio' => $item->id_socio,

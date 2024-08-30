@@ -1,4 +1,4 @@
-<div >
+<div>
     {{-- Contenido --}}
     <form wire:submit="cerrarVenta">
         <!-- Title -->
@@ -55,7 +55,7 @@
             </button>
         </div>
         <!-- Tabla de metodos de pago-->
-        <livewire:recepcion.ventas.nueva.pagos-table wire:model='datosPagos'/>
+        <livewire:recepcion.ventas.nueva.pagos-table wire:model='datosPagos' />
         @error('datosPagos')
             <x-input-error messages="{{ $message }}" />
         @enderror
@@ -131,4 +131,6 @@
             <livewire:recepcion.ventas.nueva.pagos-modal-body />
         </x-slot>
     </x-modal>
+    <!--Script para imprimir el ticket-->
+    @include('livewire.puntos.ventas.include.print-script')
 </div>

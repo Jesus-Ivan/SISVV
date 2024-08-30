@@ -39,11 +39,24 @@ class PagosModalBody extends Component
         }
     }
 
+    #[On('ver-ticket')]
+    public function onVerTicket($venta)
+    {
+        //Si no esta activada la opcion de invitado
+        if (!$this->invitado) {
+            $this->reset();
+        } else {
+            //Si esta activada la opcion de invitado, resetear solo el metodo de pago
+            $this->reset('metodo_pago', 'pago', 'monto', 'propina', 'socio');
+        }
+    }
+
     public function finishPago()
     {
         $validation_rules = [
             'monto' => 'required|numeric',
             'pago' => 'required',
+            'socio.nombre' => 'required|min:3'
         ];
 
         //Validamos las entradas

@@ -16,6 +16,8 @@ class SearchBar extends Component
 
     public $invitado = false;
 
+    public $nombre;
+
     #[On('on-selected-socio')]
     public function onSelectedInput(Socio $socioId)
     {
@@ -32,7 +34,6 @@ class SearchBar extends Component
             session()->flash('fail_socio',  $th->getMessage());
         }
     }
-
     //hook, que se ejecuta despues de actualizar la propiedad invitado desde el front
     public function updatedInvitado()
     {
@@ -42,15 +43,32 @@ class SearchBar extends Component
             //emitir evento
             $this->dispatch('on-invitado', false, $this->socioSeleccionado);
         } else {
-            //Asignar socio invitado para la venta
-            $this->socioSeleccionado = [
-                'nombre' => 'INVITADO',
-                'apellido_p' => '',
-                'apellido_m' => ''
-            ];
-            //emitir evento
-            $this->dispatch('on-invitado', true, $this->socioSeleccionado);
+            $this->actualizarClienteGeneral();
         }
+    }
+    //hook, que se ejecuta despues de actualizar la propiedad nombre desde el front
+    public function updatedNombre()
+    {
+        $this->actualizarClienteGeneral();
+    }
+
+    #[On('ver-ticket')]
+    public function onVerTicket($venta)
+    {
+        //Limpiamos el nombre
+        $this->reset('nombre', 'socioSeleccionado.nombre');
+    }
+
+    private function actualizarClienteGeneral()
+    {
+        //Asignar socio invitado para la venta
+        $this->socioSeleccionado = [
+            'nombre' => $this->nombre,
+            'apellido_p' => '',
+            'apellido_m' => ''
+        ];
+        //emitir evento
+        $this->dispatch('on-invitado', true, $this->socioSeleccionado);
     }
 
     public function render()

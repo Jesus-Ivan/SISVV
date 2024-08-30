@@ -149,6 +149,9 @@ class Container extends Component
                     ]);
                 }
             }
+
+            //Emitimos evento para abrir el ticket en nueva pestaña
+            $this->dispatch('ver-ticket', ['venta' => $resultVenta->folio]);
         });
     }
 
@@ -190,6 +193,8 @@ class Container extends Component
                     'id_tipo_pago' => $pago['id_tipo_pago'],
                 ]);
             }
+            //Emitimos evento para abrir el ticket en nueva pestaña
+            $this->dispatch('ver-ticket', ['venta' => $resultVenta->folio]);
         });
     }
 

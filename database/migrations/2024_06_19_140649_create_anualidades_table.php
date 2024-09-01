@@ -18,7 +18,9 @@ return new class extends Migration
             $table->decimal('incremento_anual', 10, 2)->nullable();
             $table->decimal('membresia_nueva', 10, 2);
             $table->decimal('descuento_membresia', 10, 2)->nullable();
+            $table->decimal('descuento_extra', 10, 2)->nullable();
             $table->decimal('iva', 10, 2)->nullable();
+            $table->string('observaciones', 255)->nullable();
             $table->string('clave_mem_f', 10);
             $table->string('estado_mem_f', 20);
             $table->date('fecha_inicio');

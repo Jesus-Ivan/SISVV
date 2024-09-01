@@ -7,7 +7,6 @@ use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
 use App\Models\TipoPago;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromArray;
 
@@ -33,7 +32,6 @@ class RecibosExport implements FromArray
             'NO.SOCIO' => 'NO.SOCIO',
             'NOMBRE' => 'NOMBRE',
             'FORMA PAGO' => 'FORMA PAGO',
-            'OBSERVACIONES' => 'OBSERVACIONES',
             'TOTAL' => 'TOTAL',
             'CUOTA MEMBRESIA MENSUAL' => 'CUOTA MEMBRESIA MENSUAL',
             'MEMBRESIA ANUAL' => 'MEMBRESIA ANUAL',
@@ -56,12 +54,14 @@ class RecibosExport implements FromArray
             'SALDO A FAVOR' => 'SALDO A FAVOR',
             'FEDERACION' => 'FEDERACION',
             'CURSOS' => 'CURSOS',
+            'TORNEOS' => 'TORNEOS',
             'TIPO CUOTA' => 'TIPO CUOTA',
+            'OBSERVACIONES' => 'OBSERVACIONES',
         ];
 
-        //Filtramos de todas las cuotas, aquellas que son cuotas para alguna membresia (mensual o inactiva)
+        //Filtramos de todas las cuotas, aquellas que son cuotas para alguna membresia (mensual o inactiva o extraordinaria)
         $cuotas_mensualidades = array_filter($this->cuotas->toArray(), function ($cuota) {
-            return $cuota['tipo'] == 'INA' || $cuota['tipo'] == 'MEN';
+            return $cuota['tipo'] == 'INA' || $cuota['tipo'] == 'MEN' || $cuota['tipo'] == 'EXT';
         });
         //Filtramos de todas las cuotas, aquellas que son cuotas para alguna membresia (anual)
         $cuotas_membresia_anual = array_filter($this->cuotas->toArray(), function ($cuota) {
@@ -70,6 +70,10 @@ class RecibosExport implements FromArray
         //Filtramos de todas las cuotas, aquellas que son cuotas de un curso
         $cuotas_cursos = array_filter($this->cuotas->toArray(), function ($cuota) {
             return $cuota['tipo'] == 'CUR';
+        });
+        //Filtramos las cuotas, que pertenecen a torneos
+        $cuotas_torneos = array_filter($this->cuotas->toArray(), function ($cuota) {
+            return $cuota['tipo'] == 'TOR';
         });
 
         //array auxiliar
@@ -101,7 +105,6 @@ class RecibosExport implements FromArray
                     'NO.SOCIO' => $recibo['id_socio'],
                     'NOMBRE' => $recibo['nombre'],
                     'FORMA PAGO' => $metodo->descripcion,
-                    'OBSERVACIONES' => $recibo['observaciones'],
                     'TOTAL' => $recibo['total'],
                     'CUOTA MEMBRESIA MENSUAL' => $this->totalCuotas($cuotas_mensualidades, $detalles_filtrados),
                     'MEMBRESIA ANUAL' => $this->totalCuotas($cuotas_membresia_anual, $detalles_filtrados),
@@ -122,9 +125,11 @@ class RecibosExport implements FromArray
                     'ESTETICA' => $this->totalCuota(19, $detalles_filtrados),
                     'PROPINAS' => $this->totalConcepto($detalles_filtrados, "propina"),
                     'SALDO A FAVOR' => $this->totalSaldoFavor($detalles_filtrados),
-                    'FEDERACION' => '',
+                    'FEDERACION' => $this->totalCuota(17, $detalles_filtrados),     //17: corresponde a la federacion
                     'CURSOS' => $this->totalCuotas($cuotas_cursos, $detalles_filtrados),
+                    'TORNEOS' => $this->totalCuotas($cuotas_torneos, $detalles_filtrados),
                     'TIPO CUOTA' => $this->tipoCuota($recibo['id_socio']),
+                    'OBSERVACIONES' => $recibo['observaciones'],
                 ];
             }
         }

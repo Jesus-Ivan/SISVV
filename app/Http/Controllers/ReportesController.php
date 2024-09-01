@@ -436,7 +436,7 @@ class ReportesController extends Controller
                 ->orWhere('descripcion', 'like', '%SALDO%');
         })->get();
 
-        //REALIZAMOS UNA BUSQEUDA INDEXADA PARA OBTENER EL PUNTO DE VENTA
+        //REALIZAMOS UNA BUSQUEDA INDEXADA PARA OBTENER EL PUNTO DE VENTA
         $puntos_venta = [];
         foreach (PuntoVenta::all()->toArray() as $key => $value) {
             $puntos_venta[$value['clave']] = $value['nombre'];

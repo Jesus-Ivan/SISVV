@@ -32,7 +32,7 @@ class CargosController extends Controller
         //Iniciamos transaccion
         DB::transaction(function () use ($fecha, $fecha_previa, $socios_membresias) {
             $expresiones = [
-                'membresias' => "(ANUALIDAD (CC-I|CC-F|CG-I|CG-F)|INACTIVA|MENSUALIDAD)",
+                'membresias' => "(ANUALIDAD (CC|CG)|INACTIVA|MENSUALIDAD)",
                 'lockers' => "(LOKER|LOCKER|CASILLERO)",
                 'resguardo' => "(RESGUARDO CARRITO)",
             ];

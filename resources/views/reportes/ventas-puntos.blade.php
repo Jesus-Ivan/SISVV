@@ -49,18 +49,17 @@
 <h3>VISTA VERDE COUNTRY CLUB</h3>
 <h5>Reporte de ventas</h5>
 @if (@isset($caja))
-    <table>
-        <tbody>
-            <tr>
-                <td style="border: 0px">Corte caja: {{ $caja->corte }}</td>
-                <td style="border: 0px">Fecha: {{ $caja->fecha_apertura }}</td>
-            </tr>
-        </tbody>
-    </table>
+    <div>
+        <p>Fecha apertura: {{ $caja->fecha_apertura }}</p>
+        <p>Fecha cierre: {{ $caja->fecha_cierre }}</p>
+        <p>Corte de caja: {{ $caja->corte }}</p>
+    </div>
+    <hr>
     <p style="border: 0px">Vendedor: {{ $caja->users->name }}</p>
     <p style="border: 0px">Punto de venta: {{ $caja->puntoVenta->nombre }}</p>
     <p style="border: 0px">Cambio inicial: ${{ $caja->cambio_inicial }}</p>
 @endif
+<hr>
 @foreach ($detalles_pagos as $key => $pagos)
     @if (count($pagos))
         <p class="remarcardo">{{ $key }}</p>
@@ -93,4 +92,11 @@
     @endif
 @endforeach
 <hr>
-<p>Total de venta: ${{ $totalVenta }}</p>
+<p style="font-size: 11pt">Total de venta: ${{ $totalVenta }}</p>
+<div>
+    @if (@isset($caja))
+        @if (!$caja->fecha_cierre)
+            <p style="text-align: center">IMPRESION NO VALIDA COMO CORTE FINAL</p>
+        @endif
+    @endif
+</div>

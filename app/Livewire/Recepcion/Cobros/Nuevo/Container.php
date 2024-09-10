@@ -45,7 +45,8 @@ class Container extends Component
     {
         //Buscamos todos los metodos de pago disponibles para un cobro
         return TipoPago::whereNot(function (Builder $query) {
-            $query->where('descripcion', 'like', 'FIRMA');
+            $query->where('descripcion', 'like', '%FIRMA%')
+                ->orWhere('descripcion', 'like', '%PENDI%');
         })->get();
     }
 

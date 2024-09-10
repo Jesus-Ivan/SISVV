@@ -66,12 +66,14 @@ class ReportesController extends Controller
     //Genera reportes de ventas, con ayuda del corte de caja
     public function generarCorte(Caja $caja, $codigopv = null)
     {
+        /*
         //Comprobamos si la caja no esta cerrada
         if (!$caja->fecha_cierre && $caja->clave_punto_venta != 'REC') {
             return redirect()->route('home');
         }
+        */
 
-        //Quitamos los metodos de pago no permitidos.
+        //Quitamos los metodos de pago no permitidos en una venta.
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
             $query->where('descripcion', 'like', 'DEPOSITO')
                 ->orWhere('descripcion', 'like', 'CHEQUE')
@@ -92,8 +94,14 @@ class ReportesController extends Controller
             $puntos_venta[$value['clave']] = $value['nombre'];
         }
 
-        //Obtenemos el total del corte
-        $totalVenta = array_sum(array_column($detalles_pago->toArray(), 'monto'));
+        //Obtenemos el total del corte, sin sumar el metodo de pago 'pendiente'
+        $totalVenta = 0;
+        foreach ($detalles_pago as $key => $pago) {
+            $result = $tipos_pago->where('id', $pago->id_tipo_pago)->first();
+            if ($result->descripcion != 'PENDIENTE')
+                $totalVenta += $pago->monto;
+        }
+
         //Separar los pagos por tipo
         foreach ($tipos_pago as $pago) {
             $separados[$pago->descripcion] = $detalles_pago->where('id_tipo_pago', $pago->id);
@@ -230,7 +238,8 @@ class ReportesController extends Controller
         //Buscamos los metodos de pago, permitidos para el reporte de cobranza
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
             $query->where('descripcion', 'like', 'FIRMA')
-                ->orWhere('descripcion', 'like', '%SALDO%');
+                ->orWhere('descripcion', 'like', '%SALDO%')
+                ->orWhere('descripcion', 'like', '%PENDIENTE%');
         })->get();
 
         //Array auxiliar de recibos separados por tipo
@@ -289,7 +298,8 @@ class ReportesController extends Controller
         //Buscamos los metodos de pago, permitidos para el reporte de cobranza
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
             $query->where('descripcion', 'like', 'FIRMA')
-                ->orWhere('descripcion', 'like', '%SALDO%');
+                ->orWhere('descripcion', 'like', '%SALDO%')
+                ->orWhere('descripcion', 'like', '%PENDIENTE%');
         })->get();
 
         //Variable auxiliar que almacena los totales de los recibos, por metodos de pago
@@ -459,15 +469,15 @@ class ReportesController extends Controller
                 'ventas.fecha_apertura',
                 'ventas.corte_caja',
                 'ventas.clave_punto_venta',
-                'detalles_ventas_pagos.id_socio', 
-                'detalles_ventas_pagos.nombre', 
-                'detalles_ventas_pagos.monto', 
-                'detalles_ventas_pagos.propina', 
-                'detalles_ventas_pagos.id_tipo_pago', 
-                )
+                'detalles_ventas_pagos.id_socio',
+                'detalles_ventas_pagos.nombre',
+                'detalles_ventas_pagos.monto',
+                'detalles_ventas_pagos.propina',
+                'detalles_ventas_pagos.id_tipo_pago',
+            )
             ->whereIn('corte_caja', array_column($cajas, 'corte'))
             ->get();
-        
+
 
         //Obtenemos el total del corte
         $totalVenta = array_sum(array_column($detalles_pago->toArray(), 'monto'));

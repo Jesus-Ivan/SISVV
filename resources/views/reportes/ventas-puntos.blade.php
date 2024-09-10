@@ -93,3 +93,10 @@
 @endforeach
 <hr>
 <p style="font-size: 11pt">Total de venta: ${{ $totalVenta }}</p>
+<div>
+    @if (@isset($caja))
+        @if (!$caja->fecha_cierre)
+            <p style="text-align: center">IMPRESION NO VALIDA COMO CORTE FINAL</p>
+        @endif
+    @endif
+</div>

@@ -67,9 +67,11 @@ class ReportesController extends Controller
     public function generarCorte(Caja $caja, $codigopv = null)
     {
         //Comprobamos si la caja no esta cerrada
+        /*
         if (!$caja->fecha_cierre && $caja->clave_punto_venta != 'REC') {
             return redirect()->route('home');
         }
+        */
 
         //Quitamos los metodos de pago no permitidos.
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
@@ -459,15 +461,15 @@ class ReportesController extends Controller
                 'ventas.fecha_apertura',
                 'ventas.corte_caja',
                 'ventas.clave_punto_venta',
-                'detalles_ventas_pagos.id_socio', 
-                'detalles_ventas_pagos.nombre', 
-                'detalles_ventas_pagos.monto', 
-                'detalles_ventas_pagos.propina', 
-                'detalles_ventas_pagos.id_tipo_pago', 
-                )
+                'detalles_ventas_pagos.id_socio',
+                'detalles_ventas_pagos.nombre',
+                'detalles_ventas_pagos.monto',
+                'detalles_ventas_pagos.propina',
+                'detalles_ventas_pagos.id_tipo_pago',
+            )
             ->whereIn('corte_caja', array_column($cajas, 'corte'))
             ->get();
-        
+
 
         //Obtenemos el total del corte
         $totalVenta = array_sum(array_column($detalles_pago->toArray(), 'monto'));

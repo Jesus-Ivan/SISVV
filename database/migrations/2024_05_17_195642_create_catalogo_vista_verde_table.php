@@ -37,6 +37,7 @@ return new class extends Migration
             $table->decimal('costo_unitario', total:10, places:2)->nullable();
             $table->decimal('costo_empleado', total:10, places:2)->nullable();
             $table->boolean('estado')->default(1);
+            $table->string('tipo', 80)->nullable();
         });
     }
 

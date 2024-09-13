@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Cuota;
+use App\Models\IntegrantesSocio;
 use App\Models\SocioCuota;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromArray;
@@ -10,9 +11,7 @@ use Maatwebsite\Excel\Concerns\FromArray;
 class SociosExport implements FromArray
 {
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function array(): array
     {
@@ -37,6 +36,7 @@ class SociosExport implements FromArray
             'locker' => 'LOCKERS',
             'resguardo' => 'RESGUARDO CARRITO',
             'membresia' => 'MEMBRESIA',
+            'integrantes' => 'INTEGRANTES',
         ];
         //Buscamos las cuotas que son de locker
         $cuotas_locker = Cuota::where('tipo', 'like', '%LOC%')->get()->toArray();
@@ -45,20 +45,23 @@ class SociosExport implements FromArray
         //Buscamos las cuotas de membresia
         $cuotas_membresias = Cuota::whereNotNull('clave_membresia')->get()->toArray();
 
+        DB::transaction(function () use ($cuotas_locker, $cuotas_resg_carr, $cuotas_membresias, $socios, &$final) {
+            foreach ($socios as $socio) {
+                $cuotas = SocioCuota::with('cuota')->where('id_socio', $socio->id)->get();
+                $integrantes = IntegrantesSocio::where('id_socio', $socio->id)->get();
 
-        foreach ($socios as $socio) {
-            $cuotas = SocioCuota::with('cuota')->where('id_socio', $socio->id)->get();
-
-            $final[] = [
-                'id' => $socio->id,
-                'nombre' =>  $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m,
-                'clave' => $socio->clave_membresia,
-                'estado' => $socio->estado,
-                'locker' => $this->sumar_cuotas(array_column($cuotas_locker, 'id'), $cuotas),
-                'resguardo' => $this->sumar_cuotas(array_column($cuotas_resg_carr, 'id'), $cuotas),
-                'membresia' => $this->sumar_cuotas(array_column($cuotas_membresias, 'id'), $cuotas),
-            ];
-        }
+                $final[] = [
+                    'id' => $socio->id,
+                    'nombre' =>  $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m,
+                    'clave' => $socio->clave_membresia,
+                    'estado' => $socio->estado,
+                    'locker' => $this->sumar_cuotas(array_column($cuotas_locker, 'id'), $cuotas),
+                    'resguardo' => $this->sumar_cuotas(array_column($cuotas_resg_carr, 'id'), $cuotas),
+                    'membresia' => $this->sumar_cuotas(array_column($cuotas_membresias, 'id'), $cuotas),
+                    'integrantes' => count($integrantes),
+                ];
+            }
+        }, 2);
         //Retornamos el array listo
         return $final;
     }

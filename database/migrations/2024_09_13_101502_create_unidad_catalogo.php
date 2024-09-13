@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('unidades', function (Blueprint $table) {
+        Schema::create('unidad_catalogo', function (Blueprint $table) {
             $table->integer('id')->autoIncrement()->unsigned();
-            $table->string('descripcion', 20);
-            $table->boolean('estado')->default(1);
+            $table->integer('codigo_catalogo');
+            $table->integer('id_unidad');
+            $table->decimal('costo', total:10, places:2)->nullable();
+            $table->timestamps();
         });
     }
 
@@ -23,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('unidades');
+        Schema::dropIfExists('unidad_catalogo');
     }
 };

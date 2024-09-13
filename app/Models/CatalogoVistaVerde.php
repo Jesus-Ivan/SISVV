@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CatalogoVistaVerde extends Model
 {
@@ -17,4 +17,9 @@ class CatalogoVistaVerde extends Model
     protected $guarded = ['codigo'];
     //Clave primaria
     protected $primaryKey = 'codigo';
+
+    public function proveedor(): BelongsTo
+    {
+        return $this->belongsTo(Proveedor::class, 'id_proveedor', 'id');
+    }
 }

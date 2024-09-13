@@ -1113,7 +1113,7 @@ INSERT INTO familias (familia) VALUES
 	('VINOS Y LICORES')
 
 -- UNIDADES --
-INSERT INTO unidades (unidad) VALUES
+INSERT INTO unidades (descripcion) VALUES
 	('BOLSA'),
 	('BULTO'),
 	('CAJA'),

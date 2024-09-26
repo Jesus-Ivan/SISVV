@@ -12,13 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('ordenes_compra', function (Blueprint $table) {
-            $table->integer('folio')->primary()->unsigned();
+            $table->integer('folio')->autoIncrement()->unsigned();
             $table->dateTime('fecha');
+            $table->string('tipo_orden', 20);
+            $table->integer('id_user');
             $table->integer('cantidad');
-            $table->decimal('subtotal', total:10, places:2);
-            $table->decimal('iva', total:10, places:2);
-            $table->decimal('total', total:10, places:2);
-            $table->boolean('autorizada');
+            $table->decimal('subtotal', total: 10, places: 2);
+            $table->decimal('iva', total: 10, places: 2);
+            $table->decimal('total', total: 10, places: 2);
         });
     }
 

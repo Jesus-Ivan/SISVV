@@ -66,10 +66,9 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::view('historial', 'almacen.Traspasos.historial')->name('almacen.traspasos.historial');
     });
 
-    Route::view('ordenes', 'almacen.ordenes')->name('almacen.ordenes');
-    Route::view('editar-orden', 'almacen.editar-orden')->name('almacen.editar');
-    Route::prefix('ordenes_realizadas')->group(function () {
-        Route::view('/', 'almacen.Ordenes.ordenes_realizadas')->name('almacen.ordenes_realizadas');
+    Route::prefix('ordenes')->group(function () {
+        Route::view('nueva', 'almacen.ordenes.nueva-orden')->name('almacen.ordenes');
+        Route::view('ordenes_realizadas', 'almacen.Ordenes.ordenes_realizadas')->name('almacen.ordenes_realizadas');
         Route::view('historial', 'almacen.Ordenes.historial')->name('almacen.ordenes.historial');
     });
 
@@ -184,6 +183,7 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     Route::prefix('PV')->group(function () {
         Route::get('/prod-vendidos', [SistemasController::class, 'prodVendidos'])->name('sistemas.pv.prod-vendidos');
         Route::post('/prod-vendidos', [SistemasController::class, 'getReporteVendidos'])->name('sistemas.pv.prod-vendidos');
+        Route::view('/cortesias', 'sistemas.Puntos.cortesias')->name('sistemas.pv.cortesias');
     });
 
     //DEPARTAMENTO DE RECEPCIÓN
@@ -220,6 +220,7 @@ Route::prefix('portico')->middleware(['auth', 'portico'])->group(function () {
 
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');
 Route::get('ventas/corte/{caja}/{codigopv?}', [ReportesController::class, 'generarCorte'])->name('ventas.corte');
+Route::get('requisicion/{folio}', [ReportesController::class, 'generarRequisicion'])->name('requisicion');
 
 
 require __DIR__ . '/auth.php';

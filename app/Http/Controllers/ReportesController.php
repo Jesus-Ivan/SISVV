@@ -11,11 +11,14 @@ use App\Models\Caja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
+use App\Models\OrdenCompra;
+use App\Models\Proveedor;
 use App\Models\PuntoVenta;
 use App\Models\Recibo;
 use App\Models\SaldoFavor;
 use App\Models\Socio;
 use App\Models\TipoPago;
+use App\Models\Unidad;
 use App\Models\User;
 use App\Models\Venta;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -469,6 +472,7 @@ class ReportesController extends Controller
                 'ventas.fecha_apertura',
                 'ventas.corte_caja',
                 'ventas.clave_punto_venta',
+                'ventas.observaciones',
                 'detalles_ventas_pagos.id_socio',
                 'detalles_ventas_pagos.nombre',
                 'detalles_ventas_pagos.monto',
@@ -690,6 +694,37 @@ class ReportesController extends Controller
             new SociosExport(),
             'Reporte Socios ' .  $hoy . '.xlsx'
         );
+    }
+
+    public function generarRequisicion($folio)
+    {
+        $requisicion = OrdenCompra::with('user')->find($folio);
+        $detalle = DB::table('detalles_compras')
+            ->where('folio_orden', $folio)
+            ->get();
+        //Generamos array's, para busquedas indexadas
+        $unidades = $this->generateIndex(Unidad::all(), 'id', 'descripcion');
+        $proveedores = $this->generateIndex(Proveedor::all(), 'id', 'proveedor');
+
+        $data = [
+            'requisicion' => $requisicion->toArray(),
+            'detalle' => $detalle->toArray(),
+            'unidades' => $unidades,
+            'proveedores' => $proveedores,
+        ];
+        $pdf = Pdf::loadView('reportes.requisicion', $data);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        $pdf->setPaper([0, 0, 612.283, 792], 'landscape'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
+        return $pdf->stream('requisicion' . $folio . '.pdf');
+    }
+
+    private function generateIndex($collection, $primary_key, $name)
+    {
+        $aux = [];
+        foreach ($collection as $key => $value) {
+            $aux[$value->$primary_key] = $value->$name;
+        }
+        return $aux;
     }
 
     private function vencidosExcel($consumosMesFin, $cancelados)

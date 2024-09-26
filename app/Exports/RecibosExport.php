@@ -225,7 +225,7 @@ class RecibosExport implements FromArray
         $patron = "/$exp_reg/i";
         //Filtramos todos los detalles que coincidan con el patron
         $notas_venta = array_filter($detalles_recibo, function ($detalle) use ($patron) {
-            return $detalle->id_venta_pago && preg_match($patron, $detalle->concepto);
+            return is_null($detalle->id_cuota) && preg_match($patron, $detalle->concepto);
         });
         return array_sum(array_column($notas_venta, 'monto_pago'));
     }

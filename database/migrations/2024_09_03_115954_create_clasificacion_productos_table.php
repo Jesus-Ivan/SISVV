@@ -16,8 +16,7 @@ return new class extends Migration
             $table->string('nombre', 80);
             $table->string('tipo', 50);
             $table->boolean('estado')->default(1);
-            $table->timestamps('created_at');
-            $table->timestamps('updated_at');
+            $table->timestamps();
         });
     }
 

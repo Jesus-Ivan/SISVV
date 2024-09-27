@@ -1,8 +1,10 @@
 <x-app-layout>
     {{-- Sub barra de navegacion --}}
     <x-slot name="header">
-        @include('almacen.nav')
+        @include('sistemas.nav')
     </x-slot>
+    
+    {{-- Contenido --}}
+    <livewire:sistemas.puntos.cortesias />
 
-    <livewire:almacen.ordenes.revisar-ordenes />
 </x-app-layout>

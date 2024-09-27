@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('nombre', 100);
             $table->integer('id_unidad');
             $table->decimal('cantidad', total:10, places:2);
+            $table->decimal('costo_unitario', total:10, places:2);
             $table->integer('id_proveedor');
             $table->decimal('importe', total:10, places:2);
             $table->decimal('iva', total:10, places:2);
@@ -27,9 +28,7 @@ return new class extends Migration
             $table->decimal('caddie', total:10, places:3);
             $table->decimal('cafeteria', total:10, places:3);
             $table->decimal('cocina', total:10, places:3);
-            $table->dateTime('ultima_compra');
-            $table->boolean('estado');
-
+            $table->dateTime('consultado');
             /*
             //Relaciones
 

@@ -22,6 +22,7 @@ return new class extends Migration
             $table->decimal('total', 10, 2);
             $table->integer('corte_caja')->nullable();
             $table->string('clave_punto_venta', 20)->nullable();
+            $table->string('observaciones', 200)->nullable();
 
 
             /*//Relaciones

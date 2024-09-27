@@ -27,7 +27,8 @@ class VentasExport implements FromArray
             'total' => 'TOTAL',
             'propina' => 'PROPINA',
             'tipo_pago' => 'METODO PAGO',
-            'clave_punto_venta' => 'ZONA'
+            'clave_punto_venta' => 'ZONA',
+            'observaciones' => 'OBSERVACIONES'
         ];
 
         foreach ($this->data['detalles_pagos'] as $tipo_pago) {
@@ -41,7 +42,8 @@ class VentasExport implements FromArray
                     'total' => $item->monto,
                     'propina' => $item->propina,
                     'tipo_pago' => $this->metodo_pago[$item->id_tipo_pago],
-                    'clave_punto_venta' => $this->puntos_venta[$item->clave_punto_venta]
+                    'clave_punto_venta' => $this->puntos_venta[$item->clave_punto_venta],
+                    'observaciones' => $item->observaciones
                 ];
             }
         }

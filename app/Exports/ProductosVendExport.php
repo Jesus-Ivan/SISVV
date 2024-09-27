@@ -22,12 +22,14 @@ class ProductosVendExport implements FromArray
         //Agregamos el encabezado
         $productos[] = [
             'clave_articulo' => 'CLAVE ARTICULO',
+            'folio_venta' => 'FOLIO VENTA',
             'punto' =>  'PUNTO',
             'descripcion' => 'DESCRIPCION',
             'cantidad' => 'CANTIDAD',
             'precio' => 'PRECIO',
             'importe' => 'IMPORTE',
             'fecha' => 'FECHA',
+            'observaciones' => 'observaciones'
         ];
         foreach ($this->ventas as $venta) {
             //Buscamos todos los productos de la venta
@@ -38,12 +40,14 @@ class ProductosVendExport implements FromArray
                 //Lo agregamos al array
                 $productos[] = [
                     'clave_articulo' => $producto->codigo_catalogo,
+                    'folio_venta' => $producto->folio_venta,
                     'punto' =>  $venta['punto_venta']['nombre'],
                     'descripcion' => $producto->catalogoProductos->nombre,
                     'cantidad' => $producto->cantidad,
                     'precio' => $producto->precio,
                     'importe' => $producto->subtotal,
-                    'fecha' => substr($venta['fecha_apertura'], 0, 10)      //Removemos la hora
+                    'fecha' => substr($venta['fecha_apertura'], 0, 10),     //Removemos la hora
+                    'observaciones' => $venta['observaciones']
                 ];
             }
         }

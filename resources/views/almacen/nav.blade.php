@@ -26,16 +26,13 @@
                                     artículos</a>
                             </li>
                             <li>
+                                <a href="{{ route('almacen.clasificacion') }}"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Clasificación
+                                    de productos</a>
+                            </li>
+                            <li>
                                 <a href="{{ route('almacen.proveedores') }}"
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Proveedores</a>
-                            </li>
-                            <li>
-                                <a href="{{ route('almacen.familias') }}"
-                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Familias</a>
-                            </li>
-                            <li>
-                                <a href="{{ route('almacen.categorias') }}"
-                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Categorías</a>
                             </li>
                             <li>
                                 <a href="{{ route('almacen.unidades') }}"

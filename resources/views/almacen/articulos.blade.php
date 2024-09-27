@@ -15,7 +15,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
             </button>
-            <h4 class="flex items-center ms-2 text-2xl font-bold dark:text-white">Lista de productos</h4>
+            <h4 class="flex items-center ms-2 text-2xl font-bold dark:text-white">LISTA DE ARTICULOS</h4>
         </div>
     </div>
 

@@ -38,9 +38,6 @@
                         <th scope="col" class="px-6 py-3">
                             PROVEEDOR
                         </th>
-                        <th scope="col" class="px-6 py-3">
-                            DEPTO
-                        </th>
                         <th scope="col" class="px-4 py-3">
                             ALMACÉN
                         </th>
@@ -92,13 +89,10 @@
                             <td class="px-6 py-4 uppercase">
                                 {{ $catalogo_vista_verde->proveedor }}
                             </td>
-                            <td class="px-6 py-4 uppercase">
-                                {{ $catalogo_vista_verde->punto_venta }}
-                            </td>
                             <td class="px-6 py-4 text-center">
                                 <span
                                     class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">
-                                    {{ $catalogo_vista_verde->stock }}
+                                    {{ $catalogo_vista_verde->stock_amc }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-center">
@@ -268,21 +262,6 @@
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>
-                    <div class="col-span-2 sm:col-span-1">
-                        <label for="departamento"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Departamento</label>
-                        <select id="departamento" wire:model="punto_venta"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                            <option selected="">Seleccionar Departamento</option>
-                            <option value="TV">TV/Monitors</option>
-                            <option value="PC">PC</option>
-                            <option value="GA">Gaming/Console</option>
-                            <option value="PH">Phones</option>
-                        </select>
-                        @error('punto_venta')
-                            <x-input-error messages="{{ $message }}" />
-                        @enderror
-                    </div>
                     <div class="col-span-1 sm:col-span-1">
                         <label for="precio"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Costo Unitario</label>
@@ -294,22 +273,22 @@
                         @enderror
                     </div>
                     <div class="col-span-1 sm:col-span-1">
-                        <label for="st_min"
+                        <label for="st_min_amc"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Stock Mínimo</label>
-                        <input type="number" name="st_min" id="st_min" wire:model="st_min"
+                        <input type="number" name="st_min_amc" id="st_min_amc" wire:model="st_min_amc"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             placeholder="Mínimo">
-                        @error('st_min')
+                        @error('st_min_amc_amc')
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>
                     <div class="col-span-1 sm:col-span-1">
-                        <label for="st_max"
+                        <label for="st_max_amc"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Stock Maximo</label>
-                        <input type="number" name="st_max" id="st_max" wire:model="st_max"
+                        <input type="number" name="st_max_amc" id="st_max_amc" wire:model="st_max_amc"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             placeholder="Máximo">
-                        @error('st_max')
+                        @error('st_max_amc')
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>
@@ -403,21 +382,6 @@
                                 <x-input-error messages="{{ $message }}" />
                             @enderror
                         </div>
-                        <div class="col-span-2 sm:col-span-1">
-                            <label for="editar_departamento"
-                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Departamento</label>
-                            <select id="editar_departamento" wire:model="punto_venta"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                                <option selected="">Seleccionar Departamento</option>
-                                <option value="TV">TV/Monitors</option>
-                                <option value="PC">PC</option>
-                                <option value="GA">Gaming/Console</option>
-                                <option value="PH">Phones</option>
-                            </select>
-                            @error('punto_venta')
-                                <x-input-error messages="{{ $message }}" />
-                            @enderror
-                        </div>
                         <div class="col-span-1 sm:col-span-1">
                             <label for="editar_precio"
                                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Costo
@@ -431,24 +395,24 @@
                             @enderror
                         </div>
                         <div class="col-span-1 sm:col-span-1">
-                            <label for="editar_st_min"
+                            <label for="editar_st_min_amc"
                                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Stock
                                 Mínimo</label>
-                            <input type="number" name="editar_st_min" id="editar_st_min" wire:model="st_min"
+                            <input type="number" name="editar_st_min_amc" id="editar_st_min_amc" wire:model="st_min_amc"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                                 placeholder="Mínimo">
-                            @error('st_min')
+                            @error('st_min_amc')
                                 <x-input-error messages="{{ $message }}" />
                             @enderror
                         </div>
                         <div class="col-span-1 sm:col-span-1">
-                            <label for="editar_st_max"
+                            <label for="editar_st_max_amc"
                                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Stock
                                 Maximo</label>
-                            <input type="number" name="editar_st_max" id="editar_st_max" wire:model="st_max"
+                            <input type="number" name="editar_st_max_amc" id="editar_st_max_amc" wire:model="st_max_amc"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                                 placeholder="Máximo">
-                            @error('st_max')
+                            @error('st_max_amc')
                                 <x-input-error messages="{{ $message }}" />
                             @enderror
                         </div>
@@ -477,7 +441,7 @@
                             d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
                     <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¿Desea eliminar
-                        {{ $catalogoVV->nombre }}?
+                        {{ $catalogo_vista_verde->nombre }}?
                     </h3>
                     <p class="text-gray-500 dark:text-gray-400">El artículo no se eliminara de la base de datos, solo
                         pasara a un estado inactivo.</p>
@@ -505,7 +469,7 @@
                             d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
                     <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¿Desea reingresar
-                        {{ $catalogoV->nombre }}?
+                        {{ $catalogo_vista_verde->nombre }}?
                     </h3>
                     <p class="text-gray-500 dark:text-gray-400">El artículo pasará nuevamente a un estado Activo</p>
                 </div>

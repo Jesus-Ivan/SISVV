@@ -19,7 +19,7 @@ class Articulos extends Component
     public $search;
     public CatalogoVistaVerde $catalogoVV;
     public $codigo;
-    public $stock;
+    public $stock_amc;
 
     #[Validate('required')]
     public $id_familia;
@@ -36,17 +36,14 @@ class Articulos extends Component
     #[Validate('required')]
     public $id_unidad;
 
-    #[Validate('required')]
-    public $punto_venta;
-
     #[Validate('required|numeric|min:1')]
     public $costo_unitario;
 
     #[Validate('required|numeric|min:1')]
-    public $st_min;
+    public $st_min_amc;
 
     #[Validate('required|numeric|min:1')]
-    public $st_max;
+    public $st_max_amc;
 
     #[Computed()]
     public function familias()
@@ -81,9 +78,8 @@ class Articulos extends Component
             'nombre',
             'id_unidad',
             'id_proveedor',
-            'punto_venta',
-            'st_min',
-            'st_max',
+            'st_min_amc',
+            'st_max_amc',
             'costo_unitario'
         );
         $this->dispatch('close-modal');
@@ -104,9 +100,8 @@ class Articulos extends Component
         $this->nombre = $articulo->nombre;
         $this->id_unidad = $articulo->id_unidad;
         $this->id_proveedor = $articulo->id_proveedor;
-        $this->punto_venta = $articulo->punto_venta;
-        $this->st_min = $articulo->st_min;
-        $this->st_max = $articulo->st_max;
+        $this->st_min_amc = $articulo->st_min_amc;
+        $this->st_max_amc = $articulo->st_max_amc;
         $this->costo_unitario = $articulo->costo_unitario;
     }
 
@@ -121,9 +116,8 @@ class Articulos extends Component
             'nombre',
             'id_unidad',
             'id_proveedor',
-            'punto_venta',
-            'st_min',
-            'st_max',
+            'st_min_amc',
+            'st_max_amc',
             'costo_unitario'
         );
         $this->dispatch('close-modal');
@@ -139,7 +133,6 @@ class Articulos extends Component
             'nombre',
             'id_unidad',
             'id_proveedor',
-            'punto_venta',
             'st_min',
             'st_max',
             'costo_unitario'
@@ -200,11 +193,10 @@ class Articulos extends Component
                 //COLUMNAS DE LA TABLA PRINCIPAL
                 'catalogo_vista_verde.codigo',
                 'catalogo_vista_verde.nombre',
-                'catalogo_vista_verde.punto_venta',
                 'catalogo_vista_verde.costo_unitario',
-                'catalogo_vista_verde.stock',
-                'catalogo_vista_verde.st_min',
-                'catalogo_vista_verde.st_max',
+                'catalogo_vista_verde.stock_amc',
+                'catalogo_vista_verde.st_min_amc',
+                'catalogo_vista_verde.st_max_amc',
                 'catalogo_vista_verde.estado',
                 //SOLO INCLUYE LAS COLUMNAS DESEADAS DE LAS TABLAS UNIDAS
                 'familias.familia',
@@ -213,8 +205,7 @@ class Articulos extends Component
                 'proveedores.proveedor',
             ])
             ->orderByRaw('catalogo_vista_verde.codigo')
-            ->paginate(5);
-
+            ->paginate(10);
         return view('livewire.almacen.articulos', [
             'listaArticulos' => $result
         ]);

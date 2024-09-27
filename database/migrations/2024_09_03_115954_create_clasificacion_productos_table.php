@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('familias', function (Blueprint $table) {
+        Schema::create('clasificacion_productos', function (Blueprint $table) {
             $table->integer('id')->autoIncrement()->unsigned();
-            $table->string('familia', 30);
+            $table->string('nombre', 80);
+            $table->string('tipo', 50);
             $table->boolean('estado')->default(1);
+            $table->timestamps('created_at');
+            $table->timestamps('updated_at');
         });
     }
 
@@ -23,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('familias');
+        Schema::dropIfExists('clasificacion_productos');
     }
 };

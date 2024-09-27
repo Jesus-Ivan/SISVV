@@ -46,9 +46,8 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
 
     Route::view('articulos', 'almacen.articulos')->name('almacen.articulos');
     Route::view('asignar', 'almacen.asignar')->name('almacen.asignar');
+    Route::view('clasificacion', 'almacen.Clasificacion.clasificacion')->name('almacen.clasificacion');
     Route::view('proveedores', 'almacen.proveedores')->name('almacen.proveedores');
-    Route::view('familias', 'almacen.familias')->name('almacen.familias');
-    Route::view('categorias', 'almacen.categorias')->name('almacen.categorias');
     Route::view('unidades', 'almacen.unidades')->name('almacen.unidades');
 
     Route::prefix('entradas')->group(function () {

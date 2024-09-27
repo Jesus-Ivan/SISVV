@@ -11,7 +11,6 @@ class VentasExport implements FromArray
 
     public function __construct(array $data, array $puntos_venta, array $metodo_pago)
     {
-        dd($data);
         $this->data = $data;
         $this->puntos_venta = $puntos_venta;
         $this->metodo_pago = $metodo_pago;

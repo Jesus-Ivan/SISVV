@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Sistemas\Puntos;
 
+use App\Models\ConversionCortesia;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
@@ -71,6 +72,12 @@ class Cortesias extends Component
                 //Buscar los detalles de pago
                 $detalles_pagos = DetallesVentaPago::where('folio_venta', $validated['folio_seleccionado'])
                     ->get();
+                //Crear registro en la tabla 'conversiones_cortesias'
+                ConversionCortesia::create([
+                    'user_name' => auth()->user()->name,
+                    'folio_venta' => $result->folio,
+                    'tipo_venta' => $result->tipo_venta
+                ]);
 
                 //Actualizar el tipo de venta, total y observaciones
                 $result->tipo_venta = 'cortesia';
@@ -88,11 +95,20 @@ class Cortesias extends Component
                     $pago->monto = 0;
                     $pago->save();
                 }
-                //Obtenemos los ID de los pagos de la venta, en la tabla 'detalles_ventas_pagos'
-                $pagos = $detalles_pagos->toArray();
-                //Actualizar el estado de cuenta
-                $estado_cuenta = EstadoCuenta::whereIn('id_venta_pago', array_column($pagos, 'id'))->get();
-                dd($estado_cuenta);
+                //Comprobar si la venta tiene id_socio
+                if ($result->id_socio) {
+                    //Obtenemos los ID de los pagos de la venta, en la tabla 'detalles_ventas_pagos'
+                    $id_pagos = array_column($detalles_pagos->toArray(), 'id');
+                    //Buscar los registros correspondientes de pagos de la venta, en el estado de cuenta
+                    $estado_cuenta = EstadoCuenta::whereIn('id_venta_pago', $id_pagos)->get();
+                    //Actualizamos el estado de cuenta, para la cortesia
+                    foreach ($estado_cuenta as $key => $row) {
+                        $row->cargo = 0;
+                        $row->abono = 0;
+                        $row->saldo = 0;
+                        $row->save();
+                    }
+                }
             }, 2);
             session()->flash('success', 'Cortesia ' . $validated['folio_seleccionado'] . ' aplicada correctamente');
         } catch (\Throwable $th) {

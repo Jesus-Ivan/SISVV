@@ -30,7 +30,7 @@ class Socios extends Component
             ->orwhere('socios.apellido_m', 'like', '%' . $this->search . '%')
             ->orWhere('socios.id', '=', $this->search)
             ->orderByDesc('socios.id')
-            ->paginate(5);
+            ->paginate(10);
 
         return view('livewire.recepcion.socios', [
             'listaSocios' => $result

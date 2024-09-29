@@ -52,6 +52,7 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
 
     Route::prefix('entradas')->group(function () {
         Route::view('/', 'almacen.Entradas.entradas')->name('almacen.entradas');
+        Route::view('nueva', 'almacen.Entradas.nueva-entrada')->name('almacen.entradas.nueva');
         Route::view('historial', 'almacen.Entradas.historial')->name('almacen.entradas.historial');
     });
     Route::prefix('salidas')->group(function () {

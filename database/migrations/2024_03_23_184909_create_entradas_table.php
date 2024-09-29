@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('entradas', function (Blueprint $table) {
-            $table->integer('folio')->primary()->unsigned();
-            $table->dateTime('fecha');
+            $table->integer('folio')->autoIncrement()->unsigned();
             $table->integer('folio_orden_compra');
             $table->decimal('subtotal', 10, 2);
             $table->decimal('iva', 10, 2);
             $table->decimal('total', 10, 2);
+            $table->timestamps();
 
             //Relaciones
 

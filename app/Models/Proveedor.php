@@ -21,4 +21,9 @@ class Proveedor extends Model
     {
         return $this->hasMany(CatalogoVistaVerde::class, 'id_proveedor', 'id');
     }
+
+    public function detallesVentasProductos(): HasMany
+    {
+        return $this->hasMany(DetallesVentaProducto::class, 'id_proveedor', 'id');
+    }
 }

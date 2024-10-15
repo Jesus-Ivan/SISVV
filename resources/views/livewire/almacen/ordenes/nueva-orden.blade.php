@@ -69,52 +69,49 @@
                 <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
-                            <th scope="col" class="px-4 py-3">
-                                CÓDIGO
-                            </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3 min-w-32">
                                 DESCRIPCIÓN
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3">
                                 UNIDAD
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3">
                                 PROVEEDOR
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3">
                                 CANTIDAD
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3">
                                 COSTO
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3">
                                 IMPORTE
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3">
                                 IVA
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3">
                                 ALMACÉN
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3">
                                 BAR
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3">
                                 BARRA
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3">
                                 CADDIE
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3">
                                 CAFETERÍA
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3">
                                 COCINA
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3 min-w-32">
                                 ULTIMA COMPRA
                             </th>
-                            <th scope="col" class="px-4 py-3">
+                            <th scope="col" class="px-2 py-3">
                                 ACCIONES
                             </th>
                         </tr>
@@ -123,19 +120,16 @@
                         @foreach ($lista_articulos as $index => $articulo)
                             <tr wire:key='{{ $index }}'
                                 class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                <td class="px-4 py-2">
-                                    {{ $articulo['codigo'] }}
-                                </td>
-                                <td class="px-4 py-2">
+                                <td class="px-2 py-2">
                                     {{ $articulo['nombre'] }}
                                 </td>
-                                <td class="px-4 py-2">
+                                <td class="px-2 py-2">
                                     {{ $this->unidades->find($articulo['id_unidad'])->descripcion }}
                                 </td>
-                                <td class="px-4 py-2">
+                                <td class="px-2 py-2">
                                     {{ $this->proveedores->find($articulo['id_proveedor'])->proveedor }}
                                 </td>
-                                <td class="px-4 py-2">
+                                <td class="px-2 py-2">
                                     @if ($index_articulo == $index)
                                         <input type="number" id="small-input-{{ $index }}"
                                             wire:model="articulo_editando.cantidad"
@@ -144,7 +138,7 @@
                                         {{ $articulo['cantidad'] }}
                                     @endif
                                 </td>
-                                <td class="px-4 py-2">
+                                <td class="px-2 py-2">
                                     @if ($index_articulo == $index)
                                         <input type="number" id="small-input-{{ $index }}"
                                             wire:model="articulo_editando.costo_unitario"
@@ -153,10 +147,10 @@
                                         ${{ $articulo['costo_unitario'] }}
                                     @endif
                                 </td>
-                                <td class="px-4 py-2">
+                                <td class="px-2 py-2">
                                     ${{ $articulo['importe'] }}
                                 </td>
-                                <td class="px-4 py-2">
+                                <td class="px-2 py-2">
                                     @if ($index_articulo == $index)
                                         <input type="number" id="small-input-{{ $index }}"
                                             wire:model="articulo_editando.iva_cant"
@@ -165,28 +159,40 @@
                                         ${{ $articulo['iva_cant'] }}
                                     @endif
                                 </td>
-                                <td class="px-4 py-2">
-                                    {{ $articulo['stock_amc'] }}
+                                <td class="px-2 py-2">
+                                    @foreach ($articulo['almacen'] as $tipo => $item)
+                                        <div>{{ $tipo }}:{{ $item }}</div>
+                                    @endforeach
                                 </td>
-                                <td class="px-4 py-2">
-                                    {{ $articulo['stock_bar'] }}
+                                <td class="px-2 py-2">
+                                    @foreach ($articulo['bar'] as $tipo => $item)
+                                        <div>{{ $tipo }}:{{ $item }}</div>
+                                    @endforeach
                                 </td>
-                                <td class="px-4 py-2">
-                                    {{ $articulo['stock_barra'] }}
+                                <td class="px-2 py-2">
+                                    @foreach ($articulo['barra'] as $tipo => $item)
+                                        <div>{{ $tipo }}:{{ $item }}</div>
+                                    @endforeach
                                 </td>
-                                <td class="px-4 py-2">
-                                    {{ $articulo['stock_caddie'] }}
+                                <td class="px-2 py-2">
+                                    @foreach ($articulo['caddie'] as $tipo => $item)
+                                        <div>{{ $tipo }}:{{ $item }}</div>
+                                    @endforeach
                                 </td>
-                                <td class="px-4 py-2">
-                                    {{ $articulo['stock_caf'] }}
+                                <td class="px-2 py-2">
+                                    @foreach ($articulo['cafeteria'] as $tipo => $item)
+                                        <div>{{ $tipo }}:{{ $item }}</div>
+                                    @endforeach
                                 </td>
-                                <td class="px-4 py-2">
-                                    har
+                                <td class="px-2 py-2">
+                                    @foreach ($articulo['cocina'] as $tipo => $item)
+                                        <div>{{ $tipo }}:{{ $item }}</div>
+                                    @endforeach
                                 </td>
-                                <td class="px-4 py-2">
-                                    aaaaa
+                                <td class="px-2 py-2 min-w-32">
+                                    {{ $articulo['ultima_compra'] }}
                                 </td>
-                                <td class="px-4 py-2">
+                                <td class="px-2 py-2">
                                     @if ($index_articulo == $index)
                                         <div class="flex">
                                             <button type="button" wire:click='confirmarEdicion({{ $index }})'
@@ -272,8 +278,8 @@
                         <label for="codigo"
                             class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Código</label>
                         <input type="text" id="disabled-input" aria-label="disabled input"
-                            class="mb-4 bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                            value="{{ $articulo_seleccionado ? $articulo_seleccionado->codigo : '' }}" disabled>
+                            class=" bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                            value="{{ $articulo_seleccionado ? $articulo_seleccionado['codigo'] : '' }}" disabled>
                     </div>
                     {{-- NOMBRE DEL ARTICULO --}}
                     <div class="col-span-2">
@@ -281,8 +287,8 @@
                             class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Nombre del
                             producto</label>
                         <input type="text" id="disabled-input" aria-label="disabled input"
-                            class="mb-4 bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                            value="{{ $articulo_seleccionado ? $articulo_seleccionado->nombre : '' }}" disabled>
+                            class=" bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                            value="{{ $articulo_seleccionado ? $articulo_seleccionado['nombre'] : '' }}" disabled>
                     </div>
                     {{-- UNIDAD DE MEDIDA --}}
                     <div class="col-span-1">
@@ -323,7 +329,8 @@
                         <label for="fecha"
                             class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Fecha de
                             ultima compra</label>
-                        <input type="text" id="disabled-input" aria-label="disabled input" value="{{ $articulo_seleccionado ? $articulo_seleccionado->ultima_compra : ''}}"
+                        <input type="text" id="disabled-input" aria-label="disabled input"
+                            value="{{ $articulo_seleccionado ? $articulo_seleccionado['ultima_compra'] : '' }}"
                             class="mb-4 bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             value="Fecha" disabled>
                     </div>
@@ -334,6 +341,9 @@
                                 <thead
                                     class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                                     <tr>
+                                        <th scope="col" class="px-6 py-2 text-center">
+
+                                        </th>
                                         <th scope="col" class="px-6 py-2 text-center">
                                             ALMACÉN
                                         </th>
@@ -355,30 +365,38 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr
-                                        class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                        <th scope="row" class="px-6 py-2 text-center">
-                                            {{ $articulo_seleccionado ? $articulo_seleccionado->stock_amc : '' }}
-                                        </th>
-                                        <td class="px-6 py-2 text-center">
-                                            {{ $articulo_seleccionado ? $articulo_seleccionado->stock_bar : '' }}
-                                        </td>
-                                        <td class="px-6 py-2 text-center">
-                                            {{ $articulo_seleccionado ? $articulo_seleccionado->stock_barra : '' }}
-                                        </td>
-                                        <td class="px-6 py-2 text-center">
-                                            {{ $articulo_seleccionado ? $articulo_seleccionado->stock_caddie : '' }}
-                                        </td>
-                                        <td class="px-6 py-2 text-center">
-                                            {{ $articulo_seleccionado ? $articulo_seleccionado->stock_caf : '' }}
-                                        </td>
-                                        <td class="px-6 py-2 text-center">
-                                            6
-                                        </td>
-                                    </tr>
+                                    @foreach ($stock as $index => $row)
+                                        <tr wire:key='{{ $index }}'
+                                            class="uppercase bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                            <th scope="row" class="px-6 py-2 text-center">
+                                                {{ $row['tipo'] }}
+                                            </th>
+                                            <td class="px-6 py-2 text-center">
+                                                {{ $row['stock_alm'] }}
+                                            </td>
+                                            <td class="px-6 py-2 text-center">
+                                                {{ $row['stock_bar'] }}
+                                            </td>
+                                            <td class="px-6 py-2 text-center">
+                                                {{ $row['stock_res'] }}
+                                            </td>
+                                            <td class="px-6 py-2 text-center">
+                                                {{ $row['stock_cad'] }}
+                                            </td>
+                                            <td class="px-6 py-2 text-center">
+                                                {{ $row['stock_caf'] }}
+                                            </td>
+                                            <td class="px-6 py-2 text-center">
+                                                {{ $row['stock_coc'] }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
+                        @error('stock')
+                            <x-input-error messages="{{ $message }}" />
+                        @enderror
                     </div>
                     {{-- CANTIDAD --}}
                     <div class="col-span-1">

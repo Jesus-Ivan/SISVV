@@ -16,7 +16,6 @@
         border: 1pt;
         border-top-style: solid;
         border-top-color: black;
-
     }
 
     .padding-cel {
@@ -70,7 +69,7 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
         <tr class="color-cel">
             <th>DESCRIPCION</th>
             <th>UNIDAD</th>
-            <th>CANTIDAD</th>
+            <th>CANT.</th>
             <th>P.UNITARIO</th>
             <th>IMPORTE</th>
             <th>PROVEEDOR</th>
@@ -80,6 +79,7 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
             <th>CADD.</th>
             <th>CAF.</th>
             <th>COCI.</th>
+            <th>ULTIMA COMPRA</th>
         </tr>
     </thead>
     <tbody>
@@ -91,12 +91,37 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
                 <td>${{ $item->costo_unitario }}</td>
                 <td>${{ $item->importe }}</td>
                 <td>{{ $proveedores[$item->id_proveedor] }}</td>
-                <td>{{ $item->almacen }}</td>
-                <td>{{ $item->bar }}</td>
-                <td>{{ $item->barra }}</td>
-                <td>{{ $item->caddie }}</td>
-                <td>{{ $item->cafeteria }}</td>
-                <td>{{ $item->cocina }}</td>
+                <td>
+                    @foreach ($item->almacen as $key => $stock)
+                        {{ substr($key,0,3) }}:{{ $stock }}
+                    @endforeach
+                </td>
+                <td>
+                    @foreach ($item->bar as $key => $stock)
+                        {{ substr($key,0,3) }}:{{ $stock }}
+                    @endforeach
+                </td>
+                <td>
+                    @foreach ($item->barra as $key => $stock)
+                        {{ substr($key,0,3) }}:{{ $stock }}
+                    @endforeach
+                </td>
+                <td>
+                    @foreach ($item->caddie as $key => $stock)
+                        {{ substr($key,0,3) }}:{{ $stock }}
+                    @endforeach
+                </td>
+                <td>
+                    @foreach ($item->cafeteria as $key => $stock)
+                        {{ substr($key,0,3) }}:{{ $stock }}
+                    @endforeach
+                </td>
+                <td>
+                    @foreach ($item->cocina as $key => $stock)
+                        {{ substr($key,0,3) }}:{{ $stock }}
+                    @endforeach
+                </td>
+                <td>{{ $item->ultima_compra }}</td>
             </tr>
         @endforeach
     </tbody>

@@ -23,6 +23,7 @@ class SistemasController extends Controller
         $codigopv = $request->input('codigopv');    //Obtenemos de la peticion lo parametros
         $fInicio = $request->input('fInicio');
         $fFin = $request->input('fFin');
+
         //Validamos las entradas
         $request->validate([
             'codigopv' => ['required'],

@@ -4,30 +4,39 @@ namespace App\Livewire\Almacen\Entradas;
 
 use App\Models\Entrada as ModelsEntrada;
 use App\Models\OrdenCompra;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Entrada extends Component
 {
-    public $folio_search,  $orden_result = [];
+    use WithPagination;
+    public $mes_busqueda;
 
-    public function buscarOrden()
+    public function mount()
     {
-        //Si existe una orden de compra
-        if (OrdenCompra::find($this->folio_search)) {
-            //Buscar los detalles de la orden de compra
-            $this->orden_result = DB::table('detalles_compras')
-                ->where('folio_orden', $this->folio_search)
-                ->get()
-                ->toArray();
-        }
-        
+        $this->mes_busqueda = now()->toDateString();
     }
     #[Computed()]
     public function entradas()
     {
-        return ModelsEntrada::all();
+        //Crear instancia de carbon del mes buscado
+        $mes_busqueda = Carbon::parse($this->mes_busqueda);
+        //Buscar las entradas
+        return ModelsEntrada::whereYear('created_at', $mes_busqueda->year)
+            ->whereMonth('created_at', $mes_busqueda->month)
+            ->paginate(10);
+    }
+
+    /**
+     * Se ejecuta para buscar las ordenes.
+     */
+    public function buscar()
+    {
+        //Reinicia el paginador.
+        $this->resetPage();
     }
     public function render()
     {

@@ -154,7 +154,10 @@ Route::prefix('pv/{codigopv}')->middleware(['auth', 'puntos'])->group(function (
         Route::get('reporte', [PuntosController::class, 'reporteVentas'])->name('pv.ventas.reporte');
     });
 
+
     Route::view('inventario', 'puntos.Inventario.inventario')->name('pv.inventario');
+    Route::get('prod-vendidos', [PuntosController::class, 'prodVendidos'])->name('pv.prod-vendidos');
+
 
     Route::prefix('solicitudes-mercancia')->group(function () {
         Route::view('/', 'puntos.Inventario.SolicitarMercancia.solicitudes')->name('pv.mercancia');
@@ -182,7 +185,7 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     //DEPARTAMENTO DE PUNTOS DE VENTA
     Route::prefix('PV')->group(function () {
         Route::get('/prod-vendidos', [SistemasController::class, 'prodVendidos'])->name('sistemas.pv.prod-vendidos');
-        Route::post('/prod-vendidos', [SistemasController::class, 'getReporteVendidos'])->name('sistemas.pv.prod-vendidos');
+        //Aqui iba la ruta de productos vendidos
         Route::view('/cortesias', 'sistemas.Puntos.cortesias')->name('sistemas.pv.cortesias');
     });
 
@@ -221,6 +224,7 @@ Route::prefix('portico')->middleware(['auth', 'portico'])->group(function () {
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');
 Route::get('ventas/corte/{caja}/{codigopv?}', [ReportesController::class, 'generarCorte'])->name('ventas.corte');
 Route::get('requisicion/{folio}', [ReportesController::class, 'generarRequisicion'])->name('requisicion');
-
+//Esta ruta debe moverse al departamento de sistemas. cuando almacen e inventarios esten listos
+Route::post('/prod-vendidos', [SistemasController::class, 'getReporteVendidos'])->name('sistemas.pv.prod-vendidos');
 
 require __DIR__ . '/auth.php';

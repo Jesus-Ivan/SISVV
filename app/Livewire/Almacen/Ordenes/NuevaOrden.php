@@ -3,10 +3,15 @@
 namespace App\Livewire\Almacen\Ordenes;
 
 use App\Models\CatalogoVistaVerde;
+use App\Models\DetallesCompra;
 use App\Models\OrdenCompra;
 use App\Models\Proveedor;
+use App\Models\PuntoVenta;
+use App\Models\Stock;
 use App\Models\Unidad;
 use App\Models\UnidadCatalogo;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -19,7 +24,7 @@ class NuevaOrden extends Component
     public array $lista_articulos;
     public $tipo_orden;         //Tipo de orden a registrar
     //El articulo (original) que se selecciona en el modal.
-    public $articulo_seleccionado;
+    public $articulo_seleccionado, $stock = [];
     //Propiedades auxiliares para el modal de agregar articulos a la orden
     public $cantidad = 0, $costo_unitario = 0, $iva = false, $iva_cant = 0, $id_proveedor, $id_unidad = null;
     //Fecha de hoy, para mostrar en la vista y en el registro de la orden de compra
@@ -30,22 +35,42 @@ class NuevaOrden extends Component
     public $index_articulo = -1, $articulo_editando = null;
 
 
+
     public function mount()
     {
+        //inicializamos la fecha de hoy
         $this->hoy = now();
     }
-
-
 
     #[On('selected-articulo')]
     public function onSelectedArticulo($codigo)
     {
         //limpiamos propiedades
-        $this->reset('articulo_seleccionado', 'cantidad', 'costo_unitario', 'iva', 'iva_cant', 'id_proveedor', 'id_unidad');
+        $this->reset('articulo_seleccionado', 'cantidad', 'costo_unitario', 'iva', 'iva_cant', 'id_proveedor', 'id_unidad', 'stock');
         //buscamos el articulo
         $result = CatalogoVistaVerde::find($codigo);
         if ($result) {
-            $this->articulo_seleccionado = $result;
+            //Actualizar el articulo seleccionado
+            $this->articulo_seleccionado = $result->toArray();
+            //Agregar la propiedad de consultado
+            $this->articulo_seleccionado['consultado']  = now()->toDateTimeString();
+
+            //Buscar el stock del articulo
+            $this->stock = Stock::where('codigo_catalogo', $codigo)
+                ->select(
+                    'stock_alm',
+                    'stock_bar',
+                    'stock_res',
+                    'stock_cad',
+                    'stock_caf',
+                    'stock_loc',
+                    'stock_lod',
+                    'stock_coc',
+                    'tipo'
+                )
+                ->get()
+                ->toArray();
+
             $this->cantidad = 1;                                //Establecemos en 1 la cantidad
             $this->id_proveedor = $result->id_proveedor;
         }
@@ -63,7 +88,7 @@ class NuevaOrden extends Component
     {
         try {
             return UnidadCatalogo::with('unidad')
-                ->where('codigo_catalogo', $this->articulo_seleccionado->codigo)
+                ->where('codigo_catalogo', $this->articulo_seleccionado['codigo'])
                 ->get();
         } catch (\Throwable $th) {
             return [];
@@ -98,33 +123,22 @@ class NuevaOrden extends Component
 
     public function agregarArticulo()
     {
-        //Si hay un articulo seleccionado
-        if ($this->articulo_seleccionado) {
             //validamos propiedades
             $validated = $this->validate([
+                'articulo_seleccionado'=> 'required',
                 'cantidad' => 'required|numeric|min:0.01',
                 'costo_unitario' => 'required|numeric|min:0.01',
                 'id_unidad' => 'required',
-                'id_proveedor' => 'required'
+                'id_proveedor' => 'required',
+                'stock' => 'required'
             ]);
-            //Convertir el objeto a array
-            $articulo = $this->articulo_seleccionado->toArray();
-            /*
-            Actualizamos las llaves del array
-            */
-            $articulo['cantidad'] =  $validated['cantidad'];
-            $articulo['costo_unitario'] =  $validated['costo_unitario'];
-            $articulo['iva_cant'] = $this->iva_cant;
-            $articulo['importe'] = $validated['cantidad'] * $validated['costo_unitario'];
-            $articulo['id_proveedor'] =  $validated['id_proveedor'];
-            $articulo['id_unidad'] =  $validated['id_unidad'];
-            $articulo['consultado'] = now();
+
+            $this->functionAgregarCampos($validated);
 
             //agregamos a la lista
-            $this->lista_articulos[] = $articulo;
+            $this->lista_articulos[] = $validated['articulo_seleccionado'];
             //limpiamos propiedades
-            $this->reset('articulo_seleccionado', 'cantidad', 'costo_unitario', 'iva', 'iva_cant', 'id_proveedor', 'id_unidad');
-        }
+            $this->reset('articulo_seleccionado', 'cantidad', 'costo_unitario', 'iva', 'iva_cant', 'id_proveedor', 'id_unidad', 'stock');
     }
 
     public function cancelar()
@@ -204,9 +218,10 @@ class NuevaOrden extends Component
                 'iva' => $iva,
                 'total' => $subtotal + $iva,
             ]);
+            
             foreach ($validated['lista_articulos'] as $key => $articulo) {
                 //creamos los detalles de la orden de compra
-                DB::table('detalles_compras')->insert([
+                DetallesCompra::create([
                     'folio_orden' => $result_orden->folio,
                     'codigo_producto' => $articulo['codigo'],
                     'nombre' => $articulo['nombre'],
@@ -217,17 +232,55 @@ class NuevaOrden extends Component
                     'importe' => $articulo['importe'],
                     'iva' => $articulo['iva_cant'],
                     'subtotal' => 0.0,
-                    'almacen' => $articulo['stock_amc'],
-                    'bar' => $articulo['stock_bar'],
-                    'barra' => $articulo['stock_barra'],
-                    'caddie' => $articulo['stock_caddie'],
-                    'cafeteria' => $articulo['stock_caf'],
-                    'cocina' => 0.0,
-                    'consultado' => $articulo['consultado']
+                    'almacen' => json_encode($articulo['almacen']),
+                    'bar' => json_encode($articulo['bar']),
+                    'barra' => json_encode($articulo['barra']),
+                    'caddie' => json_encode($articulo['caddie']),
+                    'cafeteria' => json_encode($articulo['cafeteria']),
+                    'cocina' => json_encode($articulo['cocina']),
+                    'consultado' => $articulo['consultado'],
+                    'ultima_compra' => $articulo['ultima_compra']
                 ]);
             }
         }, 2);
     }
+
+    /**
+     * Agregamos las llaves faltantes del array
+     */
+    private function functionAgregarCampos(array &$data)
+    {
+        $data['articulo_seleccionado']['cantidad'] =  $data['cantidad'];
+        $data['articulo_seleccionado']['costo_unitario'] =  $data['costo_unitario'];
+        $data['articulo_seleccionado']['iva_cant'] = $this->iva_cant;
+        $data['articulo_seleccionado']['importe'] = $data['cantidad'] * $data['costo_unitario'];
+        $data['articulo_seleccionado']['id_proveedor'] =  $data['id_proveedor'];
+        $data['articulo_seleccionado']['id_unidad'] =  $data['id_unidad'];
+        $data['articulo_seleccionado']['almacen'] =  $this->filterToArray('stock_alm', $data['stock']);
+        $data['articulo_seleccionado']['bar'] =  $this->filterToArray('stock_bar', $data['stock']);
+        $data['articulo_seleccionado']['barra'] =  $this->filterToArray('stock_res', $data['stock']);
+        $data['articulo_seleccionado']['caddie'] =  $this->filterToArray('stock_cad', $data['stock']);
+        $data['articulo_seleccionado']['cafeteria'] =  $this->filterToArray('stock_caf', $data['stock']);
+        $data['articulo_seleccionado']['cocina'] =  $this->filterToArray('stock_coc', $data['stock']);
+    }
+
+    /**
+     * Busca los stocks de un punto dado y los separa por tipo. devuelve array
+     */
+    private function filterToArray($key_punto, $stock_tipo)
+    {
+        $result = [];
+        foreach ($stock_tipo as $row) {
+            $result_filter = array_filter($row, function ($field, $key) use ($key_punto) {
+                return $key == $key_punto;
+            }, ARRAY_FILTER_USE_BOTH);
+            if (count($result_filter)) {
+                $result[$row['tipo']] = reset($result_filter);
+            }
+        }
+        return $result;
+    }
+
     public function render()
     {
         return view('livewire.almacen.ordenes.nueva-orden');

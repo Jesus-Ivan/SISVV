@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('detalles_compras', function (Blueprint $table) {
-            $table->integer('folio_orden')->autoIncrement();
+            $table->integer('id')->autoIncrement()->unsigned();
+            $table->integer('folio_orden');
             $table->integer('codigo_producto');
             $table->string('nombre', 100);
             $table->integer('id_unidad');
@@ -21,14 +22,16 @@ return new class extends Migration
             $table->integer('id_proveedor');
             $table->decimal('importe', total:10, places:2);
             $table->decimal('iva', total:10, places:2);
-            $table->decimal('subtotal', total:10, places:2);
-            $table->decimal('almacen', total:10, places:3);
-            $table->decimal('bar', total:10, places:3);
-            $table->decimal('barra', total:10, places:3);
-            $table->decimal('caddie', total:10, places:3);
-            $table->decimal('cafeteria', total:10, places:3);
-            $table->decimal('cocina', total:10, places:3);
+            $table->decimal('subtotal', total:10, places:2)->nullable();
+            $table->json('almacen');
+            $table->json('bar');
+            $table->json('barra');
+            $table->json('caddie');
+            $table->json('cafeteria');
+            $table->json('cocina');
             $table->dateTime('consultado');
+            $table->date('ultima_compra')->nullable();
+            $table->boolean('aplicado')->default(false);
             /*
             //Relaciones
 

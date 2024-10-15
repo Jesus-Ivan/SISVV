@@ -25,13 +25,15 @@ class RevisarOrdenes extends Component
     {
         return OrdenCompra::whereDate('fecha', '>=', $this->f_inicio)
             ->whereDate('fecha', '<=', $this->f_fin)
+            ->orderBy('folio', 'desc')
             ->paginate(10);
     }
 
     /**
      * Se ejecuta para buscar las ordenes.
      */
-    public function buscar(){
+    public function buscar()
+    {
         //Reinicia el paginador.
         $this->resetPage();
     }

@@ -696,6 +696,9 @@ class ReportesController extends Controller
         );
     }
 
+    /**
+     * Genera el pdf de la requisiscion de compra (almacen)
+     */
     public function generarRequisicion($folio)
     {
         $requisicion = OrdenCompra::with('user')->find($folio);
@@ -708,10 +711,12 @@ class ReportesController extends Controller
 
         $data = [
             'requisicion' => $requisicion->toArray(),
-            'detalle' => $detalle->toArray(),
+            'detalle' => $this->convertJsonColums($detalle->toArray()),
             'unidades' => $unidades,
             'proveedores' => $proveedores,
         ];
+
+
         $pdf = Pdf::loadView('reportes.requisicion', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
         $pdf->setPaper([0, 0, 612.283, 792], 'landscape'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
@@ -804,5 +809,25 @@ class ReportesController extends Controller
         $pdf = Pdf::loadView('reportes.cartera-vencida', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
         return $pdf->stream('reporte-vencidos' . $mes_actual . '.pdf');
+    }
+
+    /**
+     * Recibe los detalles de la requisicion, y convierte las columnas de "almacen, bar, barra, caddie, cafeteria, cocina"
+     * en JSON.
+     * Unicamente convierte dichas columnas del array de entrada.
+     */
+    private function convertJsonColums(array $detalles_requisicion)
+    {  
+        $aux = array_map(function ($item) {
+            $item->almacen = json_decode($item->almacen);
+            $item->bar = json_decode($item->bar);
+            $item->barra = json_decode($item->barra);
+            $item->caddie = json_decode($item->caddie);
+            $item->cafeteria = json_decode($item->cafeteria);
+            $item->cocina = json_decode($item->cocina);
+            return $item;      
+        }, $detalles_requisicion);
+
+        return $aux;
     }
 }

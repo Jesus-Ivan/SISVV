@@ -6,9 +6,8 @@ use App\Models\Caja;
 use App\Models\CambioTurno;
 use App\Models\PuntoVenta;
 use App\Models\Venta;
-use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+
 
 class PuntosController extends Controller
 {
@@ -111,5 +110,16 @@ class PuntosController extends Controller
         $permisospv = $request->get('permisos_pv'); //Obtenemos los permisos incrutados en la peticion
         $codigopv = $request->segment(2); //'codigopv' está en el segundo segmento de la ruta
         return view('puntos.caja.caja', ['codigopv' => $codigopv, 'permisospv' => $permisospv]);
+    }
+
+    public function prodVendidos(Request $request)
+    {
+        $permisospv = $request->get('permisos_pv'); //Obtenemos los permisos incrutados en la peticion
+        $codigopv = $request->segment(2); //'codigopv' está en el segundo segmento de la ruta
+        return view('puntos.Inventario.rep-prod-vendidos', [
+            'puntos' => PuntoVenta::all(),
+            'codigopv' => $codigopv,
+            'permisospv' => $permisospv
+        ]);
     }
 }

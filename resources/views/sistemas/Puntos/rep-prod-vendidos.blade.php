@@ -5,7 +5,7 @@
     </x-slot>
 
     {{-- Contenido --}}
-    <form action="{{ route('sistemas.pv.prod-vendidos') }}" method="POST">
+    <form action="{{ route('prod-vendidos') }}" method="POST">
         @csrf
         <h1 class="font-bold">REPORTE DE PRODUCTOS VENDIDOS</h1>
         <div class="flex gap-3">

@@ -4,7 +4,7 @@
         @include('puntos.nav')
     </x-slot>
     {{-- Contenido --}}
-    <form class="p-4" action="{{ route('sistemas.pv.prod-vendidos') }}" method="POST">
+    <form class="p-4" action="{{ route('prod-vendidos') }}" method="POST">
         @csrf
         <h1 class="font-bold text-lg">REPORTE DE PRODUCTOS VENDIDOS</h1>
         <div class="mt-4 flex gap-3">

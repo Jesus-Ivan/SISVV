@@ -94,6 +94,10 @@
                     @endforeach
                 </tbody>
             </table>
+
+        </div>
+        <div>
+            {{ $this->entradas->links() }}
         </div>
     </div>
 

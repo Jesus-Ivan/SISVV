@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Almacen\Entradas;
 
+use App\Models\DetallesEntrada;
 use App\Models\Entrada as ModelsEntrada;
 use App\Models\OrdenCompra;
 use Carbon\Carbon;
@@ -15,6 +16,8 @@ class Entrada extends Component
     use WithPagination;
     public $mes_busqueda;
 
+    public $entrada_seleccionada, $entrada_detalles = [];
+
     public function mount()
     {
         $this->mes_busqueda = now()->toDateString();
@@ -27,6 +30,7 @@ class Entrada extends Component
         //Buscar las entradas
         return ModelsEntrada::whereYear('created_at', $mes_busqueda->year)
             ->whereMonth('created_at', $mes_busqueda->month)
+            ->orderBy('folio', "DESC")
             ->paginate(10);
     }
 
@@ -37,6 +41,14 @@ class Entrada extends Component
     {
         //Reinicia el paginador.
         $this->resetPage();
+    }
+
+    public function verDetalles($folio)
+    {
+        $this->entrada_seleccionada = $folio;
+        $this->entrada_detalles = DetallesEntrada::where('folio_entrada', $folio)->get();
+        //dd($this->entrada_detalles);
+        $this->dispatch('open-modal', name: 'modal-entrada');
     }
     public function render()
     {

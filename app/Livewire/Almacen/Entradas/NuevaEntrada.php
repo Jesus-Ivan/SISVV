@@ -4,6 +4,7 @@ namespace App\Livewire\Almacen\Entradas;
 
 use App\Models\CatalogoVistaVerde;
 use App\Models\DetallesCompra;
+use App\Models\DetallesEntrada;
 use App\Models\Entrada as EntradaModel;
 use App\Models\OrdenCompra;
 use App\Models\Proveedor;
@@ -88,6 +89,13 @@ class NuevaEntrada extends Component
                     return $producto['fecha_compra'];
                 });
 
+                //Verificamos cada stock de cada articulo que se desea dar entrada
+                foreach ($detalles_orden as $row) {
+                    //Comprobar si el stock ingresado es valido (no null)
+                    if (!($row['cantidad'] || $row['peso']))
+                        throw new Exception("Revisa: " . $row['nombre'] . ", falta cantidad o peso", 1);
+                }
+
                 /**
                  * Calculamos los valores necesarios
                  * */
@@ -108,8 +116,9 @@ class NuevaEntrada extends Component
                         ->update(['aplicado' => true]);
                     //Actualizamos la fecha de ultima compra en el inventario
                     $this->actualizarUltimaCompra($row);
+                    
                     //Creamos el registro del detalle de entrada
-                    DB::table('detalles_entradas')->insert([
+                    DetallesEntrada::create([
                         'id_proveedor' => $row['id_proveedor'],
                         'codigo_producto' => $row['codigo_producto'],
                         'folio_entrada' => $entrada['folio'],
@@ -121,7 +130,8 @@ class NuevaEntrada extends Component
                         'iva' =>  $row['iva'],
                         'fecha_compra' =>  $row['fecha_compra'],
                     ]);
-                    //Aumentamos los stocks
+
+                    //Aumentamos los stock, del producto
                     $this->actualizarStocks($row);
                 }
             }, 2);
@@ -157,11 +167,29 @@ class NuevaEntrada extends Component
 
     private function actualizarStocks($producto)
     {
+        //Buscamos los stocks en la DB, del producto
         $result = Stock::where('codigo_catalogo', $producto['codigo_producto'])
             ->get();
+
+        //Filtrar del resultado de la query previa, las filas cuya columna 'tipo' sea unitario
+        $stock_unitario = $result->where('tipo', 'unitario')->first();
+        //Filtrar del resultado de la query previa, las filas cuyo campo 'tipo' sea peso
+        $stock_peso = $result->where('tipo', 'peso')->first();
+
+        //si el usuario ingreso un valor en el input de cantidad.
         if ($producto['cantidad']) {
+            //Si hay stock unitario en la BD, actualizamos el stock unitario de almacen
+            if ($stock_unitario) {
+                $stock_unitario->stock_alm += $producto['cantidad'];
+                $stock_unitario->save();    //Guardamos el stock
+            }
         }
+
         if ($producto['peso']) {
+            if ($stock_peso) {
+                $stock_peso->stock_alm += $producto['peso'];
+                $stock_peso->save();        //Guardamos el stock
+            }
         }
     }
 

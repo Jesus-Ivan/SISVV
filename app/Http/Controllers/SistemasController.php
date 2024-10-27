@@ -53,4 +53,14 @@ class SistemasController extends Controller
             'Productos vendidos ' . $codigopv . ' - ' . $fInicio . ' - ' . $fFin . '.xlsx'
         );
     }
+
+    public function editarVenta(Request $request)
+    {
+        //Obtener el folio de la url
+        $folioVenta = $request->segment(4);
+        return view('sistemas.Puntos.notas-editar', [
+            'folioVenta' => $folioVenta
+        ]);
+        return "editando";
+    }
 }

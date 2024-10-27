@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('detalles_entradas', function (Blueprint $table) {
+            $table->integer('id')->autoIncrement()->unsigned();
             $table->integer('codigo_producto');
             $table->integer('folio_entrada');
             $table->string('nombre', 100);

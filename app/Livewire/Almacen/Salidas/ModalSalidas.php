@@ -2,19 +2,35 @@
 
 namespace App\Livewire\Almacen\Salidas;
 
-use App\Models\InventarioPrincipal;
+use App\Constants\AlmacenConstants;
+use App\Models\CatalogoVistaVerde;
+use App\Models\Stock;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ModalSalidas extends Component
 {
-    public $articuloSeleccionado;
-    public $cantidad;
+    #[Locked]
+    public $articulo_seleccionado;
+    #[Locked]
+    public $cantidad_stock;
+    #[Locked]
+    public $peso_stock;
 
-    #[On('on-selected-articulo')]
-    public function onSelectedInput(InventarioPrincipal $data)
+    public $cantidad_salida;
+    public $peso_salida;
+
+    #[On('selected-articulo')]
+    public function onSelectedInput(CatalogoVistaVerde $data)
     {
-        $this->articuloSeleccionado = $data->toArray();
+        $this->articulo_seleccionado = $data->toArray();
+        $this->cantidad_stock = Stock::where('codigo_catalogo', $data->codigo)
+            ->where("tipo", AlmacenConstants::CANTIDAD_KEY)
+            ->first();
+        $this->peso_stock =  Stock::where('codigo_catalogo', $data->codigo)
+            ->where("tipo", AlmacenConstants::PESO_KEY)
+            ->first();
     }
 
     public function agregarSalida()
@@ -25,9 +41,9 @@ class ModalSalidas extends Component
         $validated = $this->validate($validation_rules);
         //Emitimos evento para agregar la salida
         $this->dispatch('añadirSalida', [
-            'codigo' => $this->articuloSeleccionado['codigo'],
-            'nombre' => $this->articuloSeleccionado['nombre'],
-            'stock' => $this->articuloSeleccionado['stock'],
+            'codigo' => $this->articulo_seleccionado['codigo'],
+            'nombre' => $this->articulo_seleccionado['nombre'],
+            'stock' => $this->articulo_seleccionado['stock'],
             'cantidad' => $validated['cantidad']
         ]);
         $this->dispatch('close-modal'); //Emitimos evento para cerrar el componente del modal

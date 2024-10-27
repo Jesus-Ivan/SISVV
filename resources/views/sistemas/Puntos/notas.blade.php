@@ -5,6 +5,7 @@
     </x-slot>
     
     {{-- Contenido --}}
-    <livewire:sistemas.puntos.cortesias />
+    <livewire:sistemas.puntos.notas />
+
 
 </x-app-layout>

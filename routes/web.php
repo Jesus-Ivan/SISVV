@@ -185,7 +185,9 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     //DEPARTAMENTO DE PUNTOS DE VENTA
     Route::prefix('PV')->group(function () {
         Route::get('prod-vendidos', [SistemasController::class, 'prodVendidos'])->name('sistemas.pv.prod-vendidos');
-        Route::view('cortesias', 'sistemas.Puntos.cortesias')->name('sistemas.pv.cortesias');
+        Route::view('notas', 'sistemas.Puntos.notas')->name('sistemas.pv.notas');
+        Route::get('/editar/{folioventa}', [SistemasController::class, 'editarVenta'])->name('sistemas.pv.editar');
+
     });
 
     //DEPARTAMENTO DE RECEPCIÓN

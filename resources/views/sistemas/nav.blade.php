@@ -78,21 +78,15 @@
                         <ul class="py-2 text-sm text-gray-700 dark:text-gray-400" aria-labelledby="dropdownLargeButton">
                             {{-- NOTAS DE VENTA --}}
                             <li>
-                                <a href="{{ route('almacen.ordenes') }}"
-                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Notas
-                                    de venta</a>
+                                <a href="{{ route('sistemas.pv.notas') }}"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                    Notas de venta</a>
                             </li>
                             {{-- REPORTE DE PRODUCTOS VENDIDOS --}}
                             <li>
                                 <a href="{{ route('sistemas.pv.prod-vendidos') }}"
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
                                     Rep.Prod.Vendidos</a>
-                            </li>
-                            {{-- CORTESIAS --}}
-                            <li>
-                                <a href="{{ route('sistemas.pv.cortesias') }}"
-                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                                    Cortesias</a>
                             </li>
                         </ul>
                     </div>

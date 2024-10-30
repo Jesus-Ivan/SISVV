@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('conversiones_cortesias', function (Blueprint $table) {
+        Schema::create('correcciones_ventas', function (Blueprint $table) {
             $table->id();
             $table->string('user_name',200);
             $table->integer('folio_venta');
             $table->string('tipo_venta',200);
+            $table->string('solicitante_name',255);
+            $table->integer('id_motivo');
             $table->timestamps();
         });
     }

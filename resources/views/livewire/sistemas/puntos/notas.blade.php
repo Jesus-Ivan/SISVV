@@ -17,10 +17,10 @@
         {{-- INPUTS --}}
         <div class="inline-flex grow">
             @if ($tipo_busqueda == 'FOL')
-                <input wire:model='folio_busqueda' type="text" id="folio" placeholder="Folio venta"
+                <input wire:model='folio_busqueda' type="text" placeholder="Folio venta"
                     class="h-10 block w-48 p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
             @else
-                <input wire:model='fecha_busqueda' type="date" id="fecha"
+                <input wire:model='fecha_busqueda' type="date" 
                     class="h-10 block w-48 p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
             @endif
         </div>

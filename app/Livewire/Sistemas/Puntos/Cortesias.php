@@ -46,7 +46,7 @@ class Cortesias extends Component
     public function editarVenta($folio)
     {
         $this->folio_seleccionado = $folio;
-        $this->dispatch('open-modal',  name: 'modalObservaciones'); //ABRIMOS EL MODAL PARA PODER ELIMINAR
+        $this->dispatch('open-modal',  name: 'modalObservaciones'); //ABRIMOS EL MODAL
     }
     public function confirmarCortesia()
     {

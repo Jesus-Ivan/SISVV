@@ -8,6 +8,7 @@ use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\MotivoCorreccion;
 use App\Models\PuntoVenta;
+use App\Models\Socio;
 use App\Models\TipoPago;
 use App\Models\User;
 use App\Models\Venta;
@@ -15,15 +16,20 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class NotasEditar extends Component
 {
     //Datos generales para la correcion
     public $solicitante_id, $motivo_id;
-
-    public $observaciones;      //Para las cortesias
+    //Para las cortesias
+    public $observaciones;
+    //Datos editables
     public $venta = [], $productos = [], $pagos = [];
+
+    //Nuevo socio
+    public $nuevo_socio;
 
     //Formulario de operaciones
     public VentaEditarForm $editarForm;
@@ -31,12 +37,24 @@ class NotasEditar extends Component
     //Setear el valor obtenido desde del controlador
     public function mount($folio)
     {
-        //Buscar la venta
-        $this->venta = Venta::find($folio)->toArray();
-        //Buscar los productos de la venta
-        $this->productos = DetallesVentaProducto::where('folio_venta', $folio)->get()->toArray();
-        //Buscar los pagos de la venta
-        $this->pagos = DetallesVentaPago::where('folio_venta', $folio)->get()->toArray();
+        //Consultas a la BD
+        $venta = Venta::find($folio)
+            ->toArray();
+        $productos = DetallesVentaProducto::with('catalogoProductos')
+            ->where('folio_venta', $folio)
+            ->get()
+            ->toArray();
+        $pagos = DetallesVentaPago::where('folio_venta', $folio)
+            ->get()
+            ->toArray();
+
+        //Setear valores editables
+        $this->venta = $venta;
+        $this->productos =  $productos;
+        $this->pagos = $pagos;
+
+        //Resguardar los originales
+        $this->editarForm->setOriginal($venta, $productos, $pagos);
     }
 
     #[Computed()]
@@ -47,6 +65,32 @@ class NotasEditar extends Component
             ->orderBy('fecha_apertura', 'DESC')
             ->limit(35)
             ->get();
+    }
+
+    //Calcula el total de la tabla de productos
+    #[Computed()]
+    public function total_productos()
+    {
+        $productos = array_filter($this->productos, function ($producto) {
+            return ! array_key_exists('deleted', $producto);
+        });
+        return array_sum(array_column($productos, 'subtotal'));
+    }
+
+    //Calcula el total de la tabla de pagos
+    #[Computed()]
+    public function total_pagos()
+    {
+        $pagos = array_filter($this->pagos, function ($pago) {
+            return ! array_key_exists('deleted', $pago);
+        });
+        return array_sum(array_column($pagos, 'monto'));
+    }
+
+    #[On('on-selected-socio')]
+    public function onSelectedSocio(Socio $socio)
+    {
+        $this->nuevo_socio = $socio->toArray();
     }
 
     /**
@@ -97,15 +141,103 @@ class NotasEditar extends Component
 
     public function guardarCambios()
     {
+        $validated = $this->validateCorreccion();
+
+        try {
+            DB::transaction(function () use ($validated) {
+                //Guardamos los cambios del punto de venta
+                $this->editarForm->actualizarPunto($validated['venta']);
+                //Cambiar el socio titular
+                $this->editarForm->actualizarSocioTitular($validated['venta'], $this->nuevo_socio);
+                //Actualizar los productos
+                $this->editarForm->actualizarProductos($this->productos);
+                $this->editarForm->actualizarTotal($this->total_productos);
+                //Actualizar los metodos de pago
+                $this->editarForm->actualizarPagos($this->pagos);
+
+                //Crear el registro de la bitacora
+                $this->editarForm->registrarCorreccion($validated['venta'], $validated['solicitante_id'], $validated['motivo_id']);
+            });
+
+            //Redirigir al usuario a la pantalla principal
+            $this->redirectRoute('sistemas.pv.notas');
+        } catch (\Throwable $th) {
+            //Mensaje de session
+            session()->flash('fail', $th->getMessage());
+            //evento para abrir el action message
+            $this->dispatch('open-action-message');
+        }
+    }
+
+    //Limpia el socio titular nuevo, que se selecciono
+    public function limpiarTitular()
+    {
+        $this->reset('nuevo_socio');
+    }
+    //Elimina el producto de la tabla
+    public function eliminarProducto($index)
+    {
+        //Marcar el producto como eliminado
+        $this->productos[$index]['deleted'] = true;
+    }
+
+    public function eliminarPago($index)
+    {
+        $this->pagos[$index]['deleted'] = true;
+    }
+
+    public function buscarSocioPago($index)
+    {
+        //Buscar al socio
+        $socio = Socio::find($this->pagos[$index]['id_socio']);
+        //Si existe
+        if ($socio) {
+            //Cambiar al socio del metodo de pago
+            $this->pagos[$index]['nombre'] = $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m;
+        } else {
+            //Si no existe, mostrar el mensaje de error
+            session()->flash('fail', 'No existe el socio');
+            //evento para abrir el action message
+            $this->dispatch('open-action-message');
+            //Reestablecer el valor original del id
+            $this->pagos[$index]['id_socio'] = $this->editarForm->pagos[$index]['id_socio'];
+            //Reestablecer el nombre original
+            $this->pagos[$index]['nombre'] = $this->editarForm->pagos[$index]['nombre'];
+        }
+    }
+
+    public function eliminarNota()
+    {
+        $validated = $this->validateCorreccion();
+
+        try {
+            DB::transaction(function () use ($validated) {
+                //Eliminar la nota
+                $this->editarForm->eliminarNota($validated['venta']);
+                //Crear el registro de la bitacora
+                $this->editarForm->registrarCorreccion($validated['venta'], $validated['solicitante_id'], $validated['motivo_id']);
+            });
+
+            //Mensaje de session
+            session()->flash('success', 'Nota eliminada con exito');
+            //Redirigir al usuario a la pantalla principal
+            $this->redirectRoute('sistemas.pv.notas');
+        } catch (\Throwable $th) {
+            //Mensaje de session
+            session()->flash('fail', $th->getMessage());
+            //Evento para el action message
+            $this->dispatch('open-action-message');
+        }
+    }
+
+    private function validateCorreccion()
+    {
         $validated = $this->validate([
             'venta' => 'required|min:1',
+            'solicitante_id' => 'required',
+            'motivo_id' => 'required',
         ]);
-        //Guardamos los cambios del punto de venta
-        $this->editarForm->actualizarPunto(
-            $validated['venta'],
-            $validated['clave_punto_venta'],
-            $validated['corte_caja']
-        );
+        return $validated;
     }
 
     public function render()

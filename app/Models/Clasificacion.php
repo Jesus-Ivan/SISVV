@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Clasificacion extends Model
 {
@@ -11,10 +12,8 @@ class Clasificacion extends Model
 
     //Nombre de la tabla
     protected $table = 'clasificacion_productos';
-    //Desactivar los timestamps para este modelo
-    public $timestamps = false;
     //Propiedades restringidas para asignacion masiva
     protected $guarded = ['id'];
-     //Clave primaria
-     protected $primaryKey = 'id';
+    //Clave primaria
+    protected $primaryKey = 'id';
 }

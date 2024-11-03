@@ -20,6 +20,22 @@ class CatalogoVistaVerde extends Model
 
     public function proveedor(): BelongsTo
     {
-        return $this->belongsTo(Proveedor::class, 'id_proveedor', 'id');
+        return $this->belongsTo(Proveedor::class, 'id_proveedor', 'id')->withDefault([
+            'nombre'=> 'N/A'
+        ]);
+    }
+    
+    public function familia(): BelongsTo
+    {
+        return $this->belongsTo(Clasificacion::class, 'id_familia', 'id')->withDefault([
+            'nombre'=> 'N/A'
+        ]);
+    }
+
+    public function categoria(): BelongsTo
+    {
+        return $this->belongsTo(Clasificacion::class, 'id_categoria', 'id')->withDefault([
+            'nombre'=> 'N/A'
+        ]);
     }
 }

@@ -46,7 +46,8 @@ class ProductosVendExport implements FromArray
                     'cantidad' => $producto->cantidad,
                     'precio' => $producto->precio,
                     'importe' => $producto->subtotal,
-                    'fecha' => substr($venta['fecha_apertura'], 0, 10),     //Removemos la hora
+                    'fecha' => $producto['inicio'],
+                    //'fecha' => substr($venta['fecha_apertura'], 0, 10),     //Removemos la hora
                     'observaciones' => $venta['observaciones']
                 ];
             }

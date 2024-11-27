@@ -74,6 +74,9 @@
                     Venta</label>
                 <input type="number" id="costo_unitario" wire:model="formEdit.costo_unitario"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                @error('formEdit.costo_unitario')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
             </div>
             <!-- PRECIO EMPLEADO -->
             <div class="min-w-52">
@@ -100,16 +103,17 @@
                 </select>
             </div>
             <div class="min-w-72">
-                <label for="estado" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Estado</label>
+                <label for="estado"
+                    class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Estado</label>
                 <select id="estado" wire:model="formEdit.estado"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                     <option selected value="{{ null }}">SELECCIONAR</option>
-                    @if ($formEdit->estado == '1')
-                        <option value="1">ACTIVO</option>
-                    @else
-                        <option value="0">INACTIVO</option>
-                    @endif
+                    <option value="1">ACTIVO</option>
+                    <option value="0">INACTIVO</option>
                 </select>
+                @error('formEdit.estado')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
             </div>
         </div>
 
@@ -123,7 +127,7 @@
             <div class="w-fit">
                 <label for="unidad"
                     class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Unidad</label>
-                <select id="id_unidad" wire:model='formArticulo.id_unidad'
+                <select id="id_unidad" wire:model='formEdit.id_unidad'
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                     <option selected value="{{ null }}">SELECCIONAR</option>
                     @foreach ($this->unidades as $unidad)
@@ -135,18 +139,18 @@
             <div class="w-fit">
                 <label for="costo_unidad"
                     class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Precio</label>
-                <input type="number" id="costo" wire:model='formArticulo.costo'
+                <input type="number" id="costo" wire:model='formEdit.costo_unidad'
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
             </div>
             <!-- BOTON DE AGREGAR -->
             <div>
-                <button type="button" wire:click='agregarUnidad'
+                <button type="button" wire:click='añadirUnidad'
                     class="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">
                     Agregar
                 </button>
             </div>
-
         </div>
+        
         <!-- TABLA DE UNIDADES -->
         <div class="flex justify-center">
             <div class="relative overflow-x-auto shadow-md sm:rounded-lg my-2">
@@ -159,34 +163,47 @@
                             <th scope="col" class="px-6 py-3">
                                 PRECIO
                             </th>
-                            <th scope="col" class="px-6 py-3">
+                            <th scope="col" class="px-6 py-3 text-center">
                                 ACCIÓN
                             </th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($formEdit->unidades as $unidad)
-                            <tr id="{{ $unidad['temp'] }}"
-                                class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
-                                <th scope="row"
-                                    class="px-6 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                    {{ $unidad['id_unidad'] }}
-                                </th>
-                                <td class="px-6 py-2">
-                                    ${{ $unidad['costo'] }}
-                                </td>
-                                <td class="px-6 py-2">
-                                    <button type="button" wire:click='borrarUnidad({{ $unidad['temp'] }})'
-                                        class="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                            fill="currentColor" class="w-5 h-5">
-                                            <path fill-rule="evenodd"
-                                                d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                </td>
-                            </tr>
+                        @foreach ($formEdit->unidades as $index => $unidadItem)
+                            @if (!array_key_exists('deleted', $unidadItem))
+                                <tr
+                                    class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                                    <th scope="row"
+                                        class="px-6 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                        @if (array_key_exists('unidad', $unidadItem))
+                                            {{ $unidadItem['unidad']['descripcion'] }}
+                                        @else
+                                            {{ $this->unidades->find($unidadItem['id_unidad'])->descripcion }}
+                                        @endif
+                                    </th>
+                                    <td class="px-6 py-2">
+                                        <div class="flex items-center">
+                                            $<input type="number"
+                                                wire:model="formEdit.unidades.{{ $index }}.costo_unidad"
+                                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-24 p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                                            @error('formEdit.costo_unidad')
+                                                <x-input-error messages="{{ $message }}" />
+                                            @enderror
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-2">
+                                        <button type="button" wire:click='confirmarEliminar({{ $index }})'
+                                            class="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                fill="currentColor" class="w-5 h-5">
+                                                <path fill-rule="evenodd"
+                                                    d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endif
                         @endforeach
                     </tbody>
                 </table>
@@ -206,7 +223,7 @@
             </svg>Cancelar
         </a>
         {{-- Boton de guardar cambios --}}
-        <a type="button" wire:click='register'
+        <a type="button" wire:click='confirmEdit'
             class="my-2 text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
             <svg class="w-5 h-5 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
                 height="24" fill="currentColor" viewBox="0 0 24 24">
@@ -216,8 +233,6 @@
             </svg>
             Guardar Cambios
         </a>
-
-
     </div>
 
     <!--Alerts-->

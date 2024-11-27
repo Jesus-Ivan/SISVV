@@ -51,7 +51,7 @@
                                 {{ $proveedores->id }}
                             </td>
                             <td class="px-6 py-4 uppercase">
-                                {{ $proveedores->proveedor }}
+                                {{ $proveedores->nombre }}
                             </td>
                             <td class="px-6 py-4 uppercase">
                                 {{ $proveedores->rfc }}
@@ -120,16 +120,16 @@
     {{-- Modal para añadir proveedor --}}
     <x-modal name="añadirPr" title="AÑADIR NUEVO PROVEEDOR">
         <x-slot:body>
-            <form class="p-4 md:p-5">
+            <form class="p-1 md:p-1">
                 <div class="grid gap-4 mb-4 grid-cols-2">
                     <div class="col-span-2">
                         <label for="nombre_pr"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre del
                             proveedor</label>
-                        <input type="text" name="nombre_pr" id="nombre_pr" wire:model="proveedor"
+                        <input type="text" name="nombre_pr" id="nombre_pr" wire:model="nombre"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             placeholder="Nombre" required>
-                        @error('proveedor')
+                        @error('nombre')
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>
@@ -186,10 +186,10 @@
                             <label for="editar_pr"
                                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre del
                                 proveedor</label>
-                            <input type="text" name="editar_pr" id="editar_pr" wire:model="proveedor"
+                            <input type="text" name="editar_pr" id="editar_pr" wire:model="nombre"
                                 class="bg-gray-50 border borsder-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                                 placeholder="Nombre" required>
-                            @error('proveedor')
+                            @error('nombre')
                                 <x-input-error messages="{{ $message }}" />
                             @enderror
                         </div>
@@ -250,7 +250,7 @@
                             d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
                     <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¿Desea eliminar
-                        {{ $accionesProveedor->proveedor }}?
+                        {{ $accionesProveedor->nombre }}?
                     </h3>
                     <p class="text-gray-500 dark:text-gray-400">El proveedor no se eliminara de la base de datos, solo
                         pasara a un estado inactivo.</p>

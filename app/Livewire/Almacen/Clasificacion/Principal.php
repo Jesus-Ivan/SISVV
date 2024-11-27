@@ -123,7 +123,7 @@ class Principal extends Component
                 'clasificacion_productos.estado',
             ])
             ->orderByRaw('clasificacion_productos.id')
-            ->paginate(10);
+            ->paginate(20);
         return view('livewire.almacen.clasificacion.principal', [
             'listaClasificacion' => $result
         ]);

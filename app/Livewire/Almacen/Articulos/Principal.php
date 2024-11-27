@@ -21,11 +21,6 @@ class Principal extends Component
         $this->resetPage();
     }
 
-    public function editarArticulo($articulo)
-    {
-        $this->form->editArticulo($articulo);
-    }
-
     #[Computed()]
     public function articulos()
     {

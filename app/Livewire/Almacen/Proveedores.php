@@ -14,7 +14,7 @@ class Proveedores extends Component
     public Proveedor $accionesProveedor;
 
     #[Validate('required|min:5|max:20')]
-    public $proveedor;
+    public $nombre;
     #[Validate('required|min:12|max:14')]
     public $rfc;
     #[Validate('required|numeric|min:1')]
@@ -27,7 +27,7 @@ class Proveedores extends Component
     {
         $validated = $this->validate();
         Proveedor::create($validated);
-        $this->reset('proveedor', 'rfc', 'consumo', 'credito_compra');
+        $this->reset('nombre', 'rfc', 'consumo', 'credito_compra');
         $this->dispatch('close-modal');
         session()->flash('success', "Proveedor registrado con exito"); //MENSAJE DE ALERTA CUANDO SE REGISTRE CORRECTAMENTE
         $this->dispatch('open-action-message');
@@ -39,7 +39,7 @@ class Proveedores extends Component
     {
         $this->dispatch('open-modal',  name: 'modificarPr'); //SE ABRE EL MODAL PARA PODER EDITAR
         $this->accionesProveedor = $proveedor;
-        $this->proveedor = $proveedor->proveedor;
+        $this->nombre = $proveedor->nombre;
         $this->rfc = $proveedor->rfc;
         $this->consumo = $proveedor->consumo;
         $this->credito_compra = $proveedor->credito_compra;
@@ -50,7 +50,7 @@ class Proveedores extends Component
     {
         $validated = $this->validate();
         $this->accionesProveedor->update($validated);
-        $this->reset('proveedor', 'rfc', 'consumo', 'credito_compra');
+        $this->reset('nombre', 'rfc', 'consumo', 'credito_compra');
         $this->dispatch('close-modal');
         session()->flash('success', "Cambios registrados con exito"); //MENSAJE DE ALERTA CUANDO SE EDITE CORRECTAMENTE
         $this->dispatch('open-action-message');
@@ -58,15 +58,15 @@ class Proveedores extends Component
 
     public function cancelarEdit()
     {
-        $this->reset('proveedor', 'rfc', 'consumo', 'credito_compra');
+        $this->reset('nombre', 'rfc', 'consumo', 'credito_compra');
         $this->dispatch('close-modal');
     }
 
     //ELIMINAMOS PROVEEDOR DE LA BASE DE DATOS
-    public function delete(Proveedor $proveedor)
+    public function delete(Proveedor $nombre)
     {
         $this->dispatch('open-modal',  name: 'eliminarPr'); //ABRIMOS EL MODAL PARA PODER ELIMINAR
-        $this->accionesProveedor = $proveedor;
+        $this->accionesProveedor = $nombre;
     }
 
     //CONFIRMAMOS LA ELIMINACION DEL PROVEEDOR
@@ -80,10 +80,10 @@ class Proveedores extends Component
     }
 
     //REINGRESAMOS EL PROVEEDOR 
-    public function reingresar(Proveedor $proveedor)
+    public function reingresar(Proveedor $nombre)
     {
         $this->dispatch('open-modal',  name: 'reingresarPr'); //ABRIMOS EL MODAL PARA PODER REINGRESAR
-        $this->accionesProveedor = $proveedor;
+        $this->accionesProveedor = $nombre;
     }
 
     //CONFIRMAMOS EL REINGRESO DEL PROVEEDOR
@@ -105,7 +105,7 @@ class Proveedores extends Component
     public function render()
     {
         return view('livewire.almacen.proveedores', [
-            'listaProveedores' => Proveedor::where('proveedor', 'like', '%' . $this->search . '%')->orWhere('id', '=', $this->search)
+            'listaProveedores' => Proveedor::where('nombre', 'like', '%' . $this->search . '%')->orWhere('id', '=', $this->search)
                 ->paginate(5)
         ]);
     }

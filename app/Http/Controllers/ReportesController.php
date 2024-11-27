@@ -784,6 +784,8 @@ class ReportesController extends Controller
             } else {
                 //Si no existe dentro del array
                 $socio = Socio::with('socioMembresia')->where('id', $estado->id_socio)->first();
+                if(!$socio)
+                    continue;
                 //creamos los datos del socio que se van a agregar a la tabla
                 $dataSocio = [
                     'id_socio' => $estado->id_socio,

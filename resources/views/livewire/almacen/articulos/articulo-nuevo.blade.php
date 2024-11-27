@@ -123,8 +123,11 @@
             <div class="w-fit">
                 <label for="costo_unidad"
                     class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Precio</label>
-                <input type="number" id="costo" wire:model='formArticulo.costo'
+                <input type="number" id="costo" wire:model='formArticulo.costo_unidad'
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                @error('formArticulo.costo_unidad')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
             </div>
             <!-- BOTON DE AGREGAR -->
             <div>
@@ -158,10 +161,10 @@
                                 class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
                                 <th scope="row"
                                     class="px-6 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                    {{ $unidad['id_unidad'] }}
+                                    {{ $this->unidades->find($unidad['id_unidad'])->descripcion }}
                                 </th>
                                 <td class="px-6 py-2">
-                                    ${{ $unidad['costo'] }}
+                                    ${{ $unidad['costo_unidad'] }}
                                 </td>
                                 <td class="px-6 py-2">
                                     <button type="button" wire:click='borrarUnidad({{ $unidad['temp'] }})'
@@ -204,8 +207,6 @@
             </svg>
             Guardar Artículo
         </a>
-
-
     </div>
 
     <!--Alerts-->

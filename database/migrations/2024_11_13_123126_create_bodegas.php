@@ -11,12 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('traspasos', function (Blueprint $table) {
-            $table->integer('folio')->autoIncrement()->unsigned();
-            $table->integer('id_user');
-            $table->string('observaciones', 255)->nullable();
-            $table->integer('movimientos');
-            $table->boolean('estado')->nullable();
+        Schema::create('bodegas', function (Blueprint $table) {
+            $table->string('clave', 50)->primary();
+            $table->string('descripcion', 255);
+            $table->string('tipo', 20);
             $table->timestamps();
         });
     }
@@ -26,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('traspasos');
+        Schema::dropIfExists('bodegas');
     }
 };

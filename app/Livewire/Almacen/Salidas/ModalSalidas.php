@@ -6,11 +6,15 @@ use App\Constants\AlmacenConstants;
 use App\Models\CatalogoVistaVerde;
 use App\Models\Stock;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\Modelable;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ModalSalidas extends Component
 {
+    #[Modelable]
+    public $clave_stock_origen;
+
     #[Locked]
     public $articulo_seleccionado;
     #[Locked]
@@ -35,19 +39,15 @@ class ModalSalidas extends Component
 
     public function agregarSalida()
     {
-        $validation_rules = [
-            'cantidad' => 'required|numeric|min:1'
-        ];
-        $validated = $this->validate($validation_rules);
         //Emitimos evento para agregar la salida
         $this->dispatch('añadirSalida', [
             'codigo' => $this->articulo_seleccionado['codigo'],
             'nombre' => $this->articulo_seleccionado['nombre'],
-            'stock' => $this->articulo_seleccionado['stock'],
-            'cantidad' => $validated['cantidad']
+            'cantidad_salida' => $this->cantidad_salida,
+            'peso_salida' => $this->peso_salida
         ]);
         $this->dispatch('close-modal'); //Emitimos evento para cerrar el componente del modal
-        $this->reset();
+        $this->reset('articulo_seleccionado', 'cantidad_stock', 'peso_stock', 'cantidad_salida', 'peso_salida');
     }
 
     public function render()

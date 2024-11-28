@@ -139,6 +139,12 @@
             @include('livewire.puntos.ventas.nueva.include.modal-pagos-body')
         </x-slot>
     </x-modal>
+    {{--Modal de transferir--}}
+    <x-modal name="modal-transferir" title="Transferir producto">
+        <x-slot name='body'>
+            @include('livewire.puntos.ventas.nueva.include.modal-transferir-body')
+        </x-slot>
+    </x-modal>
     <!--Alerts-->
     <x-action-message on='action-message-venta'>
         @if (session('success'))

@@ -72,7 +72,7 @@
                                 <option value="{{ null }}">Seleccionar</option>
                                 @foreach ($this->proveedores as $index_prov => $prov)
                                     <option wire:key='{{ $index_prov }}' value="{{ $prov->id }}">
-                                        {{ $prov->proveedor }}</option>
+                                        {{ $prov->nombre }}</option>
                                 @endforeach
                             </select>
                         </td>

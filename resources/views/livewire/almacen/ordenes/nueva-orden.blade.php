@@ -127,7 +127,7 @@
                                     {{ $this->unidades->find($articulo['id_unidad'])->descripcion }}
                                 </td>
                                 <td class="px-2 py-2">
-                                    {{ $this->proveedores->find($articulo['id_proveedor'])->proveedor }}
+                                    {{ $this->proveedores->find($articulo['id_proveedor'])->nombre }}
                                 </td>
                                 <td class="px-2 py-2">
                                     @if ($index_articulo == $index)
@@ -317,7 +317,7 @@
                             <option selected value="">Seleccionar Proveedor</option>
                             @foreach ($this->proveedores as $index_prov => $prov)
                                 <option wire:key='{{ $index_prov }}' value="{{ $prov->id }}">
-                                    {{ $prov->proveedor }}</option>
+                                    {{ $prov->nombre }}</option>
                             @endforeach
                         </select>
                         @error('id_proveedor')

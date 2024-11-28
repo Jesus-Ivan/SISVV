@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Salida extends Model
 {
@@ -18,4 +19,15 @@ class Salida extends Model
     //Clave primaria
     protected $primaryKey = 'folio';
 
+    public function bodegaOrigen(): BelongsTo
+    {
+        return $this->belongsTo(Bodega::class, 'clave_origen', 'clave')
+            ->withDefault(['descripcion' => 'clave bodega invalida']);
+    }
+
+    public function destino(): BelongsTo
+    {
+        return $this->belongsTo(Bodega::class, 'clave_destino', 'clave')
+        ->withDefault(['descripcion' => 'clave bodega invalida']);
+    }
 }

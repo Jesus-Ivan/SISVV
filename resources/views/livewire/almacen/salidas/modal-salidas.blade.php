@@ -37,34 +37,28 @@
                     Unitario</label>
                 <input type="text" id="disabled-input" aria-label="disabled input"
                     class="bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    value="{{ $articulo_seleccionado ? $cantidad_stock : '' }}" disabled>
+                    value="{{ $cantidad_stock ? $cantidad_stock->$clave_stock_origen : '' }}" disabled>
             </div>
             {{-- EXISTENCIAS EN EL ORIGEN (Peso) --}}
             <div>
                 <label for="stock" class="mb-2 text-sm font-medium text-gray-900 dark:text-white">Stock Peso</label>
                 <input type="text" id="disabled-input" aria-label="disabled input"
                     class="bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    value="{{ $articulo_seleccionado ? $peso_stock : '' }}" disabled>
+                    value="{{ $peso_stock ? $peso_stock->$clave_stock_origen : '' }}" disabled>
             </div>
             {{-- CANTIDAD PARA DAR SALIDA (cantidad) --}}
             <div class="col-span-1 sm:col-span-1">
                 <label for="cantidad" class="mb-2 text-sm font-medium text-gray-900 dark:text-white">Cantidad</label>
-                <input type="number" name="cantidad" id="cantidad" wire:model="cantidad"
+                <input type="number" name="cantidad" id="cantidad" wire:model="cantidad_salida"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                     placeholder="Cantidad">
-                @error('cantidad')
-                    <x-input-error messages="{{ $message }}" />
-                @enderror
             </div>
             {{-- CANTIDAD PARA DAR SALIDA (peso) --}}
             <div class="col-span-1 sm:col-span-1">
                 <label for="cantidad" class="mb-2 text-sm font-medium text-gray-900 dark:text-white">Peso</label>
-                <input type="number" name="cantidad" id="cantidad" wire:model="cantidad"
+                <input type="number" name="cantidad" id="cantidad" wire:model="peso_salida"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                     placeholder="Peso">
-                @error('cantidad')
-                    <x-input-error messages="{{ $message }}" />
-                @enderror
             </div>
         </div>
     </form>

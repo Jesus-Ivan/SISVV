@@ -48,6 +48,11 @@ class VentaForm extends Form
     //public $totalSinDescuento = 0;  //Centa total temporal en caso que se le aplique un descuento
     //public $totalConDescuento = 0;  //El total de la venta final
 
+    #[Locked]
+    public $indexTransferible;        //Es el posible producto a transferir
+    public $seachVenta = '';          //el parametro de busqueda, del modal de tranferir producto
+    public $lista_transferidos = [];  //La lista de ls productos a transferir
+
     public $permisospv;               //Almacena los permisos del usuario en el punto
 
     //REGLAS PARA VENTA AL SOCIO
@@ -161,8 +166,11 @@ class VentaForm extends Form
 
     public function actualizarTotal()
     {
+        $productos = array_filter($this->productosTable, function ($prod) {
+            return !array_key_exists('moved', $prod);
+        });
         //Se actualiza el total de los productos
-        $this->totalVenta = array_sum(array_column($this->productosTable, 'subtotal'));
+        $this->totalVenta = array_sum(array_column($productos, 'subtotal'));
     }
 
     //Recibe una instancia del modelo 'Socio' con el registro de la BD, para el registro del pago
@@ -309,31 +317,30 @@ class VentaForm extends Form
             case 'socio':
                 $venta = $this->validate([
                     'socio' => 'min:1',
-                    'productosTable' => 'min:1',
                 ]);
                 break;
             case 'invitado':
                 $venta = $this->validate([
                     'socio' => 'min:1',
                     'nombre_invitado' => 'required',
-                    'productosTable' => 'min:1',
                 ]);
                 break;
             case 'general':
                 $venta = $this->validate([
                     'nombre_p_general' => 'required',
-                    'productosTable' => 'min:1',
                 ]);
                 break;
             case 'empleado':
                 $venta = $this->validate([
                     'nombre_empleado' => 'required',
-                    'productosTable' => 'min:1',
                 ]);
                 break;
             default:
                 break;
+            
         }
+        //Agregamos los productos al resultado de la validacion
+        $venta['productosTable'] = $this->productosTable;
         //Duplicamos variable para pasarla a la funcion anonima de la transaccion
         $tipo_venta = $this->tipo_venta;
 
@@ -358,6 +365,8 @@ class VentaForm extends Form
         $inicio = now()->format('Y-m-d H:i:s');
 
         DB::transaction(function () use ($folio, $inicio) {
+            //Revisar si hubo algun movimiento de mercancia en la BD.
+            $this->verificarProductos($folio);
             //Recorremos todos los items de la tabla
             foreach ($this->productosTable as $key => $producto) {
                 //Verificamos si el item que se itera, cuenta con un 'id' de la base de datos
@@ -381,6 +390,8 @@ class VentaForm extends Form
                     ]);
                 }
             }
+            //Movemos los productos de venta
+            $this->moverProductos();
             //Actualizamos el total de la venta 
             Venta::where('folio', $folio)->update(['total' => $this->totalVenta]);
         }, 2);
@@ -402,6 +413,8 @@ class VentaForm extends Form
         $this->verificarMontos();
 
         DB::transaction(function () use ($folio, $venta, $codigopv) {
+            //Verificamos si la lista de productos no fue alterada
+            $this->verificarProductos($folio);
             //Guardamos los metodos de pago
             $this->registrarPagosVenta($folio, $venta, $codigopv);
             //Guardamos los cambios de la tabla de productos
@@ -409,6 +422,76 @@ class VentaForm extends Form
             //Cerramos la venta con la fecha actual
             Venta::where('folio', $folio)->update(['fecha_cierre' => now()->format('Y-m-d H:i:s')]);
         }, 2);
+    }
+
+    //Guarda el inidice del producto a transferir
+    public function saveProductoTransferible($index)
+    {
+        //agregar el indice
+        $this->indexTransferible = $index;
+    }
+
+    /**
+     * Agrega el producto seleccionado a una lista para transferirlo, a la venta dada como parametro
+     */
+    public function agregarTransferidos($folio)
+    {
+        //Guardar en la lista el producto que se desea mover de venta
+        $this->lista_transferidos[] = [
+            'folio_destino' => $folio,
+            'producto' => $this->productosTable[$this->indexTransferible]
+        ];
+        //Marcar el producto en el array
+        $this->productosTable[$this->indexTransferible]['moved'] = true;
+        //resetear la propiedad
+        $this->reset('indexTransferible');
+        //Actualizar el total
+        $this->actualizarTotal();
+    }
+
+    /**
+     * Consulta la BD la lista de productos de la venta, y si existio un movimiento de productos entre ventas, lanza una excepcion
+     */
+    private function verificarProductos($folio)
+    {
+        //Buscar los productos que tiene la venta en la BD
+        $productos_bd = DetallesVentaProducto::where('folio_venta', $folio)->get();
+        //De la tabla de productos, filtrar aquellos que tienen id, de la base de datos
+        $productos_current = array_filter($this->productosTable, function ($producto) {
+            return array_key_exists('id', $producto);
+        });
+
+        //Si la cantidad de productos de la BD, es diferente de la actual en la tabla. (proveniente de un movimiento de productos)
+        if (count($productos_bd) != count($productos_current)) {
+            throw new Exception('Otro usuario transfirio un producto');
+        }
+        
+    }
+
+    /**
+     * Mueve los productos correspondientes y actualiza el total de la venta destino
+     */
+    private function moverProductos()
+    {
+        //Recorrer la lista de productos a transferir
+        foreach ($this->lista_transferidos as $key => $transferido) {
+            //comprobar si la venta destino, esta abierta
+            $venta = Venta::where('folio', $transferido['folio_destino'])
+                ->whereNull('fecha_cierre')
+                ->first();
+            //Si la venta no se encontro
+            if (! $venta) {
+                throw new Exception("La venta : " . $transferido['folio_destino'] . " Ya esta cerrada ", 1);
+            }
+            //Mover el producto a la venta destino
+            DetallesVentaProducto::where('id', $transferido['producto']['id'])
+                ->update([
+                    'folio_venta' => $transferido['folio_destino']
+                ]);
+            //Actualizar el total de la venta destino
+            $venta->total = $venta->total + $transferido['producto']['subtotal'];
+            $venta->save();
+        }
     }
 
     //Esta funcion registra la venta en la tabla "ventas"
@@ -574,7 +657,11 @@ class VentaForm extends Form
     private function verificarMontos()
     {
         //Calculamos total de los productos
-        $montoTotalVenta = array_sum(array_column($this->productosTable, 'subtotal'));
+        $productos = array_filter($this->productosTable, function ($prod) {
+            return !array_key_exists('moved', $prod);
+        });
+        $montoTotalVenta = array_sum(array_column($productos, 'subtotal'));
+
         //Calculamos total de los pagos
         $montoTotalPago = array_sum(array_column($this->pagosTable, 'monto_pago'));
         //Si los totales no coinciden, error.

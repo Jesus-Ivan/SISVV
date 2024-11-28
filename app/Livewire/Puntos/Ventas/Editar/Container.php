@@ -26,6 +26,18 @@ class Container extends Component
     #[Locked]
     public $codigopv;
 
+    #[Computed()]
+    public function ventas_abiertas()
+    {
+        return Venta::whereNull('fecha_cierre')
+            ->where([
+                ["corte_caja", '=', $this->venta->corte_caja],
+                ['folio', '<>', $this->venta->folio],
+            ])
+            ->whereAny(['id_socio', 'nombre'], 'LIKE', '%' . $this->ventaForm->seachVenta . '%')
+            ->get();
+    }
+
     //Hook que se ejecuta al inicio de vida el componente.
     public function mount(Venta $venta, $permisospv, $codigopv)
     {
@@ -197,6 +209,22 @@ class Container extends Component
             session()->flash('fail', $e->getMessage());
             $this->dispatch('action-message-venta');
         }
+    }
+
+    //Abre el modal para transferir producto
+    public function transferir($index_producto)
+    {
+        //Guardamos el indice del producto a transferir en el formulario
+        $this->ventaForm->saveProductoTransferible($index_producto);
+        //Evento para abrir el modal
+        $this->dispatch('open-modal', name: 'modal-transferir');
+    }
+
+    //Del modal de tranferir producto, guarda el producto en una lista para mover el producto.
+    public function confirmarMovimiento($folio_venta)
+    {
+        $this->ventaForm->agregarTransferidos($folio_venta);
+        $this->dispatch('close-modal');
     }
 
     public function render()

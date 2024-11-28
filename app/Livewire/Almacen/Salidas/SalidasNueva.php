@@ -2,9 +2,13 @@
 
 namespace App\Livewire\Almacen\Salidas;
 
+use App\Constants\AlmacenConstants;
+use App\Models\Bodega;
+use App\Models\DetallesSalida;
 use App\Models\InventarioPrincipal;
 use App\Models\Salida;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Modelable;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Validate;
@@ -15,22 +19,44 @@ class SalidasNueva extends Component
     public $codigo;
     public $cantidad;
 
-    #[Modelable]
+    #[Validate('required')]
     public $articulos = [];
 
     #[Validate('required')]
     public $fechaActual;
 
-    #[Validate('required')]
-    public $destino;
-
-    #[Validate('required|min:8|max:100')]
+    #[Validate('max:150')]
     public $observaciones;
+
+    #[Validate('required')]
+    public $clave_origen;
+
+    #[Validate('required')]
+    public $clave_destino;
+
+    #[Computed()]
+    public function bodegas_origen()
+    {
+        return Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
+    }
+
+    #[Computed()]
+    public function bodegas_destino()
+    {
+        return Bodega::where('tipo', AlmacenConstants::BODEGA_EXTER_KEY)->get();
+    }
 
     #[On('añadirSalida')]
     public function añadir($articulo)
     {
         $this->articulos[] = $articulo;
+    }
+
+
+    public function changedOrigen()
+    {
+        //Limipiar la lista de articulos
+        $this->reset('articulos');
     }
 
     //ELIMINAR ARTICULO DE LA LISTA DE SALIDA
@@ -60,14 +86,13 @@ class SalidasNueva extends Component
             ]);
             //REGISTRAMOS LOS DETALLES DE LA SALIDA EN LA TABLA CORRESPONDIENTE
             foreach ($info['detalleSalidas'] as $key => $articulo) {
-                DB::table('detalles_salidas')
-                    ->insert([
-                        'folio_salida' => $resultSalida->folio,
-                        'codigo_articulo' => $articulo['codigo'],
-                        'nombre' => $articulo['nombre'],
-                        'cantidad' => $articulo['cantidad'],
-                        'existencia_origen' => $articulo['stock']
-                    ]);    
+                DetallesSalida::create([
+                    'folio_salida' => $resultSalida->folio,
+                    'codigo_articulo' => $articulo['codigo'],
+                    'nombre' => $articulo['nombre'],
+                    'cantidad' => $articulo['cantidad'],
+                    'existencia_origen' => $articulo['stock']
+                ]);
             }
             //RESTAMOS Y ACTUALIZAMOS EL STOCK DEL INVENTARIO PRINCIPAL
             foreach ($info['detalleSalidas'] as $key => $articulo) {

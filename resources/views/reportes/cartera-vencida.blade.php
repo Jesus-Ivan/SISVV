@@ -70,11 +70,11 @@
                 <tr>
                     <td>{{ $item['id_socio'] }}</td>
                     <td>{{ $item['nombre'] }}</td>
-                    <td>${{ $item['monto'] }}</td>
+                    <td style="text-align: right">$ {{ number_format($item['monto'], 2) }}</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
     <br>
-    <p style="font-size: larger">Total: ${{ $total }}</p>
+    <p style="font-size: larger">Total: $ {{ number_format($total, 2) }}</p>
 </div>

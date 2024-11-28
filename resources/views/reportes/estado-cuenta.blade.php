@@ -71,14 +71,17 @@
                         <td style=" border-left-width: 1px; border-left-style: solid; border-left-color: black;">
                             {{ $cargo->concepto }}
                         </td>
-                        <td style=" border-left-width: 1px; border-left-style: solid; border-left-color: black;">
-                            {{ $cargo->cargo }}
+                        <td
+                            style="text-align: right ; border-left-width: 1px; border-left-style: solid; border-left-color: black;">
+                            $ {{ number_format($cargo->cargo, 2) }}
                         </td>
-                        <td style=" border-left-width: 1px; border-left-style: solid; border-left-color: black;">
-                            {{ $cargo->abono }}
+                        <td
+                            style="text-align: right ; border-left-width: 1px; border-left-style: solid; border-left-color: black;">
+                            $ {{ number_format($cargo->abono, 2) }}
                         </td>
-                        <td style=" border-left-width: 1px; border-left-style: solid; border-left-color: black;">
-                            {{ $cargo->saldo }}
+                        <td
+                            style="text-align: right ; border-left-width: 1px; border-left-style: solid; border-left-color: black;">
+                            $ {{ number_format($cargo->saldo, 2) }}
                         </td>
                     </tr>
                 @endforeach
@@ -87,9 +90,9 @@
                 <tr>
                     <td></td>
                     <td style="text-align: right;">Subtotal:</td>
-                    <td>${{ array_sum(array_column($resulEstado->toArray(), 'cargo')) }}</td>
-                    <td>${{ array_sum(array_column($resulEstado->toArray(), 'abono')) }}</td>
-                    <td>${{ array_sum(array_column($resulEstado->toArray(), 'saldo')) }}</td>
+                    <td>$ {{ number_format(array_sum(array_column($resulEstado->toArray(), 'cargo')), 2) }}</td>
+                    <td>$ {{ number_format(array_sum(array_column($resulEstado->toArray(), 'abono')), 2) }}</td>
+                    <td>$ {{ number_format(array_sum(array_column($resulEstado->toArray(), 'saldo')), 2) }}</td>
                 </tr>
                 @if (count($saldoFavor) > 0)
                     <tr>
@@ -97,14 +100,14 @@
                         <td style="text-align: right;">Saldo a favor:</td>
                         <td></td>
                         <td></td>
-                        <td>${{ array_sum(array_column($saldoFavor->toArray(), 'saldo')) }}</td>
+                        <td>${{ number_format(array_sum(array_column($saldoFavor->toArray(), 'saldo')), 2) }}</td>
                     </tr>
                     <tr>
                         <td></td>
                         <td style="text-align: right;">Total:</td>
                         <td></td>
                         <td></td>
-                        <td>${{ array_sum(array_column($resulEstado->toArray(), 'saldo')) - array_sum(array_column($saldoFavor->toArray(), 'saldo')) }}
+                        <td>${{ number_format(array_sum(array_column($resulEstado->toArray(), 'saldo')) - array_sum(array_column($saldoFavor->toArray(), 'saldo')), 2) }}
                         </td>
                     </tr>
                 @endif

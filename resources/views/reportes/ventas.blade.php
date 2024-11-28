@@ -56,7 +56,7 @@
                     <th style="width: 60pt">Tipo Venta</th>
                     <th></th>
                     <th style="width: 100%">Socio</th>
-                    <th>Total</th>
+                    <th style="width: 60pt">Total</th>
                     <th>Propina</th>
                     <th>Zona</th>
                 </tr>
@@ -69,8 +69,8 @@
                         <td style="text-transform: uppercase">{{ $pago->tipo_venta }}</td>
                         <td style="text-align: right">{{ $pago->id_socio }}</td>
                         <td style="text-transform: uppercase">{{ $pago->nombre }}</td>
-                        <td style="text-align: right">{{ $pago->monto }}</td>
-                        <td style="text-align: right">{{ $pago->propina }}</td>
+                        <td style="text-align: right">${{ number_format($pago->monto, 2) }}</td>
+                        <td style="text-align: right">${{ number_format($pago->propina, 2) }}</td>
                         <td style="text-align: right">{{ $puntos_venta[$pago->clave_punto_venta] }}</td>
                     </tr>
                 @endforeach
@@ -84,13 +84,13 @@
                     <td style="border: 0px"></td>
                     <td style="text-align: right; font-size: 14px; font-weight: bold;">SUBTOTAL:</td>
                     <td style="text-align: right; font-size: 14px; font-weight: bold;">
-                        ${{ array_sum(array_column($pagos->toArray(), 'monto')) }}</td>
+                        $ {{ number_format(array_sum(array_column($pagos->toArray(), 'monto')), 2) }}</td>
                     <td style="text-align: right; font-size: 14px; font-weight: bold;">
-                        ${{ array_sum(array_column($pagos->toArray(), 'propina')) }}</td>
+                        $ {{ number_format(array_sum(array_column($pagos->toArray(), 'propina')), 2) }}</td>
                 </tr>
             </tfoot>
         </table>
     @endif
 @endforeach
 <hr>
-<h3>TOTAL DE VENTA: ${{ $totalVenta }}</h3>
+<h3>TOTAL DE VENTA: $ {{ number_format($totalVenta, 2) }}</h3>

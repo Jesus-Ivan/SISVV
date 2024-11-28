@@ -64,11 +64,11 @@
             </thead>
             <tbody>
                 @foreach ($cat as $detalle_cat)
-                    <tr style="{{ $detalle_cat['facturado']  ? 'background-color: gray' : '' }}">
+                    <tr style="{{ $detalle_cat['facturado'] ? 'background-color: gray' : '' }}">
                         <td>{{ $detalle_cat['folio'] }}</td>
                         <td>{{ $detalle_cat['created_at'] }}</td>
                         <td>{{ $detalle_cat['nombre'] }}</td>
-                        <td>{{ $detalle_cat['monto_pago'] }}</td>
+                        <td style="text-align: right">$ {{ number_format($detalle_cat['monto_pago'], 2) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -77,11 +77,12 @@
                     <td></td>
                     <td></td>
                     <td style="text-align: right">Subtotal: </td>
-                    <td>$ {{ array_sum(array_column($cat, 'monto_pago')) }}</td>
+                    <td style="text-align: right">$ {{ number_format(array_sum(array_column($cat, 'monto_pago')), 2) }}
+                    </td>
                 </tr>
             </tfoot>
         </table>
     @endforeach
     <br>
-    <p style="font-size: larger">Total: ${{ $total }}</p>
+    <p style="font-size: larger">Total: $ {{ number_format($total, 2) }}</p>
 </div>

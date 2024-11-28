@@ -99,11 +99,11 @@
             </tr>
         </tbody>
     </table>
-    {{--Datos del socio y fecha y hora--}}
+    {{-- Datos del socio y fecha y hora --}}
     <table style="margin-top: 2pt">
         <tbody>
             <tr>
-                <td >
+                <td>
                     <div style="font-size: 14pt">
                         {{ $cobro->id_socio }} - {{ $cobro->nombre }}
                     </div>
@@ -126,14 +126,14 @@
                 <th class="opacidad" style="width: 10%">SALDO</th>
             </tr>
         </thead>
-        <tbody >
+        <tbody>
             @foreach ($detalles as $detalle)
                 <tr>
                     <td>{{ $detalle->concepto }}</td>
                     <td>{{ $detalle->descripcion }}</td>
-                    <td>{{ $detalle->saldo_anterior }}</td>
-                    <td>{{ $detalle->monto_pago }}</td>
-                    <td>{{ $detalle->saldo }}</td>
+                    <td style="text-align: right">$ {{ number_format($detalle->saldo_anterior, 2) }}</td>
+                    <td style="text-align: right">$ {{ number_format($detalle->monto_pago, 2) }}</td>
+                    <td style="text-align: right">$ {{ number_format($detalle->saldo, 2) }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -144,7 +144,7 @@
             <tr style="color: white; font-weight: bolder">
                 <td class="opacidad" style="background: green; padding: 2pt; text-align: center">CANTIDAD CON LETRA</td>
                 <td style="width:50%; color: black; text-align: center; font-size: 12pt">TOTAL:
-                    ${{ array_sum(array_column($detalles->toArray(), 'monto_pago')) }}</td>
+                    $ {{ number_format(array_sum(array_column($detalles->toArray(), 'monto_pago')), 2) }}</td>
                 <td class="opacidad" style="background: green; padding: 2pt; text-align: center">CAJA</td>
             </tr>
         </thead>
@@ -152,7 +152,7 @@
     <table>
         <tbody>
             <tr>
-                <td style="display: flex; align-items: flex-start">{{$total_letras}}</td>
+                <td style="display: flex; align-items: flex-start">{{ $total_letras }}</td>
                 <td style="width: 125pt">
                     <p>{{ $cobro->folio }}</p>
                     <p>{{ now() }}</p>

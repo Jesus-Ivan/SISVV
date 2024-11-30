@@ -30,7 +30,80 @@
         </div>
     </div>
     {{-- line --}}
-    <hr class="h-1 my-8 bg-gray-200 border-0 dark:bg-gray-700">
+    <hr class="h-1 my-4 bg-gray-200 border-0 dark:bg-gray-700">
+    {{-- inicio anualidad, membresia al finalizar, estado al finalizar --}}
+    <div class="flex justify-between items-center">
+        <div class="flex gap-2">
+            {{-- inicio --}}
+            <div>
+                <label for="inicio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                    Inicio anualidad
+                </label>
+                <input type="date" id="inicio" wire:model.live.debounce.550ms="fInicio"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    required />
+                @error('fInicio')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
+            </div>
+            {{-- No de meses --}}
+            <div>
+                <label for="inicio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                    No. de meses
+                </label>
+                <input type="number" id="inicio" wire:model.live.debounce.250ms="no_corrida"
+                    class="w-24 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    required />
+                @error('fInicio')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
+            </div>
+            {{-- Fin anualidad --}}
+            <div>
+                <label for="inicio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                    Fin anualidad
+                </label>
+                <input type="text" id="inicio" wire:model="fFin"
+                    class="w-32 cursor-not-allowed bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    disabled aria-disabled="true" />
+            </div>
+            {{-- membresia al finalizar --}}
+            <div>
+                <label for="membresias" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia
+                    al
+                    finalizar</label>
+                <select id="membresias" wire:model='membresia_finalizar'
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option value="{{ null }}" selected>Seleccione</option>
+                    @foreach ($this->membresias as $membresia)
+                        <option value="{{ $membresia->clave }}">{{ $membresia->descripcion }}</option>
+                    @endforeach
+                </select>
+                @error('membresia_finalizar')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
+            </div>
+            {{-- estado al finalizar --}}
+            <div>
+                <label for="estado_finalizar"
+                    class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Estado al
+                    finalizar</label>
+                <select id="estado_finalizar" wire:model='estado_finalizar'
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option selected value="MEN">Mensual</option>
+                    <option value="INA">Inactiva</option>
+                    <option value="ANU">Anual</option>
+                    <option value="CAN">Cancelada</option>
+                </select>
+                @error('estado_finalizar')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
+            </div>
+        </div>
+    </div>
+    {{-- line --}}
+    <hr class="h-1 my-4 bg-gray-200 border-0 dark:bg-gray-700">
+    {{-- Datos generales de la anualidad --}}
     <div class="grid grid-cols-2 gap-4">
         {{-- Inputs --}}
         <div>
@@ -67,7 +140,7 @@
                     <label for="descuento"
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descuento
                         membresia</label>
-                    <input type="number" id="descuento" wire:model='descuento'
+                    <input type="number" wire:model='descuento'
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                         placeholder="$0" />
                 </div>
@@ -78,6 +151,25 @@
                     <input type="number" id="iva" wire:model='iva'
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                         placeholder="$0" />
+                </div>
+            </div>
+            <div class="flex gap-4">
+                {{-- descuento extra --}}
+                <div class="w-full">
+                    <label for="descuento"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descuento
+                        Extra</label>
+                    <input type="number" wire:model='descuento_extra'
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        placeholder="$0" />
+                </div>
+                {{-- Observaciones  --}}
+                <div class="w-full">
+                    <label for="descuento"
+                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Observaciones</label>
+                    <input type="text" wire:model='observaciones'
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        placeholder="Ingrese motivo ..." />
                 </div>
             </div>
         </div>
@@ -122,15 +214,15 @@
                                 </td>
                                 <td class="px-6 py-2 ">
                                     <input type="number" id="monto-{{ $index }}"
-                                        wire:model='listaCuotas.{{ $index }}.monto'
+                                        wire:model.live.debounce.500ms='listaCuotas.{{ $index }}.monto'
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                         placeholder="$0" />
                                 </td>
                                 <td class="px-6 py-2 h-14">
                                     <button type="button" wire:click="removeCuota({{ $index }})"
                                         class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                            class="w-5 h-5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                            fill="currentColor" class="w-5 h-5">
                                             <path fill-rule="evenodd"
                                                 d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
                                                 clip-rule="evenodd" />
@@ -141,6 +233,14 @@
                             </tr>
                         @endforeach
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">${{ number_format($total, 2) }}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
                 </table>
                 @error('listaCuotas')
                     <x-input-error messages="{{ $message }}" />
@@ -149,126 +249,7 @@
         </div>
     </div>
     {{-- line --}}
-    <hr class="h-1 my-8 bg-gray-200 border-0 dark:bg-gray-700">
-    {{-- inicio anualidad, membresia al finalizar, estado al finalizar, botones de calculo --}}
-    <div class="flex justify-between items-center">
-        <div class="flex gap-2">
-            {{-- inicio --}}
-            <div>
-                <label for="inicio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                    Inicio de la anualidad
-                </label>
-                <input type="date" id="inicio" wire:model="fInicio"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    required />
-                @error('fInicio')
-                    <x-input-error messages="{{ $message }}" />
-                @enderror
-            </div>
-            {{-- membresia al finalizar --}}
-            <div>
-                <label for="membresias" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia
-                    al
-                    finalizar</label>
-                <select id="membresias" wire:model='membresia_finalizar'
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                    <option value="{{ null }}" selected>Seleccione</option>
-                    @foreach ($this->membresias as $membresia)
-                        <option value="{{ $membresia->clave }}">{{ $membresia->descripcion }}</option>
-                    @endforeach
-                </select>
-                @error('membresia_finalizar')
-                    <x-input-error messages="{{ $message }}" />
-                @enderror
-            </div>
-            {{-- estado al finalizar --}}
-            <div>
-                <label for="estado_finalizar"
-                    class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Estado al
-                    finalizar</label>
-                <select id="estado_finalizar" wire:model='estado_finalizar'
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                    <option selected value="MEN">Mensual</option>
-                    <option value="INA">Inactiva</option>
-                    <option value="ANU">Anual</option>
-                    <option value="CAN">Cancelada</option>
-                </select>
-                @error('estado_finalizar')
-                    <x-input-error messages="{{ $message }}" />
-                @enderror
-            </div>
-            {{-- No de meses --}}
-            <div>
-                <label for="inicio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                    No. de meses
-                </label>
-                <input type="number" id="inicio" wire:model="no_corrida"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    required />
-                @error('fInicio')
-                    <x-input-error messages="{{ $message }}" />
-                @enderror
-            </div>
-            {{-- Boton de corrida --}}
-            <button wire:click='corrida()' type="button"
-                class="px-5 font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Corrida</button>
-        </div>
-        <div class="flex gap-2">
-            <button type="button" wire:click='calcularAnterior'
-                class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
-                -
-            </button>
-            <button type="button" wire:click='calcularSiguiente'
-                class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
-                +
-            </button>
-        </div>
-    </div>
-    {{-- Tabla resultados --}}
-    <div class="relative overflow-y-auto max-h-80 shadow-md sm:rounded-lg">
-        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                    <th scope="col" class="px-6 py-3 w-32">
-                        CLAVE
-                    </th>
-                    <th scope="col" class="px-6 py-3 w-32">
-                        FECHA APLICADA
-                    </th>
-                    <th scope="col" class="px-6 py-3 ">
-                        CONCEPTO
-                    </th>
-                    <th scope="col" class="px-6 py-3 w-32">MONTO</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($listaResultados as $cargoIndex => $item)
-                    <tr wire:key = "{{ $cargoIndex }}"
-                        class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <td class="px-6 py-2">
-                            {{ $item['id_cuota'] }}
-                        </td>
-                        <td class="px-6 py-2 ">
-                            {{ $item['fecha'] }}
-                        </td>
-                        <td class="px-6 py-2 ">
-                            {{ $item['descripcion'] }}
-                        </td>
-                        <td class="px-6 py-2 h-14 flex items-center">
-                            $
-                            <input id="small-input" type="number"
-                                wire:model="listaResultados.{{ $cargoIndex }}.monto" wire:change="updateTotal()"
-                                class="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-    <div class="text-right">
-        <p class="text-lg font-semibold text-gray-900 dark:text-white">Total: $
-            {{ $total }}</p>
-    </div>
+    <hr class="h-1 my-4 bg-gray-200 border-0 dark:bg-gray-700">
     {{-- Finalizar o cancelar --}}
     <div class="flex gap-4">
         <button type="button"
@@ -343,7 +324,7 @@
                                 @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
                             </div>
                         </div>
-                        <input type="text" id="table-search" wire:model.live.debounce.500ms="search"
+                        <input type="text" wire:model.live.debounce.500ms="search"
                             class="w-full block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             placeholder="Descripcion">
                     </div>

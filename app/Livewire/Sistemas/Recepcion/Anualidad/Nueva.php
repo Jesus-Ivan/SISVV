@@ -24,12 +24,13 @@ class Nueva extends Component
     public $socio_membresia;  //Informacion de la membresia el socio
 
     public $fInicio;          //Fecha de inicio de la anualidad
+    #[Locked]
+    public $fFin;             //Fecha de fin de la anualidad
     public $fecha_cont = 0;   //contador auxiliar para la fecha
 
     public $search;
 
     public $listaCuotas = [];
-    public $listaResultados = [];
 
     public $total = 0;
     //Almacena el estado de la membresia que se seteara en la BD. al finalizar la anualidad
@@ -39,6 +40,7 @@ class Nueva extends Component
     public $incremento, $descuento, $iva, $membresia_anterior, $membresia_nueva;
     public $saldo_cero = false;     //checkbox que indica si la anualidad debe registrase liquidada.
     public $no_corrida = 12;
+    public $descuento_extra, $observaciones;
 
     #[On('on-selected-socio')]
     public function selectedSocio(Socio $socio)
@@ -66,10 +68,45 @@ class Nueva extends Component
         return Membresias::all();
     }
 
+    /**
+     * Hook que se ejecuta cuando se actualiza una propiedad
+     */
+    public function updated($properity, $value)
+    {
+        //Si la propiedad actualizada es la fecha de inicio
+        if ($properity == 'fInicio') {
+            try {
+                $fecha_fin = Carbon::parse($value)->addMonths($this->no_corrida - 1); //Obtenemos la fecha de fin de la anualidad
+                $this->fFin = $fecha_fin->toDateString(); //Establecemos la fecha de fin de la anualidad.
+            } catch (\Throwable $th) {
+                $this->fFin = now()->toDateString();
+            }
+        }
+
+        //Si la propiedad actualizada es el numero de corrida
+        if ($properity == 'no_corrida') {
+            try {
+                $fecha_fin = Carbon::parse($this->fInicio)->addMonths($value - 1); //Obtenemos la fecha de fin de la anualidad
+                $this->fFin = $fecha_fin->toDateString(); //Establecemos la fecha de fin de la anualidad.
+            } catch (\Throwable $th) {
+                $this->fFin = now()->toDateString();
+            }
+        }
+
+        //Si la propiedad actualizada es el monto de una cuota
+        if (preg_match("/listaCuotas\.\d+\.monto/i", $properity)) {
+            //Actualizar el total de la anualidad
+            $this->total = array_sum(array_column($this->listaCuotas, 'monto'));
+        }
+    }
+
     //Eliminar el cargo del array de cargos
     public function removeCuota($cargoIndex)
     {
+        //Remover el cargo de la lista de cuotas
         unset($this->listaCuotas[$cargoIndex]);
+        //Actualizar el total de la anualidad
+        $this->total = array_sum(array_column($this->listaCuotas, 'monto'));
     }
 
     //Agrega el cargo de forma temporal al array de cargos
@@ -88,64 +125,36 @@ class Nueva extends Component
             }
         }
 
+        //Evaluamos si no hay fecha de inicio
+        if (!$this->fInicio) {
+            session()->flash('fail', 'No has seleccionado la fecha de incio de la anualidad');
+            return;
+        }
+
+        //Evaluamos si no hay numero de corrida
+        if (!$this->no_corrida) {
+            session()->flash('fail', 'No has ingresado el numero de meses');
+            return;
+        }
+
+        $cuota = $this->addYear($cuota, "/loc/i");
+        $cuota = $this->addYear($cuota, "/res/i");
+
+        if (!preg_match("/\d{4}$/i", $cuota['descripcion'])) {
+            //Se agrega el numero del año de la anualidad, a la descripcion de la cuota
+            $cuota['descripcion'] = $cuota['descripcion'] . ' ' . strval(Carbon::parse($this->fInicio)->year);
+        }
+
         //Agregramos a la lista de cargos
         $this->listaCuotas[] = $cuota;
     }
 
-    public function calcularSiguiente()
-    {
-        //Verificamos los campos de entrada
-        $this->verificar();
-        //Creamos una instancia de la fecha de inicio
-        $fecha = Carbon::parse($this->fInicio)->addMonths($this->fecha_cont);
-        //Agregamos de cuotas a la tabla de resultados
-        foreach ($this->listaCuotas as $key => $cuota) {
-            //Anexamos al array el nuevo mes
-            $this->listaResultados[] = [
-                'id_cuota' => $cuota['id'],
-                'descripcion' => $cuota['descripcion'] . ' ' . $this->fecha_cont + 1,
-                'monto' => $cuota['monto'],
-                'fecha' => $fecha->toDateString(),
-                'batch' => $this->fecha_cont
-            ];
-        }
-        //Aumentamos 1 mes, la fecha para la siguente iteracion.
-        $this->fecha_cont++;
-        //Recalculamos el total
-        $this->updateTotal();
-    }
-
-    public function calcularAnterior()
-    {
-        //restamos 1 mes
-        $this->fecha_cont--;
-        //Filtramos las cuotas, que coincidan con el 'batch' 
-        $resultado_filtrado = array_filter($this->listaResultados, function ($row) {
-            return $row['batch'] != $this->fecha_cont;
-        });
-        //Reasignamos los valores a la tabla
-        $this->listaResultados = $resultado_filtrado;
-
-        //Recalculamos el total
-        $this->updateTotal();
-    }
-
-    public function updateTotal()
-    {
-        $this->total = array_sum(array_column($this->listaResultados, 'monto'));
-    }
-
     public function aplicarAnualidad()
     {
-
         $validatedInfo = $this->verificar();     //Revisamos si los campos de inicio no estan vacios
-        //Validamos la lista de resultados antes de agregarlos
-        $validatedResultados = $this->validate([
-            'listaResultados' => 'min:1',
-        ]);
 
         try {
-            DB::transaction(function () use ($validatedInfo, $validatedResultados) {
+            DB::transaction(function () use ($validatedInfo) {
                 //Insertamos la informacion de la anualidad
                 $anualidad = Anualidad::create([
                     'id_socio' => $validatedInfo['socio']['id'],
@@ -153,28 +162,30 @@ class Nueva extends Component
                     'incremento_anual' => $this->incremento,
                     'membresia_nueva' => $this->membresia_nueva,
                     'descuento_membresia' => $this->descuento,
+                    'descuento_extra' => $this->descuento_extra,
                     'iva' => $this->iva,
+                    'observaciones' => $this->observaciones,
                     'clave_mem_f' => $validatedInfo['membresia_finalizar'],
                     'estado_mem_f' => $validatedInfo['estado_finalizar'],
-                    'fecha_inicio' => $validatedResultados['listaResultados'][0]['fecha'],
-                    'fecha_fin' => end($validatedResultados['listaResultados'])['fecha'],
+                    'fecha_inicio' => $validatedInfo['fInicio'],
+                    'fecha_fin' => $validatedInfo['fFin'],
                     'total' => $this->total,
                 ]);
                 //Creamos los registros en las otras tablas
-                foreach ($validatedResultados['listaResultados'] as $key => $cargo) {
+                foreach ($validatedInfo['listaCuotas'] as $key => $cargo) {
                     //Insertamos registro en los detalles de anualidades
                     DB::table('detalles_anualidades')->insert([
                         'id_anualidad' => $anualidad->id,
-                        'id_cuota' => $cargo['id_cuota'],
+                        'id_cuota' => $cargo['id'],
                         'descripcion' => $cargo['descripcion'],
                         'monto' => $cargo['monto'],
                     ]);
                     //Creamos los cargos en el estado de cuenta.
                     EstadoCuenta::create([
-                        'id_cuota' => $cargo['id_cuota'],
+                        'id_cuota' => $cargo['id'],
                         'id_socio' => $this->socio['id'],
                         'concepto' => $cargo['descripcion'],
-                        'fecha' => $cargo['fecha'],
+                        'fecha' => $validatedInfo['fInicio'],
                         'cargo' => $cargo['monto'],
                         'abono' => $this->saldo_cero ? $cargo['monto'] : 0,
                         'saldo' => $this->saldo_cero ? 0 : $cargo['monto'],
@@ -193,22 +204,35 @@ class Nueva extends Component
         }
     }
 
-    public function corrida()
-    {
-        for ($i = 0; $i < $this->no_corrida; $i++) {
-            $this->calcularSiguiente();
-        }
-    }
     public function verificar()
     {
         $validated = $this->validate([
             'socio' => 'required',
             'fInicio' => 'required',
-            'listaCuotas' => 'min:1',
+            'fFin' => 'required',
+            'listaCuotas' => 'required|min:1',
             'estado_finalizar' => 'required',
             'membresia_finalizar' => 'required',
         ]);
         return $validated;
+    }
+
+    /**
+     * Dada una cuota y una expresion regular. 
+     * Agrega el numero de cuotas en la tabla y el numero de año al final del concepto.
+     */
+    private function addYear($cuota, $reg_exp)
+    {
+        //Si la cuota coincide con el tipo
+        if (preg_match($reg_exp, $cuota['tipo'])) {
+            //Buscamos si ya habia cuotas en la tabla
+            $cuotas = array_filter($this->listaCuotas, function ($cuotaItem) use ($reg_exp) {
+                return preg_match($reg_exp, $cuotaItem['tipo']);
+            });
+            //Se agrega el numero del año de la anualidad, a la descripcion de la cuota
+            $cuota['descripcion'] = $cuota['descripcion'] . ' ' . strval(count($cuotas) + 1) . ' ' . strval(Carbon::parse($this->fInicio)->year);
+        }
+        return $cuota;
     }
     public function render()
     {

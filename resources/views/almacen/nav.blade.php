@@ -22,8 +22,7 @@
                             </li>
                             <li>
                                 <a href="{{ route('almacen.asignar') }}"
-                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Asignar
-                                    artículos</a>
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Existencias</a>
                             </li>
                             <li>
                                 <a href="{{ route('almacen.clasificacion') }}"

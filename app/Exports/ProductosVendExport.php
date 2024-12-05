@@ -29,7 +29,7 @@ class ProductosVendExport implements FromArray
             'precio' => 'PRECIO',
             'importe' => 'IMPORTE',
             'fecha' => 'FECHA',
-            'observaciones' => 'observaciones'
+            'observaciones' => 'OBSERVACIONES'
         ];
         foreach ($this->ventas as $venta) {
             //Buscamos todos los productos de la venta

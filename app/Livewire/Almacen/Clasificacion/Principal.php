@@ -50,11 +50,11 @@ class Principal extends Component
                 //SI NO HAY COINCIDENCIAS, REGISTRAMOS LA NUEVA CLASIFICACION
                 Clasificacion::create($validated);
                 //MENSAJE DE ALERTA
-                session()->flash('success', "REGISTRO GUARDADO CORRRECTAMENTE");
+                session()->flash('success', "Registro guardado con éxito");
                 $this->reset('tipo', 'nombre');
             }
         } catch (\Exception $e) {
-            session()->flash('error', 'ERROR AL AGREGAR EL REGISTRO' . $e->getMessage());
+            session()->flash('error', 'Error al guardar nuevo registro' . $e->getMessage());
         }
         $this->dispatch('open-action-message');
     }
@@ -64,7 +64,7 @@ class Principal extends Component
     {
         // GUARDAR EL REGISTRO
         Clasificacion::create($this->newClasificacion);
-        session()->flash('success', "REGISTRO GUARDADO CORRRECTAMENTE");
+        session()->flash('success', "Registro guardado con éxito");
         $this->dispatch('open-action-message');
         $this->reset('tipo', 'nombre');
         $this->dispatch('close-modal');
@@ -99,9 +99,9 @@ class Principal extends Component
 
         try {
             $clasificacion->update($validated);
-            session()->flash('success', "REGISTRO MODIFICADO CORRRECTAMENTE");
+            session()->flash('success', "Registro Modificado correctamente");
         } catch (\Exception $e) {
-            session()->flash('error', 'ERROR AL ACTUALIZAR EL REGISTRO' . $e->getMessage());
+            session()->flash('error', 'Error al actualizar el registro' . $e->getMessage());
         }
         $this->dispatch('open-action-message');
         $this->reset();

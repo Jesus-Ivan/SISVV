@@ -12,13 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('detalles_traspasos', function (Blueprint $table) {
+            $table->integer('id')->autoIncrement()->unsigned();
             $table->integer('folio_traspaso');
             $table->integer('codigo_articulo');
             $table->string('nombre', 50);
-            $table->integer('cantidad');
+            $table->integer('cantidad')->nullable();
             $table->float('peso')->nullable();
-            $table->decimal('existencia_origen', 10, 3);
-            $table->decimal('existencia_destino', 10, 3);
+            $table->string('clave_bodega_origen', 50);
+            $table->json('existencia_origen')->nullable();
+            $table->string('clave_bodega_destino', 50);
+            $table->json('existencia_destino')->nullable();
+            $table->dateTime('consultado');
 
             /*//Relaciones
 

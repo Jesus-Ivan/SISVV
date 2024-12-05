@@ -707,7 +707,7 @@ class ReportesController extends Controller
             ->get();
         //Generamos array's, para busquedas indexadas
         $unidades = $this->generateIndex(Unidad::all(), 'id', 'descripcion');
-        $proveedores = $this->generateIndex(Proveedor::all(), 'id', 'proveedor');
+        $proveedores = $this->generateIndex(Proveedor::all(), 'id', 'nombre');
 
         $data = [
             'requisicion' => $requisicion->toArray(),

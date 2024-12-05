@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Almacen\Entradas;
 
+use App\Constants\AlmacenConstants;
 use App\Models\CatalogoVistaVerde;
 use App\Models\DetallesCompra;
 use App\Models\DetallesEntrada;
@@ -114,7 +115,7 @@ class NuevaEntrada extends Component
                     //Cambiamos el estado a 'aplicado' en el "detalles_compra"
                     DetallesCompra::where('id', $row['id'])
                         ->update(['aplicado' => true]);
-                    //Actualizamos la fecha de ultima compra en el inventario
+                    //Actualizamos la fecha de ultima compra en el inventario ("catalogo_vista_verde")
                     $this->actualizarUltimaCompra($row);
                     
                     //Creamos el registro del detalle de entrada
@@ -172,9 +173,9 @@ class NuevaEntrada extends Component
             ->get();
 
         //Filtrar del resultado de la query previa, las filas cuya columna 'tipo' sea unitario
-        $stock_unitario = $result->where('tipo', 'unitario')->first();
+        $stock_unitario = $result->where('tipo', AlmacenConstants::CANTIDAD_KEY)->first();
         //Filtrar del resultado de la query previa, las filas cuyo campo 'tipo' sea peso
-        $stock_peso = $result->where('tipo', 'peso')->first();
+        $stock_peso = $result->where('tipo', AlmacenConstants::PESO_KEY)->first();
 
         //si el usuario ingreso un valor en el input de cantidad.
         if ($producto['cantidad']) {

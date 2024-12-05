@@ -12,11 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('detalles_salidas', function (Blueprint $table) {
+            $table->integer('id')->autoIncrement()->unsigned();
             $table->integer('folio_salida');
             $table->integer('codigo_articulo');
-            $table->string('nombre', 100);
-            $table->integer('cantidad');
-            $table->decimal('existencia_origen', 10, 3);
+            $table->string('nombre', 255);
+            $table->integer('stock_origen_cantidad')->nullable();
+            $table->decimal('stock_origen_peso', 10, 3)->nullable();
+            $table->integer('cantidad_salida')->nullable();
+            $table->decimal('peso_salida', 10, 3)->nullable();
 
             /*//Referencias
 

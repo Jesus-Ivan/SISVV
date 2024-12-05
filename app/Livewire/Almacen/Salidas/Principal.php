@@ -28,7 +28,8 @@ class Principal extends Component
     {
         $today = Carbon::parse($this->fSearch);
 
-        return Salida::whereMonth('fecha', '=', $today->month)
+        return Salida::with('bodegaOrigen', 'destino')
+            ->whereMonth('fecha', '=', $today->month)
             ->whereYear("fecha", '=', $today->year)
             ->paginate(10);
     }

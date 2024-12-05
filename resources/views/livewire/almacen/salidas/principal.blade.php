@@ -61,10 +61,10 @@
                                 {{ $salida->fecha }}
                             </td>
                             <td class="px-6 py-2 uppercase">
-                                {{ $salida->origen }}
+                                {{ $salida->bodegaOrigen->descripcion }}
                             </td>
                             <td class="px-6 py-2 uppercase">
-                                {{ $salida->destino }}
+                                {{ $salida->destino->descripcion }}
                             </td>
                             <td class="px-6 py-2 uppercase">
                                 {{ $salida->observaciones }}
@@ -80,6 +80,9 @@
                 </tbody>
             </table>
         </div>
+    </div>
+    <div>
+        {{ $this->salidas->links() }}
     </div>
 
     {{-- Modal para ver los detalles de una salida --}}

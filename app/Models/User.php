@@ -43,7 +43,13 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function cajas():HasMany{
+    public function cajas(): HasMany
+    {
         return $this->hasMany(Caja::class);
+    }
+
+    public function traspaso(): HasMany
+    {
+        return $this->hasMany(Traspaso::class);
     }
 }

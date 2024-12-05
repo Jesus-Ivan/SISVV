@@ -31,7 +31,7 @@ class SearchInput extends Component
         if ($this->search != '') {
             return DB::table($this->table_name)
                 ->whereAny($this->table_columns, 'like', '%' . $this->search . '%')
-                ->where('tipo', 'like', '%' . $this->args . '%')
+                ->where('tipo', 'like', $this->args)
                 ->where('estado', 1)
                 ->take(40)
                 ->get();

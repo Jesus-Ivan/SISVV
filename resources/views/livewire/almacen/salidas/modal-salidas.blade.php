@@ -11,7 +11,7 @@
                     'table_columns' => ['codigo', 'nombre'],
                     'primary_key' => 'codigo',
                     'event' => 'selected-articulo',
-                    'args' => 'INV',
+                    'args' => 'INV%',
                 ]" />
 
             </div>

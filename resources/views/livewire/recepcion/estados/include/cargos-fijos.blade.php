@@ -1,6 +1,4 @@
 <div>
-    <!--Linea -->
-    <hr class="h-px my-4 bg-gray-300 border-0 dark:bg-gray-700">
     <!-- Cargos fijos -->
     <h4 class="text-2xl font-bold dark:text-white ">Cargos fijos</h4>
     {{-- FECHA Y BOTON DE CARGOS --}}
@@ -24,7 +22,7 @@
                     <th scope="col" class="px-6 py-3 ">
                         CONCEPTO
                     </th>
-                    <th scope="col" class="px-6 py-3 w-64">
+                    <th scope="col" class="px-6 py-3 ">
                         CARGOS
                     </th>
                     <th scope="col" class="px-6 py-3 w-32">ACCIONES</th>
@@ -34,13 +32,13 @@
                 @foreach ($listaCargosFijos as $indexFijo => $fijo)
                     <tr wire:key="{{ $indexFijo }}"
                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <td class="px-6 py-2">
+                        <td class="px-6 py-2 {{ $fijo['auto_delete'] ? 'text-orange-600 font-semibold' : '' }}">
                             {{ $fijo['cuota']['id'] }}
                         </td>
-                        <td class="px-6 py-2 ">
+                        <td class="px-6 py-2 {{ $fijo['auto_delete'] ? 'text-orange-600 font-semibold' : '' }}">
                             {{ $fijo['cuota']['descripcion'] }}
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-6 py-2 {{ $fijo['auto_delete'] ? 'text-orange-600 font-semibold' : '' }}">
                             ${{ $fijo['cuota']['monto'] }}
                         </td>
                         <td class="px-6 py-2 h-14">

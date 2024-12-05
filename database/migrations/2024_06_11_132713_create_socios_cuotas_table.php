@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->integer('id_socio');
             $table->integer('id_cuota')->nullable();
+            $table->boolean('auto_delete')->default(false);
             $table->timestamps();
         });
     }

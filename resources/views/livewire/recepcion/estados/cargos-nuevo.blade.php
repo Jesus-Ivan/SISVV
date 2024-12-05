@@ -90,9 +90,57 @@
             </tbody>
         </table>
     </div>
+    <!--Linea -->
+    <hr class="h-px my-4 bg-gray-300 border-0 dark:bg-gray-700">
     {{-- Seccion de cargos fijos --}}
     <div class="{{ $socioMembresia->estado == 'CAN' ? ' opacity-50 pointer-events-none' : '' }}">
-        @include('livewire.recepcion.estados.include.cargos-fijos')
+        <div class="grid grid-cols-2 gap-4">
+            {{-- La tabla que contiene los cargos mensuales --}}
+            <div>
+                @include('livewire.recepcion.estados.include.cargos-fijos')
+            </div>
+            {{-- Tabla de cargos incluidos en la aualidad(opcional) --}}
+            <div class="mt-10">
+                <p
+                    class="p-2 text-lg font-semibold text-left rtl:text-right text-gray-900 dark:text-white dark:bg-gray-800">
+                    Cargos incluidos en la anualidad
+                </p>
+                <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">
+                                    Clave
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Concepto
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Cargo
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($cargos_anualidad as $index => $item)
+                                <tr wire:key='{{ $index }}'
+                                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <td scope="row"
+                                        class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                        {{ $item->id_cuota }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {{ $item->descripcion }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {{ $item->monto }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
     <!--BOTONES DE FINALIZADO-->
     <div>

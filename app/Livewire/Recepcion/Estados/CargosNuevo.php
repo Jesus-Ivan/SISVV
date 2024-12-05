@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Recepcion\Estados;
 
+use App\Models\Anualidad;
 use App\Models\Cuota;
 use App\Models\EstadoCuenta;
 use App\Models\SocioCuota;
@@ -25,15 +26,36 @@ class CargosNuevo extends Component
     public $listaCargos = [];
     public $listaCargosFijos = [];
     public $listaCargosEliminados = []; //Esta lista almacena los id, de los cargos fijos originales, que fueron eliminados
+    public $cargos_anualidad = [];      //Esta lista almacena los cargos incluidos en la anualidad
 
     public $fechaDestino;
 
     public function mount($socio)
     {
         $this->socio = $socio;
-        $this->socioMembresia = SocioMembresia::with('membresia')->where('id_socio', $socio->id)->get()[0];
+        $this->socioMembresia = SocioMembresia::with('membresia')
+            ->where('id_socio', $socio->id)
+            ->get()[0];
         //Buscamos los cargos fijos del socio
         $this->listaCargosFijos = $this->obtenerCargosFijos($socio);
+        //Si el estado de la anualidad es anual
+        if ($this->socioMembresia['estado'] == 'ANU') {
+            /*
+             *Buscar los cargos incluidos en la anualidad
+             */
+
+            //Buscamos la anualidad
+            $anualidad = Anualidad::where([
+                ['id_socio', '=', $socio->id],
+                ['fecha_inicio', '<=', now()->toDateString()],
+                ['fecha_fin', '>=', now()->toDateString()],
+            ])
+                ->first();
+            //Buscar los detalles de la anualidad
+            $this->cargos_anualidad = DB::table('detalles_anualidades')
+                ->where('id_anualidad', $anualidad->id)
+                ->get();
+        }
     }
 
     //Propiedad computarizada que pobla los resultados de busqueda
@@ -125,6 +147,7 @@ class CargosNuevo extends Component
                 'tipo' => $cuota['tipo'],
                 'clave_membresia' => $cuota['clave_membresia'],
             ],
+            'auto_delete' => false
         ];
     }
 
@@ -189,7 +212,11 @@ class CargosNuevo extends Component
 
     private function obtenerCargosFijos($socio)
     {
-        return SocioCuota::with('cuota')->where('id_socio', $socio->id)->get()->toArray();
+        return SocioCuota::with('cuota')
+            ->where('id_socio', $socio->id)
+            ->orderBy('id_cuota')
+            ->get()
+            ->toArray();
     }
     //Recibe una numero del mes y devuelve el nombre del mes en español
     private function getMes($mes)

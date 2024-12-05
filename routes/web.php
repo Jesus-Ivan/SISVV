@@ -53,8 +53,8 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
 
     Route::view('asignar', 'almacen.asignar')->name('almacen.asignar');
     Route::view('clasificacion', 'almacen.Clasificacion.clasificacion')->name('almacen.clasificacion');
-    Route::view('proveedores', 'almacen.proveedores')->name('almacen.proveedores');
-    Route::view('unidades', 'almacen.unidades')->name('almacen.unidades');
+    Route::view('proveedores', 'almacen.Proveedores.proveedores')->name('almacen.proveedores');
+    Route::view('unidades', 'almacen.Unidades.unidades')->name('almacen.unidades');
 
     Route::prefix('entradas')->group(function () {
         Route::view('/', 'almacen.Entradas.entradas')->name('almacen.entradas');

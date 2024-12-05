@@ -44,11 +44,13 @@ class CargosNuevo extends Component
              *Buscar los cargos incluidos en la anualidad
              */
 
+            //Crear la fecha de hoy
+            $hoy = now()->day(1);
             //Buscamos la anualidad
             $anualidad = Anualidad::where([
                 ['id_socio', '=', $socio->id],
-                ['fecha_inicio', '<=', now()->toDateString()],
-                ['fecha_fin', '>=', now()->toDateString()],
+                ['fecha_inicio', '<=', $hoy->toDateString()],
+                ['fecha_fin', '>=', $hoy->toDateString()],
             ])
                 ->first();
             //Buscar los detalles de la anualidad

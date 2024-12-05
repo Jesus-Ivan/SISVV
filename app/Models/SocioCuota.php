@@ -17,7 +17,15 @@ class SocioCuota extends Model
     //Clave primaria
     protected $primaryKey = 'id';
 
-    public function cuota():HasOne{
-        return $this->hasOne(Cuota::class, 'id','id_cuota');
+    public function cuota(): HasOne
+    {
+        return $this->hasOne(Cuota::class, 'id', 'id_cuota')
+            ->withDefault([
+                'id' => null,
+                'descripcion' => 'N/A',
+                'monto' => '0',
+                'tipo' => 'N/A',
+                'clave_membresia' => 'N/A',
+            ]);
     }
 }

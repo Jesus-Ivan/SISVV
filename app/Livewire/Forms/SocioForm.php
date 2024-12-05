@@ -268,6 +268,7 @@ class SocioForm extends Form
             SocioCuota::create([
                 'id_socio' => $socio->id,
                 'id_cuota' => $cuota[0]['id'],
+                'auto_delete' => true            //Indicador de eliminacion, para la activacion de la anualidad
             ]);
 
             //Creamos cada uno de los miembros del socio

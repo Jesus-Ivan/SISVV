@@ -11,7 +11,7 @@ class SearchInput extends Component
     public $search;
     public $tittle_bar;
     public $table_name, $table_columns, $primary_key;
-    public $args;
+    public $dpto, $tipo;
     public $event;
 
 
@@ -22,20 +22,22 @@ class SearchInput extends Component
         $this->table_columns = $params['table_columns'];
         $this->primary_key = $params['primary_key'];
         $this->event = $params['event'];
-        $this->args = $params['args'];
+        $this->dpto = $params['dpto'];
+        $this->tipo = $params['tipo'];
     }
 
     #[Computed()]
     public function results()
     {
         if ($this->search != '') {
-            return DB::table($this->table_name)
+            $result = DB::table($this->table_name)
                 ->whereAny($this->table_columns, 'like', '%' . $this->search . '%')
-                ->where('tipo', 'like', $this->args)
+                ->whereIn('clave_dpto', $this->dpto)
                 ->where('estado', 1)
                 ->take(40)
                 ->get();
-        } else {
+            return $result;
+        }else{
             return [];
         }
     }

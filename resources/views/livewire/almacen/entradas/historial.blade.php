@@ -21,7 +21,8 @@
                 'table_columns' => ['codigo', 'nombre'],
                 'primary_key' => 'codigo',
                 'event' => 'selected-articulo',
-                'args' => 'INV',
+                'dpto' => ['ALM', 'PV'],
+                'tipo' => null,
             ]" />
         </div>
         {{-- BOTON DE BUSQUEDA --}}

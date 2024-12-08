@@ -10,6 +10,7 @@ use App\Models\PuntoVenta;
 use App\Models\Stock;
 use App\Models\Unidad;
 use App\Models\UnidadCatalogo;
+use finfo;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\DB;
@@ -114,7 +115,7 @@ class NuevaOrden extends Component
         //Verificamos si el valor recibido del front es null
         if ($eValue) {
             $result = $this->unidadesArticulo->where('id_unidad', $eValue)->first();    //Buscamos la unidad relacionada con el articulo
-            $this->costo_unitario = $result->costo;                             //Guardamos el costo por unidad
+            $this->costo_unitario = $result->costo_unidad;                             //Guardamos el costo por unidad
         } else {
             $this->costo_unitario = 0;                                          //limpiamos el costo
         }
@@ -123,22 +124,22 @@ class NuevaOrden extends Component
 
     public function agregarArticulo()
     {
-            //validamos propiedades
-            $validated = $this->validate([
-                'articulo_seleccionado'=> 'required',
-                'cantidad' => 'required|numeric|min:0.01',
-                'costo_unitario' => 'required|numeric|min:0.01',
-                'id_unidad' => 'required',
-                'id_proveedor' => 'required',
-                'stock' => 'required'
-            ]);
+        //validamos propiedades
+        $validated = $this->validate([
+            'articulo_seleccionado' => 'required',
+            'cantidad' => 'required|numeric|min:0.01',
+            'costo_unitario' => 'required|numeric|min:0.01',
+            'id_unidad' => 'required',
+            'id_proveedor' => 'required',
+        ]);
+        $validated['stock'] = $this->stock;
 
-            $this->functionAgregarCampos($validated);
+        $this->functionAgregarCampos($validated);
 
-            //agregamos a la lista
-            $this->lista_articulos[] = $validated['articulo_seleccionado'];
-            //limpiamos propiedades
-            $this->reset('articulo_seleccionado', 'cantidad', 'costo_unitario', 'iva', 'iva_cant', 'id_proveedor', 'id_unidad', 'stock');
+        //agregamos a la lista
+        $this->lista_articulos[] = $validated['articulo_seleccionado'];
+        //limpiamos propiedades
+        $this->reset('articulo_seleccionado', 'cantidad', 'costo_unitario', 'iva', 'iva_cant', 'id_proveedor', 'id_unidad', 'stock');
     }
 
     public function cancelar()
@@ -204,7 +205,7 @@ class NuevaOrden extends Component
             'tipo_orden' => 'required',
             'lista_articulos' => 'required|array|min:1',
         ]);
-
+        
         DB::transaction(function () use ($validated) {
             $subtotal = array_sum(array_column($validated['lista_articulos'], 'importe'));
             $iva = array_sum(array_column($validated['lista_articulos'], 'iva_cant'));
@@ -218,7 +219,7 @@ class NuevaOrden extends Component
                 'iva' => $iva,
                 'total' => $subtotal + $iva,
             ]);
-            
+
             foreach ($validated['lista_articulos'] as $key => $articulo) {
                 //creamos los detalles de la orden de compra
                 DetallesCompra::create([

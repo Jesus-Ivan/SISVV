@@ -145,7 +145,8 @@
                             'table_columns' => ['codigo', 'nombre'],
                             'primary_key' => 'codigo',
                             'event' => 'selected-articulo',
-                            'args' => 'INV%',
+                            'dpto' => ['ALM', 'PV'],
+                            'tipo' => null,
                         ]" />
                     </div>
                     {{-- Codigo --}}
@@ -245,6 +246,11 @@
                         <input type="number" name="st_min" wire:model='peso'
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             placeholder="Peso">
+                    </div>
+                    <div class="col-span-1 sm:col-span-2">
+                        @if (session('error_input'))
+                            <div class="text-red-500 text-sm">{{ session('error_input') }}</div>
+                        @endif
                     </div>
                 </div>
             </div>

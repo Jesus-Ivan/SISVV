@@ -70,10 +70,16 @@
                                 {{ $salida->observaciones }}
                             </td>
                             <td class="px-6 py-2">
-                                <button x-data x-on:click="$dispatch('open-modal', { name: 'detallesSalida' })"
-                                    class="text-green-700 hover:text-white border border-green-700 hover:bg-green-800 inline-flex items-center focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-3 py-1.5 text-center dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:hover:bg-green-600 dark:focus:ring-green-800">
-                                    Detalles
-                                </button>
+                                <a wire:click="verDetalles({{ $salida->folio }})"
+                                    class="w-20 text-gray-700 hover:text-white border border-gray-700 hover:bg-gray-800 inline-flex focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-3 py-1.5 text-center dark:border-gray-500 dark:text-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800">
+                                    <div wire:loading.remove.delay wire:target='verDetalles({{ $salida->folio }})'>
+                                        Detalles
+                                    </div>
+                                    <!--Loading indicator-->
+                                    <div class="flex justify-center"   wire:loading.delay wire:target='verDetalles({{ $salida->folio }})'>
+                                        @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
+                                    </div>
+                                </a>
                             </td>
                         </tr>
                     @endforeach
@@ -86,11 +92,57 @@
     </div>
 
     {{-- Modal para ver los detalles de una salida --}}
-    <x-modal name="detallesSalida" title="DETALLES DE SALIDA">
+    <x-modal name="modal-salida" title="DETALLES DE SALIDA">
         {{-- MODAL BODY --}}
         <x-slot:body>
             <div class="space-y-4">
-
+                <p>FOLIO SALIDA: {{ $salida_seleccionada }}</p>
+                <div class="relative max-h-96 overflow-y-auto shadow-md sm:rounded-lg">
+                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-6 py-2">
+                                    Producto
+                                </th>
+                                <th scope="col" class="px-6 py-2">
+                                    Cantidad origen
+                                </th>
+                                <th scope="col" class="px-6 py-2">
+                                    Peso origen
+                                </th>
+                                <th scope="col" class="px-6 py-2">
+                                    Cantidad salida
+                                </th>
+                                <th scope="col" class="px-6 py-2">
+                                    Peso salida
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($salida_detalles as $index => $detalle)
+                                <tr wire:key='{{ $index }}'
+                                    class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                                    <th scope="row"
+                                        class="px-6 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                        {{ $detalle->nombre }}
+                                    </th>
+                                    <td class="px-6 py-2">
+                                        {{ $detalle->stock_origen_cantidad }}
+                                    </td>
+                                    <td class="px-6 py-2">
+                                        {{ $detalle->stock_origen_peso }}
+                                    </td>
+                                    <td class="px-6 py-2">
+                                        {{ $detalle->cantidad_salida }}
+                                    </td>
+                                    <td class="px-6 py-2">
+                                        {{ $detalle->peso_salida }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </x-slot>
     </x-modal>

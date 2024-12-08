@@ -77,10 +77,16 @@
                                 ${{ $entrada->total }}
                             </td>
                             <td class="px-6 py-2">
-                                <button type="button" wire:click="verDetalles({{ $entrada->folio }})"
-                                    class="text-gray-700 hover:text-white border border-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 dark:border-gray-500 dark:text-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800">
-                                    Detalles
-                                </button>
+                                <a type="button" wire:click="verDetalles({{ $entrada->folio }})" 
+                                    class="w-20 text-gray-700 hover:text-white border border-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-3 py-1.5 text-center dark:border-gray-500 dark:text-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800">
+                                    <div wire:loading.remove.delay wire:target='verDetalles({{ $entrada->folio }})'>
+                                        Detalles
+                                    </div>
+                                    <!--Loading indicator-->
+                                    <div wire:loading.delay wire:target='verDetalles({{ $entrada->folio }})'>
+                                        @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
+                                    </div>
+                                </a>
                             </td>
                         </tr>
                     @endforeach
@@ -142,7 +148,6 @@
                     </tbody>
                 </table>
             </div>
-
         </x-slot>
     </x-modal>
 </div>

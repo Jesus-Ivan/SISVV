@@ -78,17 +78,17 @@
                         <th scope="col" class="px-6 py-3 w-96">
                             DESCRIPCIÓN
                         </th>
-                        <th scope="col" class="px-6 py-3">
-                            CANTIDAD SALIDA
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            PESO SALIDA
-                        </th>
                         <th scope="col" class="px-4 py-3">
                             CANTIDAD ORIGEN
                         </th>
                         <th scope="col" class="px-4 py-3">
                             PESO ORIGEN
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            CANTIDAD SALIDA
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            PESO SALIDA
                         </th>
                         <th scope="col" class="px-6 py-3">
                             ACCIONES
@@ -106,13 +106,16 @@
                                 {{ $articulo['nombre'] }}
                             </td>
                             <td class="px-6 py-2">
-                                {{ $articulo['cantidad'] }}
+                                {{ $articulo['cantidad_origen'] ?: '' }}
                             </td>
                             <td class="px-6 py-2">
-                                {{ $articulo['peso'] }}
+                                {{ $articulo['peso_origen'] ?: '' }}
                             </td>
                             <td class="px-6 py-2">
-                                {{ $articulo['stock'] }}
+                                {{ $articulo['cantidad_salida'] }}
+                            </td>
+                            <td class="px-6 py-2">
+                                {{ $articulo['peso_salida'] }}
                             </td>
                             <td class="px-6 py-2">
                                 <button type="button" wire:click="remove({{ $articuloIndex }})"
@@ -137,6 +140,7 @@
         @enderror
     </div>
 
+    {{--Butons Acept and Cancel--}}
     <div class="ms-3 mx-3">
         {{-- Linea divisora --}}
         <hr class="h-px my-1 bg-gray-300 border-0 dark:bg-gray-700">
@@ -197,4 +201,17 @@
         @endif
     </x-action-message>
 
+    {{-- LOADING SCREEN --}}
+    <div wire:loading.delay wire:target='confirmarSalida'>
+        <x-loading-screen>
+            <x-slot name='body'>
+                <div class="flex">
+                    <div class="me-4">
+                        @include('livewire.utils.loading', ['w' => 6, 'h' => 6])
+                    </div>
+                    <p>Guardando salida...</p>
+                </div>
+            </x-slot>
+        </x-loading-screen>
+    </div>
 </div>

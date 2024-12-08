@@ -58,7 +58,7 @@ class TraspasosNuevo extends Component
     #[Computed()]
     public function bodegas()
     {
-        return Bodega::all();
+        return Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
     }
 
     #[On('selected-articulo')]
@@ -93,6 +93,11 @@ class TraspasosNuevo extends Component
             'origen_seleccionado' => 'required',
             'destino_seleccionado' => 'required',
         ]);
+
+        if (is_null($this->cantidad) && is_null($this->peso)) {
+            session()->flash('error_input', 'Ingresa cantidad o peso');
+            return;
+        }
 
         //Si se selecciono un articulo
         if ($this->articulo_seleccionado) {
@@ -229,7 +234,6 @@ class TraspasosNuevo extends Component
      */
     private function actualizarStock($lista_articulos)
     {
-        //dd($lista_articulos);
         foreach ($lista_articulos as $key => $articulo) {
             //Buscar los stocks del articulo
             $stock = Stock::where('codigo_catalogo', $articulo['codigo'])->get();

@@ -15,9 +15,9 @@ return new class extends Migration
             $table->integer('id')->autoIncrement()->unsigned();
             $table->integer('folio_traspaso');
             $table->integer('codigo_articulo');
-            $table->string('nombre', 50);
+            $table->string('nombre', 255);
             $table->integer('cantidad')->nullable();
-            $table->float('peso')->nullable();
+            $table->decimal('peso', 10, 3)->nullable();
             $table->string('clave_bodega_origen', 50);
             $table->json('existencia_origen')->nullable();
             $table->string('clave_bodega_destino', 50);

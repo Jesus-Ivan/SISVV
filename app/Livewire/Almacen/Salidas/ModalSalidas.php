@@ -39,12 +39,39 @@ class ModalSalidas extends Component
 
     public function agregarSalida()
     {
+        //Validamos que haya seleccionado un articulo
+        $validated = $this->validate([
+            'articulo_seleccionado' => 'required'
+        ]);
+        //Agregamos el stock de cantidad (unitario)
+        $validated['cantidad_stock'] = $this->cantidad_stock;
+        //Agregamos el stock de peso (peso)
+        $validated['peso_stock'] = $this->peso_stock;
+
+        //Verificamos si selecciono previamente la bodega de origen
+        if (!$this->clave_stock_origen) {
+            session()->flash('error_modal', 'Selecciona bodega de origen');
+            return;
+        }
+        //Verificamos si selecciono la bodega de salida
+        if (is_null($this->cantidad_salida) && is_null($this->peso_salida)) {
+            session()->flash('error_modal', 'Debes ingresar peso o cantidad');
+            return;
+        }
+        //Verificamos no existe ningun stock registrado
+        if (is_null($validated['cantidad_stock']) && is_null($validated['peso_stock'])) {
+            session()->flash('error_modal', 'No hay registro de stock en la BD');
+            return;
+        }
+
         //Emitimos evento para agregar la salida
         $this->dispatch('añadirSalida', [
             'codigo' => $this->articulo_seleccionado['codigo'],
             'nombre' => $this->articulo_seleccionado['nombre'],
             'cantidad_salida' => $this->cantidad_salida,
-            'peso_salida' => $this->peso_salida
+            'peso_salida' => $this->peso_salida,
+            'cantidad_origen' => $this->cantidad_stock ? $this->cantidad_stock[$this->clave_stock_origen] : null,
+            'peso_origen' => $this->peso_stock ? $this->peso_stock[$this->clave_stock_origen] : null,
         ]);
         $this->dispatch('close-modal'); //Emitimos evento para cerrar el componente del modal
         $this->reset('articulo_seleccionado', 'cantidad_stock', 'peso_stock', 'cantidad_salida', 'peso_salida');

@@ -117,7 +117,7 @@ class NuevaEntrada extends Component
                         ->update(['aplicado' => true]);
                     //Actualizamos la fecha de ultima compra en el inventario ("catalogo_vista_verde")
                     $this->actualizarUltimaCompra($row);
-                    
+
                     //Creamos el registro del detalle de entrada
                     DetallesEntrada::create([
                         'id_proveedor' => $row['id_proveedor'],
@@ -183,6 +183,14 @@ class NuevaEntrada extends Component
             if ($stock_unitario) {
                 $stock_unitario->stock_alm += $producto['cantidad'];
                 $stock_unitario->save();    //Guardamos el stock
+            } else {
+                //Si no hay stock unitario, creamos uno nuevo
+                $result_stock = Stock::create([
+                    'codigo_catalogo' => $producto['codigo_producto'],
+                    'tipo' => AlmacenConstants::CANTIDAD_KEY
+                ]);
+                $result_stock->stock_alm += $producto['cantidad'];
+                $result_stock->save();    //Guardamos el stock
             }
         }
 
@@ -190,6 +198,14 @@ class NuevaEntrada extends Component
             if ($stock_peso) {
                 $stock_peso->stock_alm += $producto['peso'];
                 $stock_peso->save();        //Guardamos el stock
+            } else {
+                //Si no hay stock de peso en la BD, creamos uno nuevo
+                $result_stock = Stock::create([
+                    'codigo_catalogo' => $producto['codigo_producto'],
+                    'tipo' => AlmacenConstants::PESO_KEY
+                ]);
+                $result_stock->stock_alm += $producto['peso'];
+                $result_stock->save();    //Guardamos el stock
             }
         }
     }

@@ -18,6 +18,7 @@ class Historial extends Component
     {
         return DB::table('detalles_compras')
             ->whereAny(['codigo_producto', 'nombre'], 'like', '%' . $this->input_search . '%')
+            ->orderByDesc('id')
             ->paginate(20);
     }
 

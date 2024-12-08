@@ -37,10 +37,10 @@
                         PROVEEDOR
                     </th>
                     <th scope="col" class="px-6 py-2">
-                        CANTIDAD
+                        CANTIDAD (PZ)
                     </th>
                     <th scope="col" class="px-6 py-2">
-                        PESO
+                        PESO (KG)
                     </th>
                     <th scope="col" class="px-6 py-2">
                         COSTO UNIT.

@@ -129,7 +129,7 @@
                                 {{ $articulo->ultima_compra }}
                             </td>
                             <td class="px-6 py-1">
-                                {{ $articulo->clave_depto }}
+                                {{ $articulo->clave_dpto }}
                             </td>
                             <td class="px-6 py-1">
                                 {{ $articulo->tipo }}

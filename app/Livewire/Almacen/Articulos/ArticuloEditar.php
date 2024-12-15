@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Almacen\Articulos;
 
+use App\Constants\AlmacenConstants;
 use App\Livewire\Forms\ArticulosForm;
 use App\Models\Clasificacion;
+use App\Models\Departamentos;
 use App\Models\Proveedor;
 use App\Models\Unidad;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +33,12 @@ class ArticuloEditar extends Component
     public function unidades()
     {
         return Unidad::all();
+    }
+
+    #[Computed()]
+    public function departamentos()
+    {
+        return Departamentos::all();
     }
 
     //Iniciamos con los componentes desde el controlador
@@ -74,6 +82,15 @@ class ArticuloEditar extends Component
 
     public function render()
     {
-        return view('livewire.almacen.articulos.articulo-editar');
+        return view('livewire.almacen.articulos.articulo-editar',[
+            'tipos' => [
+                AlmacenConstants::ABARROTES_KEY => 'ABARROTES',
+                AlmacenConstants::MATERIA_KEY => 'MATERIA PRIMA',
+                AlmacenConstants::SEMIPORDUCIDO_KEY => 'SEMIPRODUCIDO',
+                AlmacenConstants::SERVICIO_KEY => 'SERVICIO',
+                AlmacenConstants::PLATILLOS_KEY => 'PLATILLOS',
+                AlmacenConstants::BEBIDAS_KEY => 'BEBIDAS'
+            ]
+        ]);
     }
 }

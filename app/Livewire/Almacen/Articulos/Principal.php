@@ -15,19 +15,81 @@ class Principal extends Component
     use WithPagination;
     public ArticulosForm $form;
     public $search_input;
+    public $radioButon;
+    public $vista;
+
+    //Iniciamos los valores por defecto
+    public function mount()
+    {
+        //Nombre por default
+        $this->search_input = '';
+        //Radio button 'Mostrar Todos'                   
+        $this->radioButon = 'T';
+        //Select 'Mostrar Todos'           
+        $this->vista = 'COM';
+    }
 
     public function search()
     {
         $this->resetPage();
     }
 
-    #[Computed()]
+    /*#[Computed()]
     public function articulos()
     {
         return CatalogoVistaVerde::with('proveedor', 'familia', 'categoria')->where('nombre', 'like', '%' . $this->search_input . '%')->orWhere('codigo', '=', $this->search_input)
             ->orderByRaw('catalogo_vista_verde.codigo')
             ->paginate(20);
+    }*/
+
+    #[Computed()]
+    public function articulos()
+    {
+        $query = CatalogoVistaVerde::with('proveedor', 'familia', 'categoria');
+
+        if ($this->search_input) {
+            $query->where(function ($q){
+                $q->where('nombre', 'like', '%' . $this->search_input . '%')
+                ->orWhere('codigo', '=', $this->search_input);
+            });
+        }
+
+        //Aplicamos la busqueda por radio button
+        switch ($this->radioButon) {
+            // Si el radio button es 'ALMACEN'
+            case 'A':
+                $query->where('clave_depto', 'ALM');
+                break;
+            // Si el radio button es 'PUNTO DE VENTA'
+            case 'PV':
+                $query->where('clave_depto', 'PV');
+                break;
+            // Si el radio button es 'TODOS'
+            default:
+                break;
+        }
+
+        //Aplicamos la busqueda por select
+        switch ($this->vista) {
+            //Muestra unicamente los articulos 'ACTIVOS'
+            case 'ACT':
+                $query->where('estado', 1);
+                break;
+            //Muestra unicamente los articulos 'INACTIVOS'
+            case 'INA':
+                $query->where('estado', 0);
+                break;
+            default:
+                //Muestra los articulos 'COMPLETA'
+                break;
+        }
+        
+        return $query->orderByRaw('catalogo_vista_verde.codigo')
+            ->whereNot('clave_depto', 'RECEP')
+            ->paginate(20);
     }
+
+
 
     public function render()
     {

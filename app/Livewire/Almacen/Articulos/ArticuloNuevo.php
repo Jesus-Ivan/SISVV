@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Almacen\Articulos;
 
+use App\Constants\AlmacenConstants;
 use App\Livewire\Forms\ArticulosForm;
 use App\Models\Clasificacion;
+use App\Models\Departamentos;
 use App\Models\Proveedor;
 use App\Models\Unidad;
 use Illuminate\Validation\ValidationException;
@@ -30,6 +32,12 @@ class ArticuloNuevo extends Component
     public function unidades()
     {
         return Unidad::all();
+    }
+
+    #[Computed()]
+    public function departamentos()
+    {
+        return Departamentos::all();
     }
 
     public function register()
@@ -60,6 +68,15 @@ class ArticuloNuevo extends Component
 
     public function render()
     {
-        return view('livewire.almacen.articulos.articulo-nuevo');
+        return view('livewire.almacen.articulos.articulo-nuevo',[
+            'tipos' => [
+                AlmacenConstants::ABARROTES_KEY => 'ABARROTES',
+                AlmacenConstants::MATERIA_KEY => 'MATERIA PRIMA',
+                AlmacenConstants::SEMIPORDUCIDO_KEY => 'SEMIPRODUCIDO',
+                AlmacenConstants::SERVICIO_KEY => 'SERVICIO',
+                AlmacenConstants::PLATILLOS_KEY => 'PLATILLOS',
+                AlmacenConstants::BEBIDAS_KEY => 'BEBIDAS'
+            ]
+        ]);
     }
 }

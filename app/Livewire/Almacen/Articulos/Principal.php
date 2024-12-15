@@ -58,11 +58,11 @@ class Principal extends Component
         switch ($this->radioButon) {
             // Si el radio button es 'ALMACEN'
             case 'A':
-                $query->where('clave_depto', 'ALM');
+                $query->where('clave_dpto', 'ALM');
                 break;
             // Si el radio button es 'PUNTO DE VENTA'
             case 'PV':
-                $query->where('clave_depto', 'PV');
+                $query->where('clave_dpto', 'PV');
                 break;
             // Si el radio button es 'TODOS'
             default:
@@ -85,7 +85,7 @@ class Principal extends Component
         }
         
         return $query->orderByRaw('catalogo_vista_verde.codigo')
-            ->whereNot('clave_depto', 'RECEP')
+            ->whereNot('clave_dpto', 'RECEP')
             ->paginate(20);
     }
 

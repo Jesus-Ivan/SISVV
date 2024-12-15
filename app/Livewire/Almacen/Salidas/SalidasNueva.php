@@ -83,6 +83,7 @@ class SalidasNueva extends Component
                     'clave_destino' => $info['clave_destino'],
                     'observaciones' => $info['observaciones'],
                     'fecha' => $this->fechaActual,
+                    'monto' => array_sum(array_column($info['articulos'], 'monto'))
                 ]);
                 //REGISTRAMOS LOS DETALLES DE LA SALIDA EN LA TABLA CORRESPONDIENTE
                 foreach ($info['articulos'] as $key => $articulo) {
@@ -94,6 +95,8 @@ class SalidasNueva extends Component
                         'stock_origen_peso' => $articulo['peso_origen'],
                         'cantidad_salida' => $articulo['cantidad_salida'],
                         'peso_salida' => $articulo['peso_salida'],
+                        'costo_unitario'=>$articulo['costo_unitario'],
+                        'monto' => $articulo['monto'],
                     ]);
                 }
                 //RESTAMOS Y ACTUALIZAMOS EL STOCK DEL INVENTARIO PRINCIPAL

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('observaciones', 150)->nullable();
             $table->string('clave_origen', 50);
             $table->string('clave_destino', 50);
+            $table->decimal('monto', 10, 2);
         });
     }
 

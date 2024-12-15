@@ -57,7 +57,7 @@
         <form class="ms-3 w-96">
             <label for="observaciones"
                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nota:</label>
-            <input type="text" id="default-input" wire:model='observaciones'
+            <input type="text" wire:model='observaciones'
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="Observaciones">
             @error('observaciones')
@@ -91,6 +91,12 @@
                             PESO SALIDA
                         </th>
                         <th scope="col" class="px-6 py-3">
+                            PRECIO
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            MONTO
+                        </th>
+                        <th scope="col" class="px-6 py-3">
                             ACCIONES
                         </th>
                     </tr>
@@ -116,6 +122,12 @@
                             </td>
                             <td class="px-6 py-2">
                                 {{ $articulo['peso_salida'] }}
+                            </td>
+                            <td class="px-6 py-2">
+                                $ {{ $articulo['costo_unitario'] }}
+                            </td>
+                            <td class="px-6 py-2">
+                                $ {{ $articulo['monto'] }}
                             </td>
                             <td class="px-6 py-2">
                                 <button type="button" wire:click="remove({{ $articuloIndex }})"

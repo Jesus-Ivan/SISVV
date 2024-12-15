@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Forms;
 
+use App\Constants\AlmacenConstants;
 use App\Models\Caja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
@@ -9,6 +10,7 @@ use App\Models\EstadoCuenta;
 use App\Models\PuntoVenta;
 use App\Models\Socio;
 use App\Models\SocioMembresia;
+use App\Models\Stock;
 use App\Models\TipoPago;
 use App\Models\Venta;
 use Exception;
@@ -290,6 +292,7 @@ class VentaForm extends Form
         $folioVenta = 0;
         //Se crea la transaccion
         DB::transaction(function () use ($venta, $codigopv, &$folioVenta) {
+            //$this->descontarStock();
             //Crear la venta y guardamos el resultado de la insersion en la BD, en la variable 'resultVenta'
             $resultVenta = $this->registrarVenta($venta, $codigopv, true, $this->tipo_venta);
 
@@ -337,7 +340,6 @@ class VentaForm extends Form
                 break;
             default:
                 break;
-            
         }
         //Agregamos los productos al resultado de la validacion
         $venta['productosTable'] = $this->productosTable;
@@ -465,7 +467,6 @@ class VentaForm extends Form
         if (count($productos_bd) != count($productos_current)) {
             throw new Exception('Otro usuario transfirio un producto');
         }
-        
     }
 
     /**
@@ -702,5 +703,37 @@ class VentaForm extends Form
             $this->productosTable[$key]['subtotal'] = $producto['precio'] * $producto['cantidad'];
         }
         $this->actualizarTotal();
+    }
+
+    /**
+     * Se encarga de descontar el stock de un producto, dado el codigo del mismo y la clave del stock de origen
+     */
+    private function descontarStock($codigo_producto, $clave_stock, $cantidad_salida)
+    {
+        //Buscar los stocks del articulo
+        $stock = Stock::where('codigo_catalogo', $codigo_producto)->get();
+        //Si no hay stocks
+        if (!count($stock)) throw new Exception("El articulo: " . $codigo_producto . ", no cuenta con ningun registro de stock", 1);
+
+        //Si la cantidad del articulo que se desea traspasar es mayor a cero
+        if ($cantidad_salida> 0) {
+            //Buscar el stock unitario
+            $stock_cantidad = $stock->where('tipo', AlmacenConstants::CANTIDAD_KEY)->first();
+            //Si no tiene stock de cantidad (unitario)
+            if (!$stock_cantidad) throw new Exception("No hay stock " . AlmacenConstants::CANTIDAD_KEY . ' registrado en la BD para ' . $codigo_producto, 1);
+            //Actualizar el stock
+            $stock_cantidad[$clave_stock] -= $articulo['cantidad_salida'];
+            $stock_cantidad->save();
+        }
+
+        if ($articulo['peso_salida'] > 0) {
+            //Buscar el stock de peso
+            $stock_cantidad = $stock->where('tipo', AlmacenConstants::PESO_KEY)->first();
+            //Si no tiene stock de cantidad (unitario)
+            if (!$stock_cantidad) throw new Exception("No hay stock " . AlmacenConstants::PESO_KEY . ' registrado en la BD para ' . $codigo_producto, 1);
+            //Actualizar el stock
+            $stock_cantidad[$clave_stock] -= $articulo['peso_salida'];
+            $stock_cantidad->save();
+        }
     }
 }

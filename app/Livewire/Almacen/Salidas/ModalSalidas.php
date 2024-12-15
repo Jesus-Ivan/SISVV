@@ -15,7 +15,6 @@ class ModalSalidas extends Component
     #[Modelable]
     public $clave_stock_origen;
 
-    #[Locked]
     public $articulo_seleccionado;
     #[Locked]
     public $cantidad_stock;
@@ -24,17 +23,49 @@ class ModalSalidas extends Component
 
     public $cantidad_salida;
     public $peso_salida;
+    public $precio_venta;
+    public $monto = 0;
 
     #[On('selected-articulo')]
     public function onSelectedInput(CatalogoVistaVerde $data)
     {
+        //Almacenar el articulo seleccionado
         $this->articulo_seleccionado = $data->toArray();
+        //Almacenar el costo del precio para vender (que es lo mismo de la columna 'costo_unitario' en la tabla 'catalogo_vista_verde')
+        $this->precio_venta = $data->costo_unitario;
+        //Limpiar los inputs de cantidad, peso
+        $this->reset('cantidad_salida', 'peso_salida');
         $this->cantidad_stock = Stock::where('codigo_catalogo', $data->codigo)
             ->where("tipo", AlmacenConstants::CANTIDAD_KEY)
             ->first();
         $this->peso_stock =  Stock::where('codigo_catalogo', $data->codigo)
             ->where("tipo", AlmacenConstants::PESO_KEY)
             ->first();
+    }
+
+    public function changedPrecio($eValue)
+    {
+        if ($this->articulo_seleccionado) {
+            if (! $eValue) {
+                $this->precio_venta = 0;
+            } else {
+                $this->precio_venta = $eValue;
+            }
+            $this->actualizarMonto();
+        }
+    }
+
+    public function actualizarMonto()
+    {
+        if ($this->articulo_seleccionado) {
+            if ($this->peso_salida) {
+                $this->monto = $this->peso_salida * $this->precio_venta;
+            } elseif ($this->cantidad_salida) {
+                $this->monto = $this->cantidad_salida * $this->precio_venta;
+            } else {
+                $this->monto = 0;
+            }
+        }
     }
 
     public function agregarSalida()
@@ -72,6 +103,8 @@ class ModalSalidas extends Component
             'peso_salida' => $this->peso_salida,
             'cantidad_origen' => $this->cantidad_stock ? $this->cantidad_stock[$this->clave_stock_origen] : null,
             'peso_origen' => $this->peso_stock ? $this->peso_stock[$this->clave_stock_origen] : null,
+            'costo_unitario' => $this->precio_venta,
+            'monto' => $this->monto
         ]);
         $this->dispatch('close-modal'); //Emitimos evento para cerrar el componente del modal
         $this->reset('articulo_seleccionado', 'cantidad_stock', 'peso_stock', 'cantidad_salida', 'peso_salida');

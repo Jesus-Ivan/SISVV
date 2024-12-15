@@ -46,6 +46,9 @@
                             Observaciones
                         </th>
                         <th scope="col" class="px-6 py-2">
+                            Monto
+                        </th>
+                        <th scope="col" class="px-6 py-2">
                             ACCIONES
                         </th>
                     </tr>
@@ -68,6 +71,9 @@
                             </td>
                             <td class="px-6 py-2 uppercase">
                                 {{ $salida->observaciones }}
+                            </td>
+                            <td class="px-6 py-2 uppercase">
+                                $ {{ $salida->monto }}
                             </td>
                             <td class="px-6 py-2">
                                 <a wire:click="verDetalles({{ $salida->folio }})"
@@ -116,6 +122,9 @@
                                 <th scope="col" class="px-6 py-2">
                                     Peso salida
                                 </th>
+                                <th scope="col" class="px-6 py-2">
+                                    Monto
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -137,6 +146,9 @@
                                     </td>
                                     <td class="px-6 py-2">
                                         {{ $detalle->peso_salida }}
+                                    </td>
+                                    <td class="px-6 py-2">
+                                        $ {{ $detalle->monto }}
                                     </td>
                                 </tr>
                             @endforeach

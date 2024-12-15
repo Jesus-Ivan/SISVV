@@ -82,21 +82,31 @@
                 <input type="number" id="costo_empleado" wire:model="formArticulo.costo_empleado"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
             </div>
+            <!-- DEPARTAMENTO DEL ARTICULO -->
             <div class="min-w-72">
-                <label for="tipo" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tipo</label>
-                <select id="tipo" wire:model="formArticulo.tipo"
+                <label for="clave_depto"
+                    class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Departamento</label>
+                <select id="clave_depto" wire:model="formArticulo.clave_depto"
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                     <option selected value="{{ null }}">SELECCIONAR</option>
-                    <option value="INV-VEN" title="Inventariable - Vendible">INV-VEN</option>
-                    <option value="INV-NVEN-ABA" title="Inventariable - No Vendible - Abarrotes">INV-NVEN-ABA</option>
-                    <option value="INV-NVEN-MP" title="Inventariable - No Vendible - Materia Prima">INV-NVEN-MP</option>
-                    <option value="INV-NVEN-SP" title="Inventariable - No Vendible - Semiproducido">INV-NVEN-SP</option>
-                    <option value="NINV-VEN-SER" title="No Inventariable - Vendible - Servicios">NINV-VEN-SER</option>
-                    <option value="NINV-VEN-PRE-PLAT"
-                        title="No Inventariable - Vendible - Producto Preparado - Platillos">NINV-VEN-PRE-PLAT</option>
-                    <option value="NINV-VEN-PRE-BEB" title="No Inventariable - Vendible - Producto Preparado - Bebidas">
-                        NINV-VEN-PRE-BEB</option>
-                    <option value="NINV-NVEN" title="No Inventariable - No vendible">NINV-NVEN</option>
+                    @foreach ($this->departamentos as $departamento)
+                        <option value="{{ $departamento->clave }}">{{ $departamento->descripcion }}</option>
+                    @endforeach
+                </select>
+                @error('formArticulo.clave_depto')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
+            </div>
+            <!-- TIPO DE ARTICULO -->
+            <div class="min-w-72">
+                <label for="tipo" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tipo de
+                    Articulo</label>
+                <select id="tipo" wire:model="formArticulo.tipo"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option selected value="{{ null }}">SELECCIONAR</option>0
+                    @foreach ($tipos as $key => $tipo)
+                        <option value="{{ $key }}">{{ $tipo }}</option>
+                    @endforeach
                 </select>
             </div>
         </div>

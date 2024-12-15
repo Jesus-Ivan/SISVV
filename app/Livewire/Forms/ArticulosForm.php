@@ -22,6 +22,7 @@ class ArticulosForm extends Form
     public $costo_unitario;
     public $costo_empleado;
     public $estado;
+    public $clave_depto;
     public $tipo;
 
     //INFORMACION DE LOS PRECIOS POR UNIDAD
@@ -39,6 +40,7 @@ class ArticulosForm extends Form
         'proveedor' => 'max:50',
         'costo_unitario' => 'min:0|max:50',
         'costo_empleado' => 'max:50',
+        'clave_depto' => 'required',
         'tipo' => 'max:50',
         'estado' => 'max:10'
     ];
@@ -54,6 +56,7 @@ class ArticulosForm extends Form
         $this->proveedor = $articulo->id_proveedor;
         $this->costo_unitario = $articulo->costo_unitario;
         $this->costo_empleado = $articulo->costo_empleado;
+        $this->clave_depto = $articulo->clave_depto;
         $this->tipo = $articulo->tipo;
         $this->estado = $articulo->estado;
     }
@@ -106,6 +109,7 @@ class ArticulosForm extends Form
                 'id_proveedor' => $validated['proveedor'],
                 'costo_unitario' => $validated['costo_unitario'],
                 'costo_empleado' => $validated['costo_empleado'],
+                'clave_depto' => $validated['clave_depto'],
                 'tipo' => $validated['tipo']
             ]);
             //Creamos los precios de unidad dependiendo de la cantidad ingresada

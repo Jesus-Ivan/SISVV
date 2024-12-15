@@ -2,9 +2,8 @@
     {{-- FILTRO DE BUSQUEDA --}}
     <form class="relative w-96" wire:submit='search' method="GET">
         @csrf
-        <div class="flex">
-            <label for="default-search"
-                class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
+        <div class="flex items-end gap-4 grow">
+            <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
             <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                 <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
@@ -15,8 +14,53 @@
             <input wire:model="search_input" type="text"
                 class="block w-full p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="Buscar nombre de artículo o código" />
+            <!--Loading indicator-->
+            <div wire:loading>
+                @include('livewire.utils.loading', ['w' => 6, 'h' => 6])
+            </div>
         </div>
     </form>
+
+    {{-- RADIO BUTONS AND SELECT --}}
+    <div class="flex gap-3 items-center my-2">
+        <!--SELECT -->
+        <div>
+            <select id="vista" wire:model.live.debounce.600ms ='vista'
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <option selected value="COM">Completa</option>
+                <option value="ACT">Activo</option>
+                <option value="INA">Inactivo</option>
+            </select>
+        </div>
+        <!--RADIO BUTTONS-->
+        <div>
+            <label for="radio-buttons"
+                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Departamento</label>
+            <div class="flex gap-8 m-2" id="radio-buttons">
+                <div class="flex items-center">
+                    <input id="T-radio" type="radio" value="T" name="todos"
+                        wire:model.live.debounce.500ms='radioButon'
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="T-radio" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Mostrar
+                        todos</label>
+                </div>
+                <div class="flex items-center-2">
+                    <input id="A-radio" type="radio" value="A" name="almacen"
+                        wire:model.live.debounce.500ms='radioButon'
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="P-radio"
+                        class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Almacén</label>
+                </div>
+                <div class="flex items-center">
+                    <input id="PV-radio" type="radio" value="PV" name="puntos"
+                        wire:model.live.debounce.500ms='radioButon'
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="C-radio" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Puntos
+                        Venta</label>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {{-- TABLA --}}
     <div class="my-2">
@@ -40,10 +84,13 @@
                             PROVEEDOR
                         </th>
                         <th scope="col" class="px-6 py-3">
-                            COSTO UNITARIO
+                            PRECIO VENTA
                         </th>
                         <th scope="col" class="px-6 py-3">
                             ULTIMA COMPRA
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            DEPTO
                         </th>
                         <th scope="col" class="px-6 py-3">
                             TIPO
@@ -80,6 +127,9 @@
                             </td>
                             <td class="px-6 py-1">
                                 {{ $articulo->ultima_compra }}
+                            </td>
+                            <td class="px-6 py-1">
+                                {{ $articulo->clave_depto }}
                             </td>
                             <td class="px-6 py-1">
                                 {{ $articulo->tipo }}

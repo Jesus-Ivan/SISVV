@@ -23,6 +23,7 @@ class CatalogoImport implements ToCollection, WithHeadingRow
                     'costo_unitario' => $row['costo_unitario'],
                     'costo_empleado' => $row['costo_empleado'],
                     'estado' => $row['estado'],
+                    'clave_depto' => $row['clave_depto'],
                     'tipo' => $row['tipo'],
                     'ultima_compra' => $row['ultima_compra']
                 ]);
@@ -37,6 +38,7 @@ class CatalogoImport implements ToCollection, WithHeadingRow
                     'costo_unitario' => $row['costo_unitario'],
                     'costo_empleado' => $row['costo_empleado'],
                     'estado' => $row['estado'],
+                    'clave_depto' => $row['clave_depto'],
                     'tipo' => $row['tipo'],
                     'ultima_compra' => $row['ultima_compra']
                 ]);

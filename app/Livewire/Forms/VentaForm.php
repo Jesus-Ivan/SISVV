@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Constants\AlmacenConstants;
+use App\Models\Bodega;
 use App\Models\Caja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
@@ -292,7 +293,6 @@ class VentaForm extends Form
         $folioVenta = 0;
         //Se crea la transaccion
         DB::transaction(function () use ($venta, $codigopv, &$folioVenta) {
-            //$this->descontarStock();
             //Crear la venta y guardamos el resultado de la insersion en la BD, en la variable 'resultVenta'
             $resultVenta = $this->registrarVenta($venta, $codigopv, true, $this->tipo_venta);
 
@@ -301,6 +301,8 @@ class VentaForm extends Form
 
             //crear los detalles de los productos
             $this->registrarProductosVenta($folioVenta, $venta);
+            //Descontar stocks
+            //$this->descontarStock($codigopv, $venta['productosTable']);
             //Crear los detalles de los pagos
             $this->registrarPagosVenta($folioVenta, $venta, $codigopv);
         }, 2);
@@ -706,34 +708,66 @@ class VentaForm extends Form
     }
 
     /**
-     * Se encarga de descontar el stock de un producto, dado el codigo del mismo y la clave del stock de origen
+     * Se encarga de descontar el stock de los productos en el punto dado.
      */
-    private function descontarStock($codigo_producto, $clave_stock, $cantidad_salida)
+    private function descontarStock($clave_punto, $productos)
     {
-        //Buscar los stocks del articulo
-        $stock = Stock::where('codigo_catalogo', $codigo_producto)->get();
-        //Si no hay stocks
-        if (!count($stock)) throw new Exception("El articulo: " . $codigo_producto . ", no cuenta con ningun registro de stock", 1);
+        foreach ($productos as $key => $producto) {
+            //Buscar los stocks del articulo
+            $stock = Stock::where('codigo_catalogo', $producto['codigo_catalogo'])->get();
 
-        //Si la cantidad del articulo que se desea traspasar es mayor a cero
-        if ($cantidad_salida> 0) {
+            //Si cuenta con dos stocks o mas, lanzar excepcion
+            if (count($stock) >= 2)
+                throw new Exception("El producto " . $producto['nombre'] . " cuenta con dos tipos de stocks");
+
+
+            //Obtener clave del stock correspondiente al punto
+            $clave_stock = $this->getBodegaColumn($clave_punto);
+
             //Buscar el stock unitario
             $stock_cantidad = $stock->where('tipo', AlmacenConstants::CANTIDAD_KEY)->first();
-            //Si no tiene stock de cantidad (unitario)
-            if (!$stock_cantidad) throw new Exception("No hay stock " . AlmacenConstants::CANTIDAD_KEY . ' registrado en la BD para ' . $codigo_producto, 1);
-            //Actualizar el stock
-            $stock_cantidad[$clave_stock] -= $articulo['cantidad_salida'];
-            $stock_cantidad->save();
-        }
-
-        if ($articulo['peso_salida'] > 0) {
             //Buscar el stock de peso
-            $stock_cantidad = $stock->where('tipo', AlmacenConstants::PESO_KEY)->first();
-            //Si no tiene stock de cantidad (unitario)
-            if (!$stock_cantidad) throw new Exception("No hay stock " . AlmacenConstants::PESO_KEY . ' registrado en la BD para ' . $codigo_producto, 1);
+            $stock_peso = $stock->where('tipo', AlmacenConstants::PESO_KEY)->first();
+
+            //Si tiene stock de peso (peso)
+            if ($stock_peso) {
+                $stock =  $stock_peso;
+            } elseif ($stock_cantidad) {
+                $stock = $stock_cantidad;
+            } else {
+                //Si no tiene stock de cantidad (unitario), crear el stock
+                $stock = Stock::create([
+                    'codigo_catalogo' => '',
+                    'tipo' => AlmacenConstants::CANTIDAD_KEY
+                ]);
+            }
             //Actualizar el stock
-            $stock_cantidad[$clave_stock] -= $articulo['peso_salida'];
-            $stock_cantidad->save();
+            $stock[$clave_stock] -= $producto['cantidad'];
+            $stock->save();
+        }
+    }
+
+    /**
+     * Recibe la clave del punto de venta, devuelve el nombre de la columna del stock de la tabla 'stocks'
+     */
+    private function getBodegaColumn($clave_punto)
+    {
+        switch ($clave_punto) {
+            case 'BAR':
+                return 'stock_bar';
+            case 'RES':
+                return 'stock_res';
+            case 'CAD':
+                return 'stock_cad';
+            case 'CAF':
+                return 'stock_caf';
+            case 'LOD':
+                return 'stock_lod';
+            case 'LOC':
+                return 'stock_loc';
+            default:
+                throw new Exception("No existe la clave de punto : " . $clave_punto . ", para descontar stock");
+                break;
         }
     }
 }

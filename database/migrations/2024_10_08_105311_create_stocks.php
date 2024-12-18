@@ -29,10 +29,10 @@ return new class extends Migration
             $table->decimal('stock_caf', 10, 3)->default(0);
             $table->decimal('stock_caf_min', 10, 3)->nullable();
             $table->decimal('stock_caf_max', 10, 3)->nullable();
-            $table->decimal('stock_loc', 10, 3)->nullable();
+            $table->decimal('stock_loc', 10, 3)->default(0);
             $table->decimal('stock_loc_min', 10, 3)->nullable();
             $table->decimal('stock_loc_max', 10, 3)->nullable();
-            $table->decimal('stock_lod', 10, 3)->nullable();
+            $table->decimal('stock_lod', 10, 3)->default(0);
             $table->decimal('stock_lod_min', 10, 3)->nullable();
             $table->decimal('stock_lod_max', 10, 3)->nullable();
             $table->decimal('stock_coc', 10, 3)->default(0);

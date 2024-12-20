@@ -45,7 +45,7 @@ Route::prefix('administracion')->middleware(['auth'])->group(function () {
 Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
     Route::view('/', 'almacen.index')->name('almacen');
 
-    Route::prefix('articulos')->group(function (){
+    Route::prefix('articulos')->group(function () {
         Route::view('/', 'almacen.Articulos.articulos')->name('almacen.articulos');
         Route::view('nuevo', 'almacen.Articulos.nuevo-articulo')->name('almacen.articulos.nuevo');
         Route::get('editar/{articulo}', [CatalogoController::class, 'editArticulo'])->name('almacen.articulos.editar');
@@ -161,7 +161,7 @@ Route::prefix('pv/{codigopv}')->middleware(['auth', 'puntos'])->group(function (
     });
 
 
-    Route::view('inventario', 'puntos.Inventario.inventario')->name('pv.inventario');
+    Route::get('inventario', [PuntosController::class, 'verInventario'])->name('pv.inventario');
     Route::get('prod-vendidos', [PuntosController::class, 'prodVendidos'])->name('pv.prod-vendidos');
 
 
@@ -193,7 +193,6 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::get('prod-vendidos', [SistemasController::class, 'prodVendidos'])->name('sistemas.pv.prod-vendidos');
         Route::view('notas', 'sistemas.Puntos.notas')->name('sistemas.pv.notas');
         Route::get('/editar/{folioventa}', [SistemasController::class, 'editarVenta'])->name('sistemas.pv.editar');
-
     });
 
     //DEPARTAMENTO DE RECEPCIÓN

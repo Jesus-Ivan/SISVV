@@ -17,4 +17,16 @@ class AlmacenConstants
     public const SERVICIO_KEY = "SER";
     public const PLATILLOS_KEY = "PLAT";
     public const BEBIDAS_KEY = "BEB";
+
+    /**
+     * Array asociativo que relaciona la clave del punto de venta, con su columna de stock correspondiente
+     */
+    public const PUNTOS_STOCK =[
+        'BAR'=>'stock_bar',
+        'RES'=>'stock_res',
+        'CAD'=>'stock_cad',
+        'CAF'=>'stock_caf',
+        'LOD'=>'stock_lod',
+        'LOC'=>'stock_loc',
+    ];
 }

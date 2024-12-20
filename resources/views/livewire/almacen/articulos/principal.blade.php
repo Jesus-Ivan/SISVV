@@ -1,4 +1,4 @@
-<div class="ms-3 me-3">
+<div class="ms-3 mx-3">
     {{-- FILTRO DE BUSQUEDA --}}
     <form class="relative w-96" wire:submit='search' method="GET">
         @csrf

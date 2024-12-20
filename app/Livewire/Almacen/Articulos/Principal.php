@@ -34,14 +34,6 @@ class Principal extends Component
         $this->resetPage();
     }
 
-    /*#[Computed()]
-    public function articulos()
-    {
-        return CatalogoVistaVerde::with('proveedor', 'familia', 'categoria')->where('nombre', 'like', '%' . $this->search_input . '%')->orWhere('codigo', '=', $this->search_input)
-            ->orderByRaw('catalogo_vista_verde.codigo')
-            ->paginate(20);
-    }*/
-
     #[Computed()]
     public function articulos()
     {

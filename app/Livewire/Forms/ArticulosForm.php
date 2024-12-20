@@ -104,13 +104,13 @@ class ArticulosForm extends Form
         DB::transaction(function () use ($validated) {
             $articulo = CatalogoVistaVerde::create([
                 'nombre' => $validated['nombre'],
-                'id_familia' => $validated['familia'],
-                'id_categoria' => $validated['categoria'],
-                'id_proveedor' => $validated['proveedor'],
+                'id_familia' => $validated['familia'] ?: null,
+                'id_categoria' => $validated['categoria'] ?: null,
+                'id_proveedor' => $validated['proveedor'] ?: null,
                 'costo_unitario' => $validated['costo_unitario'],
                 'costo_empleado' => $validated['costo_empleado'],
                 'clave_dpto' => $validated['clave_dpto'],
-                'tipo' => $validated['tipo']
+                'tipo' => $validated['tipo'] ?: null
             ]);
             //Creamos los precios de unidad dependiendo de la cantidad ingresada
             foreach ($this->unidades as $unidad) {
@@ -132,9 +132,9 @@ class ArticulosForm extends Form
     {
         $this->articulo->update($validated);
         CatalogoVistaVerde::where('codigo', $this->articulo->codigo)->update([
-            'id_familia' => $validated['familia'],
-            'id_categoria' => $validated['categoria'],
-            'id_proveedor' => $validated['proveedor'],
+            'id_familia' => $validated['familia'] ?: null,
+            'id_categoria' => $validated['categoria'] ?: null,
+            'id_proveedor' => $validated['proveedor'] ?: null,
         ]);
     }
 

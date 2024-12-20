@@ -6,6 +6,7 @@ use App\Livewire\Almacen\Unidades;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CatalogoVistaVerde extends Model
 {
@@ -38,5 +39,10 @@ class CatalogoVistaVerde extends Model
         return $this->belongsTo(Clasificacion::class, 'id_categoria', 'id')->withDefault([
             'nombre'=> 'N/A'
         ]);
+    }
+
+    public function stocks(): HasMany
+    {
+        return $this->hasMany(Stock::class, 'codigo_catalogo', 'codigo');
     }
 }

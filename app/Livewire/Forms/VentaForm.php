@@ -5,6 +5,7 @@ namespace App\Livewire\Forms;
 use App\Constants\AlmacenConstants;
 use App\Models\Bodega;
 use App\Models\Caja;
+use App\Models\Copa;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
@@ -302,7 +303,7 @@ class VentaForm extends Form
             //crear los detalles de los productos
             $this->registrarProductosVenta($folioVenta, $venta);
             //Descontar stocks
-            //$this->descontarStock($codigopv, $venta['productosTable']);
+            //$this->verificarStock($codigopv, $venta['productosTable']);
 
             //Crear los detalles de los pagos
             $this->registrarPagosVenta($folioVenta, $venta, $codigopv);
@@ -432,7 +433,7 @@ class VentaForm extends Form
             $productos = array_filter($venta['productosTable'], function ($producto) {
                 return !array_key_exists('moved', $producto);
             });
-            //$this->descontarStock($codigopv, $productos);
+            //$this->verificarStock($codigopv, $productos);
 
             //Cerramos la venta con la fecha actual
             Venta::where('folio', $folio)->update(['fecha_cierre' => now()->format('Y-m-d H:i:s')]);
@@ -719,9 +720,10 @@ class VentaForm extends Form
     }
 
     /**
-     * Se encarga de descontar el stock de los productos en el punto dado.
+     * Se encarga de verificar el tipo de stock de cada articulo.
+     * Si el stock es valido descuenta en el punto dado
      */
-    private function descontarStock($clave_punto, $productos)
+    private function verificarStock($clave_punto, $productos)
     {
         foreach ($productos as $key => $producto) {
             //Buscar los stocks del articulo
@@ -751,9 +753,43 @@ class VentaForm extends Form
                     'tipo' => AlmacenConstants::CANTIDAD_KEY
                 ]);
             }
-            //Actualizar el stock
-            $stock[$clave_stock] -= $producto['cantidad'];
-            $stock->save();
+            $this->descontarStock($producto, $stock, $clave_stock);
         }
+    }
+
+    /**
+     * Recibe el producto a descontar, asi como su stock actual.
+     * Se encarga de verificar si el producto/articulo es una copa
+     * y asi descontar el stock correspondiente.
+     */
+    private function descontarStock(array $producto, $stock_producto, $clave_stock)
+    {
+        //Buscar si existe relacion de copeo-botella
+        $copeo = Copa::where('codigo_copa', $producto['codigo_catalogo'])->first();
+        //Si existe la relacion con una botella
+        if ($copeo) {
+            //Calcular diferencia de las copas
+            $dif = $stock_producto[$clave_stock] - $producto['cantidad'];
+
+            //Verificar el stock de la copa, en el punto dado
+            if ($dif < 0) {
+                //Buscar el stock de la botella
+                $stock_botella = Stock::where('codigo_catalogo', $copeo->codigo_botella)
+                    ->where('tipo', AlmacenConstants::CANTIDAD_KEY)
+                    ->first();
+                //Calcular la cantidad de botellas necesarias para el copeo
+                $cant_botellas = ceil(abs($dif) / $copeo->equivalencia);
+
+                //Descontar las botellas
+                $stock_botella[$clave_stock] -= $cant_botellas;
+                $stock_botella->save();
+                //Aumentar el stock de copas, segun su equivalencia y la cantidad de copas calculadas
+                $stock_producto[$clave_stock] += $cant_botellas * $copeo->equivalencia;
+                $stock_producto->save();
+            }
+        }
+        //Actualizar el stock
+        $stock_producto[$clave_stock] -= $producto['cantidad'];
+        $stock_producto->save();
     }
 }

@@ -68,13 +68,13 @@
                             DESCRIPCIÓN
                         </th>
                         <th scope="col" class="px-4 py-3 text-sm">
+                            COSTO UNITARIO
+                        </th>
+                        <th scope="col" class="px-4 py-3 text-sm">
                             EXISTENCIAS
                         </th>
                         <th scope="col" class="px-4 py-3 text-sm">
                             EXISTENCIAS ALMACÉN
-                        </th>
-                        <th scope="col" class="px-4 py-3 text-sm">
-                            COSTO UNITARIO
                         </th>
                     </tr>
                 </thead>
@@ -95,6 +95,9 @@
                                 {{ $producto->nombre }}
                             </td>
                             <td class="px-4 py-2 font-bold">
+                                $ {{ $producto->costo_unitario }}
+                            </td>
+                            <td class="px-4 py-2 font-bold">
                                 @foreach ($producto->stocks as $stock)
                                     <p class="uppercase">{{ $stock->tipo }} : {{ $stock[$clave_stock[$codigopv]] }}</p>
                                 @endforeach
@@ -103,9 +106,6 @@
                                 @foreach ($producto->stocks as $stock)
                                     <p class="uppercase">{{ $stock->tipo }} : {{ $stock->stock_alm }}</p>
                                 @endforeach
-                            </td>
-                            <td class="px-4 py-2 font-bold">
-                                ${{ $producto->costo_unitario }}
                             </td>
                         </tr>
                     @endforeach

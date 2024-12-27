@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('modificadores_producto', function (Blueprint $table) {
+        Schema::create('detalles_ventas_modificadores', function (Blueprint $table) {
+            $table->id();
             $table->integer('id_venta_producto');
-            $table->integer('id_modificador');
-            $table->string('descripcion', 80);
+            $table->integer('codigo_catalogo');
+            $table->string('nombre', 255);
             $table->integer('cantidad');
             $table->decimal('precio', 10, 2);
-            $table->decimal('monto', 10, 2);
+            $table->decimal('subtotal', 10, 2);
 
             /*//Relaciones
 

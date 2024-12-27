@@ -85,6 +85,8 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::view('nueva', 'almacen.Recetas.nueva-receta')->name('almacen.recetas.nueva');
         Route::view('editar', 'almacen.Recetas.editar-receta')->name('almacen.recetas.editar');
     });
+
+    Route::view('mermas', 'almacen.Mermas.mermas')->name('almacen.mermas');
 });
 
 Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function () {

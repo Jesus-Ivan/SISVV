@@ -123,6 +123,9 @@
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
                         <th scope="col" class="px-6 py-3">
+                            CODIGO
+                        </th>
+                        <th scope="col" class="px-6 py-3">
                             DESCRIPCION
                         </th>
                         <th scope="col" class="px-6 py-3">
@@ -146,8 +149,11 @@
                                 class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
                                 <th scope="row"
                                     class="px-6 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                    {{ $producto['catalogo_productos']['nombre'] }}
+                                    {{ $producto['codigo_catalogo'] }}
                                 </th>
+                                <td class="px-6 py-2">
+                                    {{ $producto['catalogo_productos']['nombre'] }}
+                                </td>
                                 <td class="px-6 py-2">
                                     {{ $producto['cantidad'] }}
                                 </td>

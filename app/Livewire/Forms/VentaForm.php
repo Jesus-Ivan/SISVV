@@ -303,7 +303,7 @@ class VentaForm extends Form
             //crear los detalles de los productos
             $this->registrarProductosVenta($folioVenta, $venta);
             //Descontar stocks
-            //$this->verificarStock($codigopv, $venta['productosTable']);
+            $this->verificarStock($codigopv, $venta['productosTable']);
 
             //Crear los detalles de los pagos
             $this->registrarPagosVenta($folioVenta, $venta, $codigopv);
@@ -433,7 +433,7 @@ class VentaForm extends Form
             $productos = array_filter($venta['productosTable'], function ($producto) {
                 return !array_key_exists('moved', $producto);
             });
-            //$this->verificarStock($codigopv, $productos);
+            $this->verificarStock($codigopv, $productos);
 
             //Cerramos la venta con la fecha actual
             Venta::where('folio', $folio)->update(['fecha_cierre' => now()->format('Y-m-d H:i:s')]);

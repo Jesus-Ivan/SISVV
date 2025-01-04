@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->integer('codigo_botella');
             $table->integer('codigo_copa');
-            $table->smallInteger('equivalencia');
+            $table->decimal('equivalencia',10,2);
             $table->timestamps();
         });
     }

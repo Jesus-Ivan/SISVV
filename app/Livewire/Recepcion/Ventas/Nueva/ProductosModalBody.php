@@ -21,10 +21,9 @@ class ProductosModalBody extends Component
             $this->reset('selectedProducts');
             //Obtenemos los productos que coincidan con el nombre buscado y del tipo de 'SER' = servicios
             return  DB::table('catalogo_vista_verde')
-                ->join('tipos_catalogo', 'catalogo_vista_verde.codigo', '=', 'tipos_catalogo.codigo_catalogo')
-                ->select('catalogo_vista_verde.*', 'tipos_catalogo.clave_tipo')
                 ->where('nombre', 'like', '%' . $this->searchProduct . '%')
-                ->where('clave_tipo', 'SER')
+                ->where('clave_dpto', 'RECEP')
+                ->whereNot('estado', 0)
                 ->get();
         } else {
             return [];

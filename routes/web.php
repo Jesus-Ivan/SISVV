@@ -181,14 +181,18 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     Route::view('/', 'sistemas.index')->name('sistemas');
 
     //DEPARTAMENTO DE ALMACEN
-    Route::prefix('catalogo')->group(function () {
-        Route::view('/', 'sistemas.Almacen.catalogo')->name('sistemas.catalogo');
-        Route::view('nuevo', 'sistemas.Almacen.nuevo-catalogo')->name('sistemas.almacen.nuevo');
+    Route::prefix('almacen')->group(function () {
+        Route::view('catalogo', 'sistemas.Almacen.catalogo')->name('sistemas.catalogo');
+        Route::view('catalogo/nuevo', 'sistemas.Almacen.nuevo-catalogo')->name('sistemas.almacen.nuevo');
+        Route::get('reporte-entradas', [SistemasController::class, 'repEntradas'])->name('sistemas.almacen.reporte-entradas');
+        Route::post('reporte-entradas', [ReportesController::class, 'repEntradas'])->name('sistemas.almacen.reporte-entradas');
+
+
+        Route::view('proveedores', 'sistemas.proveedores')->name('sistemas.proveedores');
+        Route::view('familias', 'sistemas.familias')->name('sistemas.familias');
+        Route::view('categorias', 'sistemas.categorias')->name('sistemas.categorias');
+        Route::view('unidades', 'sistemas.unidades')->name('sistemas.unidades');
     });
-    Route::view('proveedores', 'sistemas.proveedores')->name('sistemas.proveedores');
-    Route::view('familias', 'sistemas.familias')->name('sistemas.familias');
-    Route::view('categorias', 'sistemas.categorias')->name('sistemas.categorias');
-    Route::view('unidades', 'sistemas.unidades')->name('sistemas.unidades');
 
     //DEPARTAMENTO DE PUNTOS DE VENTA
     Route::prefix('PV')->group(function () {

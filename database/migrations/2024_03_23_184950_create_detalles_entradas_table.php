@@ -21,6 +21,7 @@ return new class extends Migration
             $table->decimal('peso', 10, 3)->unsigned()->nullable();
             $table->decimal('costo_unitario', 10, 2);
             $table->decimal('importe', 10, 2);
+            $table->string('tipo_compra', 50)->nullable();
             $table->decimal('iva', 10, 2);
             $table->date('fecha_compra');
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\ProductosVendExport;
 use App\Models\Caja;
+use App\Models\Proveedor;
 use App\Models\PuntoVenta;
 use App\Models\User;
 use App\Models\Venta;
@@ -15,6 +16,11 @@ class SistemasController extends Controller
     public function prodVendidos()
     {
         return view('sistemas.Puntos.rep-prod-vendidos', ['puntos' => PuntoVenta::all()]);
+    }
+
+    public function repEntradas()
+    {
+        return view('sistemas.Almacen.reporte-entradas', ['proveedores' => Proveedor::all()]);
     }
 
     //Responde a la ruta, para obtener el reporte de productos vendidos

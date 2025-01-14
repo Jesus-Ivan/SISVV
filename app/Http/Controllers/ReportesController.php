@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\CarteraVencidaExport;
+use App\Exports\EntradasExport;
 use App\Exports\RecibosExport;
 use App\Exports\SociosExport;
 
@@ -723,6 +724,21 @@ class ReportesController extends Controller
         return $pdf->stream('requisicion' . $folio . '.pdf');
     }
 
+    /**
+     * Genera un reporte en Excel de los productos registrados en las entradas de almacen. Dado un rango de fechas y un proveedor
+     */
+    public function repEntradas(Request $request)
+    {
+        $fInicio = $request->input('fInicio');
+        $fFin = $request->input('fFin');
+        $id_proovedor = $request->input('proveedor');
+        return Excel::download(
+            new EntradasExport($fInicio, $fFin, $id_proovedor),
+            'Entradas ' . $fInicio . ' - ' . $fFin . '.xlsx'
+
+        );
+    }
+
     private function generateIndex($collection, $primary_key, $name)
     {
         $aux = [];
@@ -784,7 +800,7 @@ class ReportesController extends Controller
             } else {
                 //Si no existe dentro del array
                 $socio = Socio::with('socioMembresia')->where('id', $estado->id_socio)->first();
-                if(!$socio)
+                if (!$socio)
                     continue;
                 //creamos los datos del socio que se van a agregar a la tabla
                 $dataSocio = [
@@ -819,7 +835,7 @@ class ReportesController extends Controller
      * Unicamente convierte dichas columnas del array de entrada.
      */
     private function convertJsonColums(array $detalles_requisicion)
-    {  
+    {
         $aux = array_map(function ($item) {
             $item->almacen = json_decode($item->almacen);
             $item->bar = json_decode($item->bar);
@@ -827,7 +843,7 @@ class ReportesController extends Controller
             $item->caddie = json_decode($item->caddie);
             $item->cafeteria = json_decode($item->cafeteria);
             $item->cocina = json_decode($item->cocina);
-            return $item;      
+            return $item;
         }, $detalles_requisicion);
 
         return $aux;

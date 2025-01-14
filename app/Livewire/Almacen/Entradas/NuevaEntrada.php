@@ -21,6 +21,7 @@ class NuevaEntrada extends Component
 {
 
     public $folio_search,  $orden_result = [];
+    public $tipo_compra_general = null;
 
     #[Computed()]
     public function proveedores()
@@ -44,12 +45,21 @@ class NuevaEntrada extends Component
                 $row['peso'] = null;                   //agregamos el peso al array
                 $row['cantidad'] = null;               //modificamos la cantidad array
                 $row['importe'] = 0;                //modificamos el importe array
+                $row['tipo_compra'] = $this->tipo_compra_general;                //modificamos el importe array
                 return $row;
             }, $result);
         } else {
             //limpiar el arreglo
             $this->orden_result = [];
         }
+    }
+
+    public function changeTipoCompra($eValue)
+    {
+        //Cambiamos el tipo de compra de cada articulo
+        array_walk($this->orden_result, function (&$value, $key) use ($eValue) {
+            $value['tipo_compra'] = $eValue;
+        });
     }
 
     //Esta funcion multiplica la cantidad y el costo unitario de cada fila de la tabla y actualiza el importe
@@ -85,13 +95,16 @@ class NuevaEntrada extends Component
         try {
             //Empezamos la transaccion
             DB::transaction(function () use ($validated) {
-                //Filtramos los elementos de la orden de entrada, que tienen fecha de compra
+                //Filtramos los elementos de la orden de compra, que tienen fecha de compra
                 $detalles_orden = array_filter($validated['orden_result'], function ($producto) {
                     return $producto['fecha_compra'];
                 });
 
                 //Verificamos cada stock de cada articulo que se desea dar entrada
                 foreach ($detalles_orden as $row) {
+                    //Comprobar si tiene el tipo de compra
+                    if (!$row['tipo_compra'])
+                        throw new Exception("Revisa: " . $row['nombre'] . ", falta tipo de compra");
                     //Comprobar si el stock ingresado es valido (no null)
                     if (!($row['cantidad'] || $row['peso']))
                         throw new Exception("Revisa: " . $row['nombre'] . ", falta cantidad o peso", 1);
@@ -128,6 +141,7 @@ class NuevaEntrada extends Component
                         'peso' => $row['peso'],
                         'costo_unitario' => $row['costo_unitario'],
                         'importe' => $row['importe'],
+                        'tipo_compra' => $row['tipo_compra'],
                         'iva' =>  $row['iva'],
                         'fecha_compra' =>  $row['fecha_compra'],
                     ]);
@@ -212,6 +226,9 @@ class NuevaEntrada extends Component
 
     public function render()
     {
-        return view('livewire.almacen.entradas.nueva-entrada');
+        return view(
+            'livewire.almacen.entradas.nueva-entrada',
+            ['metodo_pago' => AlmacenConstants::METODOS_PAGO]
+        );
     }
 }

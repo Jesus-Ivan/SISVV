@@ -91,34 +91,34 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
                 <td>${{ $item->costo_unitario }}</td>
                 <td>${{ $item->importe }}</td>
                 <td>{{ $proveedores[$item->id_proveedor] }}</td>
-                <td>
+                <td class="text-transform: uppercase;">
                     @foreach ($item->almacen as $key => $stock)
-                        {{ substr($key,0,3) }}:{{ $stock }}
+                        {{ substr($key, 0, 1) }}:{{ $stock }}
                     @endforeach
                 </td>
-                <td>
+                <td class="text-transform: uppercase;">
                     @foreach ($item->bar as $key => $stock)
-                        {{ substr($key,0,3) }}:{{ $stock }}
+                        {{ substr($key, 0, 1) }}:{{ $stock }}
                     @endforeach
                 </td>
-                <td>
+                <td class="text-transform: uppercase;">
                     @foreach ($item->barra as $key => $stock)
-                        {{ substr($key,0,3) }}:{{ $stock }}
+                        {{ substr($key, 0, 1) }}:{{ $stock }}
                     @endforeach
                 </td>
-                <td>
+                <td class="text-transform: uppercase;">
                     @foreach ($item->caddie as $key => $stock)
-                        {{ substr($key,0,3) }}:{{ $stock }}
+                        {{ substr($key, 0, 1) }}:{{ $stock }}
                     @endforeach
                 </td>
-                <td>
+                <td class="text-transform: uppercase;">
                     @foreach ($item->cafeteria as $key => $stock)
-                        {{ substr($key,0,3) }}:{{ $stock }}
+                        {{ substr($key, 0, 1) }}:{{ $stock }}
                     @endforeach
                 </td>
-                <td>
+                <td class="text-transform: uppercase;">
                     @foreach ($item->cocina as $key => $stock)
-                        {{ substr($key,0,3) }}:{{ $stock }}
+                        {{ substr($key, 0, 1) }}:{{ $stock }}
                     @endforeach
                 </td>
                 <td>{{ $item->ultima_compra }}</td>
@@ -133,8 +133,8 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
             <tr>
                 <td class="padding-cel"
                     style="width: 80pt; background-color: #b4b4b4; border: 0pt; border-style: none;">SUBTOTAL</td>
-                <td class="padding-cel" style="width: 94pt ; border: 0pt; border-style: none;">
-                    ${{ array_sum(array_column($detalle, 'importe')) }}</td>
+                <td class="padding-cel" style="width: 94pt ; border: 0pt; border-style: none; ">
+                    ${{ number_format(array_sum(array_column($detalle, 'importe')), 2) }}</td>
                 <td class="padding-cel" style=" background-color: #b4b4b4; border: 1pt; border-left-style: outset">
                     APROBADO
                     POR: (NOMBRE Y FIRMA)</td>
@@ -147,7 +147,8 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
             <tr>
                 <td class="padding-cel" style="background-color: #b4b4b4;">TOTAL</td>
                 <td class="padding-cel">
-                    ${{ array_sum(array_column($detalle, 'importe')) + array_sum(array_column($detalle, 'iva')) }}</td>
+                    ${{ number_format(array_sum(array_column($detalle, 'importe')) + array_sum(array_column($detalle, 'iva')), 2) }}
+                </td>
                 <td class="padding-cel" style="border: 1pt; border-left-style: outset"></td>
             </tr>
         </tbody>

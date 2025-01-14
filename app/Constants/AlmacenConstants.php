@@ -29,4 +29,12 @@ class AlmacenConstants
         'LOD'=>'stock_lod',
         'LOC'=>'stock_loc',
     ];
+
+    /**
+     * Array asociativo que contiene la clave-valor de los metodos de pago validos para las entradas de almacen
+     */
+    public const METODOS_PAGO = [
+        0 => 'CREDITO',
+        1 => 'CONTADO',
+    ];
 }

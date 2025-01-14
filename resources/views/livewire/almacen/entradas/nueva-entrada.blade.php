@@ -1,30 +1,46 @@
 <div class="p-2">
-    {{-- BARRA DE BUSQUEDA --}}
-    <form wire:submit='buscarOrden' method="GET">
-        @csrf
-        <div class="flex mb-2 w-96">
-            <div class="relative w-full">
-                <div class="absolute inset-y-0 start-0 flex items-center ps-3">
-                    <svg wire:loading.remove wire:target='buscarOrden' class="w-4 h-4 text-gray-500 dark:text-gray-400"
-                        aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-                    </svg>
-                    <!--Loading indicator-->
-                    <div wire:loading wire:target='buscarOrden'>
-                        @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
+    <div class="flex gap-4">
+        {{-- BARRA DE BUSQUEDA --}}
+        <form wire:submit='buscarOrden' method="GET">
+            @csrf
+            <div class="flex w-96">
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3">
+                        <svg wire:loading.remove wire:target='buscarOrden'
+                            class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                        </svg>
+                        <!--Loading indicator-->
+                        <div wire:loading wire:target='buscarOrden'>
+                            @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
+                        </div>
                     </div>
+                    <input wire:model="folio_search" type="text"
+                        class="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        placeholder="Folio orden de compra" required />
                 </div>
-                <input wire:model="folio_search" type="text"
-                    class="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    placeholder="Folio orden de compra" required />
+                <button type="submit" class="w-0 h-0" />
             </div>
-            <button type="submit" class="w-0 h-0" />
+        </form>
+        <!-- Metodo Pago general -->
+        <div>
+            <select id="tipo_compra_general" wire:model='tipo_compra_general'
+                wire:change='changeTipoCompra($event.target.value)'
+                class="min-w-32 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <option value="{{ null }}" selected>TIPO COMPRA</option>
+                @foreach ($metodo_pago as $index => $item)
+                    <option wire:key='pago.{{ $index }}' value="{{ $item }}">{{ $item }}</option>
+                @endforeach
+            </select>
         </div>
-    </form>
+    </div>
     {{-- DETALLES ORDEN COMPRA (TABLA) --}}
     <div class="overflow-y-auto h-96">
-        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400"
+            wire:loading.class='opacity-50 pointer-events-none'  wire:target='changeTipoCompra'
+            >
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                     <th scope="col" class="px-3 py-2">
@@ -35,6 +51,9 @@
                     </th>
                     <th scope="col" class=" px-6 py-2">
                         PROVEEDOR
+                    </th>
+                    <th scope="col" class=" px-6 py-2">
+                        TIPO
                     </th>
                     <th scope="col" class="px-6 py-2">
                         CANTIDAD (PZ)
@@ -76,9 +95,19 @@
                                 @endforeach
                             </select>
                         </td>
+                        <td>
+                            <select wire:model='orden_result.{{ $index }}.tipo_compra'
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                <option value="{{ null }}">TIPO COMPRA</option>
+                                @foreach ($metodo_pago as $item)
+                                    <option value="{{ $item }}">
+                                        {{ $item }}</option>
+                                @endforeach
+                            </select>
+                        </td>
                         <td class="px-6 py-2 ">
-                            <input wire:model='orden_result.{{ $index }}.cantidad' wire:change='calculateTable()'
-                                type="number" min="0"
+                            <input wire:model='orden_result.{{ $index }}.cantidad'
+                                wire:change='calculateTable()' type="number" min="0"
                                 class="w-16 max-w-20 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         </td>
                         <td class="px-6 py-2 ">

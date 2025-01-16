@@ -51,7 +51,12 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::get('editar/{articulo}', [CatalogoController::class, 'editArticulo'])->name('almacen.articulos.editar');
     });
 
-    Route::view('existencias', 'almacen.Existencias.existencias')->name('almacen.existencias');
+    Route::prefix('existencias')->group(function(){
+        Route::view('/', 'almacen.Existencias.existencias')->name('almacen.existencias');
+        Route::view('reporte', 'almacen.Existencias.reporte')->name('almacen.existencias.reporte');
+    });
+
+   
     Route::view('clasificacion', 'almacen.Clasificacion.clasificacion')->name('almacen.clasificacion');
     Route::view('proveedores', 'almacen.Proveedores.proveedores')->name('almacen.proveedores');
     Route::view('unidades', 'almacen.Unidades.unidades')->name('almacen.unidades');

@@ -63,12 +63,14 @@ class EntradasExport implements FromArray
         $data[] = $encabezados;
         //Interar todos los resultados
         foreach ($result as $item) {
+            //Buscar el proveedor especificio
+            $proveedor = $proveedores->find($item['id_proveedor']);
             //Agreagar cada item
             $data[] = [
                 'codigo_producto' => $item['codigo_producto'],
                 'folio_entrada' => $item['folio_entrada'],
                 'nombre' => $item['nombre'],
-                'id_proveedor' => $item['id_proveedor'],
+                'id_proveedor' => $proveedor ? $proveedor->nombre : 'N/R',
                 'cantidad' => $item['cantidad'],
                 'peso' => $item['peso'],
                 'costo_unitario' => $item['costo_unitario'],

@@ -9,6 +9,7 @@ use App\Models\Unidad;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 
 class Reporte extends Component
@@ -41,34 +42,17 @@ class Reporte extends Component
         unset($this->lista_articulos[$indexItem]);
     }
 
-    public function generarReporte($folio = 1)
+    public function generarReporte()
     {
-        $requisicion = OrdenCompra::with('user')->find($folio);
-        $detalle = DB::table('detalles_compras')
-            ->where('folio_orden', $folio)
-            ->get();
-        //Generamos array's, para busquedas indexadas
-        $unidades = $this->generateIndex(Unidad::all(), 'id', 'descripcion');
-        $proveedores = $this->generateIndex(Proveedor::all(), 'id', 'nombre');
-
-        $data = [
-            'requisicion' => $requisicion->toArray(),
-            'detalle' => $this->convertJsonColums($detalle->toArray()),
-            'unidades' => $unidades,
-            'proveedores' => $proveedores,
-        ];
-
-
-        $pdf = Pdf::loadView('reportes.requisicion', $data);
-        $pdf->setOption(['defaultFont' => 'Courier']);
-        $pdf->setPaper([0, 0, 612.283, 792], 'landscape'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
-
-        $pdfFile = $pdf->save('test.pdf');
-
-        return response()->download($pdf->download('sdfsd.pdf'), 'test.pdf');
-
-
-        //return $pdf->stream('requisicion' . $folio . '.pdf');
+        Http::post(
+            route('requisicion', ['folio' => 1]),
+        )
+            ->then(function ($response) {
+                dump('exito');
+            })
+            ->catch(function ($exception) {
+                dump('error');
+            });
     }
 
     private function generateIndex($collection, $primary_key, $name)

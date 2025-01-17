@@ -734,7 +734,7 @@ class ReportesController extends Controller
         $id_proovedor = $request->input('proveedor');
         return Excel::download(
             new EntradasExport($fInicio, $fFin, $id_proovedor),
-            'Entradas ' . $fInicio . ' - ' . $fFin . '.xlsx'
+            ' Entradas ' . $fInicio . ' - ' . $fFin . '.xlsx'
 
         );
     }

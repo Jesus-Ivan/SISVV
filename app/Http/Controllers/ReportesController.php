@@ -721,16 +721,7 @@ class ReportesController extends Controller
         $pdf = Pdf::loadView('reportes.requisicion', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
         $pdf->setPaper([0, 0, 612.283, 792], 'landscape'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
-
-        $pdf->render();
-        // Obtener el contenido del PDF generado
-        $output = $pdf->output();
-        // Forzar la descarga y abrir en una nueva pestaña
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: inline; filename="mi_pdf.pdf"');
-        echo $output;
-
-        //return $pdf->stream('requisicion' . $folio . '.pdf');
+        return $pdf->stream('requisicion' . $folio . '.pdf');
     }
 
     /**

@@ -103,6 +103,9 @@
                 </tbody>
             </table>
         </div>
+        <div>
+            {{ $this->detalles->links() }}
+        </div>
     </div>
     {{-- Action message --}}
     <x-action-message on='busqueda'>

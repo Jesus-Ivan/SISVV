@@ -51,12 +51,12 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::get('editar/{articulo}', [CatalogoController::class, 'editArticulo'])->name('almacen.articulos.editar');
     });
 
-    Route::prefix('existencias')->group(function(){
+    Route::prefix('existencias')->group(function () {
         Route::view('/', 'almacen.Existencias.existencias')->name('almacen.existencias');
         Route::view('reporte', 'almacen.Existencias.reporte')->name('almacen.existencias.reporte');
     });
 
-   
+
     Route::view('clasificacion', 'almacen.Clasificacion.clasificacion')->name('almacen.clasificacion');
     Route::view('proveedores', 'almacen.Proveedores.proveedores')->name('almacen.proveedores');
     Route::view('unidades', 'almacen.Unidades.unidades')->name('almacen.unidades');
@@ -240,7 +240,10 @@ Route::prefix('portico')->middleware(['auth', 'portico'])->group(function () {
 
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');
 Route::get('ventas/corte/{caja}/{codigopv?}', [ReportesController::class, 'generarCorte'])->name('ventas.corte');
+//Requiscion de compra
 Route::get('requisicion/{folio}', [ReportesController::class, 'generarRequisicion'])->name('requisicion');
+//Reporte de existencias actuales
+Route::post('reporte-existencias', [ReportesController::class, 'generarReporteExistencias'])->name('reporte-existencias');
 //Esta ruta debe moverse al departamento de sistemas. cuando almacen e inventarios esten listos
 Route::post('/prod-vendidos', [SistemasController::class, 'getReporteVendidos'])->name('prod-vendidos');
 

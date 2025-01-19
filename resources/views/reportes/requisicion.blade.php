@@ -1,6 +1,6 @@
 <style>
     html {
-        font-size: x-small;
+        font-size: small;
         margin: 16pt;
     }
 
@@ -46,11 +46,11 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
 <table>
     <thead>
         <tr class="color-cel">
-            <th>FOLIO</th>
-            <th>TIPO</th>
-            <th style="width: 50%">SOLICITANTE</th>
-            <th>FECHA</th>
-            <th>CONSULTADO</th>
+            <th style="width: 10%">FOLIO</th>
+            <th style="width: 10%">TIPO</th>
+            <th style="width: 40%">SOLICITANTE</th>
+            <th style="width: 20%">FECHA</th>
+            <th style="width: 20%">CONSULTADO</th>
         </tr>
     </thead>
     <tbody>
@@ -67,67 +67,31 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
 <table>
     <thead>
         <tr class="color-cel">
-            <th>DESCRIPCION</th>
+            <th>CODIGO</th>
+            <th style="width: 35%">DESCRIPCION</th>
             <th>UNIDAD</th>
             <th>CANT.</th>
             <th>P.UNITARIO</th>
             <th>IMPORTE</th>
             <th>PROVEEDOR</th>
-            <th>ALMA.</th>
-            <th>BAR</th>
-            <th>BARRA</th>
-            <th>CADD.</th>
-            <th>CAF.</th>
-            <th>COCI.</th>
-            <th>ULTIMA COMPRA</th>
         </tr>
     </thead>
     <tbody>
         @foreach ($detalle as $item)
             <tr>
+                <td>{{ $item->codigo_producto }}</td>
                 <td>{{ $item->nombre }}</td>
                 <td>{{ $unidades[$item->id_unidad] }}</td>
                 <td>{{ $item->cantidad }}</td>
                 <td>${{ $item->costo_unitario }}</td>
                 <td>${{ $item->importe }}</td>
                 <td>{{ $proveedores[$item->id_proveedor] }}</td>
-                <td class="text-transform: uppercase;">
-                    @foreach ($item->almacen as $key => $stock)
-                        {{ substr($key, 0, 1) }}:{{ $stock }}
-                    @endforeach
-                </td>
-                <td class="text-transform: uppercase;">
-                    @foreach ($item->bar as $key => $stock)
-                        {{ substr($key, 0, 1) }}:{{ $stock }}
-                    @endforeach
-                </td>
-                <td class="text-transform: uppercase;">
-                    @foreach ($item->barra as $key => $stock)
-                        {{ substr($key, 0, 1) }}:{{ $stock }}
-                    @endforeach
-                </td>
-                <td class="text-transform: uppercase;">
-                    @foreach ($item->caddie as $key => $stock)
-                        {{ substr($key, 0, 1) }}:{{ $stock }}
-                    @endforeach
-                </td>
-                <td class="text-transform: uppercase;">
-                    @foreach ($item->cafeteria as $key => $stock)
-                        {{ substr($key, 0, 1) }}:{{ $stock }}
-                    @endforeach
-                </td>
-                <td class="text-transform: uppercase;">
-                    @foreach ($item->cocina as $key => $stock)
-                        {{ substr($key, 0, 1) }}:{{ $stock }}
-                    @endforeach
-                </td>
-                <td>{{ $item->ultima_compra }}</td>
             </tr>
         @endforeach
     </tbody>
 </table>
 <br>
-<div style="float: right; margin-right: 6%">
+<div style="float: right; margin-right: 2%">
     <table style="width: 400pt">
         <tbody>
             <tr>

@@ -2,24 +2,66 @@
 
 namespace App\Livewire\Almacen\Existencias;
 
+use App\Models\CatalogoVistaVerde;
 use App\Models\DetallesCompra;
-use App\Models\OrdenCompra;
-use App\Models\Proveedor;
-use App\Models\Unidad;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class Reporte extends Component
 {
     //Los campos de entrada correspondientes al folio que se busca o el articulo especifico
-    public $folio_input, $articulo_input;
+    public $folio_input, $seachProduct;
     //Casilla de sumar seleccion
     public $autosuma = true;
     //Lista de articulos que se van a reportar
     public $lista_articulos = [];
+    //Lista de articulos seleccionados en el modal
+    public $selected = [];
+
+    #[Computed()]
+    public function productosResult()
+    {
+        //Propiedad que almacena todos los items que coincidan con la busqueda.
+        return CatalogoVistaVerde::where('nombre', 'like', '%' . $this->seachProduct . '%')
+            ->whereNot('clave_dpto', 'RECEP')
+            ->whereNot('estado', 0)
+            ->orderBy('nombre', 'asc')
+            ->limit(40)
+            ->get();
+    }
+
+    public function finishSelect()
+    {
+        try {
+            //Filtramos los productos seleccionados, cuyo valor sea true del checkBox
+            $total_seleccionados = array_filter($this->selected, function ($val) {
+                return $val;
+            });
+
+            //Si no se han seleccionado articulos, impedir ejecuccion
+            if (!count($total_seleccionados) > 0) {
+                return false;
+            }
+            //Recorrer todo el array de seleccionados
+            foreach ($total_seleccionados as $key => $value) {
+                //Se busca el registro del producto en base a su codigo.
+                $producto = $this->productosResult->find($key);
+                //Se anexa el producto al array de articulos
+                $this->lista_articulos[] = [
+                    'codigo' => $producto->codigo,
+                    'nombre' => $producto->nombre,
+                ];
+            }
+
+            //Limpiamos las propiedades
+            $this->selected = [];    //Productos seleccionados
+            //Emitimos evento para cerrar el componente del modal
+            $this->dispatch('close-modal');
+        } catch (\Throwable $th) {
+            dump($th->getMessage());
+        }
+    }
 
     public function searchRequisicion()
     {
@@ -37,51 +79,18 @@ class Reporte extends Component
         }
     }
 
+    #[On('selected-articulo')]
+    public function onSelectedArticulo(CatalogoVistaVerde $articulo)
+    {
+        $this->lista_articulos[] = [
+            'codigo' => $articulo->codigo,
+            'nombre' => $articulo->nombre,
+        ];
+    }
+
     public function removeItem($indexItem)
     {
         unset($this->lista_articulos[$indexItem]);
-    }
-
-    public function generarReporte()
-    {
-        Http::post(
-            route('requisicion', ['folio' => 1]),
-        )
-            ->then(function ($response) {
-                dump('exito');
-            })
-            ->catch(function ($exception) {
-                dump('error');
-            });
-    }
-
-    private function generateIndex($collection, $primary_key, $name)
-    {
-        $aux = [];
-        foreach ($collection as $key => $value) {
-            $aux[$value->$primary_key] = $value->$name;
-        }
-        return $aux;
-    }
-
-    /**
-     * Recibe los detalles de la requisicion, y convierte las columnas de "almacen, bar, barra, caddie, cafeteria, cocina"
-     * en JSON.
-     * Unicamente convierte dichas columnas del array de entrada.
-     */
-    private function convertJsonColums(array $detalles_requisicion)
-    {
-        $aux = array_map(function ($item) {
-            $item->almacen = json_decode($item->almacen);
-            $item->bar = json_decode($item->bar);
-            $item->barra = json_decode($item->barra);
-            $item->caddie = json_decode($item->caddie);
-            $item->cafeteria = json_decode($item->cafeteria);
-            $item->cocina = json_decode($item->cocina);
-            return $item;
-        }, $detalles_requisicion);
-
-        return $aux;
     }
 
     public function render()

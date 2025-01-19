@@ -10,7 +10,6 @@
     </div>
 
     <livewire:almacen.Existencias.reporte />
-
     {{-- PIE DE PAGINA --}}
     <div class="ms-3 mx-3">
         {{-- Linea divisora --}}

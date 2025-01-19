@@ -161,32 +161,32 @@
                                 </td>
                                 <td class="px-2 py-2">
                                     @foreach ($articulo['almacen'] as $tipo => $item)
-                                        <div>{{ $tipo }}:{{ $item }}</div>
+                                        <p class=" uppercase">{{ substr($tipo, 0, 1) }} : {{ $item }}</p>
                                     @endforeach
                                 </td>
                                 <td class="px-2 py-2">
                                     @foreach ($articulo['bar'] as $tipo => $item)
-                                        <div>{{ $tipo }}:{{ $item }}</div>
+                                        <p class=" uppercase">{{ substr($tipo, 0, 1) }} : {{ $item }}</p>
                                     @endforeach
                                 </td>
                                 <td class="px-2 py-2">
                                     @foreach ($articulo['barra'] as $tipo => $item)
-                                        <div>{{ $tipo }}:{{ $item }}</div>
+                                        <p class=" uppercase">{{ substr($tipo, 0, 1) }} : {{ $item }}</p>
                                     @endforeach
                                 </td>
                                 <td class="px-2 py-2">
                                     @foreach ($articulo['caddie'] as $tipo => $item)
-                                        <div>{{ $tipo }}:{{ $item }}</div>
+                                        <p class=" uppercase">{{ substr($tipo, 0, 1) }} : {{ $item }}</p>
                                     @endforeach
                                 </td>
                                 <td class="px-2 py-2">
                                     @foreach ($articulo['cafeteria'] as $tipo => $item)
-                                        <div>{{ $tipo }}:{{ $item }}</div>
+                                        <p class=" uppercase">{{ substr($tipo, 0, 1) }} : {{ $item }}</p>
                                     @endforeach
                                 </td>
                                 <td class="px-2 py-2">
                                     @foreach ($articulo['cocina'] as $tipo => $item)
-                                        <div>{{ $tipo }}:{{ $item }}</div>
+                                        <p class=" uppercase">{{ substr($tipo, 0, 1) }} : {{ $item }}</p>
                                     @endforeach
                                 </td>
                                 <td class="px-2 py-2 min-w-32">

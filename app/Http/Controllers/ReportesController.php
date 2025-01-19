@@ -9,6 +9,7 @@ use App\Exports\SociosExport;
 
 use App\Exports\VentasExport;
 use App\Models\Caja;
+use App\Models\CatalogoVistaVerde;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
@@ -18,6 +19,7 @@ use App\Models\PuntoVenta;
 use App\Models\Recibo;
 use App\Models\SaldoFavor;
 use App\Models\Socio;
+use App\Models\Stock;
 use App\Models\TipoPago;
 use App\Models\Unidad;
 use App\Models\User;
@@ -717,7 +719,6 @@ class ReportesController extends Controller
             'proveedores' => $proveedores,
         ];
 
-
         $pdf = Pdf::loadView('reportes.requisicion', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
         $pdf->setPaper([0, 0, 612.283, 792], 'landscape'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
@@ -737,6 +738,34 @@ class ReportesController extends Controller
             ' Entradas ' . $fInicio . ' - ' . $fFin . '.xlsx'
 
         );
+    }
+
+    public function generarReporteExistencias(Request $request)
+    {
+        $lista = $request->input();
+        //Remover el token csfr del formulario
+        unset($lista['_token']);
+        //Array auxiliar con la informacion de los articulos
+        $data = [];
+
+        foreach ($lista as $key => $codigo) {
+            //Buscamos el articulo en el catalogo
+            $articulo = CatalogoVistaVerde::with('stocks')
+                ->where('codigo', $codigo)
+                ->first();
+            //Agregarlo al array de datos
+            $data[] = [
+                'codigo' => $codigo,
+                'nombre' => $articulo->nombre,
+                'stocks' => $articulo->stocks,
+                'ultima_compra' => $articulo->ultima_compra
+            ];
+        }
+
+        $pdf = Pdf::loadView('reportes.existencias', ['articulos' => $data]);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        $pdf->setPaper([0, 0, 612.283, 792], 'landscape'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
+        return $pdf->stream('existencias' . now()->toDateString() . '.pdf');
     }
 
     private function generateIndex($collection, $primary_key, $name)

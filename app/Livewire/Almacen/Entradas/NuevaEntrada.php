@@ -95,10 +95,18 @@ class NuevaEntrada extends Component
         try {
             //Empezamos la transaccion
             DB::transaction(function () use ($validated) {
-                //Filtramos los elementos de la orden de compra, que tienen fecha de compra
+                //Filtramos los elementos de la orden de compra, que tienen algun dato en la tabla
                 $detalles_orden = array_filter($validated['orden_result'], function ($producto) {
-                    return $producto['fecha_compra'];
+                    return $producto['tipo_compra']
+                        || $producto['cantidad']
+                        || $producto['peso']
+                        || $producto['fecha_compra'];
                 });
+                //Si no hay detalles de orden con datos en la tabla
+                if(! count($detalles_orden)){
+                    //Error al aplicar entrada sin informacion
+                    throw new \Exception('Debes completar por lo menos un articulo');
+                }
 
                 //Verificamos cada stock de cada articulo que se desea dar entrada
                 foreach ($detalles_orden as $row) {
@@ -108,6 +116,9 @@ class NuevaEntrada extends Component
                     //Comprobar si el stock ingresado es valido (no null)
                     if (!($row['cantidad'] || $row['peso']))
                         throw new Exception("Revisa: " . $row['nombre'] . ", falta cantidad o peso", 1);
+                    //Comprobar si tiene fecha de compra
+                    if (!($row['fecha_compra']))
+                        throw new Exception("Revisa: " . $row['nombre'] . ", falta fecha de compra", 1);
                 }
 
                 /**

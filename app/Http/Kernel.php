@@ -68,5 +68,6 @@ class Kernel extends HttpKernel
         'puntos' => \App\Http\Middleware\PuntosPermisos::class,
         'portico'=>\App\Http\Middleware\PorticoPermisos::class,
         'almacen'=>\App\Http\Middleware\AlmacenPermisos::class,
+        'administracion'=>\App\Http\Middleware\AdministracionPermisos::class,
     ];
 }

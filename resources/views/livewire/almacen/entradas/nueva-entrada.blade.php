@@ -25,22 +25,27 @@
             </div>
         </form>
         <!-- Metodo Pago general -->
-        <div>
+        <div class="flex grow">
             <select id="tipo_compra_general" wire:model='tipo_compra_general'
                 wire:change='changeTipoCompra($event.target.value)'
-                class="min-w-32 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                class="max-w-32 h-9 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                 <option value="{{ null }}" selected>TIPO COMPRA</option>
                 @foreach ($metodo_pago as $index => $item)
                     <option wire:key='pago.{{ $index }}' value="{{ $item }}">{{ $item }}</option>
                 @endforeach
             </select>
         </div>
+        {{-- FECHA DE COMPRA GENERAL --}}
+        <div>
+            <input wire:model='fecha_compra_general' type="date"
+                wire:change.debounce.300ms='changeFecha($event.target.value)'
+                class="block w-full p-2.5 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+        </div>
     </div>
     {{-- DETALLES ORDEN COMPRA (TABLA) --}}
     <div class="overflow-y-auto h-96">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400"
-            wire:loading.class='opacity-50 pointer-events-none'  wire:target='changeTipoCompra'
-            >
+            wire:loading.class='opacity-50 pointer-events-none' wire:target='changeTipoCompra, changeFecha'>
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                     <th scope="col" class="px-3 py-2">

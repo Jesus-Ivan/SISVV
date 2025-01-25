@@ -22,7 +22,7 @@
     </div>
 
     {{-- Tabla --}}
-    <div class="ms-3 mx-3">
+    <div class="ms-3 mx-3" wire:loading.class='animate-pulse pointer-events-none' wire:target='order' >
         <div class="relative  shadow-md sm:rounded-lg">
             <div class="flex items-center gap-5">
                 {{-- FECHA DE INICIO --}}
@@ -49,6 +49,13 @@
                     </div>
                     <span class="sr-only">Buscar</span>
                 </button>
+                {{-- CHECK DE ORDENAR POR PROVEEDOR --}}
+                <div class="flex items-center">
+                    <input id="order" type="checkbox" wire:model.live='order'
+                        class="w-5 h-5 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800" />
+                    <label for="order" class="p-2 text-sm font-medium text-gray-900 dark:text-gray-300">Ordenar por
+                        proveedor</label>
+                </div>
             </div>
             <div class="overflow-x-auto ">
                 <table class=" w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -101,7 +108,7 @@
                                 </td>
                                 <td class="px-6 py-2">
                                     <div class="flex">
-                                        <a type="button" href="{{ route('requisicion', ['folio' => $orden->folio]) }}"
+                                        <a type="button" href="{{ route('requisicion', ['folio' => $orden->folio, 'order'=>$order]) }}"
                                             target="_blank"
                                             class="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-600 dark:focus:ring-blue-800">
                                             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24"

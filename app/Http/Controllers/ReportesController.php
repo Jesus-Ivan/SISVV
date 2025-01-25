@@ -10,10 +10,12 @@ use App\Exports\SociosExport;
 use App\Exports\VentasExport;
 use App\Models\Caja;
 use App\Models\CatalogoVistaVerde;
+use App\Models\DetallesPeriodoNomina;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
 use App\Models\OrdenCompra;
+use App\Models\PeriodoNomina;
 use App\Models\Proveedor;
 use App\Models\PuntoVenta;
 use App\Models\Recibo;
@@ -702,12 +704,21 @@ class ReportesController extends Controller
     /**
      * Genera el pdf de la requisiscion de compra (almacen)
      */
-    public function generarRequisicion($folio)
+    public function generarRequisicion($folio, $order = false)
     {
         $requisicion = OrdenCompra::with('user')->find($folio);
-        $detalle = DB::table('detalles_compras')
-            ->where('folio_orden', $folio)
-            ->get();
+
+        if ($order) {
+            $detalle = DB::table('detalles_compras')
+                ->where('folio_orden', $folio)
+                ->orderBy('id_proveedor', 'ASC')
+                ->orderBy('nombre', 'ASC')
+                ->get();
+        } else {
+            $detalle = DB::table('detalles_compras')
+                ->where('folio_orden', $folio)
+                ->get();
+        }
         //Generamos array's, para busquedas indexadas
         $unidades = $this->generateIndex(Unidad::all(), 'id', 'descripcion');
         $proveedores = $this->generateIndex(Proveedor::all(), 'id', 'nombre');
@@ -766,6 +777,22 @@ class ReportesController extends Controller
         $pdf->setOption(['defaultFont' => 'Courier']);
         $pdf->setPaper([0, 0, 612.283, 792], 'landscape'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
         return $pdf->stream('existencias' . now()->toDateString() . '.pdf');
+    }
+
+    /**
+     * Genera el pdf con todas las nominas a imprimir
+     */
+    public function imprimirNomina($ref)
+    {
+        //Buscar el registro del periodo de las nominas
+        $periodo = PeriodoNomina::find($ref);
+        //Buscar las nominas con ayuda de la referencia
+        $nominas = DetallesPeriodoNomina::where('referencia_periodo', $ref)->get();
+        //Crear el pdf
+        $pdf = Pdf::loadView('reportes.Nominas.general', ['nominas' => $nominas, 'periodo' => $periodo]);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        $pdf->setPaper([0, 0, 612.283, 792]); // Tamaño aproximado del US LETTER (216 x 279.4) mm
+        return $pdf->stream('Nominas-' . $ref . '.pdf');
     }
 
     private function generateIndex($collection, $primary_key, $name)

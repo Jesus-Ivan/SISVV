@@ -11,6 +11,7 @@ class RevisarOrdenes extends Component
 {
     use WithPagination;
     public $f_inicio, $f_fin;
+    public $order = true;
 
     //Hook que se ejecuta una vez al inicio de vida del componente
     public function mount()

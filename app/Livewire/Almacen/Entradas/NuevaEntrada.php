@@ -22,6 +22,7 @@ class NuevaEntrada extends Component
 
     public $folio_search,  $orden_result = [];
     public $tipo_compra_general = null;
+    public $fecha_compra_general = null;
 
     #[Computed()]
     public function proveedores()
@@ -31,6 +32,8 @@ class NuevaEntrada extends Component
 
     public function buscarOrden()
     {
+        //Buscamos todas la unidades
+        $unidades = Unidad::all();
         //Si existe una orden de compra
         if (OrdenCompra::find($this->folio_search)) {
             //Buscar los detalles de la orden de compra
@@ -40,14 +43,15 @@ class NuevaEntrada extends Component
                 ->toArray();
 
             //Agregar el campos a la consulta
-            $this->orden_result = array_map(function ($row) {
-                $row['fecha_compra'] = null;        //agregamos la fecha al array
-                $row['peso'] = null;                   //agregamos el peso al array
-                $row['cantidad'] = null;               //modificamos la cantidad array
-                $row['importe'] = 0;                //modificamos el importe array
+            $this->orden_result = array_map(function ($row) use ($unidades) {
+                $row['fecha_compra'] = null;                //agregamos la fecha al array
+                $row['peso'] = $this->revisarUnidad($unidades, $row, "KG", 'only');      //agregamos el peso al array
+                $row['cantidad'] = $this->revisarUnidad($unidades, $row, "KG", 'exclusive');  //modificamos la cantidad array
+                $row['importe'] = 0;                        //modificamos el importe array
                 $row['tipo_compra'] = $this->tipo_compra_general;                //modificamos el importe array
                 return $row;
             }, $result);
+            $this->calculateTable();
         } else {
             //limpiar el arreglo
             $this->orden_result = [];
@@ -59,6 +63,14 @@ class NuevaEntrada extends Component
         //Cambiamos el tipo de compra de cada articulo
         array_walk($this->orden_result, function (&$value, $key) use ($eValue) {
             $value['tipo_compra'] = $eValue;
+        });
+    }
+
+    public function changeFecha($eValue)
+    {
+        //Cambiamos la fecha de compra de cada articulo
+        array_walk($this->orden_result, function (&$value, $key) use ($eValue) {
+            $value['fecha_compra'] = $eValue;
         });
     }
 
@@ -103,9 +115,9 @@ class NuevaEntrada extends Component
                         || $producto['fecha_compra'];
                 });
                 //Si no hay detalles de orden con datos en la tabla
-                if(! count($detalles_orden)){
+                if (! count($detalles_orden)) {
                     //Error al aplicar entrada sin informacion
-                    throw new \Exception('Debes completar por lo menos un articulo');
+                    throw new Exception('Debes completar por lo menos un articulo');
                 }
 
                 //Verificamos cada stock de cada articulo que se desea dar entrada
@@ -232,6 +244,26 @@ class NuevaEntrada extends Component
                 $result_stock->stock_alm += $producto['peso'];
                 $result_stock->save();    //Guardamos el stock
             }
+        }
+    }
+
+    /**
+     * Revisa si la unidad de la fila dada, coincide con la descripcion, tomando como referencia la BD.
+     * Devuelve la cantidad solicitada del articulo, segun la unidad
+     */
+    private function revisarUnidad($unidades, $row, $descripcion_unidad = "KG", $mode)
+    {
+        $unidad_buscada = $unidades
+            ->where('descripcion', '=', $descripcion_unidad)
+            ->first();
+
+        if ($mode  == 'only') {
+            if ($unidad_buscada->id == $row['id_unidad'])
+                return  $row['cantidad'];
+        }
+        if ($mode  == 'exclusive') {
+            if ($unidad_buscada->id != $row['id_unidad'])
+                return  $row['cantidad'];
         }
     }
 

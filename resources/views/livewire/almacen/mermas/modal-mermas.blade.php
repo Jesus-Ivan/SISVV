@@ -22,18 +22,18 @@
                                 class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Código</label>
                             <input type="text" id="disabled-input" aria-label="disabled input"
                                 class=" bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                value="" disabled>
+                                value="{{ $articulo['codigo'] }}" disabled>
                         </div>
                         {{-- NOMBRE DEL ARTICULO --}}
                         <div class="col-span-2">
                             <label for="name"
                                 class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Nombre del
-                                producto</label>
+                                articulo</label>
                             <input type="text" id="disabled-input" aria-label="disabled input"
                                 class=" bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                value="" disabled>
+                                value="{{ $articulo['nombre'] }}" disabled>
                         </div>
-                        {{-- ORIGEN MERMA --}}
+                        {{-- TIPO MERMA --}}
                         <div class="col-span-1">
                             <label for="clave_dpto"
                                 class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Tipo de
@@ -41,7 +41,17 @@
                             <select id="clave_dpto" wire:model=''
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                                 <option selected value="{{ null }}">SELECCIONAR</option>
-
+                                <optgroup label="Producción">
+                                    <option value="volvo">Merma por coccion</option>
+                                    <option value="saab">Merma sobrante</option>
+                                </optgroup>
+                                <optgroup label="Almacenamiento">
+                                    <option value="volvo">Extravio/robo</option>
+                                    <option value="saab">Caducado/descompuesto</option>
+                                </optgroup>
+                                <optgroup label="Transporte">
+                                    <option value="volvo">Golpeado/maltratado</option>
+                                </optgroup>
                             </select>
                             @error('clave_dpto')
                                 <x-input-error messages="{{ $message }}" />
@@ -55,7 +65,6 @@
                             <select id="clave_dpto" wire:model=''
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                                 <option selected value="{{ null }}">SELECCIONAR</option>
-
                             </select>
                             @error('clave_dpto')
                                 <x-input-error messages="{{ $message }}" />
@@ -85,20 +94,21 @@
                                 <div class="text-red-500 text-sm">{{ $message }}</div>
                             @enderror
                         </div>
-                        {{-- Peso --}}
+                        {{-- Unidad --}}
                         <div class="col-span-1 sm:col-span-1">
-                            <label for="st_min"
-                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Peso</label>
-                            <input type="number" name="st_min" wire:model='peso'
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Peso">
+                            <label for="clave_dpto"
+                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Unidad</label>
+                            <select id="clave_dpto" wire:model=''
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                                <option selected value="{{ null }}">SELECCIONAR</option>
+                            </select>
                         </div>
                         <div class="col-span-3">
                             <label for="number-input"
-                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Motivo</label>
+                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Observaciones</label>
                             <input type="text" id=""
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                placeholder="Motivo de la merma" required />
+                                placeholder="Observaciones de la merma" required />
                         </div>
                     </div>
                 </div>

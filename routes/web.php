@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdministracionController;
 use App\Http\Controllers\CargosController;
 use App\Http\Controllers\CatalogoController;
 use App\Http\Controllers\EdoCuentaController;
@@ -34,12 +35,18 @@ Route::view('profile', 'profile')
     ->name('profile');
 
 
-Route::prefix('administracion')->middleware(['auth'])->group(function () {
+Route::prefix('administracion')->middleware(['auth','administracion'])->group(function () {
     Route::view('/', 'administracion.index')->name('administracion');
     Route::view('reportes-ordenes', 'administracion.reportes-ordenes')->name('administracion.reportes-ordenes');
     Route::view('detalles-ordenes', 'administracion.detalles-ordenes')->name('administracion.detalles-ordenes');
     Route::view('reportes-ventas', 'administracion.reportes-ventas')->name('administracion.reportes-ventas');
     Route::view('reportes-cobranza', 'administracion.reportes-cobranza')->name('administracion.reportes-cobranza');
+    Route::prefix('nominas')->group(function () {
+        Route::get('cargar-periodo', [AdministracionController::class, 'cargarPeriodo'])->name('administracion.cargar-p');
+        Route::post('cargar-periodo', [AdministracionController::class, 'subirPeriodo'])->name('administracion.cargar-p');
+        Route::get('buscar-periodo', [AdministracionController::class, 'buscarPeriodo'])->name('administracion.buscar-p');
+        Route::get('imprimir-periodo/{ref}', [ReportesController::class, 'imprimirNomina'])->name('administracion.imprimir-p');
+    });
 });
 
 Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
@@ -170,13 +177,8 @@ Route::prefix('pv/{codigopv}')->middleware(['auth', 'puntos'])->group(function (
 
     Route::get('inventario', [PuntosController::class, 'verInventario'])->name('pv.inventario');
     Route::get('prod-vendidos', [PuntosController::class, 'prodVendidos'])->name('pv.prod-vendidos');
+    Route::get('salidas', [PuntosController::class, 'salidas'])->name('pv.salidas');
 
-
-    Route::prefix('solicitudes-mercancia')->group(function () {
-        Route::view('/', 'puntos.Inventario.SolicitarMercancia.solicitudes')->name('pv.mercancia');
-        Route::view('/ver/{folio}', 'puntos.Inventario.SolicitarMercancia.ver-solicitud')->name('pv.mercancia.ver');
-        Route::view('nueva', 'puntos.Inventario.SolicitarMercancia.nueva-solicitud')->name('pv.mercancia.nueva');
-    });
 
     Route::get('socios', [PuntosController::class, 'verSocios'])->name('pv.socios');
     Route::get('caja', [PuntosController::class, 'caja'])->middleware(['auth'])->name('pv.caja');
@@ -241,7 +243,7 @@ Route::prefix('portico')->middleware(['auth', 'portico'])->group(function () {
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');
 Route::get('ventas/corte/{caja}/{codigopv?}', [ReportesController::class, 'generarCorte'])->name('ventas.corte');
 //Requiscion de compra
-Route::get('requisicion/{folio}', [ReportesController::class, 'generarRequisicion'])->name('requisicion');
+Route::get('requisicion/{folio}/{order?}', [ReportesController::class, 'generarRequisicion'])->name('requisicion');
 //Reporte de existencias actuales
 Route::post('reporte-existencias', [ReportesController::class, 'generarReporteExistencias'])->name('reporte-existencias');
 //Esta ruta debe moverse al departamento de sistemas. cuando almacen e inventarios esten listos

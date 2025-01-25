@@ -129,4 +129,14 @@ class PuntosController extends Controller
         $codigopv = $request->segment(2); //'codigopv' está en el segundo segmento de la ruta
         return view('puntos.Inventario.inventario', ['codigopv' => $codigopv, 'permisospv' => $permisospv]);
     }
+
+    /**
+     * Dirige al usuario al modulo de salidas del punto de venta
+     */
+    public function salidas(Request $request)
+    {
+        $permisospv = $request->get('permisos_pv'); //Obtenemos los permisos incrutados en la peticion
+        $codigopv = $request->segment(2); //'codigopv' está en el segundo segmento de la ruta
+        return view('puntos.Inventario.salidas', ['codigopv' => $codigopv, 'permisospv' => $permisospv]);
+    }
 }

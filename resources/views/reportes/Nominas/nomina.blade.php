@@ -8,7 +8,7 @@
     <table style="width: 100%">
         <tbody>
             <tr>
-                <td style="width: 8%"># {{ $nomina->folio }}</td>
+                <td style="width: 8%"># {{ $nomina->no_empleado }}</td>
                 <td style="width: 80%; font-style: bold">{{ $nomina->nombre }}</td>
                 <td style="width:fit-content; text-align: right">VVCC</td>
             </tr>

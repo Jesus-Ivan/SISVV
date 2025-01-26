@@ -46,6 +46,7 @@ Route::prefix('administracion')->middleware(['auth','administracion'])->group(fu
         Route::post('cargar-periodo', [AdministracionController::class, 'subirPeriodo'])->name('administracion.cargar-p');
         Route::get('buscar-periodo', [AdministracionController::class, 'buscarPeriodo'])->name('administracion.buscar-p');
         Route::get('imprimir-periodo/{ref}', [ReportesController::class, 'imprimirNomina'])->name('administracion.imprimir-p');
+        Route::delete('eliminar-periodo/{ref}', [AdministracionController::class, 'eliminarNomina'])->name('administracion.eliminar-p');
     });
 });
 

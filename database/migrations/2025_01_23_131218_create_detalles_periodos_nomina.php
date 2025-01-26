@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('detalles_periodos_nomina', function (Blueprint $table) {
             $table->integer('folio')->unsigned()->autoIncrement();
             $table->integer('referencia_periodo')->unsigned();
-            $table->integer('no_empleado')->unsigned();
+            $table->integer('no_empleado')->unsigned()->nullable();
             $table->string('nombre', 255);
             $table->string('area', 255);
             $table->decimal('nomina_fiscal', 10, 2)->nullable();

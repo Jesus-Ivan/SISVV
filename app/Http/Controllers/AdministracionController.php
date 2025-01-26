@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Imports\PeriodoImport;
+use App\Models\DetallesPeriodoNomina;
 use App\Models\PeriodoNomina;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AdministracionController extends Controller
@@ -67,6 +69,30 @@ class AdministracionController extends Controller
     }
 
     /**
+     * Elimina el registro de nomina correspondiente
+     */
+    public function eliminarNomina($ref)
+    {
+        try { 
+            DB::transaction(function () use ($ref) {
+                //Eliminamos la informacion de la BD
+                PeriodoNomina::where('referencia', $ref)->delete();
+                //Eliminamos los detalles
+                DetallesPeriodoNomina::where('referencia_periodo', $ref)->delete();
+            });
+            //redirigimos al usuario
+            return redirect()
+                ->route('administracion.buscar-p', ['year' => now()->year])
+                ->with('success', 'Nomina eliminada correctamente');
+        } catch (\Throwable $th) {
+            //redirigimos al usuario
+            return redirect()
+                ->route('administracion.buscar-p', ['year' => now()->year])
+                ->with('fail', $th->getMessage());
+        }
+    }
+
+    /**
      * Realiza la carga de la vista para la busqueda e impresion del periodo de nomina
      */
     public function buscarPeriodo(Request $request)
@@ -76,7 +102,7 @@ class AdministracionController extends Controller
             //Buscar los registros en la tabla 'periodos nomina'
             $periodos = PeriodoNomina::whereYear('created_at', $request->input('year'))
                 ->orderBy('referencia', 'DESC')
-                ->paginate(5);
+                ->paginate(10);
 
             $periodos->appends(['year' => $request->input('year')]);
         } else {

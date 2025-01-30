@@ -76,6 +76,10 @@ class RecibosExport implements FromArray
         $cuotas_torneos = array_filter($this->cuotas->toArray(), function ($cuota) {
             return $cuota['tipo'] == 'TOR';
         });
+        //Filtramos la cuotas, que pertenecen a federacion
+        $cuotas_federacion = array_filter($this->cuotas->toArray(), function ($cuota) {
+            return preg_match("/FED/i", $cuota['tipo']);
+        });
 
         //array auxiliar
         $data = [];
@@ -126,7 +130,7 @@ class RecibosExport implements FromArray
                     'ESTETICA' => $this->totalCuota(19, $detalles_filtrados),
                     'PROPINAS' => $this->totalConcepto($detalles_filtrados, "propina"),
                     'SALDO A FAVOR' => $this->totalSaldoFavor($detalles_filtrados),
-                    'FEDERACION' => $this->totalCuota(17, $detalles_filtrados),     //17: corresponde a la federacion
+                    'FEDERACION' => $this->totalCuotas($cuotas_federacion, $detalles_filtrados),
                     'ADEUDOS' => $this->totalCuota(42, $detalles_filtrados),
                     'CURSOS' => $this->totalCuotas($cuotas_cursos, $detalles_filtrados),
                     'TORNEOS' => $this->totalCuotas($cuotas_torneos, $detalles_filtrados),

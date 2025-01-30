@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('mermas_generales', function (Blueprint $table) {
             $table->integer('folio')->primary()->unsigned();
-            $table->integer('codigo_insumo')->nullable();
-            $table->dateTime('fecha_registro');
-            $table->string('origen', 20);
-            $table->integer('codigo_articulo')->nullable();
-            $table->float('cantidad');
-            $table->string('tipo', 20);
-            $table->string('usuario', 20);
-            $table->string('detalles', 100);
-
+            $table->integer('codigo_catalogo');
+            $table->string('nombre', 255);
+            $table->string('clave_bodega_origen', 50);
+            $table->decimal('cantidad', 10, 3);
+            $table->int('id_unidad');
+            $table->int('id_tipo_merma');
+            $table->string('usuario', 255);
+            $table->string('observaciones', 255)->nullable();
+            $table->timestamps();
             /*//Relaciones
 
             $table->foreign('codigo_insumo')->references('codigo')->on('ICO_insumos');

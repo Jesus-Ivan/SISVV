@@ -11,6 +11,7 @@ use App\Models\OrdenCompra;
 use App\Models\Proveedor;
 use App\Models\Stock;
 use App\Models\Unidad;
+use App\Models\UnidadCatalogo;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -30,23 +31,28 @@ class NuevaEntrada extends Component
         return Proveedor::all();
     }
 
+    #[Computed()]
+    public function unidades()
+    {
+        return Unidad::all();
+    }
+
     public function buscarOrden()
     {
-        //Buscamos todas la unidades
-        $unidades = Unidad::all();
         //Si existe una orden de compra
         if (OrdenCompra::find($this->folio_search)) {
             //Buscar los detalles de la orden de compra
-            $result = DetallesCompra::where('folio_orden', $this->folio_search)
+            $result = DetallesCompra::with('unidadCatalogo')
+                ->where('folio_orden', $this->folio_search)
                 ->where('aplicado', false)
                 ->get()
                 ->toArray();
 
             //Agregar el campos a la consulta
-            $this->orden_result = array_map(function ($row) use ($unidades) {
+            $this->orden_result = array_map(function ($row) {
                 $row['fecha_compra'] = null;                //agregamos la fecha al array
-                $row['peso'] = $this->revisarUnidad($unidades, $row, "KG", 'only');      //agregamos el peso al array
-                $row['cantidad'] = $this->revisarUnidad($unidades, $row, "KG", 'exclusive');  //modificamos la cantidad array
+                $row['peso'] = $this->revisarUnidad($this->unidades, $row, "KG", 'only');      //agregamos el peso al array
+                $row['cantidad'] = $this->revisarUnidad($this->unidades, $row, "KG", 'exclusive');  //modificamos la cantidad array
                 $row['importe'] = 0;                        //modificamos el importe array
                 $row['tipo_compra'] = $this->tipo_compra_general;                //modificamos el importe array
                 return $row;
@@ -56,6 +62,17 @@ class NuevaEntrada extends Component
             //limpiar el arreglo
             $this->orden_result = [];
         }
+    }
+
+    //Limpia todos los campos de entrada de una fila
+    public function limpiarCampos($index)
+    {
+        $this->orden_result[$index]['id_unidad'] = null;
+        $this->orden_result[$index]['fecha_compra'] = null;
+        $this->orden_result[$index]['peso'] = null;
+        $this->orden_result[$index]['cantidad'] = null;
+        $this->orden_result[$index]['importe'] = 0;
+        $this->orden_result[$index]['tipo_compra'] = null;
     }
 
     public function changeTipoCompra($eValue)
@@ -105,34 +122,37 @@ class NuevaEntrada extends Component
         $this->calculateTable();
 
         try {
+            //Filtramos los elementos de la orden de compra, que tienen algun dato en la tabla
+            $detalles_orden = array_filter($validated['orden_result'], function ($producto) {
+                return $producto['tipo_compra']
+                    || $producto['cantidad']
+                    || $producto['peso']
+                    || $producto['fecha_compra']
+                    || $producto['id_unidad'];
+            });
+            //Si no hay detalles de orden con datos en la tabla
+            if (! count($detalles_orden)) {
+                //Error al aplicar entrada sin informacion
+                throw new Exception('Debes completar por lo menos un articulo');
+            }
+
+            //Verificamos cada stock de cada articulo que se desea dar entrada
+            foreach ($detalles_orden as $row) {
+                //Comprobar si tiene el tipo de compra
+                if (!$row['tipo_compra'])
+                    throw new Exception("Revisa: " . $row['nombre'] . ", falta tipo de compra");
+                //Comprobar si tiene unidad
+                if (!$row['id_unidad'])
+                    throw new Exception("Revisa: " . $row['nombre'] . ", falta unidad");
+                //Comprobar si el stock ingresado es valido (no null)
+                if (!($row['cantidad'] || $row['peso']))
+                    throw new Exception("Revisa: " . $row['nombre'] . ", falta cantidad o peso", 1);
+                //Comprobar si tiene fecha de compra
+                if (!($row['fecha_compra']))
+                    throw new Exception("Revisa: " . $row['nombre'] . ", falta fecha de compra", 1);
+            }
             //Empezamos la transaccion
-            DB::transaction(function () use ($validated) {
-                //Filtramos los elementos de la orden de compra, que tienen algun dato en la tabla
-                $detalles_orden = array_filter($validated['orden_result'], function ($producto) {
-                    return $producto['tipo_compra']
-                        || $producto['cantidad']
-                        || $producto['peso']
-                        || $producto['fecha_compra'];
-                });
-                //Si no hay detalles de orden con datos en la tabla
-                if (! count($detalles_orden)) {
-                    //Error al aplicar entrada sin informacion
-                    throw new Exception('Debes completar por lo menos un articulo');
-                }
-
-                //Verificamos cada stock de cada articulo que se desea dar entrada
-                foreach ($detalles_orden as $row) {
-                    //Comprobar si tiene el tipo de compra
-                    if (!$row['tipo_compra'])
-                        throw new Exception("Revisa: " . $row['nombre'] . ", falta tipo de compra");
-                    //Comprobar si el stock ingresado es valido (no null)
-                    if (!($row['cantidad'] || $row['peso']))
-                        throw new Exception("Revisa: " . $row['nombre'] . ", falta cantidad o peso", 1);
-                    //Comprobar si tiene fecha de compra
-                    if (!($row['fecha_compra']))
-                        throw new Exception("Revisa: " . $row['nombre'] . ", falta fecha de compra", 1);
-                }
-
+            DB::transaction(function () use ($validated, $detalles_orden) {
                 /**
                  * Calculamos los valores necesarios
                  * */
@@ -151,6 +171,8 @@ class NuevaEntrada extends Component
                     //Cambiamos el estado a 'aplicado' en el "detalles_compra"
                     DetallesCompra::where('id', $row['id'])
                         ->update(['aplicado' => true]);
+                    //Actualizamos el precio por unidad del producto
+                    $this->actualizarPrecioUnidad($row);
                     //Actualizamos la fecha de ultima compra en el inventario ("catalogo_vista_verde")
                     $this->actualizarUltimaCompra($row);
 
@@ -181,6 +203,10 @@ class NuevaEntrada extends Component
         $this->dispatch('entrada');     //Emitimos evento para abrir acction message 
     }
 
+    /**
+     * Actualiza la fecha de la columna 'ultima_compra' de la tabla 'catalogo_vista_verde'
+     * Siempre y cuando la fecha ingresada en la entrada sea mayor (o null)
+     */
     private function actualizarUltimaCompra($producto)
     {
         //Buscamos el producto por su codigo
@@ -245,6 +271,18 @@ class NuevaEntrada extends Component
                 $result_stock->save();    //Guardamos el stock
             }
         }
+    }
+
+    /**
+     * Actualiza la columna 'costo_unidad' de la tabla 'unidad_catalogo', segun los valores ingresados en la entrada
+     */
+    private function actualizarPrecioUnidad($producto)
+    {
+        UnidadCatalogo::where([
+            ['codigo_catalogo', '=', $producto['codigo_producto']],
+            ['id_unidad', '=', $producto['id_unidad']]
+        ])
+            ->update(['costo_unidad' => $producto['costo_unitario']]);
     }
 
     /**

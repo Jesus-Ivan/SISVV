@@ -48,49 +48,53 @@
             wire:loading.class='opacity-50 pointer-events-none' wire:target='changeTipoCompra, changeFecha'>
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                    <th scope="col" class="px-3 py-2">
+                    <th scope="col" class="px-2 py-2">
                         CÓDIGO
                     </th>
-                    <th scope="col" class=" px-6 py-2">
+                    <th scope="col" class=" px-2 py-2">
                         DESCRIPCIÓN
                     </th>
-                    <th scope="col" class=" px-6 py-2">
+                    <th scope="col" class=" px-2 py-2">
                         PROVEEDOR
                     </th>
-                    <th scope="col" class=" px-6 py-2">
+                    <th scope="col" class=" px-2 py-2">
                         TIPO
                     </th>
-                    <th scope="col" class="px-6 py-2">
-                        CANTIDAD (PZ)
+                    <th scope="col" class=" px-2 py-2">
+                        UNIDAD
                     </th>
-                    <th scope="col" class="px-6 py-2">
+                    <th scope="col" class="px-2 py-2">
+                        CANTIDAD
+                    </th>
+                    <th scope="col" class="px-2 py-2">
                         PESO (KG)
                     </th>
-                    <th scope="col" class="px-6 py-2">
+                    <th scope="col" class="px-2 py-2">
                         COSTO UNIT.
                     </th>
-                    <th scope="col" class="px-6 py-2">
+                    <th scope="col" class="px-2 py-2">
                         IMPORTE
                     </th>
-                    <th scope="col" class="px-6 py-2">
+                    <th scope="col" class="px-2 py-2">
                         IVA
                     </th>
-                    <th scope="col" class="px-6 py-2">
+                    <th scope="col" class="px-2 py-2">
                         FECHA COMPRA
                     </th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($orden_result as $index => $row)
-                    <tr wire:key='{{ $index }}'
-                        class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <th class="px-3 py-2 text-center">
+                    <tr wire:key='{{ $index }}' wire:loading.class='opacity-10' wire:target='limpiarCampos({{ $index }})'
+                        class=" bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-500">
+                        <th class="cursor-pointer px-2 py-2 text-center"
+                            wire:click='limpiarCampos({{ $index }})'>
                             {{ $row['codigo_producto'] }}
                         </th>
-                        <td class="px-6 py-2 uppercase">
+                        <td class="px-2 py-2 uppercase">
                             {{ $row['nombre'] }}
                         </td>
-                        <td class="px-6 py-2 uppercase">
+                        <td class="px-2 py-2 uppercase">
                             <select id="proveedor" wire:model='orden_result.{{ $index }}.id_proveedor'
                                 class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                                 <option value="{{ null }}">Seleccionar</option>
@@ -103,44 +107,54 @@
                         <td>
                             <select wire:model='orden_result.{{ $index }}.tipo_compra'
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                <option value="{{ null }}">TIPO COMPRA</option>
+                                <option value="{{ null }}">Seleccionar</option>
                                 @foreach ($metodo_pago as $item)
                                     <option value="{{ $item }}">
                                         {{ $item }}</option>
                                 @endforeach
                             </select>
                         </td>
-                        <td class="px-6 py-2 ">
+                        <td class="px-2 py-2 ">
+                            <select wire:model='orden_result.{{ $index }}.id_unidad'
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                <option value="{{ null }}">Uni.</option>
+                                @foreach ($row['unidad_catalogo'] as $item)
+                                    <option value="{{ $item['id_unidad'] }}">
+                                        {{ $this->unidades->find($item['id_unidad'])->descripcion }}</option>
+                                @endforeach
+                            </select>
+                        </td>
+                        <td class="px-2 py-2 ">
                             <input wire:model='orden_result.{{ $index }}.cantidad'
                                 wire:change='calculateTable()' type="number" min="0"
                                 class="w-16 max-w-20 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         </td>
-                        <td class="px-6 py-2 ">
+                        <td class="px-2 py-2 ">
                             <input wire:model='orden_result.{{ $index }}.peso' wire:change='calculateTable()'
                                 type="number" min="0"
                                 class="w-16 max-w-20 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-2 py-2">
                             <div class="flex gap-1 items-center">
                                 $<input wire:model='orden_result.{{ $index }}.costo_unitario'
                                     wire:change='calculateTable()' type="number"
                                     class="block w-16 max-w-20 p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                             </div>
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-2 py-2">
                             <div class="flex gap-1 items-center">
                                 $<input wire:model='orden_result.{{ $index }}.importe' type="number"
                                     min="0"
                                     class="w-16 max-w-20 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                             </div>
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-2 py-2">
                             <div class="flex gap-1 items-center">
                                 $<input wire:model='orden_result.{{ $index }}.iva' type="number"
                                     class="block w-16 max-w-20 p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                             </div>
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-2 py-2">
                             <input wire:model='orden_result.{{ $index }}.fecha_compra'type="date"
                                 class="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         </td>

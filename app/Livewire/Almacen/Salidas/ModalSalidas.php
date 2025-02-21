@@ -106,8 +106,8 @@ class ModalSalidas extends Component
             'costo_unitario' => $this->precio_venta,
             'monto' => $this->monto
         ]);
-        $this->dispatch('close-modal'); //Emitimos evento para cerrar el componente del modal
-        $this->reset('articulo_seleccionado', 'cantidad_stock', 'peso_stock', 'cantidad_salida', 'peso_salida');
+        //$this->dispatch('close-modal'); //Emitimos evento para cerrar el componente del modal
+        $this->reset('articulo_seleccionado', 'cantidad_stock', 'peso_stock', 'cantidad_salida', 'peso_salida','monto','precio_venta');
     }
 
     public function render()

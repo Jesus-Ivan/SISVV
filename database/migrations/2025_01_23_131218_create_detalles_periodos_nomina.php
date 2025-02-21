@@ -20,12 +20,12 @@ return new class extends Migration
             $table->decimal('nomina_fiscal', 10, 2)->nullable();
             $table->decimal('diferencia_efectivo', 10, 2)->nullable();
             $table->decimal('extras', 10, 2)->nullable();
-            $table->decimal('total', 10, 2);
+            $table->decimal('total', 10, 2)->nullable();
             $table->decimal('descuento', 10, 2)->nullable();
             $table->decimal('infonavit', 10, 2)->nullable();
-            $table->decimal('nomina_pagar', 10, 2);
-            $table->date('fecha_inicio')->nullable();
-            $table->date('fecha_fin')->nullable();
+            $table->decimal('nomina_pagar', 10, 2)->nullable();
+            $table->date('fecha_inicio');
+            $table->date('fecha_fin');
             $table->string('observaciones', 255)->nullable();
         });
     }

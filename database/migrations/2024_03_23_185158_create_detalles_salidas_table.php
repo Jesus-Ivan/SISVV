@@ -20,8 +20,8 @@ return new class extends Migration
             $table->decimal('stock_origen_peso', 10, 3)->nullable();
             $table->integer('cantidad_salida')->nullable();
             $table->decimal('peso_salida', 10, 3)->nullable();
-            $table->decimal('costo_unitario', 10, 2);
-            $table->decimal('monto', 10, 2);
+            $table->decimal('costo_unitario', 10, 2)->nullable();
+            $table->decimal('monto', 10, 2)->nullable();
 
             /*//Referencias
 

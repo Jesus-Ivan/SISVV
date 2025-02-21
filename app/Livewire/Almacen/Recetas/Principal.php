@@ -56,9 +56,7 @@ class Principal extends Component
     public function render()
     {
         return view('livewire.almacen.recetas.principal', [
-            'listaPlatillos' => ICOProductos::where('nombre', 'like', '%' . $this->search . '%')->orWhere('descripcion', 'like', '%' . $this->search . '%')
-                ->orderBy('nombre', 'asc')
-                ->paginate(10)
+            'listaPlatillos' => []
         ]);
     }
 }

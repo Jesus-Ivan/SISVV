@@ -1,6 +1,6 @@
 <div @keyup.ctrl.window="$dispatch('open-modal', {name:'modal-articulos'})">
     {{-- Contenido --}}
-    <div class="py-5">
+    <div class="py-2">
         <div class="flex ms-3">
             <div class="inline-flex flex-grow">
                 <button x-data x-on:click="$dispatch('open-modal', { name: 'modal-articulos' })"
@@ -23,7 +23,7 @@
             </div>
         </div>
     </div>
-    <div class="inline-flex">
+    <div class="inline-flex mx-3">
         {{-- ORIGEN DE SALIDA --}}
         <div class="col-span-1">
             <label for="origen" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Origen:</label>
@@ -55,9 +55,9 @@
 
         {{-- CONTIENE LAS POSIBLES OBSERVACIONES PARA AUTORIZAR UNA SALIDA --}}
         <form class="ms-3 w-96">
-            <label for="observaciones"
+            <label for="observaciones_salidas"
                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nota:</label>
-            <input type="text" wire:model='observaciones'
+            <input type="text" wire:model='observaciones' id="observaciones_salidas"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="Observaciones">
             @error('observaciones')
@@ -67,8 +67,8 @@
     </div>
 
     {{-- Tabla --}}
-    <div class="ms-3 mx-3 my-3">
-        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <div class="m-3 ">
+        <div class="max-h-96 overflow-y-auto shadow-md sm:rounded-lg">
             <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>

@@ -79,6 +79,7 @@ class SalidasNueva extends Component
             //Crear la salida
             DB::transaction(function () use ($info) {
                 $resultSalida = Salida::create([
+                    'user_name' => auth()->user()->name,
                     'clave_origen' => $info['clave_origen'],
                     'clave_destino' => $info['clave_destino'],
                     'observaciones' => $info['observaciones'],
@@ -95,7 +96,7 @@ class SalidasNueva extends Component
                         'stock_origen_peso' => $articulo['peso_origen'],
                         'cantidad_salida' => $articulo['cantidad_salida'],
                         'peso_salida' => $articulo['peso_salida'],
-                        'costo_unitario'=>$articulo['costo_unitario'],
+                        'costo_unitario' => $articulo['costo_unitario'],
                         'monto' => $articulo['monto'],
                     ]);
                 }

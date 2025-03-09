@@ -152,7 +152,7 @@
                                     {{ $producto['codigo_catalogo'] }}
                                 </th>
                                 <td class="px-6 py-2">
-                                    {{ $producto['catalogo_productos']['nombre'] }}
+                                    {{ $producto['nombre'] ?: $producto['catalogo_productos']['nombre'] }}
                                 </td>
                                 <td class="px-6 py-2">
                                     {{ $producto['cantidad'] }}
@@ -270,7 +270,7 @@
             </div>
         </button>
     </div>
-    {{--Pantalla de carga--}}
+    {{-- Pantalla de carga --}}
     <div wire:loading wire:target='guardarCambios'>
         <x-loading-screen name='loading'>
             <x-slot name='body'>

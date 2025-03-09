@@ -42,7 +42,7 @@ class ProductosVendExport implements FromArray
                     'clave_articulo' => $producto->codigo_catalogo,
                     'folio_venta' => $producto->folio_venta,
                     'punto' =>  $venta['punto_venta']['nombre'],
-                    'descripcion' => $producto->catalogoProductos->nombre,
+                    'descripcion' => $producto->nombre ?: $producto->catalogoProductos->nombre,
                     'cantidad' => $producto->cantidad,
                     'precio' => $producto->precio,
                     'importe' => $producto->subtotal,

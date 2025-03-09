@@ -18,7 +18,11 @@ class DetallesVentaProducto extends Model
     //Clave primaria
     protected $primaryKey = 'id';
 
-    public function catalogoProductos(): BelongsTo{
-        return $this->belongsTo(CatalogoVistaVerde::class, 'codigo_catalogo');
+    public function catalogoProductos(): BelongsTo
+    {
+        return $this->belongsTo(CatalogoVistaVerde::class, 'codigo_catalogo')
+            ->withDefault([
+                'nombre' => 'ERR N/R'
+            ]);;
     }
 }

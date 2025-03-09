@@ -62,8 +62,6 @@ class ReportesController extends Controller
             'puntoVenta' => $puntoVenta,
         ];
 
-        //$altura = $this->calcularAltura($data);
-
         $pdf = Pdf::loadView('reportes.nota-venta', $data);
         $pdf->setOption(['defaultFont' => 'Helvetica']);
         //Tamaño predeterminado de papel del ticket (80mm x 297mm)

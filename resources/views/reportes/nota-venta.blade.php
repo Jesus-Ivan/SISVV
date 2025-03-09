@@ -100,7 +100,7 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
     <tbody>
         @foreach ($productos as $producto)
             <tr>
-                <td>{{ $producto->catalogoProductos->nombre }}</td>
+                <td>{{ $producto->nombre ?: $producto->catalogoProductos->nombre }}</td>
                 <td style="text-align: center">{{ $producto->cantidad }}</td>
                 <td>{{ $producto->precio }}</td>
                 <td>{{ $producto->subtotal }}</td>

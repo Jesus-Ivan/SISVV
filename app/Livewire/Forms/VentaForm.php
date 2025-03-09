@@ -389,6 +389,7 @@ class VentaForm extends Form
                     DetallesVentaProducto::create([
                         'folio_venta' => $folio,
                         'codigo_catalogo' => $producto['codigo_catalogo'],
+                        'nombre' => $producto['nombre'],
                         'cantidad' => $producto['cantidad'],
                         'precio' => $producto['precio'],
                         'observaciones' => $producto['observaciones'],
@@ -556,6 +557,7 @@ class VentaForm extends Form
             DetallesVentaProducto::create([
                 'folio_venta' => $folio,
                 'codigo_catalogo' => $producto['codigo_catalogo'],
+                'nombre' => $producto['nombre'],
                 'cantidad' => $producto['cantidad'],
                 'precio' => $producto['precio'],
                 'observaciones' => $producto['observaciones'],

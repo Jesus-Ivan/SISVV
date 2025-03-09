@@ -63,7 +63,7 @@
                             class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                             <div class="flex items-center">
                                 {{-- <span class="flex w-4 h-4 me-2 bg-yellow-300 rounded-full"></span> --}}
-                                <p>{{ array_key_exists('catalogo_productos', $producto) ? $producto['catalogo_productos']['nombre'] : $producto['nombre'] }}
+                                <p>{{ $producto['nombre'] ?: $producto['catalogo_productos']['nombre'] }}
                                 </p>
                             </div>
                         </th>

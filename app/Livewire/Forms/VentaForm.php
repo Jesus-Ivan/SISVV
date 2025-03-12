@@ -779,6 +779,15 @@ class VentaForm extends Form
                 $stock_botella = Stock::where('codigo_catalogo', $copeo->codigo_botella)
                     ->where('tipo', AlmacenConstants::CANTIDAD_KEY)
                     ->first();
+
+                //Verificar si el stock de botella no existe (en la BD)
+                if (!$stock_botella) {
+                    //Crear stock de cantidad (unitario)
+                    $stock_botella = Stock::create([
+                        'codigo_catalogo' => $copeo['codigo_botella'],
+                        'tipo' => AlmacenConstants::CANTIDAD_KEY
+                    ]);
+                }
                 //Calcular la cantidad de botellas necesarias para el copeo
                 $cant_botellas = ceil(abs($dif) / $copeo->equivalencia);
 

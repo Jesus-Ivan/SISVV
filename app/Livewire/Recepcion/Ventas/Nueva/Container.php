@@ -96,6 +96,7 @@ class Container extends Component
                 DetallesVentaProducto::create([
                     'folio_venta' => $resultVenta->folio,
                     'codigo_catalogo' => $producto['codigo_catalogo'],
+                    'nombre' => $producto['nombre'],
                     'cantidad' => $producto['cantidad'],
                     'precio' => $producto['precio'],
                     'subtotal' => $producto['subtotal'],
@@ -177,6 +178,7 @@ class Container extends Component
                 DetallesVentaProducto::create([
                     'folio_venta' => $resultVenta->folio,
                     'codigo_catalogo' => $producto['codigo_catalogo'],
+                    'nombre' => $producto['nombre'],
                     'cantidad' => $producto['cantidad'],
                     'precio' => $producto['precio'],
                     'subtotal' => $producto['subtotal'],

@@ -132,7 +132,7 @@ class TraspasosNuevo extends Component
     }
 
     /**
-     * Finaliza el proceso de la entrada
+     * Finaliza el proceso del traspaso
      */
     public function aplicarTraspaso()
     {
@@ -246,6 +246,10 @@ class TraspasosNuevo extends Component
                 $stock_cantidad = $stock->where('tipo', AlmacenConstants::CANTIDAD_KEY)->first();
                 //Si no tiene stock de cantidad (unitario)
                 if (!$stock_cantidad) throw new Exception("No hay stock " . AlmacenConstants::CANTIDAD_KEY . ' registrado en la BD para ' . $articulo['nombre'], 1);
+                //Si la diferencia del stock de origen menos la cantidad requerida, es negativo
+                if ($stock_cantidad[$articulo['clave_bodega_origen']] - $articulo['cantidad'] < 0)
+                    throw new Exception("No hay suficiente stock (" . AlmacenConstants::CANTIDAD_KEY . ") en la bodega de origen: " . $articulo['nombre']);
+
                 //Actualizar el stock
                 $stock_cantidad[$articulo['clave_bodega_origen']] -= $articulo['cantidad'];
                 $stock_cantidad[$articulo['clave_bodega_destino']] += $articulo['cantidad'];
@@ -254,13 +258,17 @@ class TraspasosNuevo extends Component
 
             if ($articulo['peso'] > 0) {
                 //Buscar el stock de peso
-                $stock_cantidad = $stock->where('tipo', AlmacenConstants::PESO_KEY)->first();
+                $stock_peso = $stock->where('tipo', AlmacenConstants::PESO_KEY)->first();
                 //Si no tiene stock de cantidad (unitario)
-                if (!$stock_cantidad) throw new Exception("No hay stock " . AlmacenConstants::PESO_KEY . ' registrado en la BD para ' . $articulo['nombre'], 1);
+                if (!$stock_peso) throw new Exception("No hay stock " . AlmacenConstants::PESO_KEY . ' registrado en la BD para ' . $articulo['nombre'], 1);
+                //Si la diferencia del stock de origen menos la cantidad requerida, es negativo
+                if ($stock_peso[$articulo['clave_bodega_origen']] - $articulo['peso'] < 0)
+                    throw new Exception("No hay suficiente stock (" . AlmacenConstants::PESO_KEY . ") en la bodega de origen: " . $articulo['nombre']);
+
                 //Actualizar el stock
-                $stock_cantidad[$articulo['clave_bodega_origen']] -= $articulo['peso'];
-                $stock_cantidad[$articulo['clave_bodega_destino']] += $articulo['peso'];
-                $stock_cantidad->save();
+                $stock_peso[$articulo['clave_bodega_origen']] -= $articulo['peso'];
+                $stock_peso[$articulo['clave_bodega_destino']] += $articulo['peso'];
+                $stock_peso->save();
             }
         }
     }

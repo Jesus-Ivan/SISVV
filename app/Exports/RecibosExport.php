@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Cuota;
+use App\Models\ReciboMembresia;
 use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
 use App\Models\TipoPago;
@@ -56,6 +57,7 @@ class RecibosExport implements FromArray
             'ADEUDOS' => 'ADEUDOS',
             'CURSOS' => 'CURSOS',
             'TORNEOS' => 'TORNEOS',
+            'NO IDENTIFICADO' => 'NO IDENTIFICADO',
             'TIPO CUOTA' => 'TIPO CUOTA',
             'OBSERVACIONES' => 'OBSERVACIONES',
         ];
@@ -126,15 +128,16 @@ class RecibosExport implements FromArray
                     'RECEPCION' => $this->totalConcepto($detalles_filtrados, "^(?!PROPINA)(.*)(RECEPCION)$"),
                     'RESTAURANT' => $this->totalConcepto($detalles_filtrados, "^(?!PROPINA)(.*)(RESTAURANT|RESTAURANT\/BARRA)$"),
                     'BUGABAR' => $this->totalConcepto($detalles_filtrados, "^(?!PROPINA)(.*)(BUGABAR)$"),
-                    'EVENTOS' => $this->totalCuota(20, $detalles_filtrados),
-                    'ESTETICA' => $this->totalCuota(19, $detalles_filtrados),
+                    'EVENTOS' => $this->totalCuota(20, $detalles_filtrados), // el id de Cuota del: eventos, es: 20
+                    'ESTETICA' => $this->totalCuota(19, $detalles_filtrados), // el id de Cuota del: estetica, es: 19
                     'PROPINAS' => $this->totalConcepto($detalles_filtrados, "propina"),
                     'SALDO A FAVOR' => $this->totalSaldoFavor($detalles_filtrados),
                     'FEDERACION' => $this->totalCuotas($cuotas_federacion, $detalles_filtrados),
-                    'ADEUDOS' => $this->totalCuota(42, $detalles_filtrados),
+                    'ADEUDOS' => $this->totalCuota(42, $detalles_filtrados), // el id de Cuota del: adeudo, es: 42
                     'CURSOS' => $this->totalCuotas($cuotas_cursos, $detalles_filtrados),
                     'TORNEOS' => $this->totalCuotas($cuotas_torneos, $detalles_filtrados),
-                    'TIPO CUOTA' => $this->tipoCuota($recibo['id_socio']),
+                    'NO IDENTIFICADO' => $this->totalCuota(54, $detalles_filtrados),    // el id de Cuota del: movimiento no identificado, es: 54
+                    'TIPO CUOTA' => $this->tipoCuota($recibo['id_socio'], $recibo['folio']),
                     'OBSERVACIONES' => $recibo['observaciones'],
                 ];
             }
@@ -178,14 +181,26 @@ class RecibosExport implements FromArray
     /** 
      * Obtenemos el tipo de cuota para el reporte, apartir de la tabla 'socios_membresia'
      */
-    private function tipoCuota($id_socio)
+    private function tipoCuota($id_socio, $folio_recibo)
     {
-        //Buscamos la clave de membresia correspondiente al socio
-        $socio_membresia = SocioMembresia::where('id_socio', $id_socio)
-            ->first();
+        /**
+         * Buscamos el registro en la tabla 'recibo_membresia'
+         * Es la relacion de la 'clave' de membresia del socio con el 'recibo'.
+         * En el momento de descargar el reporte.
+         */
+        $recibo_membresia = ReciboMembresia::find($folio_recibo);
+        if (! $recibo_membresia) {
 
-        if ($socio_membresia)
-            return substr($socio_membresia->clave_membresia, 0, 2);
+            //Buscamos la clave de membresia correspondiente al socio
+            $socio_membresia = SocioMembresia::where('id_socio', $id_socio)
+                ->first();
+            //Creamos el registro en la tabla 'recibo_membresia'
+            $recibo_membresia = ReciboMembresia::create([
+                'folio_recibo' => $folio_recibo,
+                'clave_membresia' => $socio_membresia->clave_membresia
+            ]);
+        }
+        return substr($recibo_membresia->clave_membresia, 0, 2);
     }
 
     /**

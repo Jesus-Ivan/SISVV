@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Recepcion\Estados;
 
+use App\Constants\RecepcionConstants;
 use App\Models\Anualidad;
 use App\Models\Cuota;
 use App\Models\EstadoCuenta;
@@ -93,6 +94,19 @@ class CargosNuevo extends Component
         //Agregamos el campo fecha al cargo.
         $cuota['fecha'] = $this->fechaDestino;
 
+        //Si la cuota es de tipo editable
+        if ($cuota['tipo'] == RecepcionConstants::EDITABLE_CARGO_KEY) {
+            //Si la cuota se esta tratando de agregar a un no.de socio diferente del 5500
+            if ($this->socio->id != RecepcionConstants::ID_SOCIO_EDITABLE) {
+                session()->flash('fail', 'Cuota permitida unicamente para la accion: ' . RecepcionConstants::ID_SOCIO_EDITABLE);
+            } else {
+                //Agregramos a la lista de cargos
+                $this->listaCargos[] = $cuota;
+            }
+            //terminar la funcion
+            return;
+        }
+
         //Evaluamos si la cuota seleccionada tiene una 'clave_membresia' null
         if ($cuota['clave_membresia']) {
             //Creamos instancia de carbon, de la fecha de la cuota
@@ -163,7 +177,7 @@ class CargosNuevo extends Component
     {
         //Comprobamos si el id del cargo fijo, estaba definido en el array
         if (isset($this->listaCargosFijos[$cargoIndex]['id'])) {
-            //guardamos el id, de la cuota fija del sicio, para eliminar despues
+            //guardamos el id, de la cuota fija del socio, para eliminar despues
             array_push($this->listaCargosEliminados, $this->listaCargosFijos[$cargoIndex]['id']);
         }
         unset($this->listaCargosFijos[$cargoIndex]);
@@ -252,6 +266,9 @@ class CargosNuevo extends Component
     }
     public function render()
     {
-        return view('livewire.recepcion.estados.cargos-nuevo');
+        return view(
+            'livewire.recepcion.estados.cargos-nuevo',
+            ['editable_cargo' => RecepcionConstants::EDITABLE_CARGO_KEY]
+        );
     }
 }

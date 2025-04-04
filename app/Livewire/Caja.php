@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Caja as ModelsCaja;
+use App\Models\CambioTurno;
 use App\Models\Venta;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -87,7 +88,7 @@ class Caja extends Component
                     ]);
                     //Retomamos las ventas del turno anterior
                     $this->retomarVentas($caja->corte);
-                });
+                }, 2);
                 session()->flash('success', 'Caja abierta correctamente');
                 $this->reset();
             } else {
@@ -159,16 +160,19 @@ class Caja extends Component
 
     private function retomarVentas($cajaCorte)
     {
-        $hoy = now()->toDateString();
-        //Buscar todas las ventas sin corte de caja, en el dia actual, en el punto actual.
-        $ventasPendientes = Venta::whereNull('corte_caja')
-            ->whereDate('fecha_apertura', $hoy)
-            ->where('clave_punto_venta', $this->codigopv)
-            ->get();
-
-        foreach ($ventasPendientes as $key => $value) {
-            $value->corte_caja = $cajaCorte;
-            $value->save();
+        //Verificamos si existe algun cambio de turno en el dia actual, en el punto actual
+        $cambioTurno = CambioTurno::where('clave_punto_venta', $this->codigopv)
+            ->whereDate('created_at', now()->toDateString())
+            ->first();
+        //Si existe un registro
+        if ($cambioTurno) {
+            //Convertimos la lista concatenada (del registro), a un array.
+            $lista_folios = explode(",", $cambioTurno->payload);
+            //Actualizar el corte de caja de las ventas
+            Venta::whereIn('folio', $lista_folios)
+                ->update([
+                    'corte_caja' => $cajaCorte,
+                ]);
         }
     }
 

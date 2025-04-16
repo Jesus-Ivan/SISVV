@@ -246,10 +246,12 @@ class TraspasosNuevo extends Component
                 $stock_cantidad = $stock->where('tipo', AlmacenConstants::CANTIDAD_KEY)->first();
                 //Si no tiene stock de cantidad (unitario)
                 if (!$stock_cantidad) throw new Exception("No hay stock " . AlmacenConstants::CANTIDAD_KEY . ' registrado en la BD para ' . $articulo['nombre'], 1);
-                //Si la diferencia del stock de origen menos la cantidad requerida, es negativo
-                if ($stock_cantidad[$articulo['clave_bodega_origen']] - $articulo['cantidad'] < 0)
-                    throw new Exception("No hay suficiente stock (" . AlmacenConstants::CANTIDAD_KEY . ") en la bodega de origen: " . $articulo['nombre']);
-
+                //Verificar si la bodega de origen del traspaso es almacen general
+                if ($articulo['clave_bodega_origen'] == 'stock_alm' || $articulo['clave_bodega_destino'] == 'stock_alm') {
+                    //Si la diferencia del stock de origen menos la cantidad requerida, es negativo
+                    if ($stock_cantidad[$articulo['clave_bodega_origen']] - $articulo['cantidad'] < 0)
+                        throw new Exception("No puedes realizar traspasos negativos con almacen: " . $articulo['nombre']);
+                }
                 //Actualizar el stock
                 $stock_cantidad[$articulo['clave_bodega_origen']] -= $articulo['cantidad'];
                 $stock_cantidad[$articulo['clave_bodega_destino']] += $articulo['cantidad'];
@@ -261,10 +263,12 @@ class TraspasosNuevo extends Component
                 $stock_peso = $stock->where('tipo', AlmacenConstants::PESO_KEY)->first();
                 //Si no tiene stock de cantidad (unitario)
                 if (!$stock_peso) throw new Exception("No hay stock " . AlmacenConstants::PESO_KEY . ' registrado en la BD para ' . $articulo['nombre'], 1);
-                //Si la diferencia del stock de origen menos la cantidad requerida, es negativo
-                if ($stock_peso[$articulo['clave_bodega_origen']] - $articulo['peso'] < 0)
-                    throw new Exception("No hay suficiente stock (" . AlmacenConstants::PESO_KEY . ") en la bodega de origen: " . $articulo['nombre']);
-
+                //Verificar si la bodega de origen del traspaso es almacen general
+                if ($articulo['clave_bodega_origen'] == 'stock_alm' || $articulo['clave_bodega_destino'] == 'stock_alm') {
+                    //Si la diferencia del stock de origen menos la cantidad requerida, es negativo
+                    if ($stock_peso[$articulo['clave_bodega_origen']] - $articulo['peso'] < 0)
+                        throw new Exception("No puedes realizar traspasos negativos con almacen: " . $articulo['nombre']);
+                }
                 //Actualizar el stock
                 $stock_peso[$articulo['clave_bodega_origen']] -= $articulo['peso'];
                 $stock_peso[$articulo['clave_bodega_destino']] += $articulo['peso'];

@@ -1,4 +1,5 @@
-<div class="relative w-full">
+<div class="relative w-full" @keydown.down="$focus.wrap().next()" @keydown.up="$focus.wrap().previous()"
+    >
     <!--Input del No de socio -->
     <div>
         <div class="absolute inset-y-0 start-0 flex items-center p-2.5 pointer-events-none">
@@ -23,11 +24,12 @@
         <div class="relative z-40">
             <div class="absolute w-full overflow-y-auto max-h-64 h-auto bg-white border">
                 @foreach ($this->results as $result)
-                    <div class="p-2 hover:bg-slate-200" wire:click="select({{ $result->$primaryKey }})">
+                    <button type="button" class="text-start w-full p-2 hover:bg-slate-100 focus:bg-slate-300"
+                        wire:click="select({{ $result->$primaryKey }})">
                         @foreach ($params['table']['columns'] as $column)
                             {{ $result->$column }}
                         @endforeach
-                    </div>
+                    </button>
                 @endforeach
             </div>
         </div>

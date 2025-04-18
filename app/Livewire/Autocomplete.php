@@ -9,7 +9,7 @@ use Livewire\Component;
 class Autocomplete extends Component
 {
 
-    public $params, $search, $event, $primaryKey;
+    public $params, $search = '', $event, $primaryKey;
 
     #[Computed]
     public function results()

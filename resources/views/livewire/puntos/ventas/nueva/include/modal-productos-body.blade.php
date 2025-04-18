@@ -4,7 +4,7 @@
         <!-- Search bar-->
         <div class="pb-4 w-full bg-white dark:bg-gray-900">
             <label for="table-search" class="sr-only">Descripcion</label>
-            <div class="relative mt-1">
+            <div class="relative mt-1" x-trap="show">
                 <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
                     <svg wire:loading.remove.delay.long wire:target='ventaForm.seachProduct'
                         class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"

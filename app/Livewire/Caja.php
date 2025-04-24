@@ -86,8 +86,8 @@ class Caja extends Component
                         'cambio_inicial' => $validated['cambio'],
                         'clave_punto_venta' => $validated['puntoSeleccionado']
                     ]);
-                    //Retomamos las ventas del turno anterior
-                    $this->retomarVentas($caja->corte);
+                    //Retomamos las ventas del turno anterior (Aquellas con la columna 'corte_caja' null)
+                    $this->retomarVentas($caja);
                 }, 2);
                 session()->flash('success', 'Caja abierta correctamente');
                 $this->reset();
@@ -158,10 +158,14 @@ class Caja extends Component
             ->get();
     }
 
-    private function retomarVentas($cajaCorte)
+    /**
+     * Verifica si existio un cambio de turno, segun la fecha y la clave del punto de venta.
+     * Estos datos son obtenidos de la informacion de la caja que recibe como parametro
+     */
+    private function retomarVentas($caja)
     {
-        //Verificamos si existe algun cambio de turno en el dia actual, en el punto actual
-        $cambioTurno = CambioTurno::where('clave_punto_venta', $this->codigopv)
+        //Verificamos si existe algun cambio de turno en el dia actual, en el punto deseado
+        $cambioTurno = CambioTurno::where('clave_punto_venta', $caja['clave_punto_venta'])
             ->whereDate('created_at', now()->toDateString())
             ->first();
         //Si existe un registro
@@ -171,7 +175,7 @@ class Caja extends Component
             //Actualizar el corte de caja de las ventas
             Venta::whereIn('folio', $lista_folios)
                 ->update([
-                    'corte_caja' => $cajaCorte,
+                    'corte_caja' => $caja['corte'],
                 ]);
         }
     }

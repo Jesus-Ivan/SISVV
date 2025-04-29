@@ -304,7 +304,7 @@ class Container extends Component
                 $resultCargo->save();
             }
             //Verificamos el estado de cuenta
-            $this->verificar_estado_cuenta($edo_cuenta, $validated['cargosTabla']);
+            //$this->verificar_estado_cuenta($edo_cuenta, $validated['cargosTabla']);
             //Emitimos evento para abrir nueva pestaña
             $this->dispatch('ver-recibo', ['folio' => $result->folio]);
         }, 2);
@@ -419,6 +419,8 @@ class Container extends Component
             } else {
                 //Restamos el abono al saldo del concepto original
                 $saldo_comprobado = $cargo_edo_cuenta_original->saldo - $total_abono;
+
+                dd($saldo_comprobado, $cargo_edo_cuenta_actual->saldo);
                 //Si el saldo del concepto actual no coincide con el saldo comprobado, ajustar el saldo
                 if ($cargo_edo_cuenta_actual->saldo != $saldo_comprobado) {
                     //Ajustamos el saldo

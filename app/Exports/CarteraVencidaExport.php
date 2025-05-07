@@ -85,8 +85,7 @@ class CarteraVencidaExport implements FromArray
     }
 
     /**
-     * Obtiene el acumulado de las notas pendientes.
-     * Segun la fecha limite
+     * Obtiene el acumulado de las notas pendientes segun la fecha limite.
      */
     public function obtenerNotas($estado_cuenta, $exp_reg)
     {

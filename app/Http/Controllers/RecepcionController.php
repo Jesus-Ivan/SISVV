@@ -18,10 +18,28 @@ class RecepcionController extends Controller
 
     public function reportesIndex()
     {
+        //Creamos una instacia de carbon con la fecha actual
         $hoy = now();
+        //Duplicamos la fecha, para utilizarla como fecha limite predeterminada
+        $limite = $hoy->copy();
+
+        //Si el dia actual es mayor al dia 10 (dia de creacion de los recargos).
+        if ($hoy->day > 10) {
+            //Si la fecha actual, es un Martes 11.
+            if ($hoy->day == 11  && $hoy->dayOfWeekIso == 2) {
+                //Establecer fecha limite: Ultimo dia del mes anterior (Loa cargos del mes actual no han vencido)
+                $limite->subMonth()->setDay($limite->daysInMonth);
+            } else {
+                //Establecer fecha limite: Ultimo dia del mes actual (cargos vencidos)
+                $limite->setDay($limite->daysInMonth);
+            }
+        } else {
+            //Establecer fecha limite: Ultimo dia del mes anterior (Loa cargos del mes actual no han vencido)
+            $limite->subMonth()->setDay($limite->daysInMonth);
+        }
         return view('recepcion.Reportes.principal', [
             'users' => User::all(),
-            'hoy' => $hoy
+            'limite' => $limite->toDateString(),
         ]);
     }
 

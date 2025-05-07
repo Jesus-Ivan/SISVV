@@ -803,4 +803,12 @@ class VentaForm extends Form
         $stock_producto[$clave_stock] -= $producto['cantidad'];
         $stock_producto->save();
     }
+
+    /**
+     * Crea el registro de la venta, en la tabla "detalles_caja".
+     * Utilizado para el corte de caja (reporte de ventas)
+     */
+    private function crearMovimientoCaja($detalle_pago, $caja){
+
+    }
 }

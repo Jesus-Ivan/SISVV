@@ -13,12 +13,15 @@ class CarteraVencidaExport implements FromArray
     public $cuotas;
     public $socios;
     public $consumosMesFin;
+    public $fecha_limite;
 
-    public function __construct($consumosMesFin, $cancelados)
+    public function __construct($consumosMesFin, $cancelados, $fecha_limite)
     {
         $this->cuotas = Cuota::all();
         $this->consumosMesFin = $consumosMesFin;
+        $this->fecha_limite = $fecha_limite;
         $sociosTemp = Socio::with('socioMembresia')->get()->toArray();
+
 
         //Si queremos la cartera con los socios cancelados
         if ($cancelados) {
@@ -52,9 +55,12 @@ class CarteraVencidaExport implements FromArray
         $data[] = $encabezados;
 
         //Ingresamos los valores al array
-        foreach ($this->socios as $key => $socio) {
+        foreach ($this->socios as $socio) {
+            //Buscar el estado de cuenta
             $estado_cuenta = EstadoCuenta::where('id_socio', $socio['id'])
-                ->where('saldo', '>',  0)->get();
+                ->where('saldo', '>',  0)
+                ->whereDate('fecha', '<=', $this->fecha_limite)
+                ->get();
 
             //Si debe algun concepto
             if (count($estado_cuenta)) {
@@ -75,15 +81,18 @@ class CarteraVencidaExport implements FromArray
             }
         }
 
-        //dd($data);
         return $data;
     }
 
-    private function obtenerNotas($estado_cuenta, $exp_reg)
+    /**
+     * Obtiene el acumulado de las notas pendientes.
+     * Segun la fecha limite
+     */
+    public function obtenerNotas($estado_cuenta, $exp_reg)
     {
         $patron = "/$exp_reg/i";
         $acu = 0;
-        $hoy = now();
+        $fecha_limite = Carbon::parse($this->fecha_limite);
 
         foreach ($estado_cuenta as $key => $row) {
             if (preg_match($patron, $row->concepto) &&  is_null($row->id_cuota)) {
@@ -91,9 +100,9 @@ class CarteraVencidaExport implements FromArray
                 //Si la opcion de incluir consumos esta activada
                 if ($this->consumosMesFin) {
                     $acu += $row->saldo;
-                } elseif ($fecha_concepto->year < $hoy->year) {
+                } elseif ($fecha_concepto->year < $fecha_limite->year) {
                     $acu += $row->saldo;
-                } elseif ($fecha_concepto->year == $hoy->year && $fecha_concepto->month < $hoy->month) {
+                } elseif ($fecha_concepto->year == $fecha_limite->year && $fecha_concepto->month < $fecha_limite->month) {
                     $acu += $row->saldo;
                 }
             }

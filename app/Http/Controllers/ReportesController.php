@@ -408,6 +408,7 @@ class ReportesController extends Controller
         //Validamos el tipo de archivo
         $validated = $this->validate($request, [
             'typeFile' => 'required',
+            'limite' => 'required'
         ]);
         //Agregamos el key para los consumos del mes
         $validated['consumosMesFin'] = $request->input('consumosMesFin', null);
@@ -416,10 +417,10 @@ class ReportesController extends Controller
 
         switch ($validated['typeFile']) {
             case 'XLS':
-                $result = $this->vencidosExcel($validated['consumosMesFin'], $validated['cancelados']);
+                $result = $this->vencidosExcel($validated['consumosMesFin'], $validated['cancelados'], $validated['limite']);
                 break;
             case 'PDF':
-                $result = $this->vencidosPdf($validated['consumosMesFin'], $validated['cancelados']);
+                $result = $this->vencidosPdf($validated['consumosMesFin'], $validated['cancelados'], $validated['limite']);
                 break;
             default:
                 $result = 'Algo ha ido mal, prueba denuevo';
@@ -802,19 +803,27 @@ class ReportesController extends Controller
         return $aux;
     }
 
-    private function vencidosExcel($consumosMesFin, $cancelados)
+    /**
+     * Realiza la exportacion de datos a excel con la biblioteca 'maatwebsite/excel'
+     * Recibe los parametros de busqueda, Si incluye los consumos del mes, los socios cancelados y la fecha limite del reporte
+     */
+    public function vencidosExcel($consumosMesFin, $cancelados, $fecha_limite)
     {
         $hoy = now()->toDateString();
         //Devolvemos el excel
         return Excel::download(
-            new CarteraVencidaExport($consumosMesFin, $cancelados),
+            new CarteraVencidaExport($consumosMesFin, $cancelados, $fecha_limite),
             'Cartera Vencida ' . $hoy . '.xlsx'
         );
     }
 
-    private function vencidosPdf($consumosMesFin, $cancelados)
+    /**
+     * Genera un pdf con la cartera vencida (resumen).
+     * Recibe los parametros de busqueda, Si incluye los consumos del mes, los socios cancelados y la fecha limite del reporte
+     */
+    public function vencidosPdf($consumosMesFin, $cancelados, $fecha_limite)
     {
-        $mes_actual = now();
+        $mes_limite = Carbon::parse($fecha_limite);
         $header = [
             'title' => 'VISTA VERDE COUNTRY CLUB',
             'rfc' => 'VVC101110AQ4',
@@ -823,13 +832,15 @@ class ReportesController extends Controller
         ];
         if ($consumosMesFin) {
             $estados = EstadoCuenta::where('saldo', '>', 0)
+                ->whereDate('fecha', '<=', $fecha_limite)
                 ->orderBy('id_socio', 'asc')
                 ->get();
         } else {
             $estados = EstadoCuenta::where('saldo', '>', 0)
-                ->whereNot(function (Builder $query) use ($mes_actual) {
-                    $query->whereMonth('fecha', $mes_actual->month)
-                        ->whereYear('fecha', $mes_actual->year)
+                ->whereDate('fecha', '<=', $fecha_limite)
+                ->whereNot(function (Builder $query) use ($mes_limite) {
+                    $query->whereMonth('fecha', $mes_limite->month)
+                        ->whereYear('fecha', $mes_limite->year)
                         ->whereNotNull('id_venta_pago');
                 })
                 ->orderBy('id_socio', 'asc')
@@ -880,7 +891,7 @@ class ReportesController extends Controller
 
         $pdf = Pdf::loadView('reportes.cartera-vencida', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
-        return $pdf->stream('reporte-vencidos' . $mes_actual . '.pdf');
+        return $pdf->stream('reporte-vencidos' . now()->toDateString() . '.pdf');
     }
 
     /**

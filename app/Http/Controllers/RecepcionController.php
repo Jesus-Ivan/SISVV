@@ -18,7 +18,11 @@ class RecepcionController extends Controller
 
     public function reportesIndex()
     {
-        return view('recepcion.Reportes.principal', ['users' => User::all()]);
+        $hoy = now();
+        return view('recepcion.Reportes.principal', [
+            'users' => User::all(),
+            'hoy' => $hoy
+        ]);
     }
 
     public function ventasNueva()

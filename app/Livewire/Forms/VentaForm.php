@@ -350,14 +350,20 @@ class VentaForm extends Form
         //Duplicamos variable para pasarla a la funcion anonima de la transaccion
         $tipo_venta = $this->tipo_venta;
 
+        //Variable auxiliar para almacenar el folio resultado de la venta
+        $folioVenta = 0;
         //Se crea la transaccion
-        DB::transaction(function () use ($venta, $codigopv, $tipo_venta) {
+        DB::transaction(function () use ($venta, $codigopv, $tipo_venta, &$folioVenta) {
             //Crear la venta y guardamos el resultado de la insersion en la BD.
             $resultVenta = $this->registrarVenta($venta, $codigopv, false, tipo_venta: $tipo_venta);
+            //Obtenemos el folio
+            $folioVenta = $resultVenta->folio;
             //crear los detalles de los productos
             $this->registrarProductosVenta($resultVenta->folio, $venta);
         }, 2);
         $this->limpiarComponente();
+        //Devolvemos objeto del resultado al componente
+        return $folioVenta;
     }
 
     /**

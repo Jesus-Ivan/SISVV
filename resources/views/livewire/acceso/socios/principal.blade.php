@@ -3,14 +3,15 @@
         <a
             class=" flex gap-4 w-full p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
             <!--USER IMAGE-->
-            @if ($socio)
-                <img class="w-52 h-52 rounded-full" src="{{ asset($socio->img_path) }}" alt="Imagen de socio">
-            @else
-                <img class="w-52 h-52 rounded-full" src="https://placehold.co/400" alt="Rounded avatar">
-            @endif
-
-            <!--USER INFO-->
             @foreach ($result as $index => $socio)
+                @if ($socio)
+                    <img class="w-52 h-52 rounded-full" src="{{ asset($socio->img_path) }}" alt="Imagen de socio">
+                @else
+                    <img class="w-52 h-52 rounded-full" src="https://placehold.co/400" alt="Rounded avatar">
+                @endif
+
+                <!--USER INFO-->
+
                 <div>
                     <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                         {{ $socio ? $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m : '' }}

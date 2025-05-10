@@ -164,7 +164,9 @@ class Container extends Component
     {
         try {
             //Guardamos la venta
-            $this->ventaForm->guardarVentaNueva($this->codigopv);
+            $folioVenta = $this->ventaForm->guardarVentaNueva($this->codigopv);
+            //Emitimos evento para abrir el ticket en nueva pestaña
+            $this->dispatch('ver-ticket', ['venta' => $folioVenta]);
             //Emitimos mensaje de sesion 
             session()->flash('success', 'Venta guardada correctamente');
         } catch (ValidationException $th) {

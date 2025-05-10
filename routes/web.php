@@ -236,9 +236,10 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     });
 });
 
-Route::prefix('portico')->middleware(['auth', 'portico'])->group(function () {
-    Route::view('/', 'portico.index')->name('portico');
-    Route::view('socios', 'portico.Socios.container')->name('portico.socios');
+//PORTICO
+Route::prefix('acceso')->middleware(['auth', 'acceso'])->group(function () {
+    Route::view('/', 'acceso.index')->name('acceso');
+    Route::view('socios', 'acceso.Socios.principal')->name('acceso.socios');
 });
 
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');

@@ -1,10 +1,8 @@
 <?php
 
-namespace App\Livewire\Portico\Socios;
+namespace App\Livewire\Puntos\Socios;
 
-use App\Models\IntegrantesSocio;
 use App\Models\Socio;
-use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -17,9 +15,8 @@ class Container extends Component
     {
         $this->socio = Socio::with(['integrantesSocio', 'socioMembresia'])->find($socio);
     }
-
     public function render()
     {
-        return view('livewire.portico.socios.container');
+        return view('livewire.puntos.socios.container');
     }
 }

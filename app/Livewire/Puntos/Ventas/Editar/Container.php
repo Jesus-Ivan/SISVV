@@ -203,6 +203,9 @@ class Container extends Component
     {
         try {
             $this->ventaForm->guardarVentaExistente($this->venta->folio);
+            //Emitimos evento para abrir el ticket en nueva pestaña
+            $this->dispatch('ver-ticket', ['venta' => $this->venta->folio]);
+            //redirigir al usuario
             $this->redirectRoute('pv.ventas', ['codigopv' => $this->codigopv]);
         } catch (ValidationException $th) {
             throw $th;

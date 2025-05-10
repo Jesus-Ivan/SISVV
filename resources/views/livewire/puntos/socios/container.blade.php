@@ -32,6 +32,15 @@
                         @endif
                     </div>
                 @endif
+                @if ($socio)
+                    <div>
+                        @if ($socio->firma == '0')
+                            <p class="font-bold text-red-600">FIRMA NO AUTORIZADA</p>
+                        @else
+                            <p class="font-bold text-green-500">FIRMA AUTORIZADA</p>
+                        @endif
+                    </div>
+                @endif
             </div>
         </a>
         <!--Search bar-->
@@ -39,11 +48,6 @@
             <livewire:autocomplete :params="[
                 'table' => ['name' => 'socios', 'columns' => ['id', 'nombre', 'apellido_p', 'apellido_m']],
             ]" primaryKey="id" event="on-selected-socio" />
-            <!--Boton de registro -->
-            <button type="button"
-                class="mt-4 inline-flex items-center focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-                Registrar entrada
-            </button>
         </div>
     </div>
     <!-- Linea -->

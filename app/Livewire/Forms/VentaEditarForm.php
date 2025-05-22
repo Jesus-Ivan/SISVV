@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Forms;
 
+use App\Constants\PuntosConstants;
 use App\Models\Caja;
 use App\Models\CorreccionVenta;
+use App\Models\DetallesCaja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
@@ -17,6 +19,8 @@ class VentaEditarForm extends Form
 {
     //Propiedades almacenar los originales
     public $venta, $productos, $pagos;
+
+    public VentaForm $ventaFrom;
 
     /**
      * Guarda los valores originales de la venta en el formulario
@@ -75,6 +79,15 @@ class VentaEditarForm extends Form
                 $row->save();
             }
         }
+        //Buscar caja abierta del punto
+        $resutCaja = $this->ventaFrom->buscarCaja($result->clave_punto_venta);
+        //Crear movimiento de caja
+        $this->ventaFrom->crearMovimientoCaja(
+            $folio_seleccionado,
+            $resutCaja->corte,
+            $detalles_pagos->toArray(),
+            PuntosConstants::INGRESO_PENDIENTE_KEY
+        );
     }
 
     /**
@@ -122,7 +135,7 @@ class VentaEditarForm extends Form
             //Buscar los detalles de pago
             $detalles_pago = DetallesVentaPago::where('folio_venta', $venta_editada['folio'])
                 ->get()->toArray();
-            
+
             //Actualizar el concepto en el estado de cuenta
             EstadoCuenta::whereIn('id_venta_pago', array_column($detalles_pago, 'id'))->update([
                 'concepto' => 'NOTA VENTA: ' . $venta_editada['folio'] . ' - ' . $caja->puntoVenta->nombre
@@ -242,6 +255,28 @@ class VentaEditarForm extends Form
                     }
                 }
             }
+        }
+
+        //Modificar el corte de caja original. 
+        foreach ($pagos_editados as $key => $pago) {
+            //Buscar la venta 
+            $resultVenta = Venta::find($pago['folio_venta']);
+            //Buscar el detalle del pago, registrado en el corte de caja original
+            $result_detalle_caja = DetallesCaja::where([
+                ['corte_caja', '=', $resultVenta->corte_caja],
+                ['folio_venta', '=', $pago['folio_venta']],
+                ['id_socio', '=', $pago['id_socio']],
+                ['monto', '=', $pago['monto']],
+                ['id_tipo_pago', '=', $pago['id_tipo_pago']],
+            ])
+                ->first();
+            dd($result_detalle_caja);
+            //Actualizar la informacion del corte
+            $result_detalle_caja->id_socio = $pago['id_socio'];
+            $result_detalle_caja->nombre = $pago['nombre'];
+            $result_detalle_caja->monto = $pago['monto'];
+            $result_detalle_caja->id_tipo_pago = $pago['id_tipo_pago'];
+            $result_detalle_caja->save();
         }
     }
 

@@ -4,13 +4,15 @@ namespace App\Livewire\Puntos\Ventas;
 
 use App\Models\Caja;
 use App\Models\CambioTurno;
-use App\Models\PuntoVenta;
+use App\Models\TipoPago;
 use App\Models\Venta;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithPagination;
+
 
 class Principal extends Component
 {
@@ -19,22 +21,63 @@ class Principal extends Component
     public $codigopv;
     public $search;
     public $fecha;
-    public $status_message;     //Mensaje para mostrar el modal
+    public $status_message;         //Mensaje para mostrar el modal
+    #[Locked]
+    public ?TipoPago $pendientes;   //Modelo que almacena el tipo de pago 'pendiente'
+    public $tipo_vista = 'todo';    //Almacena el valor del select, para el tipo de vista en la tabla de resultados
 
     public function mount($codigopv)
     {
+        //Guadar el codigo del punto de venta (proveniente del exterior del componente)
         $this->codigopv = $codigopv;
+        //Inicializar la fecha actual
         $this->fecha = now()->toDateString();
+        //Buscar el metodo de pago 'pendiente'
+        $this->pendientes = TipoPago::where('descripcion', 'like', '%PENDIENTE%')->first();
     }
 
     #[Computed()]
     public function ventasHoy()
     {
-        return Venta::whereAny(['id_socio', 'nombre'], 'like', '%' . $this->search . '%')
-            ->whereDate('fecha_apertura', $this->fecha)
-            ->where('clave_punto_venta', $this->codigopv)
+        if ($this->tipo_vista == 'todo') {
+            //Buscar TODAS la ventas, en el dia actual, en el punto de venta
+            $result = Venta::whereAny(['id_socio', 'nombre'], 'like', '%' . $this->search . '%')
+                ->whereDate('fecha_apertura', $this->fecha)
+                ->where('clave_punto_venta', $this->codigopv)
+                ->orderby('fecha_apertura', 'desc')
+                ->paginate(10);
+        } else {
+            //Buscar ventas abiertas, en el dia actual, en el punto de venta
+            $result = Venta::whereAny(['id_socio', 'nombre'], 'like', '%' . $this->search . '%')
+                ->whereDate('fecha_apertura', $this->fecha)
+                ->whereNull('fecha_cierre')
+                ->where('clave_punto_venta', $this->codigopv)
+                ->orderby('fecha_apertura', 'desc')
+                ->paginate(10);
+        }
+        return $result;
+    }
+
+    #[Computed()]
+    public function ventasPendientes()
+    {
+        //Buscar 'detalles_ventas_pagos' los pendientes.
+        $result = DB::table('ventas')
+            ->join('detalles_ventas_pagos', 'ventas.folio', '=', 'detalles_ventas_pagos.folio_venta')
+            ->select('detalles_ventas_pagos.*', 'ventas.clave_punto_venta', 'fecha_apertura')
+            ->where([
+                ['id_tipo_pago', '=', $this->pendientes->id],
+                ['clave_punto_venta', '=', $this->codigopv]
+            ])
+            ->whereAny(
+                ['detalles_ventas_pagos.id_socio', 'detalles_ventas_pagos.nombre'],
+                'like',
+                '%' . $this->search . '%'
+            )
             ->orderby('fecha_apertura', 'desc')
             ->paginate(10);
+
+        return $result;
     }
 
     public function refresh()

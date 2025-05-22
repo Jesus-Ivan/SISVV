@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Caja;
 use App\Models\CambioTurno;
 use App\Models\PuntoVenta;
+use App\Models\TipoPago;
 use App\Models\Venta;
 use Illuminate\Http\Request;
 
@@ -74,12 +75,31 @@ class PuntosController extends Controller
         }
     }
 
-    public function verVenta(Request $request)
+    /**
+     * Utilizado para pagar una venta pendiente, en el punto correspondiente
+     */
+    public function pagarVenta(Request $request)
     {
         $permisospv = $request->get('permisos_pv');
         $codigopv = $request->segment(2);
         $folioVenta = $request->segment(5);
-        return view('puntos.Ventas.ver-venta', [
+        //Obtenemos la venta, con los detalles de pago
+        $venta = Venta::with('detallesVentasPago')
+            ->find($folioVenta)
+            ->toArray();
+        //Buscar el metodo de pago 'pendiente'
+        $pendiente = TipoPago::where('descripcion', 'like', '%PENDIENTE%')->first();
+        //Filtrar los metodos de pago pendientes, de la venta
+        $pagos = array_filter($venta['detalles_ventas_pago'], function ($pago) use ($pendiente) {
+            return $pago['id_tipo_pago'] == $pendiente->id;
+        });
+        //Si no hay metodo de pago pendiente (de la venta)
+        if (!count($pagos)) {
+            //Redirigir al usuario (la venta ya no esta pendiente)
+            return redirect()->route('pv.ventas', ['codigopv' => $codigopv]);
+        }
+
+        return view('puntos.Ventas.pagar-venta', [
             'codigopv' => $codigopv,
             'permisospv' => $permisospv,
             'folioventa' => $folioVenta

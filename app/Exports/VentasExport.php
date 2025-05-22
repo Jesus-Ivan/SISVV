@@ -20,13 +20,14 @@ class VentasExport implements FromArray
     {
         $ventasDia[] = [
             'folio' => 'FOLIO',
-            'fecha' => 'FECHA',
+            'fecha' => 'FECHA VENTA',
             'tipo_venta' => 'TIPO VENTA',
             'id_socio' => 'NO. SOCIO',
             'nombre_socio' => 'SOCIO',
             'total' => 'TOTAL',
             'propina' => 'PROPINA',
             'tipo_pago' => 'METODO PAGO',
+            'tipo_movimiento' => 'TIPO MOVIMIENTO',
             'clave_punto_venta' => 'ZONA',
             'observaciones' => 'OBSERVACIONES'
         ];
@@ -42,6 +43,24 @@ class VentasExport implements FromArray
                     'total' => $item->monto,
                     'propina' => $item->propina,
                     'tipo_pago' => $this->metodo_pago[$item->id_tipo_pago],
+                    'tipo_movimiento' => $item->tipo_movimiento,
+                    'clave_punto_venta' => $this->puntos_venta[$item->clave_punto_venta],
+                    'observaciones' => $item->observaciones
+                ];
+            }
+        }
+        foreach ($this->data['detalles_pendientes'] as $tipo_pago) {
+            foreach ($tipo_pago as $key => $item) {
+                $ventasDia[] = [
+                    'folio' => $item->folio,
+                    'fecha' => $item->fecha_apertura,
+                    'tipo_venta' => $item->tipo_venta,
+                    'id_socio' => $item->id_socio,
+                    'nombre_socio' => $item->nombre,
+                    'total' => $item->monto,
+                    'propina' => $item->propina,
+                    'tipo_pago' => $this->metodo_pago[$item->id_tipo_pago],
+                    'tipo_movimiento' => $item->tipo_movimiento,
                     'clave_punto_venta' => $this->puntos_venta[$item->clave_punto_venta],
                     'observaciones' => $item->observaciones
                 ];
@@ -50,4 +69,3 @@ class VentasExport implements FromArray
         return $ventasDia;
     }
 }
-

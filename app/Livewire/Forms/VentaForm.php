@@ -3,12 +3,16 @@
 namespace App\Livewire\Forms;
 
 use App\Constants\AlmacenConstants;
+use App\Constants\PuntosConstants;
 use App\Models\Bodega;
 use App\Models\Caja;
 use App\Models\Copa;
+use App\Models\CorreccionVenta;
+use App\Models\DetallesCaja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
+use App\Models\MotivoCorreccion;
 use App\Models\PuntoVenta;
 use App\Models\Socio;
 use App\Models\SocioMembresia;
@@ -40,7 +44,7 @@ class VentaForm extends Form
     public $selected = [];            //Almacena los codigos de productos seleccionados del modal.
 
     public $productosTable = [];      //array de productos, que se muestran en la tabla (productos agregados)
-    #[Locked]
+
     public $pagosTable = [];          //Array de pagos que se muestran en la tabla
     #[Locked]
     public $totalVenta = 0;           //El costo total de los articulos
@@ -202,7 +206,7 @@ class VentaForm extends Form
             $reglas['socioPago'] = 'required';          // Agregar validacion de número de socio si es venta para socio
         }
 
-        $validated = $this->validate($reglas);                                 //Validamos los atributos
+        $validated = $this->validate($reglas);          //Validamos los atributos
 
         $this->validarFirma($validated);                                       //Validamos la firma
         $id_socio = $this->socioPago ? $this->socioPago->id : null; //Si es venta para socio, se obtiene el id del socio
@@ -296,7 +300,6 @@ class VentaForm extends Form
         DB::transaction(function () use ($venta, $codigopv, &$folioVenta) {
             //Crear la venta y guardamos el resultado de la insersion en la BD, en la variable 'resultVenta'
             $resultVenta = $this->registrarVenta($venta, $codigopv, true, $this->tipo_venta);
-
             //Obtenemos el folio
             $folioVenta = $resultVenta->folio;
 
@@ -307,6 +310,13 @@ class VentaForm extends Form
 
             //Crear los detalles de los pagos
             $this->registrarPagosVenta($folioVenta, $venta, $codigopv);
+            //Crear el detalle de caja
+            $this->crearMovimientoCaja(
+                $resultVenta->folio,
+                $resultVenta->corte_caja,
+                $venta['pagosTable'],
+                PuntosConstants::INGRESO_KEY
+            );
         }, 2);
         //Limpiamos atributos
         $this->limpiarComponente();
@@ -428,6 +438,17 @@ class VentaForm extends Form
             $this->registrarPagosVenta($folio, $venta, $codigopv);
             //Guardamos los cambios de la tabla de productos
             $this->guardarVentaExistente($folio);
+
+            //Buscamos la venta original, para saber el corte al que pertenece
+            $resultVenta = Venta::find($folio);
+            //Crear el detalle de caja
+            $this->crearMovimientoCaja(
+                $folio,
+                $resultVenta->corte_caja,
+                $venta['pagosTable'],
+                PuntosConstants::INGRESO_KEY
+            );
+
             /* 
              *Descontar stock
              */
@@ -514,7 +535,7 @@ class VentaForm extends Form
     private function registrarVenta($venta, $codigopv, $isClosed = false, $tipo_venta)
     {
         //Buscamos cajas disponibles en el punto de venta actual
-        $resultCaja = $this->buscarCaja();
+        $resultCaja = $this->buscarCaja($this->permisospv->clave_punto_venta);
         //Obtenemos la fecha-hora de actual, con una instancia de Carbon.
         $fecha_cierre = now()->format('Y-m-d H:i:s');
 
@@ -658,10 +679,13 @@ class VentaForm extends Form
         }
     }
 
-    private function buscarCaja()
+    /**
+     * Busca La ultima caja abierta en el punto dado
+     */
+    public function buscarCaja($clave_punto)
     {
         //Buscamos caja abrierta en el punto actual, en el dia actual
-        $result = Caja::where('clave_punto_venta', $this->permisospv->clave_punto_venta)
+        $result = Caja::where('clave_punto_venta', $clave_punto)
             ->whereNull('fecha_cierre')
             ->first();
         //Si no hay caja
@@ -719,6 +743,87 @@ class VentaForm extends Form
             $this->productosTable[$key]['subtotal'] = $producto['precio'] * $producto['cantidad'];
         }
         $this->actualizarTotal();
+    }
+
+    /**
+     * Crea un registo en 'detalles_caja'.
+     * Modifica la venta pendiente.
+     * Crea registro de la actualizacion en 'correcciones_ventas'
+     */
+    public function pagarPendiente($venta)
+    {
+        //Creamos patron de expresion regular
+        $patron_pendi = "/PENDIENTE/i";
+        $patron_firma = "/FIRMA/i";
+        //Validaciones de tipo de pago
+        if ($this->tipo_venta == 'socio' || $this->tipo_venta == 'invitado') {
+            foreach ($this->pagosTable as $key => $pago) {
+                //Buscar el metodo de pago que selecciono.
+                $tipo_pago = TipoPago::where('id', $pago['id_tipo_pago'])
+                    ->first();
+                //Validar si volvieron a escoger metodo de pago 'pendiente'
+                if (preg_match($patron_pendi, $tipo_pago->descripcion)) {
+                    throw new Exception("No puedes pagar con pendiente denuevo", 2);
+                }
+                //Verificar la firma del socio
+                if (preg_match($patron_firma, $tipo_pago->descripcion)) {
+                    //Buscamos el socio
+                    $result = Socio::find($pago['id_socio']);
+                    //Si el socio no tiene firma
+                    if (!$result->firma) {
+                        throw new Exception("El socio " . $pago['id_socio'] . " no tiene firma autorizada", 1);
+                    }
+                }
+            }
+        }
+        //Validar el monto total del pago y de los productos
+        $montoTotalVenta = array_sum(array_column($this->productosTable, 'subtotal'));
+        $montoTotalPago =
+            array_sum(array_column($this->pagosTable, 'monto_pago')) + array_sum(array_column($this->pagosTable, 'monto'));
+        if ($montoTotalPago != $montoTotalVenta) {
+            //Mandamos mensaje de sesion al alert
+            throw new Exception("El monto total de pago no es el correcto");
+        }
+
+        DB::transaction(function () use ($venta) {
+            //Crear o actualizar los metodos de pago de la venta
+            foreach ($this->pagosTable as $key => $pago) {
+                if (array_key_exists('id', $pago)) {
+                    $detalle_pago = DetallesVentaPago::find($pago['id']);
+                    $detalle_pago->id_tipo_pago = $pago['id_tipo_pago'];
+                    $detalle_pago->monto = $pago['monto'];
+                    $detalle_pago->propina = $pago['propina'];
+                    $detalle_pago->save();
+                } else {
+                    DetallesVentaPago::create([
+                        'folio_venta' => $venta->folio,
+                        'id_socio' => $pago['id_socio'],
+                        'nombre' => $pago['nombre'],
+                        'monto' => $pago['monto_pago'],
+                        'propina' => $pago['propina'],
+                        'id_tipo_pago' => $pago['id_tipo_pago'],
+                    ]);
+                }
+            }
+            //Buscamos cajas disponibles en el punto de venta actual
+            $resultCaja = $this->buscarCaja($this->permisospv->clave_punto_venta);
+            //Crear el detalle de caja
+            $this->crearMovimientoCaja(
+                $venta->folio,
+                $resultCaja->corte,
+                $this->pagosTable,
+                PuntosConstants::INGRESO_PENDIENTE_KEY
+            );
+            $motivo = MotivoCorreccion::where('descripcion', 'like', '%PENDIENTE%')->first();
+            //Crear el registro en 'correcciones_ventas'
+            CorreccionVenta::create([
+                'user_name' => auth()->user()->name,
+                'folio_venta' => $venta->folio,
+                'tipo_venta' => $venta->tipo_venta,
+                'solicitante_name' => auth()->user()->name,
+                'id_motivo' => $motivo->id,
+            ]);
+        }, 2);
     }
 
     /**
@@ -808,7 +913,20 @@ class VentaForm extends Form
      * Crea el registro de la venta, en la tabla "detalles_caja".
      * Utilizado para el corte de caja (reporte de ventas)
      */
-    private function crearMovimientoCaja($detalle_pago, $caja){
-
+    public function crearMovimientoCaja($folio_venta, $corte_caja, $detalles_pago, $tipo_movimiento)
+    {
+        foreach ($detalles_pago as $key => $pago) {
+            //Crear registro en la tabla
+            $result = DetallesCaja::create([
+                'corte_caja' => $corte_caja,
+                'folio_venta' => $folio_venta,
+                'id_socio' => $pago['id_socio'],
+                'nombre' => $pago['nombre'],
+                'monto' =>  array_key_exists('monto_pago', $pago) ? $pago['monto_pago'] : $pago['monto'],
+                'propina' => $pago['propina'],
+                'tipo_movimiento' => $tipo_movimiento,
+                'id_tipo_pago' => $pago['id_tipo_pago'],
+            ]);
+        }
     }
 }

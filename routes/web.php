@@ -170,7 +170,7 @@ Route::prefix('pv/{codigopv}')->middleware(['auth', 'puntos'])->group(function (
     Route::prefix('ventas')->group(function () {
         Route::get('/', [PuntosController::class, 'ventasIndex'])->name('pv.ventas');
         Route::get('/editar/{folioventa}', [PuntosController::class, 'editarVenta'])->name('pv.ventas.editar');
-        Route::get('/ver/{folioventa}', [PuntosController::class, 'verVenta'])->name('pv.ventas.ver');
+        Route::get('/pagar/{folioventa}', [PuntosController::class, 'pagarVenta'])->name('pv.ventas.pagar');
         Route::get('nueva', [PuntosController::class, 'nuevaVenta'])->name('pv.ventas.nueva');
         Route::get('reporte', [PuntosController::class, 'reporteVentas'])->name('pv.ventas.reporte');
     });
@@ -207,6 +207,9 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::get('prod-vendidos', [SistemasController::class, 'prodVendidos'])->name('sistemas.pv.prod-vendidos');
         Route::view('notas', 'sistemas.Puntos.notas')->name('sistemas.pv.notas');
         Route::get('/editar/{folioventa}', [SistemasController::class, 'editarVenta'])->name('sistemas.pv.editar');
+        Route::view('crear-detalles-caja', 'sistemas.Puntos.detalles-caja')->name('sistemas.pv.detalles-caja');
+        Route::post('crear-detalles-caja', [SistemasController::class, 'detallesCaja'])->name('sistemas.pv.editar');
+
     });
 
     //DEPARTAMENTO DE RECEPCIÓN

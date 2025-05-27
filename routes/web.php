@@ -100,6 +100,22 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
     });
 
     Route::view('mermas', 'almacen.Mermas.mermas')->name('almacen.mermas');
+
+    Route::prefix('productos')->group(function (){
+        //view de la tabla de productos
+        Route::view('/', 'almacen.Productos.productos')->name('almacen.productos');
+    });
+
+    Route::prefix('insumos')->group(function (){
+        //view de la tabla de insumos
+        Route::view('/', 'almacen.Insumos.insumos')->name('almacen.insumos');
+    });
+
+    Route::prefix('presentaciones')->group(function (){
+        //view de la tabla de presentaciones
+        Route::view('/', 'almacen.Presentaciones.presentaciones')->name('almacen.presentaciones');
+        Route::view('/nueva', 'almacen.Presentaciones.nueva-presentacion')->name('almacen.presentaciones.nueva');
+    });
 });
 
 Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function () {

@@ -11,7 +11,7 @@ class SearchInput extends Component
     public $search;
     public $tittle_bar;
     public $table_name, $table_columns, $primary_key;
-    public $dpto, $tipo;
+    public $dpto;
     public $event;
 
 
@@ -23,7 +23,6 @@ class SearchInput extends Component
         $this->primary_key = $params['primary_key'];
         $this->event = $params['event'];
         $this->dpto = $params['dpto'];
-        $this->tipo = $params['tipo'];
     }
 
     #[Computed()]

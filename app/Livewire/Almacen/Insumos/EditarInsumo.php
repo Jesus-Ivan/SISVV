@@ -1,27 +1,33 @@
 <?php
 
-namespace App\Livewire\Almacen\Presentaciones;
+namespace App\Livewire\Almacen\Insumos;
 
 use App\Constants\AlmacenConstants;
-use App\Livewire\Forms\PresentacionForm;
+use App\Livewire\Forms\InsumoForm;
 use App\Models\Insumo;
-use App\Models\Proveedor;
+use App\Models\Unidad;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-class NuevaPresentacion extends Component
+class EditarInsumo extends Component
 {
-    //Formulario para los datos
-    public PresentacionForm $form;
+    public InsumoForm $form;
 
-    #[Computed()]
-    public function proveedores()
-    {
-        return Proveedor::all();
+    public function mount($clave){
+        //Buscar el insumo
+        $insumo = Insumo::find($clave);
+        if ($insumo) {
+            //Setar los valores editables en el form
+            $this->form->setValues($insumo);
+        }else{
+            //redirigir al usuario en caso de no existir la presentacion
+            $this->redirectRoute('almacen.insumos');
+        }
     }
 
     #[Computed()]
@@ -33,21 +39,32 @@ class NuevaPresentacion extends Component
         return $result;
     }
 
+    #[Computed()]
+    public function unidades()
+    {
+        return Unidad::all();
+    }
+
     #[On('selected-insumo')]
     public function onSelectedInsumo($clave)
     {
-        //Guardar clave del insumo base seleccionado
-        $this->form->setInsumoBase($clave);
+        //Guardar el insumo seleccionado
+        $this->form->agregarInsumo($clave);
     }
+
+    public function eliminarInsumo($indexSubTable){
+        $this->form->marcarInsumo($indexSubTable);
+    }
+
 
     public function guardar()
     {
         try {
-            $this->form->guardarPresentacion();
+            $this->form->actualizarInsumo();
             //Mensage de session para el alert
-            session()->flash('success', 'Presentacion registrada correctamente');
-            //Evento para abrir el alert
-            $this->dispatch('open-action-message');
+            session()->flash('success', 'Insumo actualizado exitosamente');
+            //redirigir al usuario en caso de exito
+            $this->redirectRoute('almacen.insumos');
         } catch (ValidationException $th) {
             //Lanzar la excepcion de validacion a la vista
             throw $th;
@@ -58,10 +75,6 @@ class NuevaPresentacion extends Component
         }
     }
 
-    public function limpiarInsumoBase()
-    {
-        $this->form->limpiarInsumoBase();
-    }
 
     public function changedCosto()
     {
@@ -72,13 +85,19 @@ class NuevaPresentacion extends Component
     {
         $this->form->calcularPrecioIva();
     }
+
     public function changedCostoIva()
     {
         $this->form->calcularPrecioSinIva();
     }
 
+    public function changedCantidad(){
+        $this->form->recalcularSubtotales();
+        
+    }
+    
     public function render()
     {
-        return view('livewire.almacen.presentaciones.nueva-presentacion');
+        return view('livewire.almacen.insumos.editar-insumo');
     }
 }

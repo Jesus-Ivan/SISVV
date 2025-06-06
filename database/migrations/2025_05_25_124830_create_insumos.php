@@ -16,10 +16,10 @@ return new class extends Migration
             $table->string('descripcion', 255);
             $table->integer('id_grupo');
             $table->integer('id_unidad');
-            $table->decimal('ultimo_costo', 10, 2)->nullable();
+            $table->decimal('costo', 10, 2)->default(0);
             $table->date('ultima_compra')->nullable();
-            $table->integer('iva')->nullable();
-            $table->decimal('costo_con_impuesto', 10, 2);
+            $table->integer('iva')->default(0);
+            $table->decimal('costo_con_impuesto', 10, 2)->default(0);
             $table->boolean('inventariable')->default(1);
             $table->boolean('elaborado')->default(0);
             $table->decimal('rendimiento_elaborado', 10, 2)->nullable();

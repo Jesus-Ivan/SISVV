@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Almacen\Presentaciones;
 
+use App\Constants\AlmacenConstants;
 use App\Models\Presentacion;
 use App\Models\Proveedor;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -12,7 +14,7 @@ class Principal extends Component
 {
     use WithPagination;
 
-    public $search_input = "", $grupo, $proveedor = "", $estado = "";
+    public $search_input = "", $grupo = "", $proveedor = "", $estado = "";
 
     public function search()
     {
@@ -22,8 +24,14 @@ class Principal extends Component
     #[Computed()]
     public function presentaciones()
     {
-        $result = Presentacion::with('proveedor')
-            ->where('descripcion', 'like', "%$this->search_input%");
+        $result = Presentacion::with(['proveedor', 'grupo'])
+            ->whereAny(['descripcion', 'clave'], 'like', "%$this->search_input%");
+
+        //Si  $grupo es diferente de ""
+        if (strlen($this->grupo) > 0) {
+            //Anexar el criterio de busqueda a la consulta
+            $result->where('id_grupo', '=', $this->grupo);
+        }
 
         //Si se selecciono un proveedor ($proveedor es cualquier string "1", "9", diferente de "")
         if (strlen($this->proveedor) > 0) {
@@ -43,6 +51,15 @@ class Principal extends Component
     public function proveedores()
     {
         return Proveedor::all();
+    }
+
+    #[Computed()]
+    public function grupos()
+    {
+        $result = DB::table('grupos')
+            ->where('tipo', AlmacenConstants::GRUPO_INSUMO_KEY)
+            ->get();
+        return $result;
     }
 
     public function render()

@@ -17,17 +17,15 @@
             <input wire:model="search_input" type="text"
                 class="block w-full p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="Nombre de presentacion o código" />
-            <!--Loading indicator-->
-            <div wire:loading>
-                @include('livewire.utils.loading', ['w' => 6, 'h' => 6])
-            </div>
         </div>
 
         <!--SELECT -->
         <select id="Grupo" wire:model='grupo'
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-            <option selected value="COM">GRUPO</option>
-            <option value="ACT">Proximamente</option>
+            <option value="{{ null }}">SELECCIONE GRUPO</option>
+            @foreach ($this->grupos as $index_g => $grupo)
+                <option wire:key='{{ $index_g }}' value="{{ $grupo->id }}">{{ $grupo->descripcion }}</option>
+            @endforeach
         </select>
         <select id="Proveedor" wire:model='proveedor'
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
@@ -42,7 +40,16 @@
             <option value="1">Activo</option>
             <option value="0">Inactivo</option>
         </select>
-
+        <!--Boton de busqueda -->
+        <button type="submit"
+            class="w-40 mx-3 justify-center text-center inline-flex items-center text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">
+            <div wire:loading wire:target='search'>
+                @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
+            </div>
+            <div wire:loading.remove wire:target='search'>
+                Buscar
+            </div>
+        </button>
     </form>
     {{-- TABLA --}}
     <div class="my-2">
@@ -50,7 +57,7 @@
             <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
-                        <th scope="col" class="px-6 py-3">
+                        <th scope="col" class="px-3 py-3">
                             #
                         </th>
                         <th scope="col" class="px-20 py-3">
@@ -71,7 +78,7 @@
                         <th scope="col" class="px-6 py-3">
                             ESTADO
                         </th>
-                        <th scope="col" class="px-6 py-3">
+                        <th scope="col" class="px-3 py-3">
                             ACCIONES
                         </th>
                     </tr>
@@ -80,23 +87,23 @@
                     @foreach ($this->presentaciones as $index => $articulo)
                         <tr wire:key='{{ $articulo->clave }}'
                             class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                            <td class="px-6 py-1">
+                            <td class="px-3 py-1">
                                 {{ $articulo->clave }}
                             </td>
                             <td class="px-6 py-1 uppercase">
                                 {{ $articulo->descripcion }}
                             </td>
                             <td class="px-6 py-1 uppercase">
-                                {{ $articulo->id_grupo }}
+                                {{ $articulo->grupo->descripcion }}
                             </td>
                             <td class="px-6 py-1 uppercase">
                                 {{ $articulo->proveedor->nombre }}
                             </td>
                             <td class="px-6 py-1 uppercase">
-                                {{ $articulo->costo }}
+                                $ {{ $articulo->costo }}
                             </td>
                             <td class="px-6 py-1">
-
+                                {{ $articulo->ultima_compra }}
                             </td>
                             <td class="px-6 py-1">
                                 @if ($articulo->estado == '1')
@@ -109,9 +116,9 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="px-6 py-1">
+                            <td class="px-3 py-1">
                                 <div class="text-center">
-                                    <a href="{{ route('almacen.articulos.editar', $articulo->clave) }}">
+                                    <a href="{{ route('almacen.presentaciones.editar', $articulo->clave) }}">
                                         <button type="button"
                                             class="text-green-700 hover:text-white border border-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:hover:bg-green-600 dark:focus:ring-green-800">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"

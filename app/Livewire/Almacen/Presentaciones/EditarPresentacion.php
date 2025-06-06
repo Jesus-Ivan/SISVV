@@ -4,19 +4,18 @@ namespace App\Livewire\Almacen\Presentaciones;
 
 use App\Constants\AlmacenConstants;
 use App\Livewire\Forms\PresentacionForm;
-use App\Models\Insumo;
+use App\Models\Presentacion;
 use App\Models\Proveedor;
+use Illuminate\Validation\ValidationException;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-class NuevaPresentacion extends Component
+class EditarPresentacion extends Component
 {
-    //Formulario para los datos
-    public PresentacionForm $form;
+    public PresentacionForm $form;     //Formulario
 
     #[Computed()]
     public function proveedores()
@@ -40,21 +39,16 @@ class NuevaPresentacion extends Component
         $this->form->setInsumoBase($clave);
     }
 
-    public function guardar()
+    public function mount($clave)
     {
-        try {
-            $this->form->guardarPresentacion();
-            //Mensage de session para el alert
-            session()->flash('success', 'Presentacion registrada correctamente');
-            //Evento para abrir el alert
-            $this->dispatch('open-action-message');
-        } catch (ValidationException $th) {
-            //Lanzar la excepcion de validacion a la vista
-            throw $th;
-        } catch (Exception $e) {
-            session()->flash('fail', $e->getMessage());
-            //Evento para abrir el alert
-            $this->dispatch('open-action-message');
+        //Buscar la presentacion
+        $presentacion = Presentacion::find($clave);
+        if ($presentacion) {
+            //Setar los valores editables en el form
+            $this->form->setValues($presentacion);
+        }else{
+            //redirigir al usuario en caso de no existir la presentacion
+            $this->redirectRoute('almacen.presentaciones');
         }
     }
 
@@ -77,8 +71,24 @@ class NuevaPresentacion extends Component
         $this->form->calcularPrecioSinIva();
     }
 
+    public function guardar()
+    {
+        try {
+            //Intentar guardar los cambios
+            $this->form->guardarCambios();
+            //redirigir al usuario en caso de exito
+            $this->redirectRoute('almacen.presentaciones');
+        } catch (ValidationException $th) {
+            //Lanzar la excepcion de validacion a la vista
+            throw $th;
+        } catch (Exception $e) {
+            session()->flash('fail', $e->getMessage());
+            $this->dispatch('open-action-message');
+        }
+    }
+
     public function render()
     {
-        return view('livewire.almacen.presentaciones.nueva-presentacion');
+        return view('livewire.almacen.presentaciones.editar-presentacion');
     }
 }

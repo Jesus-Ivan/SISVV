@@ -8,7 +8,7 @@
                     <th scope="col" class="p-4">
                     </th>
                     <th scope="col" class="px-6 py-3 w-fit">
-                        REFERENCIA
+                        APLICADO AL
                     </th>
                     <th scope="col" class="px-6 py-3 w-3/6">
                         CONCEPTO
@@ -38,7 +38,7 @@
                         </td>
                         <th scope="row"
                             class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            {{ $cargo->id }}
+                            {{ $cargo->fecha }}
                         </th>
                         <td class="px-6 py-4">
                             {{ $cargo->concepto }}

@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Livewire\Almacen\Presentaciones;
+namespace App\Livewire\Almacen\Insumos;
 
 use App\Constants\AlmacenConstants;
-use App\Livewire\Forms\PresentacionForm;
-use App\Models\Insumo;
-use App\Models\Proveedor;
+use App\Livewire\Forms\InsumoForm;
+use App\Models\Unidad;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -13,16 +12,10 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-class NuevaPresentacion extends Component
+class NuevoInsumo extends Component
 {
-    //Formulario para los datos
-    public PresentacionForm $form;
+    public InsumoForm $form;
 
-    #[Computed()]
-    public function proveedores()
-    {
-        return Proveedor::all();
-    }
 
     #[Computed()]
     public function grupos()
@@ -33,19 +26,30 @@ class NuevaPresentacion extends Component
         return $result;
     }
 
+    #[Computed()]
+    public function unidades()
+    {
+        return Unidad::all();
+    }
+
     #[On('selected-insumo')]
     public function onSelectedInsumo($clave)
     {
-        //Guardar clave del insumo base seleccionado
-        $this->form->setInsumoBase($clave);
+        //Guardar el insumo seleccionado
+        $this->form->agregarInsumo($clave);
     }
+
+    public function eliminarInsumo($indexSubTable){
+        $this->form->eliminarInsumoSeleccionado($indexSubTable);
+    }
+
 
     public function guardar()
     {
         try {
-            $this->form->guardarPresentacion();
+            $this->form->guardarNuevoInsumo();
             //Mensage de session para el alert
-            session()->flash('success', 'Presentacion registrada correctamente');
+            session()->flash('success', 'Insumo registrado exitosamente');
             //Evento para abrir el alert
             $this->dispatch('open-action-message');
         } catch (ValidationException $th) {
@@ -58,11 +62,7 @@ class NuevaPresentacion extends Component
         }
     }
 
-    public function limpiarInsumoBase()
-    {
-        $this->form->limpiarInsumoBase();
-    }
-
+    
     public function changedCosto()
     {
         $this->form->calcularPrecioIva();
@@ -77,8 +77,12 @@ class NuevaPresentacion extends Component
         $this->form->calcularPrecioSinIva();
     }
 
+    public function changedCantidad(){
+        $this->form->recalcularSubtotales();
+    }
+
     public function render()
     {
-        return view('livewire.almacen.presentaciones.nueva-presentacion');
+        return view('livewire.almacen.insumos.nuevo-insumo');
     }
 }

@@ -16,7 +16,12 @@ class AlmacenConstants
     public const SEMIPORDUCIDO_KEY = "SP";
     public const SERVICIO_KEY = "SER";
     public const PLATILLOS_KEY = "PLAT";
-    public const BEBIDAS_KEY = "BEB";
+    //public const BEBIDAS_KEY = "BEB";
+
+    public const ALIMENTOS_KEY = "ALIMENTOS";
+    public const BEBIDAS_KEY = "BEBIDAS";
+    public const INSUMOS_KEY = "INSUM";
+    public const PRODUCTOS_KEY = "PRODU";
 
     /**
      * Array asociativo que relaciona la clave del punto de venta, con su columna de stock correspondiente de la tabla 'stocks'

@@ -57,7 +57,7 @@ class Principal extends Component
     public function grupos()
     {
         $result = DB::table('grupos')
-            ->where('tipo', AlmacenConstants::GRUPO_INSUMO_KEY)
+            ->where('tipo', AlmacenConstants::INSUMOS_KEY)
             ->get();
         return $result;
     }

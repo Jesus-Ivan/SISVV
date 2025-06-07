@@ -20,7 +20,15 @@ class AlmacenConstants
 
     public const ALIMENTOS_KEY = "ALIMENTOS";
     public const BEBIDAS_KEY = "BEBIDAS";
+    /**
+     * Es el valor contenido en la columna 'tipo' de la tabla 'grupos'. 
+     * Referente a los grupos disponibles para insumos y presentaciones
+     */
     public const INSUMOS_KEY = "INSUM";
+    /**
+     * Es el valor contenido en la columna 'tipo' de la tabla 'grupos'. 
+     * Referente a los grupos disponibles para productos de venta
+     */
     public const PRODUCTOS_KEY = "PRODU";
 
     /**
@@ -34,17 +42,6 @@ class AlmacenConstants
         'LOD' => 'stock_res',
         'LOC' => 'stock_res',
     ];
-
-    /**
-     * Es el valor contenido en la columna 'tipo' de la tabla 'grupos'. 
-     * Referente a los grupos disponibles para insumos
-     */
-    public const GRUPO_INSUMO_KEY = "INSUM";
-    /**
-     * Es el valor contenido en la columna 'tipo' de la tabla 'grupos'. 
-     * Referente a los grupos disponibles para productos de venta
-     */
-    public const GRUPO_PRODUC_KEY = "PRODU";
 
     /**
      * Array asociativo que contiene la clave-valor de los metodos de pago validos para las entradas de almacen

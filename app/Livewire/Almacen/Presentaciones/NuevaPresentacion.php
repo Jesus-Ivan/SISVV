@@ -28,7 +28,7 @@ class NuevaPresentacion extends Component
     public function grupos()
     {
         $result = DB::table('grupos')
-            ->where('tipo', AlmacenConstants::GRUPO_INSUMO_KEY)
+            ->where('tipo', AlmacenConstants::INSUMOS_KEY)
             ->get();
         return $result;
     }
@@ -36,7 +36,7 @@ class NuevaPresentacion extends Component
     #[On('selected-insumo')]
     public function onSelectedInsumo($clave)
     {
-        //Guardar clave del insumo base seleccionado
+        //Guardar valores del insumo base seleccionado
         $this->form->setInsumoBase($clave);
     }
 

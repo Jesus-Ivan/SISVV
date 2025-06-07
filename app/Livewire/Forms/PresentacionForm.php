@@ -38,16 +38,18 @@ class PresentacionForm extends Form
     }
 
     /**
-     * Guarda el insumo base original y la unidad correspondiente
+     * Guarda el insumo base original, la unidad correspondiente y el grupo.
      */
     public function setInsumoBase($clave)
     {
         //Buscar insumo base
-        $this->insumo_base = Insumo::find($clave);
+        $this->insumo_base = Insumo::with('grupo')->find($clave);
         //Si hay un insumo base
         if ($this->insumo_base) {
             //Buscar la unidad
             $this->unidad_insumo = Unidad::find($this->insumo_base->id_unidad);
+            //Cambiar el grupo de la presentacion, por el grupo del insumo base.
+            $this->id_grupo = $this->insumo_base->grupo->id;
         }
     }
 

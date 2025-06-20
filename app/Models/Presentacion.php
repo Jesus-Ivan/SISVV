@@ -26,7 +26,7 @@ class Presentacion extends Model
 
     public function grupo(): BelongsTo
     {
-        return $this->belongsTo(Grupo::class, 'id_grupo', 'id')
+        return $this->belongsTo(Grupos::class, 'id_grupo', 'id')
             ->withDefault([
                 'descripcion' => 'N/A',
                 'tipo' => '',

@@ -35,7 +35,7 @@ Route::view('profile', 'profile')
     ->name('profile');
 
 
-Route::prefix('administracion')->middleware(['auth','administracion'])->group(function () {
+Route::prefix('administracion')->middleware(['auth', 'administracion'])->group(function () {
     Route::view('/', 'administracion.index')->name('administracion');
     Route::view('reportes-ordenes', 'administracion.reportes-ordenes')->name('administracion.reportes-ordenes');
     Route::view('detalles-ordenes', 'administracion.detalles-ordenes')->name('administracion.detalles-ordenes');
@@ -102,25 +102,26 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
 
     Route::view('mermas', 'almacen.Mermas.mermas')->name('almacen.mermas');
 
-    Route::prefix('productos')->group(function (){
+    Route::prefix('productos')->group(function () {
         //view de la tabla de productos
         Route::view('/', 'almacen.Productos.productos')->name('almacen.productos');
+        Route::view('/nuevo', 'almacen.Productos.nuevo-producto')->name('almacen.productos.nuevo');
+        Route::view('/editar/{clave}', 'almacen.Productos.editar-producto')->name('almacen.productos.editar');
     });
 
-    Route::prefix('insumos')->group(function (){
+    Route::prefix('insumos')->group(function () {
         //view de la tabla de insumos
         Route::view('/', 'almacen.Insumos.insumos')->name('almacen.insumos');
         Route::view('/nuevo', 'almacen.Insumos.nuevo-insumo')->name('almacen.insumos.nuevo');
         Route::view('/editar/{clave}', 'almacen.Insumos.editar-insumo')->name('almacen.insumos.editar');
     });
 
-    Route::prefix('presentaciones')->group(function (){
+    Route::prefix('presentaciones')->group(function () {
         //view de la tabla de presentaciones
         Route::view('/', 'almacen.Presentaciones.presentaciones')->name('almacen.presentaciones');
         Route::view('/nueva', 'almacen.Presentaciones.nueva-presentacion')->name('almacen.presentaciones.nueva');
         Route::view('/editar/{clave}', 'almacen.Presentaciones.editar-presentacion')->name('almacen.presentaciones.editar');
     });
-
 });
 
 Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function () {

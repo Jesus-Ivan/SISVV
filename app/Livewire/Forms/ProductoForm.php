@@ -124,6 +124,14 @@ class ProductoForm extends Form
     }
 
     /**
+     * Agrega el atributo 'deleted' de forma temporal. En el array de insumo elaborado
+     */
+    public function marcarInsumo($index)
+    {
+        $this->receta_table[$index]['deleted'] = true;
+    }
+
+    /**
      * Convierte el modelo en array y agrega las propiedades necesarias (maximos, incluidos, forzar)
      */
     public function agregarGrupoModificador(GruposModificadores $grupo)
@@ -143,9 +151,32 @@ class ProductoForm extends Form
      */
     public function eliminarGrupo($index)
     {
-        //Obtenemos el item a eliminar
+        //Verificar el grupo asignado para los modificadores.
+        $this->limpiarGrupoModif($index);
+        //Eliminar grupo del array
+        unset($this->grupos_modif[$index]);
+    }
+
+    /**
+     * Agrega el atributo 'deleted' de forma temporal, al grupo de modificadores de la tabla 'grupos_modif'
+     */
+    public function marcarGrupo($index)
+    {
+        //Verificar el grupo asignado para los modificadores.
+        $this->limpiarGrupoModif($index);
+        //Agregar atributo 
+        $this->grupos_modif[$index]['deleted'] = true;
+    }
+
+    /**
+     * Asigna null a los atributos 'id_grup_modif' en la tabla 'modif'.\
+     * Cuyo valor coincida con el campo 'id_grupo' en la posicion $index de la tabla 'grupos_modif'
+     */
+    private function limpiarGrupoModif($index)
+    {
+        //Obtenemos el item a eliminar (grupo de modificador)
         $item = $this->grupos_modif[$index];
-        //Recorremos la tabla 'modif'
+        //Recorremos la tabla 'modif' (modificadores posibles)
         for ($i = 0; $i < count($this->modif); $i++) {
             //Si 'id_grup_modif' del modificador es el mismo que 'id_grupo' del grupo a eliminar
             if ($this->modif[$i]['id_grup_modif'] == $item['id_grupo']) {
@@ -153,7 +184,6 @@ class ProductoForm extends Form
                 $this->modif[$i]['id_grup_modif'] = null;
             }
         }
-        unset($this->grupos_modif[$index]);
     }
 
     /**
@@ -175,6 +205,15 @@ class ProductoForm extends Form
     public function eliminarProducto($index)
     {
         unset($this->modif[$index]);
+    }
+
+    /**
+     * Agrega el atributo 'deleted' de forma temporal, al modificadores de la tabla 'modif'
+     */
+    public function marcarProducto($index)
+    {
+        //Agregar atributo 
+        $this->modif[$index]['deleted'] = true;
     }
 
     /**
@@ -213,13 +252,116 @@ class ProductoForm extends Form
         $this->verificarGrupos();   //Verificar relacion entre tablas '$grupos_modif y $modif'
 
         $this->actualizarGenerales($validated);
+        $this->actualizarReceta();
+        $this->actualizarCompuesto();
     }
 
     /**
      * Actualiza las propiedades generales el producto
      */
-    public function actualizarGenerales($validated) {
+    public function actualizarGenerales($validated)
+    {
+        //Cambiar las nuevas propiedades al modelo original
+        $this->original->descripcion = $validated['descripcion'];
+        $this->original->precio = $validated['precio'];
+        $this->original->iva = $validated['iva'];
+        $this->original->precio_con_impuestos = $validated['costo_con_impuesto'];
+        $this->original->id_grupo = $validated['id_grupo'];
+        $this->original->id_subgrupo = $this->id_subgrupo;
+        $this->original->estado = $this->estado;
+        //Actualizar el registro en la bd
+        $this->original->save();
+    }
 
+    /**
+     * Actualiza, crea o elimina los registros correspondientes a la receta del producto
+     */
+    public function actualizarReceta()
+    {
+        //Recorrer todo el array de la tabla
+        foreach ($this->receta_table as $key => $insumo) {
+            //Si contiene el atributo 'deleted'
+            if (array_key_exists('deleted', $insumo)) {
+                //Si hay atributo 'id'
+                if (array_key_exists('id', $insumo))
+                    //Eliminacion suave de la BD
+                    Receta::destroy($insumo['id']);
+            } elseif (array_key_exists('id', $insumo)) {
+                //Actualizar el registro
+                Receta::where('id', $insumo['id'])
+                    ->update([
+                        'cantidad' => $insumo['cantidad'],
+                        'cantidad_c_merma' => $insumo['cantidad_con_merma'],
+                        'total' => $insumo['total'],
+                    ]);
+            } else {
+                //crear el nuevo registro del insumo requerido para la receta
+                Receta::create([
+                    'clave_producto' => $this->original->clave,
+                    'clave_insumo' => $insumo['clave'],
+                    'cantidad' => $insumo['cantidad'],
+                    'cantidad_c_merma' => $insumo['cantidad_con_merma'],
+                    'total' => $insumo['total'],
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Actualiza, crea o elimina los registros correspondientes a las propeidades compuestas
+     */
+    public function actualizarCompuesto()
+    {
+        //Recorrer todo el array de la tabla 'grupos_modif'
+        foreach ($this->grupos_modif as $i => $grupo) {
+            //Si contiene el atributo 'deleted'
+            if (array_key_exists('deleted', $grupo)) {
+                //Si hay atributo 'id'
+                if (array_key_exists('id', $grupo))
+                    ModifProducto::destroy($grupo['id']); //Eliminacion suave de la BD
+            } elseif (array_key_exists('id', $grupo)) {
+                //Actualizar registro
+                ModifProducto::where('id', $grupo['id'])
+                    ->update([
+                        'modif_incluidos' => $grupo['incluidos'],
+                        'modif_maximos' => $grupo['maximos'],
+                        'forzar_captura' => $grupo['forzar'],
+                    ]);
+            } else {
+                //Crear registro
+                ModifProducto::create([
+                    'id_grupo' => $grupo['id_grupo'],
+                    'clave_producto' => $this->original->clave,
+                    'modif_incluidos' => $grupo['incluidos'],
+                    'modif_maximos' => $grupo['maximos'],
+                    'forzar_captura' => $grupo['forzar'],
+                ]);
+            }
+        }
+        //Recorrer todo el array de la tabla 'modif'
+        foreach ($this->modif as $i => $item) {
+            //Si contiene el atributo 'deleted'
+            if (array_key_exists('deleted', $item)) {
+                //Si hay atributo 'id'
+                if (array_key_exists('id', $item))
+                    Modificador::destroy($item['id']); //Eliminacion suave de la BD
+            } elseif (array_key_exists('id', $item)) {
+                //Actualizar registro
+                Modificador::where('id', $item['id'])
+                    ->update([
+                        'id_grupo' => $item['id_grup_modif'],
+                        'precio' => $item['precio'],
+                    ]);
+            } else {
+                //Crear los modificadores (en la tabla 'modificadores')
+                Modificador::create([
+                    'id_grupo' => $item['id_grup_modif'],
+                    'clave_producto' => $this->original->clave,
+                    'clave_modificador' => $item['clave'],
+                    'precio' => $item['precio'],
+                ]);
+            }
+        }
     }
 
     /**
@@ -286,6 +428,10 @@ class ProductoForm extends Form
         if (count($this->grupos_modif) > 0) {
             //Revisar si cada grupo, tiene un modificador asignado.
             foreach ($this->grupos_modif as $i => $grupo) {
+
+                //Si el grupo tiene el atributo 'eliminado', Omitir comprobacion
+                if (array_key_exists('deleted', $grupo)) continue;
+
                 //Filtrar los items de la tabla 'modificadores', que tengan asignado dicho grupo
                 $result = array_filter($this->modif, function ($item_modif) use ($grupo) {
                     return $item_modif['id_grup_modif'] == $grupo['id_grupo'];
@@ -299,7 +445,7 @@ class ProductoForm extends Form
     }
 
     /**
-     * Multiplica toda la tabla de insumos (receta).
+     * Multiplica toda la tabla de insumos (receta).\
      *  total = cantidad * costo_con_impuesto
      */
     public function recalcularSubtotales()
@@ -358,7 +504,7 @@ class ProductoForm extends Form
     }
 
     /**
-     * Contiene las reglas para validar las propiedades de los grupos de modificadores.
+     * Contiene las reglas para validar las propiedades de los grupos de modificadores.\
      * Y valida cada propiedad de la tabla 'grupos_modif'
      */
     public function validarGrupoModif()
@@ -377,7 +523,7 @@ class ProductoForm extends Form
     }
 
     /**
-     * Contiene las reglas para validar las propiedades de los modificadores.
+     * Contiene las reglas para validar las propiedades de los modificadores.\
      * Y valida cada propiedad de la tabla 'modif'
      */
     public function validarModif()

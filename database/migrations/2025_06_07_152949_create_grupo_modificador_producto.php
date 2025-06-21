@@ -19,6 +19,7 @@ return new class extends Migration
             $table->integer('modif_maximos');
             $table->boolean('forzar_captura');
             $table->timestamps();
+            $table->softDeletes($column = 'deleted_at');
         });
     }
 

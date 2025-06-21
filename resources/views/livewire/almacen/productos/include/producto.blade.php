@@ -173,45 +173,48 @@
                     </thead>
                     <tbody>
                         @foreach ($this->form->receta_table as $index => $insumo)
-                            <tr wire:key='{{ $index }}'
-                                class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
-                                <th scope="row"
-                                    class="w-24 px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                    {{ $insumo['clave'] }}
-                                </th>
-                                <td class="w-6/12 px-3 py-2">
-                                    {{ $insumo['descripcion'] }}
-                                </td>
-                                <td class="px-3 py-2 w-32">
-                                    <input type="number" wire:model='form.receta_table.{{ $index }}.cantidad'
-                                        wire:change='actualizarTotal' step="0.001" placeholder="0.001"
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
-                                </td>
-                                <td class="px-3 py-2 w-32">
-                                    <input type="number"
-                                        wire:model='form.receta_table.{{ $index }}.cantidad_con_merma'
-                                        step="0.001" placeholder="0.001"
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
-                                </td>
-                                <td class="px-3 py-2 w-32">
-                                    {{ $insumo['unidad']['descripcion'] }}
-                                </td>
-                                <td class="px-3 py-2">
-                                    $ {{ number_format($insumo['total'], 2) }}
-                                </td>
-                                <td class="px-3 py-2">
-                                    <button type="button" wire:click="eliminarInsumo({{ $index }})"
-                                        class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                            fill="currentColor" class="w-5 h-5">
-                                            <path fill-rule="evenodd"
-                                                d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                        <span class="sr-only">Borrar</span>
-                                    </button>
-                                </td>
-                            </tr>
+                            @if (!array_key_exists('deleted', $insumo))
+                                <tr wire:key='{{ $index }}'
+                                    class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
+                                    <th scope="row"
+                                        class="w-24 px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                        {{ $insumo['clave'] }}
+                                    </th>
+                                    <td class="w-6/12 px-3 py-2">
+                                        {{ $insumo['descripcion'] }}
+                                    </td>
+                                    <td class="px-3 py-2 w-32">
+                                        <input type="number"
+                                            wire:model='form.receta_table.{{ $index }}.cantidad'
+                                            wire:change='actualizarTotal' step="0.001" placeholder="0.001"
+                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                                    </td>
+                                    <td class="px-3 py-2 w-32">
+                                        <input type="number"
+                                            wire:model='form.receta_table.{{ $index }}.cantidad_con_merma'
+                                            step="0.001" placeholder="0.001"
+                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                                    </td>
+                                    <td class="px-3 py-2 w-32">
+                                        {{ $insumo['unidad']['descripcion'] }}
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        $ {{ number_format($insumo['total'], 2) }}
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <button type="button" wire:click="eliminarInsumo({{ $index }})"
+                                            class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                fill="currentColor" class="w-5 h-5">
+                                                <path fill-rule="evenodd"
+                                                    d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            <span class="sr-only">Borrar</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endif
                         @endforeach
                     </tbody>
                 </table>
@@ -257,49 +260,52 @@
                             </thead>
                             <tbody>
                                 @foreach ($this->form->grupos_modif as $i_grup_mod => $grupo_mod)
-                                    <tr wire:key='{{ $i_grup_mod }}'
-                                        class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
-                                        <th scope="row"
-                                            class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                            {{ $grupo_mod['id_grupo'] }}
-                                        </th>
-                                        <td class="px-3 py-2 w-full">
-                                            {{ $grupo_mod['descripcion'] }}
-                                        </td>
-                                        <td class="px-3 py-2 w-32">
-                                            <input type="number" step="1"
-                                                wire:model='form.grupos_modif.{{ $i_grup_mod }}.incluidos'
-                                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
-                                            @error('form.grupos_modif.' . $i_grup_mod . '.incluidos')
-                                                <x-input-error messages="{{ $message }}" />
-                                            @enderror
-                                        </td>
-                                        <td class="px-3 py-2 w-32">
-                                            <input type="number" step="1"
-                                                wire:model='form.grupos_modif.{{ $i_grup_mod }}.maximos'
-                                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
-                                            @error('form.grupos_modif.' . $i_grup_mod . '.maximos')
-                                                <x-input-error messages="{{ $message }}" />
-                                            @enderror
-                                        </td>
-                                        <td class="px-3 py-2 text-center">
-                                            <input type="checkbox"
-                                                wire:model='form.grupos_modif.{{ $i_grup_mod }}.forzar'
-                                                class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                        </td>
-                                        <td class="px-3 py-2">
-                                            <button type="button" wire:click="eliminarGrupo({{ $i_grup_mod }})"
-                                                class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                                    fill="currentColor" class="w-5 h-5">
-                                                    <path fill-rule="evenodd"
-                                                        d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
-                                                        clip-rule="evenodd" />
-                                                </svg>
-                                                <span class="sr-only">Borrar</span>
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    @if (!array_key_exists('deleted', $grupo_mod))
+                                        <tr wire:key='{{ $i_grup_mod }}'
+                                            class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
+                                            <th scope="row"
+                                                class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                                {{ $grupo_mod['id_grupo'] }}
+                                            </th>
+                                            <td class="px-3 py-2 w-full">
+                                                {{ $grupo_mod['descripcion'] }}
+                                            </td>
+                                            <td class="px-3 py-2 w-32">
+                                                <input type="number" step="1"
+                                                    wire:model='form.grupos_modif.{{ $i_grup_mod }}.incluidos'
+                                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                                                @error('form.grupos_modif.' . $i_grup_mod . '.incluidos')
+                                                    <x-input-error messages="{{ $message }}" />
+                                                @enderror
+                                            </td>
+                                            <td class="px-3 py-2 w-32">
+                                                <input type="number" step="1"
+                                                    wire:model='form.grupos_modif.{{ $i_grup_mod }}.maximos'
+                                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                                                @error('form.grupos_modif.' . $i_grup_mod . '.maximos')
+                                                    <x-input-error messages="{{ $message }}" />
+                                                @enderror
+                                            </td>
+                                            <td class="px-3 py-2 text-center">
+                                                <input type="checkbox"
+                                                    wire:model='form.grupos_modif.{{ $i_grup_mod }}.forzar'
+                                                    class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                            </td>
+                                            <td class="px-3 py-2">
+                                                <button type="button"
+                                                    wire:click="eliminarGrupo({{ $i_grup_mod }})"
+                                                    class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                        fill="currentColor" class="w-5 h-5">
+                                                        <path fill-rule="evenodd"
+                                                            d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                            clip-rule="evenodd" />
+                                                    </svg>
+                                                    <span class="sr-only">Borrar</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endif
                                 @endforeach
                             </tbody>
                         </table>
@@ -318,6 +324,7 @@
                         'table_columns' => ['clave', 'descripcion'],
                         'primary_key' => 'clave',
                         'event' => 'selected-producto',
+                        'conditions' => [['estado', '=', true]]
                     ]" />
                     {{-- Tabla de productos (modificadores posibles) --}}
                     <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -343,53 +350,57 @@
                             </thead>
                             <tbody>
                                 @foreach ($this->form->modif as $i_modif => $item)
-                                    <tr wire:key='{{ $i_modif }}'
-                                        class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
-                                        <th scope="row"
-                                            class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                            {{ $item['clave'] }}
-                                        </th>
-                                        <td class="px-3 py-2 w-full">
-                                            {{ $item['descripcion'] }}
-                                        </td>
-                                        <td class="px-3 py-2 ">
-                                            <div class="flex items-center gap-2 w-32">
-                                                $ <input type="number" step="0.001"
-                                                    wire:model='form.modif.{{ $i_modif }}.precio'
-                                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
-                                            </div>
-                                            @error('form.modif.' . $i_modif . '.precio')
-                                                <x-input-error messages="{{ $message }}" />
-                                            @enderror
-                                        </td>
-                                        <td class="px-3 py-2">
-                                            <select wire:model='form.modif.{{ $i_modif }}.id_grup_modif'
-                                                class="w-fit bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                                <option value="{{ null }}">Seleccione</option>
-                                                @foreach ($this->form->grupos_modif as $i_grupo => $grupo)
-                                                    <option wire:key='{{ $i_grupo }}'
-                                                        value="{{ $grupo['id_grupo'] }}">
-                                                        {{ $grupo['descripcion'] }}</option>
-                                                @endforeach
-                                            </select>
-                                            @error('form.modif.' . $i_modif . '.id_grup_modif')
-                                                <x-input-error messages="{{ $message }}" />
-                                            @enderror
-                                        </td>
-                                        <td class="px-3 py-2">
-                                            <button type="button"
-                                                wire:click="eliminarProductoModif({{ $i_modif }})"
-                                                class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                                    fill="currentColor" class="w-5 h-5">
-                                                    <path fill-rule="evenodd"
-                                                        d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
-                                                        clip-rule="evenodd" />
-                                                </svg>
-                                                <span class="sr-only">Borrar</span>
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    @if (!array_key_exists('deleted', $item))
+                                        <tr wire:key='{{ $i_modif }}'
+                                            class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
+                                            <th scope="row"
+                                                class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                                {{ $item['clave'] }}
+                                            </th>
+                                            <td class="px-3 py-2 w-full">
+                                                {{ $item['descripcion'] }}
+                                            </td>
+                                            <td class="px-3 py-2 ">
+                                                <div class="flex items-center gap-2 w-32">
+                                                    $ <input type="number" step="0.001"
+                                                        wire:model='form.modif.{{ $i_modif }}.precio'
+                                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                                                </div>
+                                                @error('form.modif.' . $i_modif . '.precio')
+                                                    <x-input-error messages="{{ $message }}" />
+                                                @enderror
+                                            </td>
+                                            <td class="px-3 py-2">
+                                                <select wire:model='form.modif.{{ $i_modif }}.id_grup_modif'
+                                                    class="w-fit bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                                    <option value="{{ null }}">Seleccione</option>
+                                                    @foreach ($this->form->grupos_modif as $i_grupo => $grupo)
+                                                        @if (!array_key_exists('deleted', $grupo))
+                                                            <option wire:key='{{ $i_grupo }}'
+                                                                value="{{ $grupo['id_grupo'] }}">
+                                                                {{ $grupo['descripcion'] }}</option>
+                                                        @endif
+                                                    @endforeach
+                                                </select>
+                                                @error('form.modif.' . $i_modif . '.id_grup_modif')
+                                                    <x-input-error messages="{{ $message }}" />
+                                                @enderror
+                                            </td>
+                                            <td class="px-3 py-2">
+                                                <button type="button"
+                                                    wire:click="eliminarProductoModif({{ $i_modif }})"
+                                                    class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                        fill="currentColor" class="w-5 h-5">
+                                                        <path fill-rule="evenodd"
+                                                            d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                            clip-rule="evenodd" />
+                                                    </svg>
+                                                    <span class="sr-only">Borrar</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endif
                                 @endforeach
                             </tbody>
                         </table>

@@ -59,8 +59,9 @@ class EditarProducto extends Component
     }
     public function eliminarInsumo($index)
     {
-        //Eliminar el insumo de la receta
-        $this->form->eliminarInsumoReceta($index);
+        //Marcar como eliminado, el insumo de la receta
+        $this->form->marcarInsumo($index);
+        
     }
 
     #[On('selected-grupo')]
@@ -76,8 +77,8 @@ class EditarProducto extends Component
     }
     public function eliminarGrupo($index)
     {
-        //Eliminar el grupo de modificador
-        $this->form->eliminarGrupo($index);
+        //Marcar como eliminado, el grupo de modificador
+        $this->form->marcarGrupo($index);
     }
 
     #[On('selected-producto')]
@@ -94,8 +95,8 @@ class EditarProducto extends Component
 
     public function eliminarProductoModif($index)
     {
-        //Eliminar el producto
-        $this->form->eliminarProducto($index);
+        //marcar como eliminado el modificador
+        $this->form->marcarProducto($index);
     }
 
     public function actualizarTotal()

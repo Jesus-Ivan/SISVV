@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('clave_modificador');
             $table->decimal('precio', 10, 2)->nullable();
             $table->timestamps();
+            $table->softDeletes($column = 'deleted_at');
         });
     }
 

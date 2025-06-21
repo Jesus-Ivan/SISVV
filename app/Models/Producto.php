@@ -6,26 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Insumo extends Model
+class Producto extends Model
 {
     use HasFactory;
-    
-    //Nombre de la tabla de referencia
-    protected $table = 'insumos';
+
+    //Nombre de tabla
+    protected $table = 'productos';
     //Propiedades restringidas para asignacion masiva
     protected $guarded = ['clave'];
     //Clave primaria
     protected $primaryKey = 'clave';
-
-
-    public function unidad(): BelongsTo
-    {
-        return $this->belongsTo(Unidad::class, 'id_unidad', 'id')
-            ->withDefault([
-                'descripcion' => 'N/A',
-                'estado' => 0
-            ]);
-    }
 
     public function grupo(): BelongsTo
     {
@@ -33,7 +23,15 @@ class Insumo extends Model
             ->withDefault([
                 'descripcion' => 'N/A',
                 'tipo' => '',
-                'clasificacion' =>'',
+                'clasificacion' => '',
+            ]);
+    }
+
+    public function subgrupo(): BelongsTo
+    {
+        return $this->belongsTo(Subgrupos::class, 'id_subgrupo', 'id')
+            ->withDefault([
+                'descripcion' => 'N/A',
             ]);
     }
 }

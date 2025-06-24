@@ -96,13 +96,8 @@ class CargosNuevo extends Component
 
         //Si la cuota es de tipo editable
         if ($cuota['tipo'] == RecepcionConstants::EDITABLE_CARGO_KEY) {
-            //Si la cuota se esta tratando de agregar a un no.de socio diferente del 5500
-            if ($this->socio->id != RecepcionConstants::ID_SOCIO_EDITABLE) {
-                session()->flash('fail', 'Cuota permitida unicamente para la accion: ' . RecepcionConstants::ID_SOCIO_EDITABLE);
-            } else {
-                //Agregramos a la lista de cargos
-                $this->listaCargos[] = $cuota;
-            }
+            //Agregramos a la lista de cargos
+            $this->listaCargos[] = $cuota;
             //terminar la funcion
             return;
         }

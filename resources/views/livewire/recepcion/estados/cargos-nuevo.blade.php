@@ -65,7 +65,7 @@
                             {{ $cargo['fecha'] }}
                         </th>
                         <td class="px-6 py-4">
-                            @if ($cargo['tipo'] == $editable_cargo)
+                            @if (preg_match("/$editable_cargo/i", $cargo['tipo']))
                                 <input type="text" wire:model='listaCargos.{{ $cargoIndex }}.descripcion'
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                             @else
@@ -73,7 +73,7 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 ">
-                            @if ($cargo['tipo'] == $editable_cargo)
+                            @if (preg_match("/$editable_cargo/i", $cargo['tipo']))
                                 <div class="flex items-center">
                                     $ <input type="text" wire:model='listaCargos.{{ $cargoIndex }}.monto'
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />

@@ -44,8 +44,8 @@ class CarteraVencidaExport implements FromArray
             'NOTAS VENTAS' => 'NOTAS VENTAS',
         ];
         //REFERENNCIA A LA VARIABLE ENCABEZADOS
-        foreach ($this->cuotas as $key => $cuota) {
-            $encabezados[$key] = $cuota->descripcion;
+        foreach ($this->cuotas as $cuota) {
+            $encabezados[$cuota->id] = $cuota->descripcion;
         }
 
         //array auxiliar
@@ -71,9 +71,9 @@ class CarteraVencidaExport implements FromArray
                     'NOMBRE' => $socio['nombre'] . ' ' . $socio['apellido_p'] . ' ' . $socio['apellido_m'],
                     'NOTAS VENTAS' => $total_deuda,
                 ];
-                foreach ($this->cuotas as $key => $cuota) {
-                    $totalCuota = $this->obtenerTotalCuota($estado_cuenta, $key + 1);
-                    $row_aux[$key] = $totalCuota;
+                foreach ($this->cuotas as $cuota) {
+                    $totalCuota = $this->obtenerTotalCuota($estado_cuenta, $cuota->id);
+                    $row_aux[$cuota->id] = $totalCuota;
                     $total_deuda += $totalCuota;
                 }
                 if ($total_deuda)

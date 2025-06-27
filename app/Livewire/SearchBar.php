@@ -4,28 +4,28 @@ namespace App\Livewire;
 
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Reactive;
 use Livewire\Component;
+
 
 class SearchBar extends Component
 {
-    public $search;
+    public $search = '';
     public $tittle_bar;
     public $table_name, $table_columns, $primary_key;
-    public $dpto;
     public $event;
+    #[Reactive]
     public $conditions;
 
 
-    public function mount($params)
+    public function mount($tittle, $table, $columns, $primary, $event, $conditions = null)
     {
-        $this->tittle_bar = $params['tittle_bar'];
-        $this->table_name = $params['table_name'];
-        $this->table_columns = $params['table_columns'];
-        $this->primary_key = $params['primary_key'];
-        $this->event = $params['event'];
-        if (array_key_exists('conditions', $params)) {
-            $this->conditions = $params['conditions'];
-        }
+        $this->tittle_bar = $tittle;
+        $this->table_name = $table;
+        $this->table_columns = $columns;
+        $this->primary_key = $primary;
+        $this->event = $event;
+        $this->conditions = $conditions;
     }
 
     #[Computed()]
@@ -35,8 +35,9 @@ class SearchBar extends Component
             //Construir la consulta
             $result = DB::table($this->table_name);
             //Si tiene condiciones extras
-            if ($this->conditions)
+            if ($this->conditions){
                 $result->where($this->conditions);  //Agregar las condiciones extras
+            }
             //Agregar la condición de búsqueda principal
             $result->whereAny($this->table_columns, 'like', '%' . $this->search . '%')
                 ->take(40);

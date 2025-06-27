@@ -73,7 +73,6 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
         <tr class="color-cel">
             <th>CODIGO</th>
             <th style="width: 35%">DESCRIPCION</th>
-            <th>UNIDAD</th>
             <th>CANT.</th>
             <th>P.UNITARIO</th>
             <th>IMPORTE</th>
@@ -85,7 +84,6 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
             <tr>
                 <td>{{ $item->codigo_producto }}</td>
                 <td>{{ $item->nombre }}</td>
-                <td>{{ $unidades[$item->id_unidad] }}</td>
                 <td>{{ $item->cantidad }}</td>
                 <td>${{ $item->costo_unitario }}</td>
                 <td>${{ $item->importe }}</td>

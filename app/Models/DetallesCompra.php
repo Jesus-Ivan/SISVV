@@ -12,8 +12,6 @@ class DetallesCompra extends Model
     use HasFactory;
     //Nombre de la tabla
     protected $table = 'detalles_compras';
-    //Desactivar los timestamps para este modelo
-    public $timestamps = false;
     //Propiedades restringidas para asignacion masiva
     protected $guarded = ['id'];
     //Clave primaria

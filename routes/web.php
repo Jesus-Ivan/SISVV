@@ -68,6 +68,7 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::view('/', 'almacen.Requisiciones.requisiciones')->name('almacen.requi');
         Route::view('nueva', 'almacen.Requisiciones.nueva-requisicion')->name('almacen.requi.nueva');
         Route::view('historial', 'almacen.Requisiciones.historial-requisiciones')->name('almacen.requi.historial');
+        Route::view('editar/{folio}', 'almacen.Requisiciones.editar-requisicion')->name('almacen.requi.editar');
     });
 
 
@@ -96,7 +97,6 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::view('nueva', 'almacen.ordenes.nueva-orden')->name('almacen.ordenes');
         Route::view('ordenes_realizadas', 'almacen.Ordenes.ordenes_realizadas')->name('almacen.ordenes_realizadas');
         Route::view('historial', 'almacen.Ordenes.historial')->name('almacen.ordenes.historial');
-        Route::view('editar/{folio}', 'almacen.Ordenes.editar-orden')->name('almacen.ordenes.editar');
     });
 
     Route::view('nuevo-costeo', 'almacen.nuevo-costeo')->name('almacen.nuevo');

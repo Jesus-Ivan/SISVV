@@ -52,6 +52,6 @@
         </div>
     </div>
     {{--Componente livewire--}}
-    <livewire:almacen.requisiciones.requisiciones />
+    <livewire:almacen.requisiciones.principal />
 
 </x-app-layout>

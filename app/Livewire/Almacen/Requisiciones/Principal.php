@@ -7,7 +7,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-class Requisiciones extends Component
+class Principal extends Component
 {
     use WithPagination;
     public $f_inicio, $f_fin;
@@ -38,9 +38,9 @@ class Requisiciones extends Component
         //Reinicia el paginador.
         $this->resetPage();
     }
-    
+
     public function render()
     {
-        return view('livewire.almacen.requisiciones.requisiciones');
+        return view('livewire.almacen.requisiciones.principal');
     }
 }

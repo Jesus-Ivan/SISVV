@@ -33,6 +33,7 @@ return new class extends Migration
             $table->date('ultima_compra')->nullable();
             $table->boolean('aplicado')->default(false);
             $table->timestamps();
+            $table->softDeletes();
             /*
             //Relaciones
 

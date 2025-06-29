@@ -10,6 +10,7 @@ use App\Exports\SociosExport;
 use App\Exports\VentasExport;
 use App\Models\Caja;
 use App\Models\CatalogoVistaVerde;
+use App\Models\DetallesCompra;
 use App\Models\DetallesPeriodoNomina;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
@@ -708,24 +709,25 @@ class ReportesController extends Controller
         $requisicion = OrdenCompra::with('user')->find($folio);
 
         if ($order) {
-            $detalle = DB::table('detalles_compras')
-                ->where('folio_orden', $folio)
+            $detalle = DetallesCompra::where('folio_orden', $folio)
                 ->orderBy('id_proveedor', 'ASC')
                 ->orderBy('nombre', 'ASC')
-                ->get();
+                ->get()->toArray();
         } else {
-            $detalle = DB::table('detalles_compras')
-                ->where('folio_orden', $folio)
-                ->get();
+            $detalle = DetallesCompra::where('folio_orden', $folio)
+                ->get()->toArray();
         }
-        //Generamos array's, para busquedas indexadas
-        $unidades = $this->generateIndex(Unidad::all(), 'id', 'descripcion');
+        //Generamos array, para busqueda indexada
         $proveedores = $this->generateIndex(Proveedor::all(), 'id', 'nombre');
+        //Calcular el subtotal y el nuevo iva
+        $subtotal = $this->calcularSubtotal($detalle);
+        $iva = $this->calcularIva($detalle);
 
         $data = [
             'requisicion' => $requisicion->toArray(),
-            'detalle' => $this->convertJsonColums($detalle->toArray()),
-            'unidades' => $unidades,
+            'detalle' => $detalle,
+            'subtotal' => $subtotal,
+            'iva' => $iva,
             'proveedores' => $proveedores,
         ];
 
@@ -912,5 +914,35 @@ class ReportesController extends Controller
         }, $detalles_requisicion);
 
         return $aux;
+    }
+
+    /**
+     * Obtiene la sumatoria de (costo_unitario * cantidad)
+     */
+    private function calcularSubtotal($presentaciones)
+    {
+        $acu = 0;
+        foreach ($presentaciones as $presentacion) {
+            //Si la presentacion contiene el atributo eliminado, omitir
+            if (array_key_exists('deleted', $presentacion)) continue;
+            //Mutiplicar y acumular el valor
+            $acu += $presentacion['costo_unitario'] * $presentacion['cantidad'];
+        }
+        return $acu;
+    }
+
+    /**
+     * Obtiene la sumatoria de (costo_unitario * (iva / 100)) * $cantidad'
+     */
+    private function calcularIva($presentaciones)
+    {
+        $acu = 0;
+        foreach ($presentaciones as $presentacion) {
+            //Si la presentacion contiene el atributo eliminado, omitir
+            if (array_key_exists('deleted', $presentacion)) continue;
+            //Mutiplicar y acumular el valor
+            $acu += ($presentacion['costo_unitario'] * ($presentacion['iva'] / 100)) * $presentacion['cantidad'];
+        }
+        return $acu;
     }
 }

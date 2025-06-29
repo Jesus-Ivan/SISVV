@@ -21,6 +21,7 @@ class NuevaRequisicion extends Component
     public $costo_unitario = 0, $iva = 16, $costo_con_impuesto = 0, $id_proveedor, $id_grupo = null;
     //Fecha de hoy, para mostrar en la vista y en el registro de la orden de compra
     public $hoy;
+    public $tittle = '';
 
     public RequisicionesForm $form;
 

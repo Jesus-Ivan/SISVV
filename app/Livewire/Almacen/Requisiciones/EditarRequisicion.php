@@ -4,6 +4,7 @@ namespace App\Livewire\Almacen\Requisiciones;
 
 use App\Constants\AlmacenConstants;
 use App\Livewire\Forms\RequisicionesForm;
+use App\Models\OrdenCompra;
 use App\Models\Presentacion;
 use App\Models\Proveedor;
 use Illuminate\Support\Facades\DB;
@@ -15,18 +16,29 @@ use Throwable;
 
 class EditarRequisicion extends Component
 {
-        //El articulo (original) que se selecciona en el modal.
+    //El articulo (original) que se selecciona en el modal.
     public $articulo_seleccionado;
     //Propiedades auxiliares para el modal de agregar articulos a la orden
     public $costo_unitario = 0, $iva = 16, $costo_con_impuesto = 0, $id_proveedor, $id_grupo = null;
     //Fecha de hoy, para mostrar en la vista y en el registro de la orden de compra
     public $hoy;
+    public $tittle = '';
 
     public RequisicionesForm $form;
 
 
-    public function mount()
+    public function mount($tittle, $folio_requi)
     {
+        $this->$tittle = $tittle;
+        //Buscar la requisicion (orden de compra), mediante su folio
+        $requisicion = OrdenCompra::find($folio_requi);
+        if ($requisicion) {
+            //Setar los valores editables en el form
+            $this->form->setValues($requisicion);
+        } else {
+            //redirigir al usuario en caso de no existir la requisicion
+            $this->redirectRoute('almacen.requi');
+        }
         //inicializamos la fecha de hoy
         $this->hoy = now();
     }
@@ -93,8 +105,8 @@ class EditarRequisicion extends Component
 
     public function eliminarArticulo($indexArticulo)
     {
-        //Eliminamos el articulo de la lista
-        $this->form->eliminarPresentacion($indexArticulo);
+        //Marcar el articulo de la lista
+        $this->form->marcarPresentacion($indexArticulo);
     }
 
     public function guardarOrden()
@@ -102,9 +114,9 @@ class EditarRequisicion extends Component
         try {
             DB::transaction(function () {
                 //Crear la nueva orden
-                $this->form->crearRequisicion();
+                $this->form->guardarRequisicion();
             }, 2);
-            session()->flash('success-compra', 'Orden registrada correctamente');   //Mensaje de sesion
+            session()->flash('success-compra', 'Orden actualizada correctamente');   //Mensaje de sesion
             $this->hoy = now();             //Reestablecemos la fecha
         } catch (ValidationException $e) {
             throw $e;                       //Si es excepcion de validacion, lanzar a la vista
@@ -158,7 +170,7 @@ class EditarRequisicion extends Component
         $this->form->actualizarImporte($index);
     }
 
-    
+
     public function render()
     {
         return view('livewire.almacen.requisiciones.editar-requisicion');

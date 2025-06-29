@@ -16,7 +16,7 @@
         @include('almacen.nav')
     </x-slot>
 
-    {{--Componente de livewire--}}
-    <livewire:almacen.requisiciones.nueva-requisicion />
+    {{-- Componente de livewire --}}
+    <livewire:almacen.requisiciones.nueva-requisicion tittle='NUEVA REQUISICION' />
 
 </x-app-layout>

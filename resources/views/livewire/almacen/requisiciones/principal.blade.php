@@ -72,13 +72,13 @@
                                 {{ $orden->fecha }}
                             </td>
                             <td class="px-6 py-2">
-                                ${{ $orden->subtotal }}
+                                ${{ number_format($orden->subtotal, 2) }}
                             </td>
                             <td class="px-6 py-2">
-                                ${{ $orden->iva }}
+                                ${{ number_format($orden->iva, 2) }}
                             </td>
                             <td class="px-6 py-2">
-                                ${{ $orden->total }}
+                                ${{ number_format($orden->total, 2) }}
                             </td>
                             <td class="px-6 py-2">
                                 {{ $orden->tipo_orden }}

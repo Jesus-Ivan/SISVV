@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DetallesCompra extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     //Nombre de la tabla
     protected $table = 'detalles_compras';
     //Propiedades restringidas para asignacion masiva

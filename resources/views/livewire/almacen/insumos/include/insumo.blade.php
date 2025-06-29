@@ -126,13 +126,8 @@
         <div class="flex items-end gap-4">
             {{-- Search bar Insumo --}}
             <div class="flex-1">
-                <livewire:search-bar :params="[
-                    'tittle_bar' => 'Insumo de receta',
-                    'table_name' => 'insumos',
-                    'table_columns' => ['clave', 'descripcion'],
-                    'primary_key' => 'clave',
-                    'event' => 'selected-insumo',
-                ]" />
+                <livewire:search-bar tittle="Insumo de receta" table="insumos" :columns="['clave', 'descripcion']" primary="clave"
+                    event="selected-insumo" />
             </div>
             {{-- Rendimiento --}}
             <div class="w-64">

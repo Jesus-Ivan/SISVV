@@ -6,14 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DetallesCompra extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     //Nombre de la tabla
     protected $table = 'detalles_compras';
-    //Desactivar los timestamps para este modelo
-    public $timestamps = false;
     //Propiedades restringidas para asignacion masiva
     protected $guarded = ['id'];
     //Clave primaria

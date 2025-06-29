@@ -108,13 +108,8 @@
         <div>
             <div class="py-7">
                 {{-- Search bar Insumo base --}}
-                <livewire:search-bar :params="[
-                    'tittle_bar' => 'Insumo Base',
-                    'table_name' => 'insumos',
-                    'table_columns' => ['clave', 'descripcion'],
-                    'primary_key' => 'clave',
-                    'event' => 'selected-insumo',
-                ]" />
+                <livewire:search-bar tittle="Insumo Base" table="insumos" :columns="['clave', 'descripcion']" primary="clave"
+                    event="selected-insumo" />
                 {{-- Insumo base Descripcion --}}
                 <div class="flex gap-2 items-end">
                     <div class="w-full">

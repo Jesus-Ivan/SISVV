@@ -136,13 +136,8 @@
         </div>
         <div x-show="activeTab === 'receta'" x-cloak>
             {{-- Componente de busqueda de insumos --}}
-            <livewire:search-bar :params="[
-                'tittle_bar' => 'Buscar insumo',
-                'table_name' => 'insumos',
-                'table_columns' => ['clave', 'descripcion'],
-                'primary_key' => 'clave',
-                'event' => 'selected-receta',
-            ]" />
+            <livewire:search-bar tittle="Buscar insumo" table="insumos" :columns="['clave', 'descripcion']" primary="clave"
+                event="selected-receta" />
             {{-- Tabla resultados --}}
             <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
                 <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -226,13 +221,8 @@
                 {{-- Tabla 1 --}}
                 <div>
                     {{-- Componente de busqueda de grupos --}}
-                    <livewire:search-bar :params="[
-                        'tittle_bar' => 'Buscar grupo modificador',
-                        'table_name' => 'grupos_modificadores',
-                        'table_columns' => ['id', 'descripcion'],
-                        'primary_key' => 'id',
-                        'event' => 'selected-grupo',
-                    ]" />
+                    <livewire:search-bar tittle="Buscar grupo modificador" table="grupos_modificadores"
+                        :columns="['id', 'descripcion']" primary="id" event="selected-grupo" />
                     {{-- Tabla grupo modificador --}}
                     <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
                         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -318,14 +308,8 @@
                 {{-- Tabla 2 --}}
                 <div>
                     {{-- Componente de busqueda de productos --}}
-                    <livewire:search-bar :params="[
-                        'tittle_bar' => 'Buscar modificador (producto)',
-                        'table_name' => 'productos',
-                        'table_columns' => ['clave', 'descripcion'],
-                        'primary_key' => 'clave',
-                        'event' => 'selected-producto',
-                        'conditions' => [['estado', '=', true]]
-                    ]" />
+                    <livewire:search-bar tittle="Buscar modificador (producto)" table="productos" :columns="['clave', 'descripcion']"
+                        primary="clave" event="selected-producto" :conditions="[['estado', '=', true]]" />
                     {{-- Tabla de productos (modificadores posibles) --}}
                     <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
                         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">

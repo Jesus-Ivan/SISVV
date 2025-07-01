@@ -65,6 +65,16 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
     });
 
 
+    Route::prefix('facturas')->group(function () {
+        Route::view('/', 'almacen.Facturas.facturas')->name('almacen.facturas');
+        Route::view('nuevo-registro', 'almacen.Facturas.nuevo-registro-factura')->name('almacen.facturas.nuevo-registro');
+    });
+
+    Route::prefix('inventario-fisico')->group(function () {
+        Route::view('/', 'almacen.Inventario.inventario-fisico')->name('almacen.inventario-fisico');
+        Route::view('nuevo-inventario', 'almacen.Inventario.nuevo-inventario')->name('almacen.nuevo-inventario');
+    });
+
     Route::view('clasificacion', 'almacen.Clasificacion.clasificacion')->name('almacen.clasificacion');
     Route::view('proveedores', 'almacen.Proveedores.proveedores')->name('almacen.proveedores');
     Route::view('unidades', 'almacen.Unidades.unidades')->name('almacen.unidades');

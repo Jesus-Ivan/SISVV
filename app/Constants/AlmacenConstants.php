@@ -22,7 +22,9 @@ class AlmacenConstants
     public const BEBIDAS_KEY = "BEBIDAS";
     /**
      * Es el valor contenido en la columna 'tipo' de la tabla 'grupos'. 
-     * Referente a los grupos disponibles para insumos y presentaciones
+     * Referente a los grupos disponibles para insumos y presentaciones\
+     * \
+     * Tambien refiere al valor en la columna 'naturaleza' de la tabla 'bodegas'
      */
     public const INSUMOS_KEY = "INSUM";
     /**
@@ -30,6 +32,21 @@ class AlmacenConstants
      * Referente a los grupos disponibles para productos de venta
      */
     public const PRODUCTOS_KEY = "PRODU";
+
+    /**
+     *  Refiere al valor en la columna 'naturaleza' de la tabla 'bodegas'
+     */
+    public const PRESENTACION_KEY = 'PRESEN';
+
+    /**
+     * Es la clave del concepto de "E. POR AJUSTE" de la tabla 'conceptos_almacen'
+     */
+    public const ENT_AJUSTE_KEY = "EPA";
+
+    /**
+     * Es la clave del concepto de "S. POR AJUSTE" de la tabla 'conceptos_almacen'
+     */
+    public const SAL_AJUSTE_KEY = "SPA";
 
     /**
      * Array asociativo que relaciona la clave del punto de venta, con su columna de stock correspondiente de la tabla 'stocks'

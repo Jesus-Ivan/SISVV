@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('bodegas', function (Blueprint $table) {
-            $table->string('clave', 50)->primary();
+        Schema::create('conceptos_almacen', function (Blueprint $table) {
+            $table->string('clave', 255)->primary();
             $table->string('descripcion', 255);
-            $table->string('tipo', 20);
-            $table->string('naturaleza', 50)->nullable();
-            $table->timestamps();
+            $table->string('tipo', 50);
+            $table->boolean('visible_inv_fisico')->default(true);
         });
     }
 
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('bodegas');
+        Schema::dropIfExists('conceptos_almacen');
     }
 };

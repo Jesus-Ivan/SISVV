@@ -1173,6 +1173,26 @@ INSERT INTO proveedores (nombre, rfc, consumo, credito_compra) VALUES
 	('WALMART', 'ASDFGHJKL12389', '1000', '1500'),
 	('XO CHIHUAHUA', 'ASDFGHJKL12390', '1000', '1500')
 
+--CONCEPTOS ALMACEN --
+INSERT INTO conceptos_almacen VALUES ( 'CP', 'S.POR COMIDA DE PERSONAL', 'SALIDA', 1);
+INSERT INTO conceptos_almacen VALUES ( 'ECA', 'E. POR CANCELACION', 'ENTRADA', 0);
+INSERT INTO conceptos_almacen VALUES ( 'EDA', 'E. ALMACEN', 'ENTRADA', 0);
+INSERT INTO conceptos_almacen VALUES ( 'EPA', 'E. POR AJUSTE', 'ENTRADA', 1);
+INSERT INTO conceptos_almacen VALUES ( 'EPC', 'E. POR COMPRA', 'ENTRADA', 0);
+INSERT INTO conceptos_almacen VALUES ( 'EPD', 'E. POR DEVOLUCIÓN', 'ENTRADA', 0);
+INSERT INTO conceptos_almacen VALUES ( 'EPL', 'E. POR CANCELACION', 'ENTRADA', 0);
+INSERT INTO conceptos_almacen VALUES ( 'EPP', 'E. POR PRODUCCION', 'ENTRADA', 1);
+INSERT INTO conceptos_almacen VALUES ( 'ETA', 'E. POR TRASPASO DE ALMACEN', 'ENTRADA', 0);
+INSERT INTO conceptos_almacen VALUES ( 'SALM', 'S. DE ALMACEN', 'SALIDA', 0);
+INSERT INTO conceptos_almacen VALUES ( 'SPA', 'S. POR AJUSTE', 'SALIDA', 1);
+INSERT INTO conceptos_almacen VALUES ( 'SPC', 'S. POR CANCELACION', 'SALIDA', 0);
+INSERT INTO conceptos_almacen VALUES ( 'SPD', 'S. POR DESPERDICIO', 'SALIDA', 1);
+INSERT INTO conceptos_almacen VALUES ( 'SPM', 'S. POR MERMA', 'SALIDA', 1);
+INSERT INTO conceptos_almacen VALUES ( 'SPP', 'S. POR PRODUCCION', 'SALIDA', 1);
+INSERT INTO conceptos_almacen VALUES ( 'SPV', 'S. POR VENTA', 'SALIDA', 0);
+INSERT INTO conceptos_almacen VALUES ( 'STA', 'S. POR TRASPASO DE ALMACEN', 'SALIDA', 0);
+
+
 --!		CONSULTAS DE JESUS IVAN		!--
 -- Agregar membresias --
 INSERT INTO membresias (clave, descripcion)

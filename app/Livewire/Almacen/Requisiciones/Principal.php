@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Almacen\Requisiciones;
 
-use App\Models\OrdenCompra;
+use App\Models\Requisicion;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -24,8 +24,8 @@ class Principal extends Component
     #[Computed()]
     public function ordenes()
     {
-        return OrdenCompra::whereDate('fecha', '>=', $this->f_inicio)
-            ->whereDate('fecha', '<=', $this->f_fin)
+        return Requisicion::whereDate('created_at', '>=', $this->f_inicio)
+            ->whereDate('created_at', '<=', $this->f_fin)
             ->orderBy('folio', 'desc')
             ->paginate(10);
     }

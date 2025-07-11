@@ -64,11 +64,13 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::view('reporte', 'almacen.Existencias.reporte')->name('almacen.existencias.reporte');
     });
 
-    Route::prefix('requisicion')->group(function (){
+    Route::prefix('requisicion')->group(function () {
         Route::view('/', 'almacen.Requisiciones.requisiciones')->name('almacen.requi');
         Route::view('nueva', 'almacen.Requisiciones.nueva-requisicion')->name('almacen.requi.nueva');
         Route::view('historial', 'almacen.Requisiciones.historial-requisiciones')->name('almacen.requi.historial');
         Route::view('editar/{folio}', 'almacen.Requisiciones.editar-requisicion')->name('almacen.requi.editar');
+        //Requiscion de compra (NUEVAS REQUISICIONES) 
+        Route::get('ver/{folio}/{order?}', [ReportesController::class, 'verRequi'])->name('almacen.requi.ver');
     });
 
 
@@ -283,8 +285,8 @@ Route::prefix('acceso')->middleware(['auth', 'acceso'])->group(function () {
 
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');
 Route::get('ventas/corte/{caja}/{codigopv?}', [ReportesController::class, 'generarCorte'])->name('ventas.corte');
-//Requiscion de compra
-Route::get('requisicion/{folio}/{order?}', [ReportesController::class, 'generarRequisicion'])->name('requisicion');
+//Ordenes de compra (VIEJAS REQUISICIONES)
+Route::get('ordenes/{folio}/{order?}', [ReportesController::class, 'generarRequisicion'])->name('orden');
 //Reporte de existencias actuales
 Route::post('reporte-existencias', [ReportesController::class, 'generarReporteExistencias'])->name('reporte-existencias');
 //Esta ruta debe moverse al departamento de sistemas. cuando almacen e inventarios esten listos

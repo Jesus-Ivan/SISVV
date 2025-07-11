@@ -12,6 +12,7 @@ use App\Models\Caja;
 use App\Models\CatalogoVistaVerde;
 use App\Models\DetallesCompra;
 use App\Models\DetallesPeriodoNomina;
+use App\Models\DetallesRequisicion;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
@@ -20,6 +21,7 @@ use App\Models\PeriodoNomina;
 use App\Models\Proveedor;
 use App\Models\PuntoVenta;
 use App\Models\Recibo;
+use App\Models\Requisicion;
 use App\Models\SaldoFavor;
 use App\Models\Socio;
 use App\Models\Stock;
@@ -702,6 +704,7 @@ class ReportesController extends Controller
     }
 
     /**
+     * LEGACY\
      * Genera el pdf de la requisiscion de compra (almacen)
      */
     public function generarRequisicion($folio, $order = false)
@@ -732,6 +735,42 @@ class ReportesController extends Controller
         ];
 
         $pdf = Pdf::loadView('reportes.requisicion', $data);
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        $pdf->setPaper([0, 0, 612.283, 792], 'landscape'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
+        return $pdf->stream('requisicion' . $folio . '.pdf');
+    }
+
+    /**
+     * Genera el pdf de la nueva requisicion
+     */
+    public function verRequi($folio, $order = false)
+    {
+        $requisicion = Requisicion::with('user')->find($folio);
+
+        if ($order) {
+            $detalle = DetallesRequisicion::where('folio_requisicion', $folio)
+                ->orderBy('id_proveedor', 'ASC')
+                ->orderBy('descripcion', 'ASC')
+                ->get()->toArray();
+        } else {
+            $detalle = DetallesRequisicion::where('folio_requisicion', $folio)
+                ->get()->toArray();
+        }
+        //Generamos array, para busqueda indexada
+        $proveedores = $this->generateIndex(Proveedor::all(), 'id', 'nombre');
+        //Calcular el subtotal y el nuevo iva
+        $subtotal = $this->calcularSubtotal($detalle);
+        $iva = $this->calcularIva($detalle);
+
+        $data = [
+            'requisicion' => $requisicion,
+            'detalle' => $detalle,
+            'subtotal' => $subtotal,
+            'iva' => $iva,
+            'proveedores' => $proveedores,
+        ];
+
+        $pdf = Pdf::loadView('reportes.requisicion-new', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
         $pdf->setPaper([0, 0, 612.283, 792], 'landscape'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
         return $pdf->stream('requisicion' . $folio . '.pdf');

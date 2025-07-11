@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Insumo extends Model
 {
@@ -18,6 +19,14 @@ class Insumo extends Model
     protected $primaryKey = 'clave';
 
 
+    /**
+     * Define la relación "uno a muchos" con los movimientos de almacén.
+     */
+    public function movimientosAlmacen(): HasMany
+    {
+        return $this->hasMany(MovimientosAlmacen::class, 'clave_insumo', 'clave');
+    }
+    
     public function unidad(): BelongsTo
     {
         return $this->belongsTo(Unidad::class, 'id_unidad', 'id')

@@ -7,6 +7,7 @@ use App\Livewire\Forms\RequisicionesForm;
 use App\Models\OrdenCompra;
 use App\Models\Presentacion;
 use App\Models\Proveedor;
+use App\Models\Requisicion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
@@ -26,12 +27,11 @@ class EditarRequisicion extends Component
 
     public RequisicionesForm $form;
 
-
     public function mount($tittle, $folio_requi)
     {
         $this->$tittle = $tittle;
         //Buscar la requisicion (orden de compra), mediante su folio
-        $requisicion = OrdenCompra::find($folio_requi);
+        $requisicion = Requisicion::find($folio_requi);
         if ($requisicion) {
             //Setar los valores editables en el form
             $this->form->setValues($requisicion);

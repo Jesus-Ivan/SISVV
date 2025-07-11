@@ -3,36 +3,40 @@
 namespace App\Livewire\Forms;
 
 use App\Models\DetallesCompra;
+use App\Models\DetallesRequisicion;
 use App\Models\OrdenCompra;
+use App\Models\Requisicion;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 use Ramsey\Uuid\Type\Integer;
 
 class RequisicionesForm extends Form
 {
-    public $tipo_orden;         //Tipo de orden a registrar
+    public $tipo_orden, $observaciones;         //Tipo de orden a registrar y observaciones
     //Tabla de presentaciones para la requisicion
     public $presentaciones = [];
 
-    public ?OrdenCompra $requi_original = null;
+    public ?Requisicion $requi_original = null;
 
     /**
      * Establece los valores iniciales para editar la orden de compra
      */
-    public function setValues(OrdenCompra $requisicion)
+    public function setValues(Requisicion $requisicion)
     {
         //Guardar el modelo original
         $this->requi_original = $requisicion;
         //Guardar el tipo de orden
         $this->tipo_orden = $requisicion->tipo_orden;
+        //Guardar las observaciones
+        $this->observaciones = $requisicion->observaciones;
         //Buscar los detalles de la requisicion
-        $result = DetallesCompra::where('folio_orden', $requisicion->folio)->get();
+        $result = DetallesRequisicion::where('folio_requisicion', $requisicion->folio)->get();
         //Agregarlos al array de presentaciones, (utilizado para la vista)
         foreach ($result as $detalle) {
             $this->presentaciones[] = [
                 'id' => $detalle->id,
-                'clave' => $detalle->codigo_producto,
-                'descripcion' => $detalle->nombre,
+                'clave' => $detalle->clave_presentacion,
+                'descripcion' => $detalle->descripcion,
                 'id_proveedor' => $detalle->id_proveedor,
                 'cantidad' => $detalle->cantidad,
                 'costo_unitario' => $detalle->costo_unitario,
@@ -142,11 +146,11 @@ class RequisicionesForm extends Form
         $subtotal = $this->calcularSubtotal($validated['presentaciones']);
         $iva = $this->calcularIva($validated['presentaciones']);
         //creamos la orden
-        $result_orden = OrdenCompra::create([
-            'fecha' => now(),
-            'tipo_orden' => $validated['tipo_orden'],
+        $result_orden = Requisicion::create([
             'id_user' => auth()->user()->id,
-            'cantidad' => count($validated['presentaciones']),
+            'tipo_orden' => $validated['tipo_orden'],
+            'observaciones' => $this->observaciones,
+            'movimientos' => count($validated['presentaciones']),
             'subtotal' => $subtotal,
             'iva' => $iva,
             'total' => $subtotal + $iva,
@@ -154,10 +158,10 @@ class RequisicionesForm extends Form
 
         foreach ($validated['presentaciones'] as $key => $articulo) {
             //creamos los detalles de la orden de compra
-            DetallesCompra::create([
-                'folio_orden' => $result_orden->folio,
-                'codigo_producto' => $articulo['clave'],
-                'nombre' => $articulo['descripcion'],
+            DetallesRequisicion::create([
+                'folio_requisicion' => $result_orden->folio,
+                'clave_presentacion' => $articulo['clave'],
+                'descripcion' => $articulo['descripcion'],
                 'id_proveedor' => $articulo['id_proveedor'],
                 'cantidad' => $articulo['cantidad'],
                 'costo_unitario' => $articulo['costo_unitario'],
@@ -210,6 +214,8 @@ class RequisicionesForm extends Form
         $validated = $this->validate([
             'tipo_orden' => 'required',
         ]);
+        $validated['observaciones'] = $this->observaciones; //Agregar la propiedad al array validado
+
         //Calcular el subtotal y el nuevo iva
         $subtotal = $this->calcularSubtotal($this->presentaciones);
         $iva = $this->calcularIva($this->presentaciones);
@@ -221,10 +227,10 @@ class RequisicionesForm extends Form
                 //Si hay atributo 'id'
                 if (array_key_exists('id', $item))
                     //Eliminacion suave de la BD
-                    DetallesCompra::destroy($item['id']);
+                    DetallesRequisicion::destroy($item['id']);
             } elseif (array_key_exists('id', $item)) {
                 //Actualizar el registro
-                DetallesCompra::where('id', $item['id'])
+                DetallesRequisicion::where('id', $item['id'])
                     ->update([
                         'cantidad' => $item['cantidad'],
                         'costo_unitario' => $item['costo_unitario'],
@@ -234,10 +240,10 @@ class RequisicionesForm extends Form
                     ]);
             } else {
                 //crear el nuevo registro de la presentacion, en la requisicion
-                DetallesCompra::create([
-                    'folio_orden' => $this->requi_original->folio,
-                    'codigo_producto' => $item['clave'],
-                    'nombre' => $item['descripcion'],
+                DetallesRequisicion::create([
+                    'folio_requisicion' => $this->requi_original->folio,
+                    'clave_presentacion' => $item['clave'],
+                    'descripcion' => $item['descripcion'],
                     'id_proveedor' => $item['id_proveedor'],
                     'cantidad' => $item['cantidad'],
                     'costo_unitario' => $item['costo_unitario'],
@@ -249,10 +255,11 @@ class RequisicionesForm extends Form
         }
 
         //Actualizar el total de la orden
-        OrdenCompra::where('folio', $this->requi_original->folio)
+        Requisicion::where('folio', $this->requi_original->folio)
             ->first()
             ->update([
                 'tipo_orden' => $validated['tipo_orden'],
+                'observaciones' => $validated['observaciones'],
                 'cantidad' => $this->movimientos($this->presentaciones),
                 'subtotal' => $subtotal,
                 'iva' => $iva,

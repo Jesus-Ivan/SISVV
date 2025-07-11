@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Presentacion extends Model
 {
@@ -16,6 +17,14 @@ class Presentacion extends Model
     protected $guarded = ['clave'];
     //Clave primaria
     protected $primaryKey = 'clave';
+
+    /**
+     * Define la relación "uno a muchos" con los movimientos de almacén.
+     */
+    public function movimientosAlmacen(): HasMany
+    {
+        return $this->hasMany(MovimientosAlmacen::class, 'clave_presentacion', 'clave');
+    }
 
     public function proveedor(): BelongsTo
     {

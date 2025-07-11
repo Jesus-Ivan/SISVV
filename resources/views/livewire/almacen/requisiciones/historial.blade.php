@@ -1,14 +1,14 @@
 <div>
     {{-- Contenido --}}
     <div class="container py-3">
-        <div class="flex ms-3">
+        <div class="flex mx-3">
             <div class="inline-flex flex-grow">
-                <h4 class="flex items-center ms-2 text-2xl font-bold dark:text-white">HISTORIAL DE ORDENES (LEGACY)</h4>
+                <h4 class="flex items-center text-2xl font-bold dark:text-white">HISTORIAL DE REQUISICIONES</h4>
             </div>
         </div>
     </div>
     {{-- Search bar --}}
-    <div class="flex gap-4 items-end">
+    <div class="flex gap-4 items-end mx-3">
         {{-- Fecha inicio --}}
         <div>
             <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Fecha de inicio</label>
@@ -22,20 +22,14 @@
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-36 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
         </div>
         {{-- Campo de entrada --}}
-        <div class="w-64">
-            <livewire:search-input :params="[
-                'tittle_bar' => 'Codigo o nombre articulo',
-                'table_name' => 'catalogo_vista_verde',
-                'table_columns' => ['codigo', 'nombre'],
-                'primary_key' => 'codigo',
-                'event' => 'selected-articulo',
-                'dpto' => ['ALM', 'PV'],
-                'tipo' => null,
-            ]" />
+        <div class="flex-1">
+            <livewire:search-bar tittle="Codigo o nombre de presentacion" table="presentaciones" :columns="['clave', 'descripcion']"
+                primary="clave" event="selected-articulo" />
         </div>
+
         {{-- BOTON DE BUSQUEDA --}}
         <button type="button" wire:click='buscar'
-            class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+            class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
             <div wire:loading.remove wire:target='buscar'>
                 Todos
             </div>
@@ -52,28 +46,28 @@
         <table class="table  w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                    <th scope="col" class="px-6 py-3">
-                        FECHA ORDEN
+                    <th scope="col" class="px-3 py-3">
+                        FECHA REQUISICION
                     </th>
-                    <th scope="col" class="px-6 py-3">
-                        FOLIO DE COMPRA
+                    <th scope="col" class="px-3 py-3">
+                        FOLIO REQUISICION
                     </th>
-                    <th scope="col" class="px-6 py-3">
-                        CÓDIGO
+                    <th scope="col" class="px-3 py-3">
+                        #
                     </th>
-                    <th scope="col" class="px-4 py-3">
-                        DESCRIPCIÓN
+                    <th scope="col" class="px-3 py-3">
+                        PRESENTACION
                     </th>
-                    <th scope="col" class="px-4 py-3">
+                    <th scope="col" class="px-3 py-3">
                         CANTIDAD
                     </th>
-                    <th scope="col" class="px-4 py-3">
+                    <th scope="col" class="px-3 py-3">
                         COSTO UNITARIO
                     </th>
-                    <th scope="col" class="px-4 py-3">
+                    <th scope="col" class="px-3 py-3">
                         TOTAL
                     </th>
-                    <th scope="col" class="px-6 py-3">
+                    <th scope="col" class="px-3 py-3">
                         IVA
                     </th>
                 </tr>
@@ -82,29 +76,29 @@
                 @foreach ($this->productos as $index => $producto)
                     <tr wire:key='{{ $index }}'
                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <td class="px-6 py-4">
-                            {{ $producto->fecha }}
+                        <td class="px-3 py-2">
+                            {{ $producto->created_at }}
                         </td>
-                        <td class="px-6 py-4">
-                            {{ $producto->folio_orden }}
+                        <td class="px-3 py-2">
+                            {{ $producto->folio_requisicion }}
                         </td>
-                        <td class="px-6 py-4">
-                            {{ $producto->codigo_producto }}
+                        <td class="px-3 py-2">
+                            {{ $producto->clave_presentacion }}
                         </td>
-                        <td class="px-6 py-4">
-                            {{ $producto->nombre }}
+                        <td class="px-3 py-2">
+                            {{ $producto->descripcion }}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-3 py-2">
                             {{ $producto->cantidad }}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-3 py-2">
                             ${{ $producto->costo_unitario }}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-3 py-2">
                             ${{ $producto->importe }}
                         </td>
-                        <td class="px-6 py-4">
-                            ${{ $producto->iva }}
+                        <td class="px-3 py-2">
+                            {{ $producto->iva }} %
                         </td>
                     </tr>
                 @endforeach

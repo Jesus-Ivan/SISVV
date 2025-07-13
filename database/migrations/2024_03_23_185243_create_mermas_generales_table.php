@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('nombre', 255);
             $table->string('clave_bodega_origen', 50);
             $table->decimal('cantidad', 10, 3);
-            $table->int('id_unidad');
-            $table->int('id_tipo_merma');
+            $table->integer('id_unidad');
+            $table->integer('id_tipo_merma');
             $table->string('usuario', 255);
             $table->string('observaciones', 255)->nullable();
             $table->timestamps();

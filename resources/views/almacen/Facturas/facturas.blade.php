@@ -20,6 +20,6 @@
     </div>
 
     <div>
-        <livewire:almacen.facturas.facturas />
+        <livewire:almacen.facturas.principal />
     </div>
 </x-app-layout>

@@ -23,13 +23,25 @@ class Historial extends Component
     #[Computed()]
     public function productos()
     {
+        $columns = [
+            'requisiciones.created_at',
+            'detalles_requisiciones.id',
+            'detalles_requisiciones.folio_requisicion',
+            'detalles_requisiciones.clave_presentacion',
+            'detalles_requisiciones.descripcion',
+            'detalles_requisiciones.cantidad',
+            'detalles_requisiciones.costo_unitario',
+            'detalles_requisiciones.iva',
+            'detalles_requisiciones.costo_con_impuesto',
+            'detalles_requisiciones.importe',
+        ];
         if ($this->selected_codigo) {
             return DB::table('detalles_requisiciones')
                 ->join('requisiciones', 'detalles_requisiciones.folio_requisicion', '=', 'requisiciones.folio')
                 ->where('clave_presentacion', $this->selected_codigo)
                 ->whereDate('requisiciones.created_at', '>=', $this->fInicio)
                 ->whereDate('requisiciones.created_at', '<=', $this->fFin)
-                ->select('requisiciones.created_at', 'detalles_requisiciones.*')
+                ->select($columns)
                 ->orderBy('id', "DESC")
                 ->paginate(20);
         } else {
@@ -37,7 +49,7 @@ class Historial extends Component
                 ->join('requisiciones', 'detalles_requisiciones.folio_requisicion', '=', 'requisiciones.folio')
                 ->whereDate('requisiciones.created_at', '>=', $this->fInicio)
                 ->whereDate('requisiciones.created_at', '<=', $this->fFin)
-                ->select('requisiciones.created_at', 'detalles_requisiciones.*')
+                ->select($columns)
                 ->orderBy('id', "DESC")
                 ->paginate(20);
         }

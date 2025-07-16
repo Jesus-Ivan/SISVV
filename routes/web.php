@@ -141,6 +141,13 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::view('/nueva', 'almacen.Presentaciones.nueva-presentacion')->name('almacen.presentaciones.nueva');
         Route::view('/editar/{clave}', 'almacen.Presentaciones.editar-presentacion')->name('almacen.presentaciones.editar');
     });
+
+    Route::prefix('documentos')->group(function () {
+        Route::get('existencias', [ReportesController::class, 'getExistencias'])->name('almacen.documentos.existencias');
+        Route::post('existencias', [ReportesController::class, 'postExistencias'])->name('almacen.documentos.existencias');
+        Route::get('tabla-inv-sem', [ReportesController::class, 'getInvSemanal'])->name('almacen.documentos.inv-sem');
+        Route::post('tabla-inv-sem', [ReportesController::class, 'postInvSemanal'])->name('almacen.documentos.inv-sem');
+    });
 });
 
 Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function () {

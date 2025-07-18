@@ -3,7 +3,7 @@
 namespace App\Livewire\Almacen\Inventario;
 
 use App\Constants\AlmacenConstants;
-
+use App\Libraries\InventarioService;
 use App\Models\Bodega;
 use App\Models\ConceptoAlmacen;
 use App\Models\DetallesInventario;
@@ -74,6 +74,9 @@ class InventarioNuevo extends Component
         //Obtenemos la bodega seleccionada, apartir de su clave.
         $bodega = $this->bodegas->find($validated['clave_bodega']);
 
+        //Instanciar objeto para consultar las existencias
+        $service = new InventarioService();
+
         //Para cada grupo, en la lista de grupos seleccionados
         foreach ($this->lista_grupos as $id => $status) {
             //Si status es true
@@ -81,11 +84,17 @@ class InventarioNuevo extends Component
                 //Si la naturaleza de la bodega seleccionada es de 'presentaciones'
                 if ($bodega->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
                     //Fusionar el array de resultados provisto de la consulta
-                    $this->table = array_merge($this->table, $this->consultarPresentaciones(Grupos::find($id)));
+                    $this->table = array_merge(
+                        $this->table,
+                        $service->consultarPresentaciones(Grupos::find($id), $validated['fecha_inv'], $validated['hora_inv'], $validated['clave_bodega'])
+                    );
                     $this->actualizarTotalesPresentacion();
                 } else {
                     //Fusionar el array de resultados provisto de la consulta
-                    $this->table = array_merge($this->table, $this->consultarInsumos(Grupos::find($id)));
+                    $this->table = array_merge(
+                        $this->table,
+                        $service->consultarInsumos(Grupos::find($id), $validated['fecha_inv'], $validated['hora_inv'], $validated['clave_bodega'])
+                    );
                     $this->actualizarTotalesInsumo();
                 }
             }
@@ -174,6 +183,7 @@ class InventarioNuevo extends Component
                 MovimientosAlmacen::create([
                     'folio_inventario' => $inv_fisico->folio,
                     'clave_concepto' => $row['clave_concepto'],
+                    'clave_insumo' => $row['clave_insumo_base'],
                     'clave_presentacion' => $row['clave'],
                     'descripcion' => $row['descripcion'],
                     'clave_bodega' => $inv_fisico->clave_bodega,
@@ -264,103 +274,6 @@ class InventarioNuevo extends Component
             if (! strlen($this->table[$index]['clave_concepto']))
                 throw new Exception('Falta concepto en: ' . $this->table[$index]['descripcion']);
         }
-    }
-
-    /**
-     * Esta funcion consulta las existencias de las presentaciones. 
-     */
-    private function consultarPresentaciones(Grupos $grupoInsumo)
-    {
-        //Preparamos la fecha limite
-        $fechaLimite = Carbon::parse($this->fecha_inv . $this->hora_inv);
-        //Array auxiliar
-        $result = [];
-        //Array de condiciones 
-        $condiciones = [
-            ['fecha_existencias', '<=', $fechaLimite->toDateTimeString()],
-            ['clave_bodega', '=', $this->clave_bodega]
-        ];
-        //Obtenemos las presentaciones activas con las existencias
-        $existencias = Presentacion::query()
-            ->where([
-                ['estado', '=', 1],
-                ['id_grupo', '=', $grupoInsumo->id]
-            ])
-            ->withSum([
-                'movimientosAlmacen' => fn($query) => $query->where($condiciones)
-            ], 'cantidad_presentacion')
-            ->withSum([
-                'movimientosAlmacen' => fn($query) => $query->where($condiciones)
-            ], 'cantidad_insumo')
-            ->get();
-        //Simplificar el array y agregar atributo extra.
-        foreach ($existencias as $row) {
-            $result[] = [
-                'clave' => $row->clave,
-                'descripcion' => $row->descripcion,
-                'id_grupo' => $row->id_grupo,
-                'costo' => $row->costo,
-                'iva' => $row->iva,
-                'costo_con_impuesto' => $row->costo_con_impuesto,
-                'clave_insumo_base' => $row->clave_insumo_base,
-                'rendimiento' => $row->rendimiento,
-                'existencias_presentacion' => $row->movimientos_almacen_sum_cantidad_presentacion ?: 0,
-                'existencias_insumo' => $row->movimientos_almacen_sum_cantidad_insumo ?: 0,
-                'existencias_real' => $row->movimientos_almacen_sum_cantidad_presentacion ?: 0,
-                'diferencia' => 0,
-                'diferencia_importe' => 0,
-                'clave_concepto' => ''
-            ];
-        }
-
-        return $result;
-    }
-
-    /**
-     * Esta funcion consulta las existencias de los insumos. 
-     */
-    private function consultarInsumos(Grupos $grupoInsumo)
-    {
-        //Preparamos la fecha limite
-        $fechaLimite = Carbon::parse($this->fecha_inv . $this->hora_inv);
-        //Array auxiliar
-        $result = [];
-        //Array de condiciones 
-        $condiciones = [
-            ['fecha_existencias', '<=', $fechaLimite->toDateTimeString()],
-            ['clave_bodega', '=', $this->clave_bodega]
-        ];
-        //Obtenemos las presentaciones activas con las existencias
-        $existencias = Insumo::query()->with('unidad')
-            ->where([
-                ['inventariable', '=', 1],
-                ['id_grupo', '=', $grupoInsumo->id]
-            ])
-            ->withSum([
-                'movimientosAlmacen' => fn($query) => $query->where($condiciones)
-            ], 'cantidad_insumo')
-            ->get();
-        //Simplificar el array y agregar atributo extra.
-        foreach ($existencias as $row) {
-            $result[] = [
-                'clave' => $row->clave,
-                'descripcion' => $row->descripcion,
-                'id_grupo' => $row->id_grupo,
-                'unidad_descripcion' => $row->unidad->descripcion,
-                'costo' => $row->costo,
-                'iva' => $row->iva,
-                'costo_con_impuesto' => $row->costo_con_impuesto,
-                'clave_insumo_base' => $row->clave_insumo_base,
-                'rendimiento' => $row->rendimiento,
-                'existencias_insumo' => $row->movimientos_almacen_sum_cantidad_insumo ?: 0,
-                'existencias_real' => $row->movimientos_almacen_sum_cantidad_insumo ?: 0,
-                'diferencia' => 0,
-                'diferencia_importe' => 0,
-                'clave_concepto' => ''
-            ];
-        }
-
-        return $result;
     }
 
     /**

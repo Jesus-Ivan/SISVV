@@ -62,7 +62,7 @@
                         CANTIDAD
                     </th>
                     <th scope="col" class="px-3 py-3">
-                        COSTO UNITARIO
+                        COSTO C.IMPUESTO
                     </th>
                     <th scope="col" class="px-3 py-3">
                         TOTAL
@@ -92,7 +92,7 @@
                             {{ $producto->cantidad }}
                         </td>
                         <td class="px-3 py-2">
-                            ${{ $producto->costo_unitario }}
+                            ${{ $producto->costo_con_impuesto }}
                         </td>
                         <td class="px-3 py-2">
                             ${{ $producto->importe }}

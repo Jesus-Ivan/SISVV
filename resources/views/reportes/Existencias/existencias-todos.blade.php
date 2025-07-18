@@ -82,7 +82,7 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
                 @foreach ($bodegas as $item)
                     <td>{{ $articulo[$item->clave] }}</td>
                 @endforeach
-                <td>10-04-2025</td>
+                <td>{{ $articulo['ultima_compra'] }}</td>
             </tr>
         @endforeach
     </tbody>

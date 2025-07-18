@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DetallesRequisicion extends Model
@@ -17,4 +18,8 @@ class DetallesRequisicion extends Model
     //Clave primaria
     protected $primaryKey = 'id';
 
+    public function presentacion(): BelongsTo
+    {
+        return $this->belongsTo(Presentacion::class, 'clave_presentacion', 'clave');
+    }
 }

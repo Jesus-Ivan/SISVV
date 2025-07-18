@@ -978,6 +978,13 @@ class ReportesController extends Controller
         $service = new InventarioService(); //Objeto para consultar existencias
         $result = [];       //Array auxiliar
 
+        //Validamos
+        $validated = $request->validate([
+            'fecha' => ['required'],
+            'hora' => ['required'],
+            'selected_grupos' => ['required']
+        ]);
+
         //Obtenemos todas las bodegas de tipo interna
         $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
 
@@ -986,17 +993,29 @@ class ReportesController extends Controller
             //Cambiar la ruta de la vista
             $view_path = 'reportes.existencias.existencias-todos';
             //Obtener el array inicial con los insumos y las columnas de las bodegas
-            $result = $service->obtenerTodosInsumos($grupos, $bodegas);
+            $result = $service->obtenerTodosInsumos($grupos, $bodegas, $folio);
 
             //Para cada bodega
             foreach ($bodegas as $b) {
                 $temp = []; //Limipar el array temporal (que contiene las existencias de 1 sola bodega)
-                foreach ($grupos as $grupo_id) {
-                    //Consultar las existencias
-                    $temp = array_merge(
-                        $temp,
-                        $service->consultarInsumos(Grupos::find($grupo_id), $fecha, $hora, $b->clave)
-                    );
+                //Si hay un folio de requi
+                if (!is_null($folio)) {
+                    //Buscar las existencias por clave de insumo y clave de bodega
+                    foreach ($result as $key => $insum) {
+                        $temp = array_merge(
+                            $temp,
+                            $service->existenciasInsumo($insum['clave'], $fecha, $hora, $b->clave)
+                        );
+                    }
+                } else {
+                    //Buscar las existencias por clave de grupo y clave de bodega
+                    foreach ($grupos as $grupo_id) {
+                        //Unir los resultados de cada consulta
+                        $temp = array_merge(
+                            $temp,
+                            $service->consultarInsumos(Grupos::find($grupo_id), $fecha, $hora, $b->clave)
+                        );
+                    }
                 }
                 //Para todas las existencias obtenidas (almacenadas en el array temporal).
                 foreach ($temp as $i => $row_insumo) {
@@ -1007,11 +1026,18 @@ class ReportesController extends Controller
         } else {
             //Si la naturaleza de la bodega es de  'Insumos'
             if ($bodega->naturaleza == AlmacenConstants::INSUMOS_KEY) {
-                foreach ($grupos as $grupo_id) {
-                    $result = array_merge(
-                        $result,
-                        $service->consultarInsumos(Grupos::find($grupo_id), $fecha, $hora, $bodega->clave)
-                    );
+                //Si hay un folio de requi
+                if (!is_null($folio)) {
+                    //Buscar las existencias por folio de requi. y clave de bodega
+                    $result = $service->existenciasInsumoRequi($folio, $fecha, $hora, $bodega->clave);
+                } else {
+                    //Buscar las existencias por clave de grupo y clave de bodega
+                    foreach ($grupos as $grupo_id) {
+                        $result = array_merge(
+                            $result,
+                            $service->consultarInsumos(Grupos::find($grupo_id), $fecha, $hora, $bodega->clave)
+                        );
+                    }
                 }
                 $view_path = 'reportes.existencias.existencias-insumos';    //vista del reporte para los insumos
             } elseif ($bodega->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
@@ -1068,6 +1094,12 @@ class ReportesController extends Controller
         $fecha = $request->input('fecha');
         $grupos = $request->input('selected_grupos');   //Array de los id de grupos seleccionados
         $bodega = Bodega::find($request->input('clave_bodega'));
+
+        //Validamos
+        $validated = $request->validate([
+            'fecha' => ['required'],
+            'selected_grupos' => ['required']
+        ]);
 
         //Crear el array de fechas (hasta 6 dias despues)
         $fechas = [];

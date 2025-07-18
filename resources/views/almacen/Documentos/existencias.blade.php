@@ -38,15 +38,12 @@
                                 </option>
                             @endforeach
                         </select>
-                        @error('clave_bodega')
-                            <x-input-error messages="{{ $message }}" />
-                        @enderror
                     </div>
                     {{-- SELECT FECHA --}}
                     <div>
                         <input type="date" value="{{ $fecha }}" id="fecha" name="fecha"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
-                        @error('fecha_inv')
+                        @error('fecha')
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>
@@ -54,7 +51,7 @@
                     <div>
                         <input type="time" value="{{ $hora }}" id="hora" name="hora"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
-                        @error('hora_inv')
+                        @error('hora')
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>
@@ -68,7 +65,7 @@
             </div>
             {{-- Tabla grupos insumos --}}
             <div class="p-3">
-                <table class=" w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                <table class=" w-full max-h-96 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
                             <th scope="col" class="w-16 px-4 py-3">
@@ -109,6 +106,9 @@
                         @endforeach
                     </tbody>
                 </table>
+                @error('selected_grupos')
+                    <x-input-error messages="{{ $message }}" />
+                @enderror
             </div>
         </form>
     </div>

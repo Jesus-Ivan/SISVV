@@ -978,12 +978,19 @@ class ReportesController extends Controller
         $service = new InventarioService(); //Objeto para consultar existencias
         $result = [];       //Array auxiliar
 
-        //Validamos
-        $validated = $request->validate([
+        //Definir reglas de validacion inicial
+        $rules = [
             'fecha' => ['required'],
             'hora' => ['required'],
             'selected_grupos' => ['required']
-        ]);
+        ];
+        //Si hay folio de requisicion
+        if (!is_null($folio)) {
+            //Retirar la regla 'selected_grupos'
+            unset($rules['selected_grupos']);
+        }
+        //Validamos la peticion
+        $validated = $request->validate($rules);
 
         //Obtenemos todas las bodegas de tipo interna
         $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
@@ -1024,31 +1031,28 @@ class ReportesController extends Controller
                 }
             }
         } else {
-            //Si la naturaleza de la bodega es de  'Insumos'
-            if ($bodega->naturaleza == AlmacenConstants::INSUMOS_KEY) {
-                //Si hay un folio de requi
-                if (!is_null($folio)) {
-                    //Buscar las existencias por folio de requi. y clave de bodega
-                    $result = $service->existenciasInsumoRequi($folio, $fecha, $hora, $bodega->clave);
-                } else {
+            //Si hay un folio de requi
+            if (!is_null($folio)) {
+                //Buscar las existencias de la requisicion
+                $result = $service->obtenerExistenciasRequi($folio, $fecha, $hora, $bodega->clave, $bodega->naturaleza);
+            } else {
+                if ($bodega->naturaleza == AlmacenConstants::INSUMOS_KEY) {
                     //Buscar las existencias por clave de grupo y clave de bodega
-                    foreach ($grupos as $grupo_id) {
+                    foreach ($grupos as $grupo_id)
                         $result = array_merge(
                             $result,
                             $service->consultarInsumos(Grupos::find($grupo_id), $fecha, $hora, $bodega->clave)
                         );
-                    }
+                } else {
+                    //Buscar las existencias por clave de grupo y clave de bodega
+                    foreach ($grupos as $grupo_id)
+                        $result = array_merge(
+                            $result,
+                            $service->consultarPresentaciones(Grupos::find($grupo_id), $fecha, $hora, $bodega->clave)
+                        );
                 }
-                $view_path = 'reportes.existencias.existencias-insumos';    //vista del reporte para los insumos
-            } elseif ($bodega->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
-                foreach ($grupos as $grupo_id) {
-                    $result = array_merge(
-                        $result,
-                        $service->consultarPresentaciones(Grupos::find($grupo_id), $fecha, $hora, $bodega->clave)
-                    );
-                }
-                $view_path = 'reportes.existencias.existencias-presentaciones'; //vista del reporte para los insumos
             }
+            $view_path = $service->getView($bodega->naturaleza);
         }
 
         //Cargar la vista del reporte

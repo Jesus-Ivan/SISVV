@@ -2,6 +2,7 @@
 
 namespace App\Libraries;
 
+use App\Constants\AlmacenConstants;
 use App\Models\DetallesRequisicion;
 use App\Models\Grupos;
 use App\Models\Insumo;
@@ -116,7 +117,7 @@ class InventarioService
      * Genera el array inicial, con los nombres de TODOS los insumos a consultar (en los N grupos).\
      * Ademas, agrega las claves de las bodegas, como columnas al array
      */
-    public function obtenerTodosInsumos(array $claves_grupos, $bodegas, $folio = null)
+    public function obtenerTodosInsumos(array|null $claves_grupos, $bodegas, $folio = null)
     {
         $result = [];
         //si hay un folio
@@ -194,9 +195,94 @@ class InventarioService
     }
 
     /**
-     * Consulta las esistencias de los insumos en base a una requisicon
+     * Consulta las existencias de los insumos en base a una requisicon, 
      */
-    public function existenciasInsumoRequi(){
+    public function obtenerExistenciasRequi($folio, $fecha_inv, $hora_inv, $clave_bodega, $tipo_bodega)
+    {
+        //Preparamos la fecha limite
+        $fechaLimite = Carbon::parse($fecha_inv . $hora_inv);
 
+        //Obtener las presentaciones de la requisicion
+        $detalles = DetallesRequisicion::with('presentacion')
+            ->where('folio_requisicion', $folio)
+            ->get();
+
+        //Buscar cada insumo base de la requisicion
+        foreach ($detalles as $key => $detalle) {
+            $insumos[] = Insumo::select('clave', 'descripcion', 'id_grupo', 'id_unidad', 'ultima_compra')
+                ->where('clave', $detalle->presentacion->clave_insumo_base)
+                ->first();
+        }
+
+        //Array auxiliar
+        $result = [];
+        //Array de condiciones para la consulta
+        $condiciones = [
+            ['fecha_existencias', '<=', $fechaLimite->toDateTimeString()],
+            ['clave_bodega', '=', $clave_bodega]
+        ];
+
+        if ($tipo_bodega == AlmacenConstants::INSUMOS_KEY) {
+            //Consultar cada existencia insumos asociados a la requisicion 
+            foreach ($insumos as $insumo) {
+                //Obtener las existencias de 1 insumo
+                $existencias_insumo = Insumo::query()->with('unidad')
+                    ->where('clave', $insumo->clave)
+                    ->withSum([
+                        'movimientosAlmacen' => fn($query) => $query->where($condiciones)
+                    ], 'cantidad_insumo')
+                    ->first();
+
+                $result[] = [
+                    'clave' => $existencias_insumo->clave,
+                    'descripcion' => $existencias_insumo->descripcion,
+                    'unidad_descripcion' => $existencias_insumo->unidad->descripcion,
+                    'costo' => $existencias_insumo->costo,
+                    'iva' => $existencias_insumo->iva,
+                    'costo_con_impuesto' => $existencias_insumo->costo_con_impuesto,
+                    'existencias_insumo' => $existencias_insumo->movimientos_almacen_sum_cantidad_insumo ?: 0,
+                    'existencias_real' => $existencias_insumo->movimientos_almacen_sum_cantidad_insumo ?: 0,
+                    'ultima_compra' => $existencias_insumo->ultima_compra
+                ];
+            }
+        } elseif ($tipo_bodega == AlmacenConstants::PRESENTACION_KEY) {
+            //Consultar cada existencia de las presentaciones asociadas a la requisicion 
+            foreach ($detalles as $detalle) {
+                //Obtener las existencias de 1 presentacion
+                $existencias_pre = Presentacion::query()
+                    ->where('clave', $detalle->clave_presentacion)
+                    ->withSum([
+                        'movimientosAlmacen' => fn($query) => $query->where($condiciones)
+                    ], 'cantidad_presentacion')
+                    ->first();
+
+                $result[] = [
+                    'clave' => $existencias_pre->clave,
+                    'descripcion' => $existencias_pre->descripcion,
+                    'costo' => $existencias_pre->costo,
+                    'iva' => $existencias_pre->iva,
+                    'costo_con_impuesto' => $existencias_pre->costo_con_impuesto,
+                    'clave_insumo_base' => $existencias_pre->clave_insumo_base,
+                    'existencias_presentacion' => $existencias_pre->movimientos_almacen_sum_cantidad_presentacion ?: 0,
+                    'existencias_real' => $existencias_pre->movimientos_almacen_sum_cantidad_presentacion ?: 0,
+                    'ultima_compra' => $existencias_pre->ultima_compra
+                ];
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Obtener la ruta de la vista, segun el tipo de bodega
+     */
+    public function getView($tipo_bodega)
+    {
+        if ($tipo_bodega == AlmacenConstants::INSUMOS_KEY) {
+            $view_path = 'reportes.existencias.existencias-insumos';    //vista del reporte para los insumos
+        } elseif ($tipo_bodega == AlmacenConstants::PRESENTACION_KEY) {
+            $view_path = 'reportes.existencias.existencias-presentaciones';    //vista del reporte para las presentaciones
+        }
+
+        return $view_path;
     }
 }

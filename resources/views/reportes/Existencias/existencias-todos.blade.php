@@ -1,6 +1,6 @@
 <style>
     html {
-        font-size: small;
+        font-size: x-small;
         margin: 16pt;
     }
 
@@ -68,7 +68,7 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
             <th style="width: 30%">INSUMOS</th>
             <th style="width: fit-content">UNIDAD</th>
             @foreach ($bodegas as $i => $item)
-                <th style="width: 7%">{{ substr($item->descripcion, 0, 3) }}</th>
+                <th>{{ substr($item->descripcion, 0, 3) }}</th>
             @endforeach
             <th>U.COMPRA</th>
         </tr>

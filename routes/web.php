@@ -148,6 +148,12 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::get('tabla-inv-sem', [ReportesController::class, 'getInvSemanal'])->name('almacen.documentos.inv-sem');
         Route::post('tabla-inv-sem', [ReportesController::class, 'postInvSemanal'])->name('almacen.documentos.inv-sem');
     });
+
+    Route::prefix('entradas-v2')->group(function () {
+        //view de la tabla de productos
+        Route::view('/', 'almacen.Productos.productos')->name('almacen.entradav2');
+        Route::view('/nueva', 'almacen.Productos.nuevo-producto')->name('almacen.entradav2.nueva');
+    });
 });
 
 Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function () {

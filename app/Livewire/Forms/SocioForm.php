@@ -48,6 +48,7 @@ class SocioForm extends Form
     public $img_path_integrante;
     public $fecha_nac;
     public $parentesco;
+    public $tel_integrante;
     public $integrantes = [];       //Integrantes temporales (utilizado en para crearlos en el registro)
 
     public $integrantes_BD = [];    //Integrantes que ya estan registrados
@@ -63,6 +64,7 @@ class SocioForm extends Form
     public $editando_fecha_nac;
     public $editando_parentesco;
     public $editando_img_path_integrante;
+    public $editando_tel_integrante;
 
     // Propiedad auxiliar para eliminar un integrante
     public $integrante_eliminar;
@@ -140,6 +142,7 @@ class SocioForm extends Form
         $this->editando_apellido_m_integrante = $miembro['apellido_m_integrante'];
         $this->editando_fecha_nac = $miembro['fecha_nac'];
         $this->editando_parentesco = $miembro['parentesco'];
+        $this->editando_tel_integrante = $miembro['tel_integrante'];
     }
     public function selectMiembro(array $miembro)
     {
@@ -172,7 +175,8 @@ class SocioForm extends Form
             'editando_apellido_m_integrante' => "required|max:30",
             'editando_fecha_nac' => "max:10",
             'editando_parentesco' => "required|max:20",
-            'editando_img_path_integrante' => "max:255"
+            'editando_img_path_integrante' => "max:255",
+            'editando_tel_integrante' => "max:10",
         ]);
         //verificamos si existe una imagen cargada en la edicion.
         if ($this->editando_img_path_integrante) {
@@ -192,6 +196,7 @@ class SocioForm extends Form
             'fecha_nac' => $validated['editando_fecha_nac'],
             'parentesco' => $validated['editando_parentesco'],
             'img_path_integrante' => $validated['editando_img_path_integrante'],
+            'tel_integrante' => $validated['editando_tel_integrante'],
         ]);
         $this->cleanEdit();
     }
@@ -290,7 +295,8 @@ class SocioForm extends Form
             'apellido_m_integrante' => "required|max:30",
             'fecha_nac' => "max:10",
             'parentesco' => "required|max:20",
-            'img_path_integrante' => "max:255"
+            'img_path_integrante' => "max:255",
+            'tel_integrante' => "max:10"
         ]);
         //Agregamos marca de tiempo como id temporal
         $validated['temp'] =  time();
@@ -298,7 +304,7 @@ class SocioForm extends Form
         array_push($this->integrantes, $validated);
 
         //Limpiamos los campos 
-        $this->reset('nombre_integrante', 'apellido_p_integrante', 'apellido_m_integrante', 'img_path_integrante', 'fecha_nacimiento', 'parentesco');
+        $this->reset('nombre_integrante', 'apellido_p_integrante', 'apellido_m_integrante', 'img_path_integrante', 'fecha_nacimiento', 'parentesco', 'tel_integrante');
     }
     //Elimina un miembro de memoria (utilizado en la vista socios-nuevo.blade.php)
     public function quitarMiembro($temp)
@@ -386,13 +392,14 @@ class SocioForm extends Form
             'apellido_m_integrante' => "required|max:50",
             'fecha_nac' => "max:10",
             'parentesco' => "required|max:20",
-            'img_path_integrante' => "max:255"
+            'img_path_integrante' => "max:255",
+            'tel_integrante' => "max:10",
         ]);
         //Creamos el integrante
         $this->crearIntegranteBD($validated, $this->socio->id);
         //Buscamos los nuevos integrantes del socio
         $this->setIntegrantes($this->socio);
-        $this->reset('nombre_integrante', 'apellido_p_integrante', 'apellido_m_integrante', 'fecha_nac', 'parentesco', 'img_path_integrante');
+        $this->reset('nombre_integrante', 'apellido_p_integrante', 'apellido_m_integrante', 'fecha_nac', 'parentesco', 'img_path_integrante', 'tel_integrante');
     }
 
     //Encargada de insertar el registro en la BD y almacenar la imagen
@@ -409,7 +416,8 @@ class SocioForm extends Form
             'apellido_m_integrante' => $integrante['apellido_m_integrante'],
             'fecha_nac' => $integrante['fecha_nac'],
             'parentesco' => $integrante['parentesco'],
-            'img_path_integrante' => $ruta
+            'img_path_integrante' => $ruta,
+            'tel_integrante' => $integrante['tel_integrante']
         ]);
     }
 

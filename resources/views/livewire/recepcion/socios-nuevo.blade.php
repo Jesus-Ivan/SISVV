@@ -274,8 +274,8 @@
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>
-                    <div class="w-full">
-                        <div>
+                    <div class="w-full flex gap-3">
+                        <div class="w-full">
                             <label for="membresias"
                                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Parentesco</label>
                             <select wire:model='formSocio.parentesco' id="membresias"
@@ -296,6 +296,13 @@
                             @error('formSocio.parentesco')
                                 <x-input-error messages="{{ $message }}" />
                             @enderror
+                        </div>
+                        <div class="w-full">
+                            <label for="tel_integrante"
+                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Celular</label>
+                            <input type="tel" id="tel_integrante" wire:model="formSocio.tel_integrante"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                required />
                         </div>
                     </div>
                     <!-- Subir foto -->
@@ -356,6 +363,9 @@
                             NOMBRE(S)
                         </th>
                         <th scope="col" class="px-6 py-3 min-w-52">
+                            CELULAR
+                        </th>
+                        <th scope="col" class="px-6 py-3 min-w-52">
                             FECHA NACIMIENTO
                         </th>
                         <th scope="col" class="px-6 py-3 max-w-fit">
@@ -393,6 +403,9 @@
                             </td>
                             <td class="px-6 py-4">
                                 {{ $integrante['nombre_integrante'] }}
+                            </td>
+                            <td class="px-6 py-4">
+                                {{ $integrante['tel_integrante'] }}
                             </td>
                             <td class=" px-6 py-4">
                                 {{ $integrante['fecha_nac'] }}

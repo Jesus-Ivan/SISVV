@@ -68,7 +68,7 @@
                                 {{ $entrada->folio }}
                             </td>
                             <td class="px-6 py-2">
-                                {{ $entrada->folio_orden_compra }}
+                                {{ $entrada->folio_requisicion }}
                             </td>
                             <td class="px-6 py-2">
                                 {{ $entrada->fecha_existencias }}

@@ -20,7 +20,7 @@
             {{-- Select de bodega --}}
             <select id="bodega" wire:model.live='clave_bodega' id="disabled-input" aria-label="disabled input"
                 disabled
-                class="bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                class="bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-fit p-1.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500">
                 <option selected value="{{ null }}">BODEGA</option>
                 @foreach ($this->bodegas as $b)
                     <option value="{{ $b->clave }}">{{ $b->descripcion }}</option>
@@ -47,15 +47,25 @@
                 <x-input-error messages="{{ $message }}" />
             @enderror
         </div>
+        {{-- proveedor general --}}
+        <div>
+            <select wire:change='actualizarProveedor($event.target.value)'
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <option value="{{ null }}" selected>Proveedor...</option>
+                @foreach ($this->proveedores as $p)
+                    <option wire:key='{{ $p->id }}' value="{{ $p->id }}">{{ $p->nombre }}</option>
+                @endforeach
+            </select>
+        </div>
         <div class="flex grow justify-end">
             <input type="text" wire:model='observaciones'
-                class="max-w-md bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                class="h-9 max-w-md bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="Observaciones ..." />
         </div>
 
     </div>
     {{-- Tabla de resultados --}}
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <div class="relative overflow-y-auto shadow-md sm:rounded-lg h-96">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
@@ -113,6 +123,7 @@
                         </td>
                         <td class="px-3 py-2">
                             <input type="number" wire:model='articulos_table.{{ $index }}.cantidad'
+                                wire:change='actualizarImporte({{ $index }})'
                                 class="max-w-24 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="0.0" />
                         </td>
@@ -122,17 +133,20 @@
                         <td class="px-3 py-2 flex items-center">
                             $
                             <input type="number" wire:model='articulos_table.{{ $index }}.costo'
+                                wire:change='updateCostoIva({{ $index }})'
                                 class="max-w-28 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="0.0" />
                         </td>
                         <td class="px-3 py-2">
                             <input type="number" wire:model='articulos_table.{{ $index }}.iva'
+                                wire:change='updateCostoIva({{ $index }})'
                                 class="max-w-16 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="0.0" />
                         </td>
                         <td class="px-3 py-2 flex items-center">
                             $
                             <input type="number" wire:model='articulos_table.{{ $index }}.costo_con_impuesto'
+                                wire:change='updateCostoSinIva({{ $index }})'
                                 class="max-w-28 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="0.0" />
                         </td>
@@ -167,12 +181,12 @@
                     <div class="relative">
                         <div class="inline-flex gap-2">
                             {{-- Folio requi --}}
-                            <input type="text"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                            <input type="text" wire:keyup.enter='buscarRequisicion'
+                                class="{{ $locked_bodega ? 'cursor-not-allowed pointer-events-none' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="Folio requisicion" wire:model='folio_requi' />
                             {{-- Select de bodega --}}
                             <select id="bodega" wire:model='clave_bodega' wire:change ='actualizarItems'
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                class="{{ $locked_bodega ? 'cursor-not-allowed pointer-events-none' : '' }}  bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 <option selected value="{{ null }}">BODEGA</option>
                                 @foreach ($this->bodegas as $b)
                                     <option value="{{ $b->clave }}">{{ $b->descripcion }}</option>
@@ -181,17 +195,18 @@
                             {{-- Input search --}}
                             <div class="relative">
                                 <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                                    <svg wire:loading.delay.remove wire:target='search_input'
+                                        class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
                                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                                             stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
                                     </svg>
+                                    <!--Loading indicator-->
+                                    <div wire:loading.delay wire:target='search_input'>
+                                        @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
+                                    </div>
+                                </div>
 
-                                </div>
-                                <!--Loading indicator-->
-                                <div wire:loading.delay wire:target='search_input'>
-                                    @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
-                                </div>
                                 <input type="text" wire:model.live.debounce.500ms="search_input"
                                     class="w-96 p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                     placeholder="Código o Descripción" />
@@ -199,8 +214,9 @@
                         </div>
                     </div>
                     <!-- Result table-->
-                    <div class="overflow-y-auto h-80 my-2">
-                        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                    <div class="overflow-y-auto h-80 my-2" wire:loading.class='animate-pulse'
+                        wire:target='actualizarItems, buscarRequisicion'>
+                        <table class=" w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                             <thead
                                 class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                                 <tr>

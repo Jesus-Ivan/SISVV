@@ -20,6 +20,7 @@ class AlmacenConstants
 
     public const ALIMENTOS_KEY = "ALIMENTOS";
     public const BEBIDAS_KEY = "BEBIDAS";
+    public const OTROS_KEY = "OTROS";
     /**
      * Es el valor contenido en la columna 'tipo' de la tabla 'grupos'. 
      * Referente a los grupos disponibles para insumos y presentaciones\

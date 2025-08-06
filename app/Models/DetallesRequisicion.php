@@ -17,4 +17,8 @@ class DetallesRequisicion extends Model
     //Clave primaria
     protected $primaryKey = 'id';
 
+    public function presentacion()
+    {
+        return $this->belongsTo(Presentacion::class, 'clave_presentacion', 'clave');
+    }
 }

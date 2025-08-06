@@ -107,7 +107,8 @@ class Insumos extends Component
             [
                 'clasificaciones' => [
                     AlmacenConstants::ALIMENTOS_KEY,
-                    AlmacenConstants::BEBIDAS_KEY
+                    AlmacenConstants::BEBIDAS_KEY,
+                    AlmacenConstants::OTROS_KEY,
                 ],
                 'listaInsumos' => $insumos
             ]

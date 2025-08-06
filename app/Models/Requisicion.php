@@ -20,4 +20,9 @@ class Requisicion extends Model
     {
         return $this->belongsTo(User::class, 'id_user', 'id');
     }
+
+    public function detalles()
+    {
+        return $this->hasMany(DetallesRequisicion::class, 'folio_requisicion', 'folio');
+    }
 }

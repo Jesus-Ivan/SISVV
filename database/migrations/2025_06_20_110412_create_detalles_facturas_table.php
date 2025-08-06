@@ -19,6 +19,8 @@ return new class extends Migration
             $table->decimal('costo', 10, 2);
             $table->decimal('iva', 10, 2);
             $table->decimal('impuesto', 10, 2);
+            $table->decimal('costo_con_impuesto', 10, 2);
+            $table->decimal('importe_sin_impuesto', 10, 2);
             $table->decimal('importe', 10, 2);
             $table->timestamps();
         });

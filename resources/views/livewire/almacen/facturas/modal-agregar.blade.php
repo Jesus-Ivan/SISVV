@@ -4,6 +4,7 @@
             <div class="p-1 w-full max-w-2xl max-h-full">
                 <div class="relative mt-1">
                     <div class="inline-flex gap-2">
+                        <!-- SELECT PARA BUSCAR POR GRUPO -->
                         <select id="grupo" wire:model.live='selectedGrupo'
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                             <option selected value="{{ null }}">SELECCIONAR GRUPO</option>
@@ -11,7 +12,8 @@
                                 <option value="{{ $grupo->id }}">{{ $grupo->descripcion }}</option>
                             @endforeach
                         </select>
-                        <div class="relative" x-trap="show">
+                        <!-- BARRA DE BUSQUEDA -->
+                        <div class="relative">
                             <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                                 <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
@@ -19,7 +21,7 @@
                                         stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
                                 </svg>
                             </div>
-                            <input type="text" id="default-search"
+                            <input type="text"
                                 wire:model.live.debounce.500ms="searchPresentacion"
                                 class="w-96 p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="Código o Descripción" />
@@ -30,7 +32,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- Result table-->
+                <!-- TABLA DE RESULTADOS -->
                 <div class="overflow-y-auto h-80 my-2">
                     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -54,7 +56,7 @@
                                     class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600">
                                     <td class="w-4 p-4">
                                         <input id="checkbox-{{ $presentacion->clave }}" type="checkbox"
-                                            wire:model.live="selectedPresentacion.{{ $presentacion->clave }}"
+                                            wire:model="selectedPresentacion.{{ $presentacion->clave }}"
                                             class="w-6 h-6 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                     </td>
                                     <th scope="row"

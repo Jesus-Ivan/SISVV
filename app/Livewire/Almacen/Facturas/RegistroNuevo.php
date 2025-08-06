@@ -5,8 +5,10 @@ namespace App\Livewire\Almacen\Facturas;
 use App\Constants\AlmacenConstants;
 use App\Models\DetallesFacturas;
 use App\Models\Facturas;
+use App\Models\Insumo;
 use App\Models\Presentacion;
 use App\Models\Proveedor;
+use App\Models\Requisicion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
@@ -27,6 +29,8 @@ class RegistroNuevo extends Component
     public $selectedGrupo = null;
     public $selectedPresentacion = [];
     public $listaPresentaciones = [];
+
+    public $folio_search;   // Opcional, para buscar un folio de requisicion
 
     #[Computed()]
     public function proveedores()
@@ -104,6 +108,50 @@ class RegistroNuevo extends Component
         }
     }
 
+    /**
+     * Metodo para buscar requisiciones.
+     * Puede ser opcional crear una factura mediante una requisicion
+     */
+    public function buscarRequisicion()
+    {
+        //Validamos el folio de la requisicion
+        $this->validate([
+            'folio_search' => 'required|numeric',
+        ]);
+
+        // Buscamos la requisicion 
+        $requisicion = Requisicion::with('detalles.presentacion')
+            ->find($this->folio_search);
+
+        // Limpiamos la lista actual
+        $this->reset('listaPresentaciones');
+
+        //Asignamos el folio de la requisición
+        $this->folio_entrada = $requisicion->folio;
+
+        foreach ($requisicion->detalles as $detalle) {
+            // Verificamos que los datos de la presentacion existan en la base de datos
+            if ($detalle && $detalle->presentacion) {
+                $presentacion = $detalle->presentacion;
+                $costo = $presentacion->costo;
+                $iva = $presentacion->iva;
+                $costo_con_impuesto = $costo + ($costo * ($iva / 100));
+
+                // Agregamosel resultado a la lista
+                array_push($this->listaPresentaciones, [
+                    'temp' => time() . $presentacion->id,
+                    'clave' => $presentacion->clave,
+                    'descripcion' => $presentacion->descripcion,
+                    'cantidad' => $detalle->cantidad, // Usamos la cantidad de la requisición
+                    'costo' => $costo,
+                    'iva' => $iva,
+                    'costo_con_impuesto' => round($costo_con_impuesto, 2),
+                    'importe' => round($costo_con_impuesto * $detalle->cantidad, 2)
+                ]);
+            }
+        }
+    }
+
     // Método para eliminar una presentación de la lista temporal
     public function removePresentacion($index)
     {
@@ -145,38 +193,83 @@ class RegistroNuevo extends Component
                 'listaPresentaciones' => 'required|array|min:1'
             ]);
 
-            $subtotal = $this->calcularSubtotal($validated['listaPresentaciones']);
-            $iva = $this->calcularIva($validated['listaPresentaciones']);
+            //Iniciamos la transaccion
+            DB::transaction(function () use ($validated) {
+                $subtotal = $this->calcularSubtotal($validated['listaPresentaciones']);
+                $iva = $this->calcularIva($validated['listaPresentaciones']);
 
-            //Creamos el registro para la tabla 'Facturas'
-            $result_factura = Facturas::create([
-                'fecha_compra' => $validated['fecha_compra'],
-                'fecha_vencimiento' => $validated['fecha_vencimiento'],
-                'folio_entrada' => $validated['folio_entrada'],
-                'id_proveedor' => $validated['id_proveedor'],
-                'subtotal' => $subtotal,
-                'iva' => $iva,
-                'total' => $subtotal + $iva,
-                'cuenta_contable' => $validated['cuenta_contable'],
-                'folio_remision' => $validated['folio_remision'],
-                'user_name' => auth()->user()->name,
-                'observaciones' => $validated['observaciones']
-            ]);
-
-            foreach ($validated['listaPresentaciones'] as $key => $presentacion) {
-                //Creamos los detalles de la factura
-                DetallesFacturas::create([
-                    'folio_compra' => $result_factura->folio,
-                    'clave_presentacion' => $presentacion['clave'],
-                    'cantidad' => $presentacion['cantidad'],
-                    'costo' => $presentacion['costo'],
-                    'iva' => $presentacion['iva'],
-                    'impuesto' => $presentacion['costo_con_impuesto'],
-                    'importe' => $presentacion['importe']
+                //Creamos el registro para la tabla 'Facturas'
+                $result_factura = Facturas::create([
+                    'fecha_compra' => $validated['fecha_compra'],
+                    'fecha_vencimiento' => $validated['fecha_vencimiento'],
+                    'folio_entrada' => $validated['folio_entrada'],
+                    'id_proveedor' => $validated['id_proveedor'],
+                    'subtotal' => $subtotal,
+                    'iva' => $iva,
+                    'total' => $subtotal + $iva,
+                    'cuenta_contable' => $validated['cuenta_contable'],
+                    'folio_remision' => $validated['folio_remision'],
+                    'user_name' => auth()->user()->name,
+                    'observaciones' => $validated['observaciones']
                 ]);
-            }
-            $this->reset();
 
+                foreach ($validated['listaPresentaciones'] as $key => $presentacion) {
+                    //Creamos los detalles de la factura
+                    DetallesFacturas::create([
+                        'folio_compra' => $result_factura->folio,
+                        'clave_presentacion' => $presentacion['clave'],
+                        'cantidad' => $presentacion['cantidad'],
+                        'costo' => $presentacion['costo'],
+                        'iva' => $presentacion['iva'],
+                        'impuesto' => $presentacion['costo_con_impuesto'],
+                        'importe' => $presentacion['importe']
+                    ]);
+
+                    //Actualizamos dos datos en la tabla 'Presentaciones'
+                    $presentacionUpdate = Presentacion::where('clave', $presentacion['clave'])->first();
+                    if ($presentacionUpdate) {
+                        $nuevaFecha = $validated['fecha_compra'];
+                        $fechaExistente = $presentacionUpdate->ultima_compra;
+                        
+                        // Si la fecha de compra es mayor a la fecha existente o no cuenta con fecha, actualizamos la fecha
+                        if (is_null($fechaExistente) || $nuevaFecha > $fechaExistente) {
+                            $presentacionUpdate->update([
+                                'costo' => $presentacion['costo'],
+                                'iva' => $presentacion['iva'],
+                                'costo_con_impuesto' => $presentacion['costo_con_impuesto'],
+                                'ultima_compra' => $nuevaFecha
+                            ]);
+
+                            //Actualizamos el insumo en la tabla 'Insumos', para ello obtenemos el insumo relacionado a la presentación
+                            $insumoUpdate = Insumo::where('clave', $presentacionUpdate->clave_insumo_base)->first();
+
+                            if ($insumoUpdate) {
+                                $insumoFechaExistente = $insumoUpdate->ultima_compra;
+
+                                // Si la nueva fecha de compra es mayor que la del insumo, o no existe, actualizamos el insumo
+                                if (is_null($insumoFechaExistente) || $nuevaFecha > $insumoFechaExistente) {
+                                    // Obtenemos todas las presentaciones relacionadas con este insumo
+                                    $presentacionesDelInsumo = Presentacion::where('clave_insumo_base', $insumoUpdate->clave)->get();
+
+                                    // Encontramos el costo más alto entre todas las presentaciones
+                                    $costoMasAlto = $presentacionesDelInsumo->max('costo');
+                                    $ivaMasAlto = $presentacionesDelInsumo->max('iva');
+                                    $costoConImpuestoMasAlto = $presentacionesDelInsumo->max('costo_con_impuesto');
+
+                                    $insumoUpdate->update([
+                                        'costo' => $costoMasAlto,
+                                        'iva' => $ivaMasAlto,
+                                        'costo_con_impuesto' => $costoConImpuestoMasAlto,
+                                        'ultima_compra' => $nuevaFecha
+                                    ]);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            $this->reset();
             session()->flash('success', 'Factura registrada exitosamente.');
         } catch (ValidationException $e) {
             //Si es una excepcion de validacion, volverla a lanzar a la vista
@@ -195,7 +288,7 @@ class RegistroNuevo extends Component
     private function actualizarImporte($index)
     {
         //Verificar que cantidad no sea vacio
-        if (strlen($this->listaPresentaciones[$index]['cantidad']) == 0)
+        if (strlen($this->listaPresentaciones[$index]['cantidad']) == 0 || $this->listaPresentaciones[$index]['cantidad'] < 1)
             $this->listaPresentaciones[$index]['cantidad'] = 1;
         //Calcula el importe
         $this->listaPresentaciones[$index]['importe'] =
@@ -208,10 +301,10 @@ class RegistroNuevo extends Component
     private function actualizaCostoIva($index)
     {
         //Verificar el atributo $iva es un string vacio 
-        if (strlen($this->listaPresentaciones[$index]['iva']) == 0)
+        if (strlen($this->listaPresentaciones[$index]['iva']) == 0 || $this->listaPresentaciones[$index]['iva'] < 1)
             $this->listaPresentaciones[$index]['iva'] = '0';
         //Verificar el atributo $costo_unitario es un string vacio 
-        if (strlen($this->listaPresentaciones[$index]['costo']) == 0)
+        if (strlen($this->listaPresentaciones[$index]['costo']) == 0 || $this->listaPresentaciones[$index]['costo'] < 1)
             $this->listaPresentaciones[$index]['costo'] = '0';
 
         //Variables auxiliares
@@ -229,7 +322,7 @@ class RegistroNuevo extends Component
     private function actualizaCostoSinIva($index)
     {
         //Verificar el atributo $costo_con_impuesto es un string vacio 
-        if (strlen($this->listaPresentaciones[$index]['costo_con_impuesto']) == 0)
+        if (strlen($this->listaPresentaciones[$index]['costo_con_impuesto']) == 0 || $this->listaPresentaciones[$index]['costo_con_impuesto'] < 1)
             $this->listaPresentaciones[$index]['costo_con_impuesto'] = '0';
 
         //Variables auximilares

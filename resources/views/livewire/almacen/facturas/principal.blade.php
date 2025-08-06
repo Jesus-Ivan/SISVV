@@ -91,7 +91,7 @@
                         <td class="px-3 py-2">
                             {{ $detalles->user_name }}
                         </td>
-                        <td class="px-3 py-2">
+                        <td class="px-3 py-2 w-80">
                             {{ $detalles->observaciones }}
                         </td>
                         <td class="px-3 py-2 text-center">

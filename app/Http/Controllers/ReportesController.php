@@ -1171,7 +1171,7 @@ class ReportesController extends Controller
             //Mutiplicar y acumular el valor
             $acu += $presentacion['costo_unitario'] * $presentacion['cantidad'];
         }
-        return $acu;
+        return round($acu, 2);
     }
 
     /**
@@ -1186,6 +1186,6 @@ class ReportesController extends Controller
             //Mutiplicar y acumular el valor
             $acu += ($presentacion['costo_unitario'] * ($presentacion['iva'] / 100)) * $presentacion['cantidad'];
         }
-        return $acu;
+        return round($acu, 2);
     }
 }

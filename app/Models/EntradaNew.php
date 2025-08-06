@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EntradaNew extends Model
 {
@@ -23,5 +24,10 @@ class EntradaNew extends Model
                 'clave' => 'N/A',
                 'descripcion' => 'N/A',
             ]);
+    }
+
+    public function detalles(): HasMany
+    {
+        return $this->hasMany(DetalleEntradaNew::class, 'folio_entrada', 'folio');
     }
 }

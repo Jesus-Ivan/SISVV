@@ -153,6 +153,7 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         //view de la tabla de productos
         Route::view('/', 'almacen.Entradas.v2.entrada')->name('almacen.entradav2');
         Route::view('/nueva', 'almacen.Entradas.v2.nueva-entrada')->name('almacen.entradav2.nueva');
+        Route::view('/historial', 'almacen.Entradas.v2.historial')->name('almacen.entradav2.historial');
     });
 });
 

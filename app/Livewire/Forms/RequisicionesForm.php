@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Forms;
 
+use App\Libraries\InventarioService;
 use App\Models\DetallesCompra;
 use App\Models\DetallesRequisicion;
 use App\Models\OrdenCompra;
@@ -42,6 +43,8 @@ class RequisicionesForm extends Form
                 'costo_unitario' => $detalle->costo_unitario,
                 'iva' => $detalle->iva,
                 'costo_con_impuesto' => $detalle->costo_con_impuesto,
+                'impuesto' => $detalle->impuesto,
+                'importe_sin_impuesto' => $detalle->importe_sin_impuesto,
                 'importe' =>  $detalle->importe,
             ];
         }
@@ -52,6 +55,14 @@ class RequisicionesForm extends Form
      */
     public function agregarPresentacion($presentacion)
     {
+        //Instacia de clase del inventario
+        $invService = new InventarioService();
+        //Obtener el importe sin impuesto
+        $importe_sin_impuesto = $invService->obtenerImporte($presentacion['costo_unitario'], 1);
+        //Obtener el importe con impuesto
+        $importe = $invService->obtenerImporte($presentacion['costo_con_impuesto'], 1);
+
+        //Array de datos
         $this->presentaciones[] = [
             'clave' => $presentacion['articulo_seleccionado']['clave'],
             'descripcion' => $presentacion['articulo_seleccionado']['descripcion'],
@@ -60,7 +71,9 @@ class RequisicionesForm extends Form
             'costo_unitario' => $presentacion['costo_unitario'],
             'iva' => $presentacion['iva'],
             'costo_con_impuesto' => $presentacion['costo_con_impuesto'],
-            'importe' => $presentacion['costo_con_impuesto'],   //Dado de que agrega con cantidad * 1
+            'impuesto' => $importe - $importe_sin_impuesto,
+            'importe_sin_impuesto' => $importe_sin_impuesto,
+            'importe' => $importe,  
         ];
     }
 
@@ -88,13 +101,23 @@ class RequisicionesForm extends Form
         //Verificar que cantidad no sea vacio
         if (strlen($this->presentaciones[$index]['cantidad']) == 0)
             $this->presentaciones[$index]['cantidad'] = 1;
-        //Calcular el importe
-        $this->presentaciones[$index]['importe'] =
-            $this->presentaciones[$index]['cantidad'] * $this->presentaciones[$index]['costo_con_impuesto'];
+        //Variable auxiliar
+        $row = $this->presentaciones[$index];
+        //Instacia de clase del inventario
+        $inventarioService = new InventarioService();
+
+        //Calcular calcular el importe_sin_impuesto
+        $importe_sin_impuesto = $inventarioService->obtenerImporte($row['costo_unitario'], $row['cantidad']);
+        //Calcular importe con impuesto
+        $importe = $inventarioService->obtenerImporte($row['costo_con_impuesto'], $row['cantidad']);
+        //Actualizar valores
+        $this->presentaciones[$index]['impuesto'] = $importe - $importe_sin_impuesto;
+        $this->presentaciones[$index]['importe_sin_impuesto'] = $importe_sin_impuesto;
+        $this->presentaciones[$index]['importe'] = $importe;
     }
 
     /**
-     * Calcula el precio con iva de la tabla 'presentaciones'
+     * Calcula el costo con iva de la tabla 'presentaciones'
      */
     public function actualizarCostoIva($index)
     {
@@ -167,6 +190,8 @@ class RequisicionesForm extends Form
                 'costo_unitario' => $articulo['costo_unitario'],
                 'iva' => $articulo['iva'],
                 'costo_con_impuesto' => $articulo['costo_con_impuesto'],
+                'importe_sin_impuesto' => $articulo['importe_sin_impuesto'],
+                'impuesto' => $articulo['impuesto'],
                 'importe' => $articulo['importe'],
             ]);
         }
@@ -174,7 +199,7 @@ class RequisicionesForm extends Form
     }
 
     /**
-     * Obtiene la sumatoria de (costo_unitario * cantidad)
+     * Obtiene la sumatoria de ('importe_sin_impuesto')
      */
     public function calcularSubtotal($presentaciones)
     {
@@ -183,13 +208,13 @@ class RequisicionesForm extends Form
             //Si la presentacion contiene el atributo eliminado, omitir
             if (array_key_exists('deleted', $presentacion)) continue;
             //Mutiplicar y acumular el valor
-            $acu += $presentacion['costo_unitario'] * $presentacion['cantidad'];
+            $acu += $presentacion['importe_sin_impuesto'];
         }
         return $acu;
     }
 
     /**
-     * Obtiene la sumatoria de (costo_unitario * (iva / 100)) * $cantidad'
+     * Obtiene la sumatoria de ('impuesto')
      */
     private function calcularIva($presentaciones)
     {
@@ -198,7 +223,7 @@ class RequisicionesForm extends Form
             //Si la presentacion contiene el atributo eliminado, omitir
             if (array_key_exists('deleted', $presentacion)) continue;
             //Mutiplicar y acumular el valor
-            $acu += ($presentacion['costo_unitario'] * ($presentacion['iva'] / 100)) * $presentacion['cantidad'];
+            $acu += $presentacion['impuesto'];
         }
         return $acu;
     }
@@ -249,6 +274,8 @@ class RequisicionesForm extends Form
                     'costo_unitario' => $item['costo_unitario'],
                     'iva' => $item['iva'],
                     'costo_con_impuesto' => $item['costo_con_impuesto'],
+                    'importe_sin_impuesto' => $item['importe_sin_impuesto'],
+                    'impuesto' => $item['impuesto'],
                     'importe' => $item['importe'],
                 ]);
             }

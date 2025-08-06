@@ -111,7 +111,7 @@
     </div>
 
     {{-- MODAL DE INFORMACION DE ENTRADA --}}
-    <x-modal name="modal-entrada" title="ENTRADA">
+    <x-modal name="modal-entrada" title="Detalles de entrada">
         <x-slot name='body'>
             <p>FOLIO ENTRADA: {{ $entrada_seleccionada }}</p>
             <div class="relative max-h-96 overflow-y-auto shadow-md sm:rounded-lg">
@@ -119,16 +119,19 @@
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
                             <th scope="col" class="px-6 py-2">
-                                Producto
+                                Presentacion
                             </th>
                             <th scope="col" class="px-6 py-2">
                                 Cantidad
                             </th>
                             <th scope="col" class="px-6 py-2">
-                                Peso
+                                C.Unitario
                             </th>
                             <th scope="col" class="px-6 py-2">
-                                C.Unitario
+                                Iva
+                            </th>
+                            <th scope="col" class="px-6 py-2">
+                                C.C.Impuesto
                             </th>
                             <th scope="col" class="px-6 py-2">
                                 Importe
@@ -141,16 +144,19 @@
                                 class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
                                 <th scope="row"
                                     class="px-6 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                    {{ $detalle->nombre }}
+                                    {{ $detalle->descripcion }}
                                 </th>
                                 <td class="px-6 py-2">
                                     {{ $detalle->cantidad }}
                                 </td>
                                 <td class="px-6 py-2">
-                                    {{ $detalle->peso }}
+                                    ${{ $detalle->costo_unitario }}
                                 </td>
                                 <td class="px-6 py-2">
-                                    ${{ $detalle->costo_unitario }}
+                                    {{ $detalle->iva }}
+                                </td>
+                                <td class="px-6 py-2">
+                                    ${{ $detalle->costo_con_impuesto }}
                                 </td>
                                 <td class="px-6 py-2">
                                     ${{ $detalle->importe }}

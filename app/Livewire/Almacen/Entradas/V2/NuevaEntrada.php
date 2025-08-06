@@ -3,6 +3,7 @@
 namespace App\Livewire\Almacen\Entradas\V2;
 
 use App\Constants\AlmacenConstants;
+use App\Libraries\InventarioService;
 use App\Models\Bodega;
 use App\Models\DetalleEntradaNew;
 use App\Models\DetallesRequisicion;
@@ -21,7 +22,7 @@ use Livewire\Component;
 
 class NuevaEntrada extends Component
 {
-    public $clave_bodega = '', $search_input = '', $folio_requi = '';
+    public $clave_bodega = '', $search_input = '', $folio_requi = null;
     public $fecha, $hora, $observaciones;
     public $selectedItems = [], $articulos_table = [];
     #[Locked]
@@ -86,6 +87,8 @@ class NuevaEntrada extends Component
         $total_seleccionados = array_filter($this->selectedItems, function ($val) {
             return $val;
         });
+        //Instancia de la clase para el servicio de inventario
+        $invService = new InventarioService();
 
         //Recorrer todo el array de seleccionados
         foreach ($total_seleccionados as $key => $value) {
@@ -96,6 +99,10 @@ class NuevaEntrada extends Component
                 //Se busca el insumo del producto en base a su clave.
                 $producto = Insumo::with('unidad')->find($key);
             }
+            //Calcular calcular el importe_sin_impuesto
+            $importe_sin_impuesto = $invService->obtenerImporte($producto['costo'], 1);
+            //Calcular importe con impuesto
+            $importe = $invService->obtenerImporte($producto['costo_con_impuesto'], 1);
 
             //Se anexa el producto al array de la tabla
             $this->articulos_table[] = [
@@ -108,7 +115,9 @@ class NuevaEntrada extends Component
                 'clave_insumo_base' => $producto->clave_insumo_base,
                 'rendimiento' => $producto->rendimiento,
                 'id_proveedor' => $producto->id_proveedor,
-                'importe' => $producto->costo_con_impuesto, //Es lo mismo que multiplicar cantidad * costo_con_impuesto
+                'importe_sin_impuesto' => $importe_sin_impuesto,
+                'impuesto' => $importe - $importe_sin_impuesto,
+                'importe' => $importe,
                 'unidad' => $producto->unidad,
             ];
         }
@@ -198,10 +207,9 @@ class NuevaEntrada extends Component
         $validated['fecha_existencias'] = Carbon::parse($validated['fecha'])->setTimeFromTimeString($validated['hora']);
 
         //Calcular iva
-        $iva = $this->calcularIva($this->articulos_table);
-
+        $iva = round(array_sum(array_column($this->articulos_table, 'impuesto')), 2);
         //calcular subtotal
-        $subtotal = $this->calcularSubtotal($this->articulos_table);
+        $subtotal = round(array_sum(array_column($this->articulos_table, 'importe_sin_impuesto')), 2);
 
         //Iniciar transaccion
         try {
@@ -214,50 +222,26 @@ class NuevaEntrada extends Component
                     'observaciones' => $this->observaciones,
                     'subtotal' => $subtotal,
                     'iva' => $iva,
-                    'total' => round($subtotal + $iva, 2),
+                    'total' => $subtotal + $iva,
                     'id_user' => $user->id,
                     'nombre' => $user->name,
                 ]);
+                //Buscar la bodega, despues de crear el registro de la entrada
+                $bodega = Bodega::find($result->clave_bodega);
                 //Recorrer todos los articulos de la tabla
                 foreach ($validated['articulos_table'] as $key => $row) {
                     //Crear detalles de la entrada
-                    $this->createDetalleEntrada($row, Bodega::find($result->clave_bodega), $result);
+                    $this->createDetalleEntrada($row, $bodega, $result);
                     //Crear movimientos de inventario
-                    $this->createMovimientoAlmacen($row, Bodega::find($result->clave_bodega), $result);
+                    $this->createMovimientoAlmacen($row, $bodega, $result);
                 }
             }, 2);
             session()->flash('success-entrada', 'Entrada registrada correctamente');   //Mensaje de sesion
-            $this->reset();     //Limpiar propiedades
+            $this->reset('clave_bodega', 'search_input', 'folio_requi', 'observaciones', 'selectedItems', 'articulos_table', 'locked_bodega');     //Limpiar propiedades
         } catch (\Throwable $th) {
             session()->flash('fail', $th->getMessage());   //Mensaje de sesion de error
         }
         $this->dispatch('entrada');  //Emitimos evento para mostrar el message-alert
-    }
-
-    /**
-     * Obtiene la sumatoria de (costo_unitario * cantidad)
-     */
-    public function calcularSubtotal($presentaciones)
-    {
-        $acu = 0;
-        foreach ($presentaciones as $presentacion) {
-            //Mutiplicar y acumular el valor
-            $acu += $presentacion['costo'] * $presentacion['cantidad'];
-        }
-        return $acu;
-    }
-
-    /**
-     * Obtiene la sumatoria de (costo_unitario * (iva / 100)) * $cantidad'
-     */
-    public function calcularIva($presentaciones)
-    {
-        $acu = 0;
-        foreach ($presentaciones as $presentacion) {
-            //Mutiplicar y acumular el valor
-            $acu += ($presentacion['costo'] * ($presentacion['iva'] / 100)) * $presentacion['cantidad'];
-        }
-        return $acu;
     }
 
     /**
@@ -283,11 +267,11 @@ class NuevaEntrada extends Component
                 'importe' => $row['importe'],
                 'fecha_existencias' => $entrada->fecha_existencias,
             ]);
-        } else {
+        } elseif ($bodega->naturaleza == AlmacenConstants::INSUMOS_KEY) {
             //Movimientos de almacen (insumos)
             MovimientosAlmacen::create([
                 'folio_entrada' => $entrada->folio,
-                'clave_concepto' => '',
+                'clave_concepto' => AlmacenConstants::ENT_KEY,
                 'clave_insumo' => $row['clave'],
                 'descripcion' => $row['descripcion'],
                 'clave_bodega' => $entrada->clave_bodega,
@@ -298,6 +282,9 @@ class NuevaEntrada extends Component
                 'importe' => $row['importe'],
                 'fecha_existencias' => $entrada->fecha_existencias,
             ]);
+        } else {
+            //Lanzar excepcion
+            throw new Exception("La bodega: " . $bodega->descripcion . ", no tiene naturaleza definida", 1);
         }
     }
 
@@ -321,6 +308,8 @@ class NuevaEntrada extends Component
             'costo_unitario' => $row['costo'],
             'iva' => $row['iva'],
             'costo_con_impuesto' => $row['costo_con_impuesto'],
+            'importe_sin_impuesto' => $row['importe_sin_impuesto'],
+            'impuesto' => $row['impuesto'],
             'importe' => $row['importe'],
         ];
 
@@ -357,9 +346,22 @@ class NuevaEntrada extends Component
         //Verificar que cantidad no sea vacio
         if (strlen($this->articulos_table[$index]['cantidad']) == 0)
             $this->articulos_table[$index]['cantidad'] = 1;
-        //Calcular el importe
-        $this->articulos_table[$index]['importe'] =
-            $this->articulos_table[$index]['cantidad'] * $this->articulos_table[$index]['costo_con_impuesto'];
+        //Actualizar la cantidad, por su absoluto
+        $this->articulos_table[$index]['cantidad'] = abs($this->articulos_table[$index]['cantidad']);
+
+        //Variable auxiliar
+        $row = $this->articulos_table[$index];
+        //Instacia de clase del inventario
+        $invService = new InventarioService();
+
+        //Calcular calcular el importe_sin_impuesto
+        $importe_sin_impuesto = $invService->obtenerImporte($row['costo'], $row['cantidad']);
+        //Calcular importe con impuesto
+        $importe = $invService->obtenerImporte($row['costo_con_impuesto'], $row['cantidad']);
+        //Actualizar valores
+        $this->articulos_table[$index]['impuesto'] = $importe - $importe_sin_impuesto;
+        $this->articulos_table[$index]['importe_sin_impuesto'] = $importe_sin_impuesto;
+        $this->articulos_table[$index]['importe'] = $importe;
     }
 
     /**

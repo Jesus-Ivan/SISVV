@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Almacen\Entradas\V2;
 
+use App\Models\DetalleEntradaNew;
 use App\Models\DetallesEntrada;
 use App\Models\EntradaNew;
 use Carbon\Carbon;
@@ -48,13 +49,13 @@ class Principal extends Component
 
     public function verDetalles($folio)
     {
-        /*
+        //Establecer el folio seleccionado
         $this->entrada_seleccionada = $folio;
-        $this->entrada_detalles = DetallesEntrada::where('folio_entrada', $folio)->get();
-        //dd($this->entrada_detalles);
+        //Buscar los detalles de la nueva entrada
+        $this->entrada_detalles = DetalleEntradaNew::where('folio_entrada', $folio)->get();
+        //Emitir evento para abrir el modal
         $this->dispatch('open-modal', name: 'modal-entrada');
-        */
-        dump('detalles xd');
+        
     }
 
     public function render()

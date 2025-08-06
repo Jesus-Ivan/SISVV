@@ -39,6 +39,7 @@ class Historial extends Component
             return DB::table('detalles_requisiciones')
                 ->join('requisiciones', 'detalles_requisiciones.folio_requisicion', '=', 'requisiciones.folio')
                 ->where('clave_presentacion', $this->selected_codigo)
+                ->whereNull('deleted_at')
                 ->whereDate('requisiciones.created_at', '>=', $this->fInicio)
                 ->whereDate('requisiciones.created_at', '<=', $this->fFin)
                 ->select($columns)
@@ -47,6 +48,7 @@ class Historial extends Component
         } else {
             return DB::table('detalles_requisiciones')
                 ->join('requisiciones', 'detalles_requisiciones.folio_requisicion', '=', 'requisiciones.folio')
+                ->whereNull('deleted_at')
                 ->whereDate('requisiciones.created_at', '>=', $this->fInicio)
                 ->whereDate('requisiciones.created_at', '<=', $this->fFin)
                 ->select($columns)

@@ -747,7 +747,7 @@ class ReportesController extends Controller
     }
 
     /**
-     * Genera el pdf de la nueva requisicion
+     * Genera el pdf de la NUEVA requisicion
      */
     public function verRequi($folio, $order = false)
     {
@@ -765,8 +765,8 @@ class ReportesController extends Controller
         //Generamos array, para busqueda indexada
         $proveedores = $this->generateIndex(Proveedor::all(), 'id', 'nombre');
         //Calcular el subtotal y el nuevo iva
-        $subtotal = $this->calcularSubtotal($detalle);
-        $iva = $this->calcularIva($detalle);
+        $subtotal = array_sum(array_column($detalle, 'importe_sin_impuesto'));
+        $iva = array_sum(array_column($detalle, 'impuesto'));
 
         $data = [
             'requisicion' => $requisicion,

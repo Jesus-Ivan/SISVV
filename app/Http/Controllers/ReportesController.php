@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AlmacenConstants;
 use App\Exports\CarteraVencidaExport;
 use App\Exports\EntradasExport;
 use App\Exports\RecibosExport;
 use App\Exports\SociosExport;
 
 use App\Exports\VentasExport;
+use App\Libraries\InventarioService;
+use App\Models\Bodega;
 use App\Models\Caja;
 use App\Models\CatalogoVistaVerde;
 use App\Models\DetallesCompra;
@@ -16,8 +19,11 @@ use App\Models\DetallesRequisicion;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
+use App\Models\Grupos;
+use App\Models\Insumo;
 use App\Models\OrdenCompra;
 use App\Models\PeriodoNomina;
+use App\Models\Presentacion;
 use App\Models\Proveedor;
 use App\Models\PuntoVenta;
 use App\Models\Recibo;
@@ -933,6 +939,204 @@ class ReportesController extends Controller
         $pdf = Pdf::loadView('reportes.cartera-vencida', $data);
         $pdf->setOption(['defaultFont' => 'Courier']);
         return $pdf->stream('reporte-vencidos' . now()->toDateString() . '.pdf');
+    }
+
+    /**
+     * Devuelve la vista para generar el reporte de existencias.
+     */
+    public function getExistencias()
+    {
+        $grupos = Grupos::where('tipo', AlmacenConstants::INSUMOS_KEY)
+            ->get();
+        $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
+        //Establecer fecha inicial
+        $fecha = now()->toDateString();
+        //Establecer hora inicial
+        $hora = now()->setHour(23)->setMinute(59)->toTimeString("minute");
+
+        //Devolver la vista
+        return view('almacen.Documentos.existencias', [
+            'grupos' => $grupos,
+            'bodegas' => $bodegas,
+            'fecha' => $fecha,
+            'hora' => $hora,
+        ]);
+    }
+
+    /**
+     * Genera el reporte de existencias de la peticion POST
+     */
+    public function postExistencias(Request $request)
+    {
+        //Obtener los parametros de la peticion post.
+        $folio = $request->input('folio');
+        $bodega = Bodega::find($request->input('clave_bodega'));
+        $fecha = $request->input('fecha');
+        $hora = $request->input('hora');
+        $grupos = $request->input('selected_grupos');   //Array de los id de grupos seleccionados
+        $view_path = '';    //ruta de la vista a cargar en el pdf
+        $service = new InventarioService(); //Objeto para consultar existencias
+        $result = [];       //Array auxiliar
+
+        //Definir reglas de validacion inicial
+        $rules = [
+            'fecha' => ['required'],
+            'hora' => ['required'],
+            'selected_grupos' => ['required']
+        ];
+        //Si hay folio de requisicion
+        if (!is_null($folio)) {
+            //Retirar la regla 'selected_grupos'
+            unset($rules['selected_grupos']);
+        }
+        //Validamos la peticion
+        $validated = $request->validate($rules);
+
+        //Obtenemos todas las bodegas de tipo interna
+        $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
+
+        //Si no selecciono bodega
+        if (is_null($bodega)) {
+            //Cambiar la ruta de la vista
+            $view_path = 'reportes.existencias.existencias-todos';
+            //Obtener el array inicial con los insumos y las columnas de las bodegas
+            $result = $service->obtenerTodosInsumos($grupos, $bodegas, $folio);
+
+            //Para cada bodega
+            foreach ($bodegas as $b) {
+                $temp = []; //Limipar el array temporal (que contiene las existencias de 1 sola bodega)
+                //Si hay un folio de requi
+                if (!is_null($folio)) {
+                    //Buscar las existencias por clave de insumo y clave de bodega
+                    foreach ($result as $key => $insum) {
+                        $temp = array_merge(
+                            $temp,
+                            $service->existenciasInsumo($insum['clave'], $fecha, $hora, $b->clave)
+                        );
+                    }
+                } else {
+                    //Buscar las existencias por clave de grupo y clave de bodega
+                    foreach ($grupos as $grupo_id) {
+                        //Unir los resultados de cada consulta
+                        $temp = array_merge(
+                            $temp,
+                            $service->consultarInsumos(Grupos::find($grupo_id), $fecha, $hora, $b->clave)
+                        );
+                    }
+                }
+                //Para todas las existencias obtenidas (almacenadas en el array temporal).
+                foreach ($temp as $i => $row_insumo) {
+                    //Actualizar las existencias de cada insumo indexado. segun la bodega en turno de la iteracion.
+                    $result[$row_insumo['clave']][$b->clave] = $row_insumo['existencias_insumo'];
+                }
+            }
+        } else {
+            //Si hay un folio de requi
+            if (!is_null($folio)) {
+                //Buscar las existencias de la requisicion
+                $result = $service->obtenerExistenciasRequi($folio, $fecha, $hora, $bodega->clave, $bodega->naturaleza);
+            } else {
+                if ($bodega->naturaleza == AlmacenConstants::INSUMOS_KEY) {
+                    //Buscar las existencias por clave de grupo y clave de bodega
+                    foreach ($grupos as $grupo_id)
+                        $result = array_merge(
+                            $result,
+                            $service->consultarInsumos(Grupos::find($grupo_id), $fecha, $hora, $bodega->clave)
+                        );
+                } else {
+                    //Buscar las existencias por clave de grupo y clave de bodega
+                    foreach ($grupos as $grupo_id)
+                        $result = array_merge(
+                            $result,
+                            $service->consultarPresentaciones(Grupos::find($grupo_id), $fecha, $hora, $bodega->clave)
+                        );
+                }
+            }
+            $view_path = $service->getView($bodega->naturaleza);
+        }
+
+        //Cargar la vista del reporte
+        $pdf = Pdf::loadView($view_path, [
+            'articulos' => $result,
+            'fecha' => $fecha,
+            'hora' => $hora,
+            'bodega' => $bodega,
+            'bodegas' => $bodegas,
+        ]);
+        //Definir fuente 
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        //Definir orientacion y tamaño
+        $pdf->setPaper([0, 0, 612.283, 792], 'landscape'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
+        return $pdf->stream('existencias' . now()->toDateString() . '.pdf');
+    }
+
+    /**
+     * Devuelve la vista necesaria para consultar la tabla de inventarios
+     */
+    public function getInvSemanal()
+    {
+        $grupos = Grupos::where('tipo', AlmacenConstants::INSUMOS_KEY)
+            ->get();
+        $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
+        //Establecer fecha inicial
+        $fecha = now()->toDateString();
+
+        //Devolver la vista
+        return view('almacen.Documentos.tabla-inventarios', [
+            'grupos' => $grupos,
+            'bodegas' => $bodegas,
+            'fecha' => $fecha,
+        ]);
+    }
+
+    /**
+     * Genera el pdf de la semana correspondiente, a la tabla de inventarios
+     */
+    public function postInvSemanal(Request $request)
+    {
+        //Datos del request
+        $fecha = $request->input('fecha');
+        $grupos = $request->input('selected_grupos');   //Array de los id de grupos seleccionados
+        $bodega = Bodega::find($request->input('clave_bodega'));
+
+        //Validamos
+        $validated = $request->validate([
+            'fecha' => ['required'],
+            'selected_grupos' => ['required']
+        ]);
+
+        //Crear el array de fechas (hasta 6 dias despues)
+        $fechas = [];
+        for ($i = 0; $i <= 5; $i++) {
+            $fechas[] = Carbon::parse($fecha)->addDays($i);
+        }
+
+        if ($bodega->naturaleza == AlmacenConstants::INSUMOS_KEY) {
+            //Obtener los Insumos
+            $result  = Insumo::where('inventariable', 1)
+                ->whereIn('id_grupo', $grupos)
+                ->orderBy('descripcion')
+                ->get();
+        } else {
+            //Obtener las presentaciones
+            $result = Presentacion::where('estado', 1)
+                ->whereIn('id_grupo', $grupos)
+                ->orderBy('descripcion')
+                ->get();
+        }
+
+        //Cargar la vista del reporte
+        $pdf = Pdf::loadView('reportes.tabla-inv-semanal', [
+            'articulos' => $result,
+            'fechas' => $fechas,
+            'bodega' => $bodega,
+        ]);
+
+        //Definir fuente 
+        $pdf->setOption(['defaultFont' => 'Courier']);
+        //Definir orientacion y tamaño
+        $pdf->setPaper([0, 0, 612.283, 792], 'portrait'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
+        return $pdf->stream('existencias' . now()->toDateString() . '.pdf');
     }
 
     /**

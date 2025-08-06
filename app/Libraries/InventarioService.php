@@ -285,4 +285,13 @@ class InventarioService
 
         return $view_path;
     }
+
+    /**
+     * Calcula el importe segun la cantidad dada. (redondeado a dos decimales)
+     */
+    public function obtenerImporte(float $costo_unitario, float $cant): float
+    {
+        //Calcular el importe
+        return round($cant * $costo_unitario, 2);
+    }
 }

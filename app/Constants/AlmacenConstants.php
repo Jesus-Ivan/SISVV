@@ -50,6 +50,11 @@ class AlmacenConstants
     public const SAL_AJUSTE_KEY = "SPA";
 
     /**
+     * Es la clave del concepto de "E. ALMACEN" de la tabla 'conceptos_almacen'
+     */
+    public const ENT_KEY ="EDA";
+
+    /**
      * Array asociativo que relaciona la clave del punto de venta, con su columna de stock correspondiente de la tabla 'stocks'
      */
     public const PUNTOS_STOCK = [

@@ -21,6 +21,8 @@ return new class extends Migration
             $table->decimal('costo_unitario', total: 10, places: 2);
             $table->decimal('iva', total: 10, places: 2);
             $table->decimal('costo_con_impuesto', total: 10, places: 2)->nullable();
+            $table->decimal('importe_sin_impuesto', total: 10, places: 2);
+            $table->decimal('impuesto', total: 10, places: 2);
             $table->decimal('importe', total: 10, places: 2);
             $table->timestamps();
             $table->softDeletes();

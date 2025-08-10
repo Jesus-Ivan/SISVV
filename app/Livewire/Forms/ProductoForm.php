@@ -15,7 +15,7 @@ use Livewire\Form;
 class ProductoForm extends Form
 {
     //Atributos del producto GENERAL
-    public $descripcion, $precio, $iva = 0, $costo_con_impuesto;
+    public $descripcion, $precio, $iva = 16, $costo_con_impuesto;
     public $id_grupo, $id_subgrupo, $estado = 1;
     //Atributos de producto RECETA
     public $receta_table = [];

@@ -37,7 +37,7 @@ class Principal extends Component
             //Anexar el criterio de busqueda a la consulta
             $result->where('estado', '=', $this->estado);
         }
-        return $result->paginate(20);
+        return $result->orderBy('clave', 'DESC')->paginate(20);
     }
 
     public function actualizarSubGrupo() {}

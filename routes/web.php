@@ -155,6 +155,13 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::view('/nueva', 'almacen.Entradas.v2.nueva-entrada')->name('almacen.entradav2.nueva');
         Route::view('/historial', 'almacen.Entradas.v2.historial')->name('almacen.entradav2.historial');
     });
+
+    //Nueva ruta de traspasos
+    Route::prefix('traspasos-v2')->group(function () {
+        Route::view('/', 'almacen.Traspasos.v2.traspaso')->name('almacen.traspasov2');
+        Route::view('/nuevo', 'almacen.Traspasos.v2.nuevo-traspaso')->name('almacen.traspasov2.nuevo');
+        Route::view('/historial', 'almacen.Traspasos.v2.historial')->name('almacen.traspasov2.historial');
+    });
 });
 
 Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function () {

@@ -139,7 +139,7 @@
                                 class="w-24 max-w-20 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         </td>
                         <td class="px-6 py-2 flex gap-2 items-center">
-                            $ <input wire:model.live="listaPresentaciones.{{ $index }}.costo"
+                            $ <input wire:model.live="listaPresentaciones.{{ $index }}.costo_unitario"
                                 wire:change='costoIvaActualizado({{ $index }})' type="number" min="0"
                                 class="w-24 max-w-20 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         </td>

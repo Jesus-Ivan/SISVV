@@ -3,6 +3,7 @@
 namespace App\Livewire\Almacen\Facturas;
 
 use App\Constants\AlmacenConstants;
+use App\Libraries\InventarioService;
 use App\Models\DetallesFacturas;
 use App\Models\Facturas;
 use App\Models\Insumo;
@@ -99,9 +100,11 @@ class RegistroNuevo extends Component
                     'clave' => $key,
                     'descripcion' => $result->descripcion,
                     'cantidad' => 1,
-                    'costo' => $result->costo,
+                    'costo_unitario' => $result->costo,
                     'iva' => $result->iva,
+                    'impuesto' => $result->impuesto,
                     'costo_con_impuesto' => $result->costo_con_impuesto,
+                    'importe_sin_impuesto' => $result->importe_sin_impuesto,
                     'importe' => $result['costo_con_impuesto']
                 ]);
             }
@@ -133,20 +136,19 @@ class RegistroNuevo extends Component
             // Verificamos que los datos de la presentacion existan en la base de datos
             if ($detalle && $detalle->presentacion) {
                 $presentacion = $detalle->presentacion;
-                $costo = $presentacion->costo;
-                $iva = $presentacion->iva;
-                $costo_con_impuesto = $costo + ($costo * ($iva / 100));
 
-                // Agregamosel resultado a la lista
+                // Agregamos el resultado a la lista
                 array_push($this->listaPresentaciones, [
                     'temp' => time() . $presentacion->id,
                     'clave' => $presentacion->clave,
                     'descripcion' => $presentacion->descripcion,
                     'cantidad' => $detalle->cantidad, // Usamos la cantidad de la requisición
-                    'costo' => $costo,
-                    'iva' => $iva,
-                    'costo_con_impuesto' => round($costo_con_impuesto, 2),
-                    'importe' => round($costo_con_impuesto * $detalle->cantidad, 2)
+                    'costo_unitario' => $detalle->costo_unitario,
+                    'iva' => $detalle->iva,
+                    'impuesto' => $detalle->impuesto,
+                    'costo_con_impuesto' => $detalle->costo_con_impuesto,
+                    'importe_sin_impuesto' => $detalle->importe_sin_impuesto,
+                    'importe' => $detalle->importe
                 ]);
             }
         }
@@ -195,9 +197,11 @@ class RegistroNuevo extends Component
 
             //Iniciamos la transaccion
             DB::transaction(function () use ($validated) {
-                $subtotal = $this->calcularSubtotal($validated['listaPresentaciones']);
-                $iva = $this->calcularIva($validated['listaPresentaciones']);
 
+                //Calculamos los valores necesaios
+                $subtotal = array_sum(array_column($validated['listaPresentaciones'], 'importe_sin_impuesto'));
+                $iva = array_sum(array_column($validated['listaPresentaciones'], 'impuesto'));
+                
                 //Creamos el registro para la tabla 'Facturas'
                 $result_factura = Facturas::create([
                     'fecha_compra' => $validated['fecha_compra'],
@@ -219,9 +223,11 @@ class RegistroNuevo extends Component
                         'folio_compra' => $result_factura->folio,
                         'clave_presentacion' => $presentacion['clave'],
                         'cantidad' => $presentacion['cantidad'],
-                        'costo' => $presentacion['costo'],
+                        'costo' => $presentacion['costo_unitario'],
                         'iva' => $presentacion['iva'],
-                        'impuesto' => $presentacion['costo_con_impuesto'],
+                        'impuesto' => $presentacion['impuesto'],
+                        'costo_con_impuesto' => $presentacion['costo_con_impuesto'],
+                        'importe_sin_impuesto' => $presentacion['importe_sin_impuesto'],
                         'importe' => $presentacion['importe']
                     ]);
 
@@ -232,9 +238,9 @@ class RegistroNuevo extends Component
                         $fechaExistente = $presentacionUpdate->ultima_compra;
                         
                         // Si la fecha de compra es mayor a la fecha existente o no cuenta con fecha, actualizamos la fecha
-                        if (is_null($fechaExistente) || $nuevaFecha > $fechaExistente) {
+                        if (is_null($fechaExistente) || $nuevaFecha >= $fechaExistente) {
                             $presentacionUpdate->update([
-                                'costo' => $presentacion['costo'],
+                                'costo' => $presentacion['costo_unitario'],
                                 'iva' => $presentacion['iva'],
                                 'costo_con_impuesto' => $presentacion['costo_con_impuesto'],
                                 'ultima_compra' => $nuevaFecha
@@ -247,7 +253,7 @@ class RegistroNuevo extends Component
                                 $insumoFechaExistente = $insumoUpdate->ultima_compra;
 
                                 // Si la nueva fecha de compra es mayor que la del insumo, o no existe, actualizamos el insumo
-                                if (is_null($insumoFechaExistente) || $nuevaFecha > $insumoFechaExistente) {
+                                if (is_null($insumoFechaExistente) || $nuevaFecha >= $insumoFechaExistente) {
                                     // Obtenemos todas las presentaciones relacionadas con este insumo
                                     $presentacionesDelInsumo = Presentacion::where('clave_insumo_base', $insumoUpdate->clave)->get();
 
@@ -290,9 +296,19 @@ class RegistroNuevo extends Component
         //Verificar que cantidad no sea vacio
         if (strlen($this->listaPresentaciones[$index]['cantidad']) == 0 || $this->listaPresentaciones[$index]['cantidad'] < 1)
             $this->listaPresentaciones[$index]['cantidad'] = 1;
-        //Calcula el importe
-        $this->listaPresentaciones[$index]['importe'] =
-            $this->listaPresentaciones[$index]['cantidad'] * $this->listaPresentaciones[$index]['costo_con_impuesto'];
+        //Variable auxiliar
+        $row = $this->listaPresentaciones[$index];
+        //Instacia de clase del inventario
+        $invService = new InventarioService();
+        //Calcular el importe sin impuesto
+        $importe_sin_impuesto = $invService->obtenerImporte($row['costo_unitario'], $row['cantidad']);
+        //Calcular el importe con impuesto
+        $importe = $invService->obtenerImporte($row['costo_con_impuesto'], $row['cantidad']);
+
+        //Actualizar valores
+        $this->listaPresentaciones[$index]['impuesto'] = $importe - $importe_sin_impuesto;
+        $this->listaPresentaciones[$index]['importe_sin_impuesto'] = $importe_sin_impuesto;
+        $this->listaPresentaciones[$index]['importe'] = $importe;
     }
 
     /**
@@ -304,11 +320,11 @@ class RegistroNuevo extends Component
         if (strlen($this->listaPresentaciones[$index]['iva']) == 0 || $this->listaPresentaciones[$index]['iva'] < 1)
             $this->listaPresentaciones[$index]['iva'] = '0';
         //Verificar el atributo $costo_unitario es un string vacio 
-        if (strlen($this->listaPresentaciones[$index]['costo']) == 0 || $this->listaPresentaciones[$index]['costo'] < 1)
-            $this->listaPresentaciones[$index]['costo'] = '0';
+        if (strlen($this->listaPresentaciones[$index]['costo_unitario']) == 0 || $this->listaPresentaciones[$index]['costo_unitario'] < 1)
+            $this->listaPresentaciones[$index]['costo_unitario'] = '0';
 
         //Variables auxiliares
-        $costo = $this->listaPresentaciones[$index]['costo'];
+        $costo = $this->listaPresentaciones[$index]['costo_unitario'];
         $iva = $this->listaPresentaciones[$index]['iva'];
 
         //Calcular costo con iva
@@ -331,33 +347,7 @@ class RegistroNuevo extends Component
 
         //Calcular Costo sin iva
         $costo_sin_iva = ($costo_con_impuesto * 100) / (100 + $iva);
-        $this->listaPresentaciones[$index]['costo'] = round($costo_sin_iva, 2);
-    }
-
-    /**
-     * Obtiene la sumatoria de (costo_unitario * cantidad)
-     */
-    private function calcularSubtotal($listaPresentaciones)
-    {
-        $acu = 0;
-        foreach ($listaPresentaciones as $presentacion) {
-            //Mutiplicar y acumular el valor
-            $acu += $presentacion['costo'] * $presentacion['cantidad'];
-        }
-        return $acu;
-    }
-
-    /**
-     * Obtiene la sumatoria de (costo_unitario * (iva / 100)) * $cantidad'
-     */
-    private function calcularIva($listaPresentaciones)
-    {
-        $acu = 0;
-        foreach ($listaPresentaciones as $presentacion) {
-            //Mutiplicar y acumular el valor
-            $acu += ($presentacion['costo'] * ($presentacion['iva'] / 100)) * $presentacion['cantidad'];
-        }
-        return $acu;
+        $this->listaPresentaciones[$index]['costo_unitario'] = round($costo_sin_iva, 2);
     }
 
     public function render()

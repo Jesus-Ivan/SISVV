@@ -34,7 +34,7 @@
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Entradas</a>
                             </li>
                             <li>
-                                <a href="#"
+                                <a href="{{ route('almacen.traspasov2') }}"
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Traspasos</a>
                             </li>
                             <li>

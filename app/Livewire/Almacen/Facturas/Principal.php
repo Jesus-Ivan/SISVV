@@ -51,7 +51,8 @@ class Principal extends Component
             $year = substr($this->search_mes, 0, 4);
             $month = substr($this->search_mes, 5, 2);
             $query->whereYear('fecha_compra', $year)
-                ->whereMonth('fecha_compra', $month);
+                ->whereMonth('fecha_compra', $month)
+                ->orderBy('fecha_compra', 'desc');
         }
         if ($this->search_proveedor) {
             $query->where('id_proveedor', $this->search_proveedor);

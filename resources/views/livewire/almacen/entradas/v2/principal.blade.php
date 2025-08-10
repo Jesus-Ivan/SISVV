@@ -76,7 +76,7 @@
                             <td class="px-6 py-2">
                                 {{ $entrada->bodega->descripcion }}
                             </td>
-                            <td class="px-6 py-2">
+                            <td class="px-6 py-2  max-w-64">
                                 {{ $entrada->observaciones }}
                             </td>
                             <td class="px-6 py-2">

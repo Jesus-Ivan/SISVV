@@ -106,7 +106,7 @@
         @else
             <x-slot name='body'>
                 <!-- CONTENIDO NORMAL -->
-                <div class="h-auto max-w-4xl overflow-y-auto" wire:loading.remove.remove wire:target='agregar'>
+                <div class="h-auto max-w-4xl " wire:loading.remove.remove wire:target='agregar'>
                     {{-- Search bar --}}
                     <div class="grid gap-2 grid-cols-3">
                         {{-- SELECT BODEGA --}}
@@ -142,47 +142,51 @@
                         </div>
                     </div>
                     {{-- Tabla grupos insumos --}}
-                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" class="w-16 px-4 py-3">
-                                    #
-                                </th>
-                                <th scope="col" class=" px-6 py-3">
-                                    DESCRIPCION
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    <input wire:model='seleccionar_general' wire:click='seleccionar()'
-                                        type="checkbox"
-                                        class="w-6 h-6 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($this->grupos as $i_grupo => $grupo)
-                                <tr wire:key='{{ $i_grupo }}'
-                                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600">
-                                    <td
-                                        class="max-w-16 px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                        {{ $grupo->id }}
-                                    </td>
-                                    <td class="max-w-32 font-medium text-gray-900  dark:text-white ">
-                                        <div class="flex items-center">
-                                            <label for="checkbox-{{ $grupo->id }}"
-                                                class="w-full px-6 py-3 text-sm font-medium text-gray-900 dark:text-gray-300">
-                                                {{ $grupo->descripcion }}
-                                            </label>
-                                        </div>
-                                    </td>
-                                    <td class="w-4 px-6 py-3 ">
-                                        <input id="checkbox-{{ $grupo->id }}"
-                                            wire:model="lista_grupos.{{ $grupo->id }}" type="checkbox"
+                    <div class="overflow-y-auto h-96">
+                        <table class=" w-full  text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                            <thead
+                                class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                                <tr>
+                                    <th scope="col" class="w-16 px-4 py-3">
+                                        #
+                                    </th>
+                                    <th scope="col" class=" px-6 py-3">
+                                        DESCRIPCION
+                                    </th>
+                                    <th scope="col" class="px-6 py-3">
+                                        <input wire:model='seleccionar_general' wire:click='seleccionar()'
+                                            type="checkbox"
                                             class="w-6 h-6 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                    </td>
+                                    </th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach ($this->grupos as $i_grupo => $grupo)
+                                    <tr wire:key='{{ $i_grupo }}'
+                                        class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600">
+                                        <td
+                                            class="max-w-16 px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                            {{ $grupo->id }}
+                                        </td>
+                                        <td class="max-w-32 font-medium text-gray-900  dark:text-white ">
+                                            <div class="flex items-center">
+                                                <label for="checkbox-{{ $grupo->id }}"
+                                                    class="w-full px-6 py-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+                                                    {{ $grupo->descripcion }}
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td class="w-4 px-6 py-3 ">
+                                            <input id="checkbox-{{ $grupo->id }}"
+                                                wire:model="lista_grupos.{{ $grupo->id }}" type="checkbox"
+                                                class="w-6 h-6 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
                     <!-- Modal footer -->
                     <div
                         class="mt-2 flex items-center space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b dark:border-gray-600">
@@ -195,7 +199,7 @@
                 <div class="w-96 h-80" wire:loading wire:target='agregar'>
                     <div
                         class="flex items-center justify-center w-full h-full border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
-                        <div 
+                        <div
                             class="text-lg px-4 py-2 leading-none text-center text-blue-800 bg-blue-200 rounded-full animate-pulse dark:bg-blue-900 dark:text-blue-200">
                             <p>Calculando existencias ...</p>
                             <p>Por favor espere</p>

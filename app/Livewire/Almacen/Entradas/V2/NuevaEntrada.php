@@ -68,9 +68,11 @@ class NuevaEntrada extends Component
         if ($this->clave_bodega == '') {
             return [];
         } elseif (Bodega::find($this->clave_bodega)->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
-            $result = Presentacion::whereAny(['descripcion', 'clave'], 'like', "%$this->search_input%");
+            $result = Presentacion::whereAny(['descripcion', 'clave'], 'like', "%$this->search_input%")
+                ->where('estado', true);
         } elseif (Bodega::find($this->clave_bodega)->naturaleza == AlmacenConstants::INSUMOS_KEY) {
-            $result = Insumo::whereAny(['descripcion', 'clave'], 'like', "%$this->search_input%");
+            $result = Insumo::whereAny(['descripcion', 'clave'], 'like', "%$this->search_input%")
+                ->where('inventariable', true);
         }
 
         return  $result->get()->take(100);

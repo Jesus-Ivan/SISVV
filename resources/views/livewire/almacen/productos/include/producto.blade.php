@@ -137,7 +137,7 @@
         <div x-show="activeTab === 'receta'" x-cloak>
             {{-- Componente de busqueda de insumos --}}
             <livewire:search-bar tittle="Buscar insumo" table="insumos" :columns="['clave', 'descripcion']" primary="clave"
-                event="selected-receta" />
+                event="selected-receta" :conditions="[['inventariable', '=', 1]]" />
             {{-- Tabla resultados --}}
             <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
                 <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">

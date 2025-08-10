@@ -52,10 +52,10 @@
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>
-                    {{-- precio --}}
+                    {{-- precio sin impuesto --}}
                     <div>
                         <label for="precio"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Precio venta</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Precio sin impuesto</label>
                         <input type="number" id="precio" wire:model='form.precio' wire:change='changedPrecio'
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                         @error('form.precio')
@@ -72,11 +72,10 @@
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>
-                    {{-- costo con impuesto --}}
+                    {{-- Precio venta --}}
                     <div>
                         <label for="c_c_impuesto"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Precio con
-                            impuesto</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Precio venta</label>
                         <input type="number" id="c_c_impuesto" wire:model='form.costo_con_impuesto'
                             wire:change='changedPrecioIva'
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />

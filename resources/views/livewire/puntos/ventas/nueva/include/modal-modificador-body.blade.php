@@ -1,4 +1,4 @@
-<div>
+<div >
     {{-- STEPPER --}}
     <ol
         class="flex items-center w-full p-3 space-x-2 text-sm font-medium text-center text-gray-500 bg-white border border-gray-200 rounded-lg shadow-xs dark:text-gray-400 sm:text-base dark:bg-gray-800 dark:border-gray-700 sm:p-4 sm:space-x-4 rtl:space-x-reverse">
@@ -37,8 +37,8 @@
     {{-- Table & List --}}
     <div class="flex gap-4 mt-2">
         {{-- Table --}}
-        <div class="w-96 relative overflow-y-auto shadow-md sm:rounded-lg">
-            <table class="text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+        <div class="overflow-y-auto shadow-md sm:rounded-lg">
+            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
                         <th scope="col" class="px-3 py-2 w-full">
@@ -55,7 +55,7 @@
                     <tr
                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                         <th scope="row"
-                            class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                            class="w-64 px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                             Agua ciel mineral 600
                         </th>
                         <td class="px-3 py-2">
@@ -77,8 +77,8 @@
             </table>
         </div>
         {{-- List butons --}}
-        <div
-            class="w-96 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+        <div 
+            class="w-64 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
             <button type="button"
                 class="w-full px-4 py-2 font-medium text-left rtl:text-right border-b border-gray-200 cursor-pointer hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:text-white dark:focus:ring-gray-500 dark:focus:text-white">
                 Settings
@@ -89,8 +89,9 @@
             </button>
         </div>
     </div>
+
     <!-- Modal footer -->
-    <div class="flex items-center  border-t border-gray-200 rounded-b dark:border-gray-600">
+    <div class="mt-3 flex items-center  border-t border-gray-200 rounded-b dark:border-gray-600">
         <button type="button"
             class="px-5 py-2.5 text-sm font-medium text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
             <svg class="w-3.5 h-3.5 text-white me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"

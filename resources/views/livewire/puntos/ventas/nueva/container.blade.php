@@ -20,11 +20,9 @@
                 Añadir
             </button>
             {{-- BOTON ARTICULOS V2 --}}
-            {{--
             <button class="bg-cyan-400" x-data x-on:click="$dispatch('open-modal', {name:'modal-modificadores'})">
                 agregar nuevo
             </button>
-            --}}
         </div>
         <!--Tabla de articulos-->
         @include('livewire.puntos.ventas.nueva.include.productos-table')

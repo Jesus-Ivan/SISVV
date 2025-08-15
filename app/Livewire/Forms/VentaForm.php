@@ -9,6 +9,7 @@ use App\Models\Copa;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
+use App\Models\Producto;
 use App\Models\PuntoVenta;
 use App\Models\Socio;
 use App\Models\SocioMembresia;
@@ -728,6 +729,22 @@ class VentaForm extends Form
     }
 
     /**
+     * Agrega el nuevo producto a la tabla
+     */
+    public function agregarProducto(Producto $producto)
+    {
+        $this->productosTable[] = [
+            'codigo_catalogo' => $producto->clave,
+            'nombre' => $producto->descripcion,
+            'cantidad' => 1,
+            'precio' => $producto->precio_con_impuestos,
+            'subtotal' => $producto->precio_con_impuestos,
+            'observaciones' => '',
+            'tiempo' => null
+        ];
+    }
+
+    /**
      * Se encarga de verificar el tipo de stock de cada articulo.
      * Si el stock es valido descuenta en el punto dado
      */
@@ -814,7 +831,5 @@ class VentaForm extends Form
      * Crea el registro de la venta, en la tabla "detalles_caja".
      * Utilizado para el corte de caja (reporte de ventas)
      */
-    private function crearMovimientoCaja($detalle_pago, $caja){
-
-    }
+    private function crearMovimientoCaja($detalle_pago, $caja) {}
 }

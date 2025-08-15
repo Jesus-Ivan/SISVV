@@ -20,7 +20,7 @@
                 Añadir
             </button>
             {{-- BOTON ARTICULOS V2 --}}
-            <button class="bg-cyan-400" x-data x-on:click="$dispatch('open-modal', {name:'modal-modificadores'})">
+            <button class="bg-cyan-400" x-data x-on:click="$dispatch('open-modal', {name:'modal-new-producto'})">
                 agregar nuevo
             </button>
         </div>
@@ -158,8 +158,16 @@
         </x-slot>
     </x-modal>
 
+    {{-- NUEVO modal de productos --}}
+    <x-modal name="modal-new-producto" title="Seleccionar producto">
+        <x-slot name='body'>
+            @include('livewire.puntos.ventas.nueva.include.modal-new-producto-body')
+        </x-slot>
+    </x-modal>
+
     <!--Modal modificadores -->
-    <x-modal name="modal-modificadores" title="Seleccionar modificadores: NEW YORK">
+    <x-modal name="modal-modificadores"
+        title="Modificadores: {{ $producto_compuesto ? $producto_compuesto['descripcion'] : '' }}">
         <x-slot name='body'>
             @include('livewire.puntos.ventas.nueva.include.modal-modificador-body')
         </x-slot>

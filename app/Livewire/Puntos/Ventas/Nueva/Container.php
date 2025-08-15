@@ -4,6 +4,10 @@ namespace App\Livewire\Puntos\Ventas\Nueva;
 
 use App\Livewire\Forms\VentaForm;
 use App\Models\CatalogoVistaVerde;
+use App\Models\GruposModificadores;
+use App\Models\Modificador;
+use App\Models\ModifProducto;
+use App\Models\Producto;
 use App\Models\Socio;
 use App\Models\SocioMembresia;
 use App\Models\TipoPago;
@@ -21,12 +25,26 @@ class Container extends Component
     #[Locked]
     public $codigopv;
 
+    #[Locked]
+    public $producto_compuesto = null; //Almacena el producto compuesto seleccionado en el modal de productos
+    #[Locked]
+    public $modificadores = [];     //Almacena los posibles modificadores que el usuario puede seleccionar (de un producto compuesto)
+    #[Locked]
+    public $gruposModif = [];       //Almacena los grupos de modificadores (de un producto compuesto)
+
     public function mount($codigopv, $permisospv)
     {
         //Guardamos el codigo del pv en el componente
         $this->codigopv = $codigopv;
         //Guardamos los permisos del usuario en el formulario
         $this->ventaForm->permisospv = $permisospv;
+    }
+
+    #[Computed(persist: true)]
+    public function gruposModificadores()
+    {
+        //Buscar los grupos de modificadores
+        return GruposModificadores::all();
     }
 
     #[On('on-selected-socio')]
@@ -96,6 +114,17 @@ class Container extends Component
             ->orderBy('nombre', 'asc')
             ->limit(40)
             ->get();
+    }
+
+    #[Computed()]
+    public function productosNew()
+    {
+        $result = Producto::where('descripcion', 'like', '%' . $this->ventaForm->seachProduct . '%')
+            ->whereNot('estado', 0)
+            ->orderBy('descripcion', 'asc')
+            ->limit(50)
+            ->get();
+        return $result;
     }
 
     //hook que monitorea la actualizacion del componente
@@ -199,6 +228,54 @@ class Container extends Component
     public function resetVentas()
     {
         $this->ventaForm->resetVentas();
+    }
+
+
+    public function seleccionarProducto($clave)
+    {
+        //Buscar el producto con sus modificadores y los grupos
+        $producto = Producto::with(['modificador', 'grupoModif'])
+            ->find($clave);
+
+        //Si el producto tiene algun grupo de modificador asignado (es compuesto)
+        if (count($producto->grupoModif)) {
+            //Establer las propiedades de produto compuesto, en el componente 
+            $this->producto_compuesto = $producto->toArray();
+            $this->modificadores = $producto->modificador->toArray();
+            $this->gruposModif = $producto->grupoModif->toArray();
+
+            //Agregar descripcion del producto (modificadores posibles)
+            foreach ($this->modificadores as $index => $modif) {
+                $result = Producto::find($modif['clave_modificador']);
+                $this->modificadores[$index]['descripcion'] = $result->descripcion;
+            }
+            //Agregar descripcion del grupo de modificadores
+            foreach ($this->gruposModif as $index => $grupo) {
+                $grupo = $this->gruposModificadores->find($grupo['id_grupo']);
+                if ($grupo) {
+                    $this->gruposModif[$index]['descripcion'] = $grupo->descripcion;
+                } else {
+                    $this->gruposModif[$index]['descripcion'] = 'N/A';
+                }
+            }
+
+            //Emitir evento para abrir el modal
+            $this->dispatch('open-modal', name: 'modal-modificadores');
+            //Emitir evento para actualizar el front de los modificadores.
+            $this->dispatch('actualizar-modificadores');
+        } else {
+            //Intentamos guardar los items seleccionados, para mostrarlos en la tabla
+            $this->ventaForm->agregarProducto($producto);
+            //Emitimos evento para cerrar el componente del modal
+            $this->dispatch('close-modal');
+        }
+    }
+
+    public function guardarCompuesto($selected)
+    {
+        dump($selected);
+        //Limpiar las propiedades auxiliares
+        $this->reset('producto_compuesto', 'modificadores', 'gruposModif');
     }
 
 

@@ -2,7 +2,7 @@
     activeTab: 'general',
     tabClasses(tabName) {
         const isActive = this.activeTab === tabName;
-        let classes = 'inline-block w-full p-4 border-r border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-blue-300 focus:outline-none ';
+        let classes = 'inline-block w-full p-3 border-r border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-blue-300 focus:outline-none ';
 
         if (isActive) {
             classes += 'text-gray-900 bg-gray-100 dark:bg-gray-700 dark:text-white';
@@ -17,19 +17,19 @@
         class="hidden text-sm font-medium text-center text-gray-500 rounded-lg shadow-sm sm:flex dark:divide-gray-700 dark:text-gray-400">
         <li class="w-full focus-within:z-10">
             <button @click="activeTab = 'general'" :class="tabClasses('general')"
-                class="inline-block w-full p-3 border-r border-gray-200 dark:border-gray-700 rounded-s-lg focus:ring-4 focus:ring-blue-300 focus:outline-none hover:text-gray-700 hover:bg-gray-50 dark:hover:text-white dark:hover:bg-gray-700">
+                >
                 General
             </button>
         </li>
         <li class="w-full focus-within:z-10">
             <button @click="activeTab = 'receta'" :class="tabClasses('receta')"
-                class="inline-block w-full p-3 border-r border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-blue-300 focus:outline-none hover:text-gray-700 hover:bg-gray-50 dark:hover:text-white dark:hover:bg-gray-700">
+                >
                 Receta
             </button>
         </li>
         <li class="w-full focus-within:z-10">
             <button @click="activeTab = 'compuesto'" :class="tabClasses('compuesto')"
-                class="inline-block w-full p-3 border-r border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-blue-300 focus:outline-none hover:text-gray-700 hover:bg-gray-50 dark:hover:text-white dark:hover:bg-gray-700">
+                >
                 Compuesto
             </button>
         </li>

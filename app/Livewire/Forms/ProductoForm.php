@@ -94,7 +94,7 @@ class ProductoForm extends Form
                 'id' => $modificador->id, //ID, del registo en la BD.
                 'clave' => $modificador->clave_modificador,
                 'descripcion' => $modificador->productoModif->descripcion,
-                'precio' => $modificador->precio,
+                'precio_con_impuestos' => $modificador->precio,
                 'id_grup_modif' => $modificador->id_grupo
             ];
         }
@@ -350,7 +350,7 @@ class ProductoForm extends Form
                 Modificador::where('id', $item['id'])
                     ->update([
                         'id_grupo' => $item['id_grup_modif'],
-                        'precio' => $item['precio'],
+                        'precio' => $item['precio_con_impuestos'],
                     ]);
             } else {
                 //Crear los modificadores (en la tabla 'modificadores')
@@ -358,7 +358,7 @@ class ProductoForm extends Form
                     'id_grupo' => $item['id_grup_modif'],
                     'clave_producto' => $this->original->clave,
                     'clave_modificador' => $item['clave'],
-                    'precio' => $item['precio'],
+                    'precio' => $item['precio_con_impuestos'],
                 ]);
             }
         }
@@ -414,7 +414,7 @@ class ProductoForm extends Form
                 'id_grupo' => $item['id_grup_modif'],
                 'clave_producto' => $producto->clave,
                 'clave_modificador' => $item['clave'],
-                'precio' => $item['precio'],
+                'precio' => $item['precio_con_impuestos'],
             ]);
         }
     }
@@ -531,11 +531,11 @@ class ProductoForm extends Form
         foreach ($this->modif as $index => $value) {
             $this->validate([
                 'modif.' . $index . '.id_grup_modif' => 'required',
-                'modif.' . $index . '.precio'  => 'required|numeric|min:0'
+                'modif.' . $index . '.precio_con_impuestos'  => 'required|numeric|min:0'
             ], [
                 'modif.*.id_grup_modif.required' => 'Obligatorio',
-                'modif.*.precio.required' => 'Obligatorio',
-                'modif.*.precio.min' => 'Mínimo: 0',
+                'modif.*.precio_con_impuestos.required' => 'Obligatorio',
+                'modif.*.precio_con_impuestos.min' => 'Mínimo: 0',
             ]);
         }
     }

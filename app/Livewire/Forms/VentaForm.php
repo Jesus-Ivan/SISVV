@@ -60,6 +60,7 @@ class VentaForm extends Form
 
     public $permisospv;               //Almacena los permisos del usuario en el punto
 
+
     //REGLAS PARA VENTA AL SOCIO
     public $socioVentaRules = [
         'socio' => 'min:1',
@@ -131,9 +132,18 @@ class VentaForm extends Form
         $this->recalcularSubtotales();
     }
 
-    public function eliminarArticulo($productoIndex)
+    /**
+     * Elimina los productos agregados con el mismo timeStamp (ideado para eliminar todos aquellos agregados como compuesto)
+     */
+    public function eliminarArticulo($timeStamp)
     {
-        unset($this->productosTable[$productoIndex]);
+        //Filtrar los elementos con el mismo timeStamp, de la tabla de productos
+        $new_array = array_filter($this->productosTable, function ($item) use ($timeStamp) {
+            return $item['time'] != $timeStamp;
+        });
+        //Re asignar variable
+        $this->productosTable = $new_array;
+        //Calcular los totales
         $this->recalcularSubtotales();
     }
 
@@ -395,7 +405,7 @@ class VentaForm extends Form
                     //Crear el nuevo item
                     DetallesVentaProducto::create([
                         'folio_venta' => $folio,
-                        'codigo_catalogo' => $producto['codigo_catalogo'],
+                        'clave_producto' => $producto['clave_producto'],
                         'nombre' => $producto['nombre'],
                         'cantidad' => $producto['cantidad'],
                         'precio' => $producto['precio'],
@@ -563,7 +573,7 @@ class VentaForm extends Form
         foreach ($venta['productosTable'] as $key => $producto) {
             DetallesVentaProducto::create([
                 'folio_venta' => $folio,
-                'codigo_catalogo' => $producto['codigo_catalogo'],
+                'clave_producto' => $producto['clave_producto'],
                 'nombre' => $producto['nombre'],
                 'cantidad' => $producto['cantidad'],
                 'precio' => $producto['precio'],
@@ -729,19 +739,45 @@ class VentaForm extends Form
     }
 
     /**
-     * Agrega el nuevo producto a la tabla
+     * Agrega el NUEVO producto a la tabla
      */
-    public function agregarProducto(Producto $producto)
+    public function agregarProducto(Producto $producto, $cantidad, int $time, $autoSum = false)
     {
+        //Filtramos aquellos productos que no sean modificadores en la tabla
+        $new_array = array_filter($this->productosTable, function ($item) {
+            return !array_key_exists('modif', $item);
+        });
+        dump($new_array);
         $this->productosTable[] = [
-            'codigo_catalogo' => $producto->clave,
+            'time' => $time,
+            'clave_producto' => $producto->clave,
             'nombre' => $producto->descripcion,
-            'cantidad' => 1,
+            'cantidad' => $cantidad,
             'precio' => $producto->precio_con_impuestos,
-            'subtotal' => $producto->precio_con_impuestos,
+            'subtotal' => $cantidad * $producto->precio_con_impuestos,
             'observaciones' => '',
             'tiempo' => null
         ];
+    }
+
+    /**
+     * Agrega los modificadores seleccionados a la tabla
+     */
+    public function agregarModificadores(array $modificadores, int $time)
+    {
+        foreach ($modificadores as $key => $modificador) {
+            $this->productosTable[] = [
+                'time' => $time,
+                'clave_producto' => $modificador['clave_modificador'],
+                'nombre' => $modificador['descripcion'],
+                'cantidad' => $modificador['cantidad'],
+                'precio' => $modificador['precio'],
+                'subtotal' => $modificador['precio'] * $modificador['cantidad'],
+                'observaciones' => '',
+                'tiempo' => null,
+                'modif' => true
+            ];
+        }
     }
 
     /**

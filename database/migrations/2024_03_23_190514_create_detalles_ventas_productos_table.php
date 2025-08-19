@@ -15,6 +15,7 @@ return new class extends Migration
             $table->integer('id')->autoIncrement()->unsigned();
             $table->integer('folio_venta');
             $table->integer('codigo_catalogo')->nullable();
+            $table->integer('clave_producto')->nullable();
             $table->string('nombre', 255)->nullable();
             $table->smallInteger('cantidad');
             $table->decimal('precio', 10, 2);

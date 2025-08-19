@@ -31,6 +31,9 @@ class Container extends Component
     public $modificadores = [];     //Almacena los posibles modificadores que el usuario puede seleccionar (de un producto compuesto)
     #[Locked]
     public $gruposModif = [];       //Almacena los grupos de modificadores (de un producto compuesto)
+    public $cantidadProducto = 1;   //Utilizada en el modal de buscar productos (NEW)
+    #[Locked]
+    public $modal_name = 'modal-new-producto'; //Es el nombre del modal a abrir con la tecla 'ctrl' desde el front
 
     public function mount($codigopv, $permisospv)
     {
@@ -172,9 +175,9 @@ class Container extends Component
         $this->ventaForm->eliminarPago($pagoIndex);
     }
 
-    public function eliminarArticulo($productoIndex)
+    public function eliminarArticulo($timeStamp)
     {
-        $this->ventaForm->eliminarArticulo($productoIndex);
+        $this->ventaForm->eliminarArticulo($timeStamp);
     }
 
     //Funcion que se llama, cada vez que el input de cantidad de la venta nueva, cambia
@@ -258,24 +261,44 @@ class Container extends Component
                     $this->gruposModif[$index]['descripcion'] = 'N/A';
                 }
             }
-
+            //Actualizar el nombre del modal a abrir con el evento 'ctrl' desde el front
+            $this->modal_name = 'modal-modificadores';
             //Emitir evento para abrir el modal
-            $this->dispatch('open-modal', name: 'modal-modificadores');
+            $this->dispatch('open-modal', name: $this->modal_name);
             //Emitir evento para actualizar el front de los modificadores.
             $this->dispatch('actualizar-modificadores');
         } else {
-            //Intentamos guardar los items seleccionados, para mostrarlos en la tabla
-            $this->ventaForm->agregarProducto($producto);
+            //Agregar el producto a la tabla
+            $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time(), true);
             //Emitimos evento para cerrar el componente del modal
             $this->dispatch('close-modal');
+            //Limpiar las propiedades auxiliares
+            $this->reset('producto_compuesto', 'modificadores', 'gruposModif', 'cantidadProducto');
+            //Actualizar el total de la venta
+            $this->ventaForm->actualizarTotal();
         }
     }
 
     public function guardarCompuesto($selected)
     {
-        dump($selected);
+        //Buscar el producto compuesto, segun el primer modificador seleccionado
+        $producto = Producto::find(reset($selected)['clave_producto']);
+        //Generar timeStamp
+        $time = time();
+        //Agregar el producto a la tabla
+        $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, $time);
+        //Agregar los modificadores a la tabla 
+        $this->ventaForm->agregarModificadores($selected, $time);
+        //Actualizar el total de la venta
+        $this->ventaForm->actualizarTotal();
+    }
+
+    public function limpiarCompuesto()
+    {
         //Limpiar las propiedades auxiliares
-        $this->reset('producto_compuesto', 'modificadores', 'gruposModif');
+        $this->reset('producto_compuesto', 'modificadores', 'gruposModif', 'cantidadProducto', 'modal_name');
+        //Emitimos evento para cerrar el componente del modal
+        $this->dispatch('close-modal');
     }
 
 

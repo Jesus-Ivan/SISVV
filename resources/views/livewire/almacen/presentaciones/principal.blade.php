@@ -70,7 +70,10 @@
                             PROVEEDOR
                         </th>
                         <th scope="col" class="px-6 py-3">
-                            ULTIMO COSTO
+                            C.C.IMPUESTO
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            C.RENDIMIENTO
                         </th>
                         <th scope="col" class="px-6 py-3">
                             ULTIMA COMPRA
@@ -100,7 +103,10 @@
                                 {{ $articulo->proveedor->nombre }}
                             </td>
                             <td class="px-6 py-1 uppercase">
-                                $ {{ $articulo->costo }}
+                                $ {{ number_format($articulo->costo_con_impuesto, 3) }}
+                            </td>
+                            <td class="px-6 py-1 uppercase">
+                                $ {{ number_format($articulo->costo_rend_impuesto, 3) }}
                             </td>
                             <td class="px-6 py-1">
                                 {{ $articulo->ultima_compra }}

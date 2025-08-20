@@ -60,15 +60,18 @@ class EditarPresentacion extends Component
     public function changedCosto()
     {
         $this->form->calcularPrecioIva();
+        $this->calcularEquivalencias();
     }
 
     public function changedIva()
     {
         $this->form->calcularPrecioIva();
+        $this->calcularEquivalencias();
     }
     public function changedCostoIva()
     {
         $this->form->calcularPrecioSinIva();
+        $this->calcularEquivalencias();
     }
 
     public function guardar()
@@ -85,6 +88,13 @@ class EditarPresentacion extends Component
             session()->flash('fail', $e->getMessage());
             $this->dispatch('open-action-message');
         }
+    }
+
+    //Calcula las equivalencias relacionadas con el rendimiento de la presentacion
+    public function calcularEquivalencias()
+    {
+        $this->form->costoRendimiento();
+        $this->form->costoRendimientoImp();
     }
 
     public function render()

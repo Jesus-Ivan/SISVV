@@ -141,6 +141,7 @@
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Redimiento
                             insumo</label>
                         <input type="number" id="rendi" wire:model='form.rendimiento'
+                            wire:change='calcularEquivalencias'
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             placeholder="50" />
                         @error('form.rendimiento')
@@ -154,6 +155,26 @@
                             value="{{ $this->form->unidad_insumo ? $this->form->unidad_insumo->descripcion : '' }}"
                             class="cursor-not-allowed bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             placeholder="#" />
+                    </div>
+                </div>
+                {{-- Separador --}}
+                <hr class="w-full h-1 my-8 bg-gray-200 border-0 dark:bg-gray-700">
+                {{-- Equivalencias --}}
+                <div class="flex gap-3">
+                    <div class="w-full">
+                        <label
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Costo/Rendimiento</label>
+                        <input type="number" wire:model='form.c_rendimiento' aria-label="disabled input" disabled
+                            class="cursor-not-allowed bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                            placeholder="0" step="0.001" />
+                    </div>
+                    <div class="w-full">
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Costo/Rendimiento
+                            Impuesto</label>
+                        <input type="number" wire:model='form.c_rendimiento_imp' aria-label="disabled input"
+                            disabled
+                            class="cursor-not-allowed bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                            placeholder="0" step="0.001" />
                     </div>
                 </div>
             </div>

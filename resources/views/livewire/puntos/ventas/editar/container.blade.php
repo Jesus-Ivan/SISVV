@@ -1,4 +1,4 @@
-<div @keyup.ctrl.window="$dispatch('open-modal', {name:'modal-productos'})">
+<div @keyup.ctrl.window="$dispatch('open-modal', {name:'{{ $modal_name }}'})">
     <form>
         <!--Info del socio-->
         <div class="m-3">
@@ -10,7 +10,7 @@
         <!--Boton de articulos -->
         <div class="flex">
             <div class="flex-grow"></div>
-            <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'modal-productos'})"
+            <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'{{ $modal_name }}'})"
                 class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700 inline-flex items-center">
                 <svg class="w-5 h-5 text-white me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                     fill="currentColor" viewBox="0 0 24 24">
@@ -81,7 +81,8 @@
                 </svg>
                 Cancelar
             </a>
-            <button type="button" wire:click="guardarVentaExistente" wire:loading.attr="disabled" wire:target='guardarVentaExistente'
+            <button type="button" wire:click="guardarVentaExistente" wire:loading.attr="disabled"
+                wire:target='guardarVentaExistente'
                 class="inline-flex items-center focus:outline-none text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-900">
                 <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -92,7 +93,8 @@
                 Guardar venta
             </button>
             @if ($this->ventaForm->permisospv->clave_rol != 'MES')
-                <button type="button" wire:click="cerrarVentaExistente" wire:loading.attr="disabled" wire:target='cerrarVentaExistente'
+                <button type="button" wire:click="cerrarVentaExistente" wire:loading.attr="disabled"
+                    wire:target='cerrarVentaExistente'
                     class="inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
                     <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -121,14 +123,16 @@
         </x-loading-screen>
     </div>
 
-    <!--Modal productos -->
-    <x-modal name="modal-productos" title="Agregar productos">
+    {{-- NUEVO modal de productos --}}
+    <x-modal name="modal-new-producto" title="Seleccionar producto">
         <x-slot name='body'>
-            @include('livewire.puntos.ventas.nueva.include.modal-productos-body')
+            @include('livewire.puntos.ventas.nueva.include.modal-new-producto-body')
         </x-slot>
     </x-modal>
+
     <!--Modal modificadores -->
-    <x-modal name="modal-modificadores" title="Agregar modificador">
+    <x-modal name="modal-modificadores"
+        title="{{ $cantidadProducto }} Modificadores: {{ $producto_compuesto ? $producto_compuesto['descripcion'] : '' }}">
         <x-slot name='body'>
             @include('livewire.puntos.ventas.nueva.include.modal-modificador-body')
         </x-slot>
@@ -139,10 +143,16 @@
             @include('livewire.puntos.ventas.nueva.include.modal-pagos-body')
         </x-slot>
     </x-modal>
-    {{--Modal de transferir--}}
+    {{-- Modal de transferir --}}
     <x-modal name="modal-transferir" title="Transferir producto">
         <x-slot name='body'>
             @include('livewire.puntos.ventas.nueva.include.modal-transferir-body')
+        </x-slot>
+    </x-modal>
+    {{-- Modal de motivo eliminacion --}}
+    <x-modal name="modal-motivo eliminacion" title="Eliminar producto">
+        <x-slot name='body'>
+            @include('livewire.puntos.ventas.nueva.include.modal-eliminar-body')
         </x-slot>
     </x-modal>
     <!--Alerts-->

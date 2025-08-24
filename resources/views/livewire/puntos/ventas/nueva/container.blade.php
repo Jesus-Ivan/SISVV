@@ -1,4 +1,4 @@
-<div @keyup.ctrl.window="$dispatch('open-modal', {name:'modal-productos'})">
+<div @keyup.ctrl.window="$dispatch('open-modal', {name:'{{ $modal_name }}'})">
     <div>
         @include('livewire.puntos.ventas.nueva.include.search-bar')
         <!--Linea -->
@@ -6,7 +6,7 @@
         <!--Boton de articulos -->
         <div class="flex">
             <div class="flex-grow"></div>
-            <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'modal-productos'})"
+            <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'{{ $modal_name }}'})"
                 class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700 inline-flex items-center">
                 <svg class="w-5 h-5 text-white me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                     fill="currentColor" viewBox="0 0 24 24">
@@ -19,12 +19,6 @@
                 </svg>
                 Añadir
             </button>
-            {{-- BOTON ARTICULOS V2 --}}
-            {{--
-            <button class="bg-cyan-400" x-data x-on:click="$dispatch('open-modal', {name:'modal-modificadores'})">
-                agregar nuevo
-            </button>
-            --}}
         </div>
         <!--Tabla de articulos-->
         @include('livewire.puntos.ventas.nueva.include.productos-table')
@@ -160,8 +154,16 @@
         </x-slot>
     </x-modal>
 
+    {{-- NUEVO modal de productos --}}
+    <x-modal name="modal-new-producto" title="Seleccionar producto">
+        <x-slot name='body'>
+            @include('livewire.puntos.ventas.nueva.include.modal-new-producto-body')
+        </x-slot>
+    </x-modal>
+
     <!--Modal modificadores -->
-    <x-modal name="modal-modificadores" title="Seleccionar modificadores: NEW YORK">
+    <x-modal name="modal-modificadores"
+        title="{{ $cantidadProducto }} Modificadores: {{ $producto_compuesto ? $producto_compuesto['descripcion'] : '' }}">
         <x-slot name='body'>
             @include('livewire.puntos.ventas.nueva.include.modal-modificador-body')
         </x-slot>

@@ -20,6 +20,8 @@ return new class extends Migration
             $table->decimal('costo_con_impuesto', 10, 2)->default(0);
             $table->integer('clave_insumo_base');
             $table->decimal('rendimiento', 11, 3);
+            $table->decimal('costo_rend', 11, 3);
+            $table->decimal('costo_rend_impuesto', 11, 3);
             $table->integer('id_proveedor');
             $table->boolean('estado')->default(1);
             $table->date('ultima_compra')->nullable();

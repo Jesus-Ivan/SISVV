@@ -22,7 +22,7 @@
     </div>
 
     {{-- Tabla --}}
-    <div class="ms-3 mx-3" wire:loading.class='animate-pulse pointer-events-none' wire:target='order' >
+    <div class="ms-3 mx-3" wire:loading.class='animate-pulse pointer-events-none' wire:target='order'>
         <div class="relative  shadow-md sm:rounded-lg">
             <div class="flex items-center gap-5">
                 {{-- FECHA DE INICIO --}}
@@ -108,9 +108,11 @@
                                 </td>
                                 <td class="px-6 py-2">
                                     <div class="flex">
-                                        <a type="button" href="{{ route('requisicion', ['folio' => $orden->folio, 'order'=>$order]) }}"
+                                        {{-- IMPRIMIR --}}
+                                        <a type="button"
+                                            href="{{ route('orden', ['folio' => $orden->folio, 'order' => $order]) }}"
                                             target="_blank"
-                                            class="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-600 dark:focus:ring-blue-800">
+                                            class="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-600 dark:focus:ring-blue-800">
                                             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24"
                                                 height="24" fill="currentColor" viewBox="0 0 24 24">
                                                 <path fill-rule="evenodd"

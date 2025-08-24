@@ -94,19 +94,6 @@ class CargosNuevo extends Component
         //Agregamos el campo fecha al cargo.
         $cuota['fecha'] = $this->fechaDestino;
 
-        //Si la cuota es de tipo editable
-        if ($cuota['tipo'] == RecepcionConstants::EDITABLE_CARGO_KEY) {
-            //Si la cuota se esta tratando de agregar a un no.de socio diferente del 5500
-            if ($this->socio->id != RecepcionConstants::ID_SOCIO_EDITABLE) {
-                session()->flash('fail', 'Cuota permitida unicamente para la accion: ' . RecepcionConstants::ID_SOCIO_EDITABLE);
-            } else {
-                //Agregramos a la lista de cargos
-                $this->listaCargos[] = $cuota;
-            }
-            //terminar la funcion
-            return;
-        }
-
         //Evaluamos si la cuota seleccionada tiene una 'clave_membresia' null
         if ($cuota['clave_membresia']) {
             //Creamos instancia de carbon, de la fecha de la cuota

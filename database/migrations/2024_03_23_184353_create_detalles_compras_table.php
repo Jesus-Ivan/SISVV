@@ -16,22 +16,24 @@ return new class extends Migration
             $table->integer('folio_orden');
             $table->integer('codigo_producto');
             $table->string('nombre', 100);
-            $table->integer('id_unidad');
+            $table->integer('id_proveedor');
+            $table->integer('id_unidad')->nullable();
             $table->decimal('cantidad', total:10, places:2);
             $table->decimal('costo_unitario', total:10, places:2);
-            $table->integer('id_proveedor');
-            $table->decimal('importe', total:10, places:2);
             $table->decimal('iva', total:10, places:2);
-            $table->decimal('subtotal', total:10, places:2)->nullable();
-            $table->json('almacen');
-            $table->json('bar');
-            $table->json('barra');
-            $table->json('caddie');
-            $table->json('cafeteria');
-            $table->json('cocina');
-            $table->dateTime('consultado');
+            $table->decimal('costo_con_impuesto', total:10, places:2)->nullable();
+            $table->decimal('importe', total:10, places:2);
+            $table->json('almacen')->nullable();
+            $table->json('bar')->nullable();
+            $table->json('barra')->nullable();
+            $table->json('caddie')->nullable();
+            $table->json('cafeteria')->nullable();
+            $table->json('cocina')->nullable();
+            $table->dateTime('consultado')->nullable();
             $table->date('ultima_compra')->nullable();
             $table->boolean('aplicado')->default(false);
+            $table->timestamps();
+            $table->softDeletes();
             /*
             //Relaciones
 

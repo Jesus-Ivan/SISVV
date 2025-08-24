@@ -71,11 +71,11 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
 <table>
     <thead>
         <tr class="color-cel">
-            <th>CODIGO</th>
-            <th style="width: 35%">DESCRIPCION</th>
-            <th>UNIDAD</th>
+            <th style="width: 6%">#</th>
+            <th style="width: 35%">PRESENTACION</th>
             <th>CANT.</th>
             <th>P.UNITARIO</th>
+            <th>P.IMPUESTO</th>
             <th>IMPORTE</th>
             <th>PROVEEDOR</th>
         </tr>
@@ -83,13 +83,13 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
     <tbody>
         @foreach ($detalle as $item)
             <tr>
-                <td>{{ $item->codigo_producto }}</td>
-                <td>{{ $item->nombre }}</td>
-                <td>{{ $unidades[$item->id_unidad] }}</td>
-                <td>{{ $item->cantidad }}</td>
-                <td>${{ $item->costo_unitario }}</td>
-                <td>${{ $item->importe }}</td>
-                <td>{{ $proveedores[$item->id_proveedor] }}</td>
+                <td>{{ $item['codigo_producto'] }}</td>
+                <td>{{ $item['nombre'] }}</td>
+                <td>{{ $item['cantidad'] }}</td>
+                <td>${{ $item['costo_unitario'] }}</td>
+                <td>${{ $item['costo_con_impuesto'] }}</td>
+                <td>${{ number_format($item['importe'], 2) }}</td>
+                <td>{{ $proveedores[$item['id_proveedor']] }}</td>
             </tr>
         @endforeach
     </tbody>
@@ -102,20 +102,20 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
                 <td class="padding-cel"
                     style="width: 80pt; background-color: #b4b4b4; border: 0pt; border-style: none;">SUBTOTAL</td>
                 <td class="padding-cel" style="width: 94pt ; border: 0pt; border-style: none; ">
-                    ${{ number_format(array_sum(array_column($detalle, 'importe')), 2) }}</td>
+                    $ {{ number_format($subtotal, 2) }}</td>
                 <td class="padding-cel" style=" background-color: #b4b4b4; border: 1pt; border-left-style: outset">
                     APROBADO
                     POR: (NOMBRE Y FIRMA)</td>
             </tr>
             <tr>
                 <td class="padding-cel" style="background-color: #b4b4b4;">IVA</td>
-                <td class="padding-cel">${{ array_sum(array_column($detalle, 'iva')) }}</td>
+                <td class="padding-cel">$ {{ number_format($iva, 2) }}</td>
                 <td class="padding-cel" style="border: 1pt; border-left-style: outset"></td>
             </tr>
             <tr>
                 <td class="padding-cel" style="background-color: #b4b4b4;">TOTAL</td>
                 <td class="padding-cel">
-                    ${{ number_format(array_sum(array_column($detalle, 'importe')) + array_sum(array_column($detalle, 'iva')), 2) }}
+                    ${{ number_format($subtotal + $iva, 2) }}
                 </td>
                 <td class="padding-cel" style="border: 1pt; border-left-style: outset"></td>
             </tr>

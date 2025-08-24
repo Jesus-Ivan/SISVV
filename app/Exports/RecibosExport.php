@@ -72,7 +72,7 @@ class RecibosExport implements FromArray
         });
         //Filtramos de todas las cuotas, aquellas que son cuotas de un curso
         $cuotas_cursos = array_filter($this->cuotas->toArray(), function ($cuota) {
-            return $cuota['tipo'] == 'CUR';
+            return preg_match("/CUR/i", $cuota['tipo']);
         });
         //Filtramos las cuotas, que pertenecen a torneos
         $cuotas_torneos = array_filter($this->cuotas->toArray(), function ($cuota) {

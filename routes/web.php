@@ -35,7 +35,7 @@ Route::view('profile', 'profile')
     ->name('profile');
 
 
-Route::prefix('administracion')->middleware(['auth','administracion'])->group(function () {
+Route::prefix('administracion')->middleware(['auth', 'administracion'])->group(function () {
     Route::view('/', 'administracion.index')->name('administracion');
     Route::view('reportes-ordenes', 'administracion.reportes-ordenes')->name('administracion.reportes-ordenes');
     Route::view('detalles-ordenes', 'administracion.detalles-ordenes')->name('administracion.detalles-ordenes');
@@ -64,10 +64,30 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::view('reporte', 'almacen.Existencias.reporte')->name('almacen.existencias.reporte');
     });
 
+    Route::prefix('requisicion')->group(function () {
+        Route::view('/', 'almacen.Requisiciones.requisiciones')->name('almacen.requi');
+        Route::view('nueva', 'almacen.Requisiciones.nueva-requisicion')->name('almacen.requi.nueva');
+        Route::view('historial', 'almacen.Requisiciones.historial-requisiciones')->name('almacen.requi.historial');
+        Route::view('editar/{folio}', 'almacen.Requisiciones.editar-requisicion')->name('almacen.requi.editar');
+        //Requiscion de compra (NUEVAS REQUISICIONES) 
+        Route::get('ver/{folio}/{order?}', [ReportesController::class, 'verRequi'])->name('almacen.requi.ver');
+    });
+
+
+    Route::prefix('facturas')->group(function () {
+        Route::view('/', 'almacen.Facturas.facturas')->name('almacen.facturas');
+        Route::view('nuevo-registro', 'almacen.Facturas.nuevo-registro-factura')->name('almacen.facturas.nuevo-registro');
+    });
+
+    Route::prefix('inventario-fisico')->group(function () {
+        Route::view('/', 'almacen.Inventario.inventario-fisico')->name('almacen.inventario-fisico');
+        Route::view('nuevo-inventario', 'almacen.Inventario.nuevo-inventario')->name('almacen.nuevo-inventario');
+    });
 
     Route::view('clasificacion', 'almacen.Clasificacion.clasificacion')->name('almacen.clasificacion');
     Route::view('proveedores', 'almacen.Proveedores.proveedores')->name('almacen.proveedores');
     Route::view('unidades', 'almacen.Unidades.unidades')->name('almacen.unidades');
+    Route::view('grupos', 'almacen.Grupos.grupos')->name('almacen.grupos');
 
     Route::prefix('entradas')->group(function () {
         Route::view('/', 'almacen.Entradas.entradas')->name('almacen.entradas');
@@ -100,6 +120,48 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
     });
 
     Route::view('mermas', 'almacen.Mermas.mermas')->name('almacen.mermas');
+
+    Route::prefix('productos')->group(function () {
+        //view de la tabla de productos
+        Route::view('/', 'almacen.Productos.productos')->name('almacen.productos');
+        Route::view('/nuevo', 'almacen.Productos.nuevo-producto')->name('almacen.productos.nuevo');
+        Route::view('/editar/{clave}', 'almacen.Productos.editar-producto')->name('almacen.productos.editar');
+    });
+
+    Route::prefix('insumos')->group(function () {
+        //view de la tabla de insumos
+        Route::view('/', 'almacen.Insumos.insumos')->name('almacen.insumos');
+        Route::view('/nuevo', 'almacen.Insumos.nuevo-insumo')->name('almacen.insumos.nuevo');
+        Route::view('/editar/{clave}', 'almacen.Insumos.editar-insumo')->name('almacen.insumos.editar');
+    });
+
+    Route::prefix('presentaciones')->group(function () {
+        //view de la tabla de presentaciones
+        Route::view('/', 'almacen.Presentaciones.presentaciones')->name('almacen.presentaciones');
+        Route::view('/nueva', 'almacen.Presentaciones.nueva-presentacion')->name('almacen.presentaciones.nueva');
+        Route::view('/editar/{clave}', 'almacen.Presentaciones.editar-presentacion')->name('almacen.presentaciones.editar');
+    });
+
+    Route::prefix('documentos')->group(function () {
+        Route::get('existencias', [ReportesController::class, 'getExistencias'])->name('almacen.documentos.existencias');
+        Route::post('existencias', [ReportesController::class, 'postExistencias'])->name('almacen.documentos.existencias');
+        Route::get('tabla-inv-sem', [ReportesController::class, 'getInvSemanal'])->name('almacen.documentos.inv-sem');
+        Route::post('tabla-inv-sem', [ReportesController::class, 'postInvSemanal'])->name('almacen.documentos.inv-sem');
+    });
+
+    Route::prefix('entradas-v2')->group(function () {
+        //view de la tabla de productos
+        Route::view('/', 'almacen.Entradas.v2.entrada')->name('almacen.entradav2');
+        Route::view('/nueva', 'almacen.Entradas.v2.nueva-entrada')->name('almacen.entradav2.nueva');
+        Route::view('/historial', 'almacen.Entradas.v2.historial')->name('almacen.entradav2.historial');
+    });
+
+    //Nueva ruta de traspasos
+    Route::prefix('traspasos-v2')->group(function () {
+        Route::view('/', 'almacen.Traspasos.v2.traspaso')->name('almacen.traspasov2');
+        Route::view('/nuevo', 'almacen.Traspasos.v2.nuevo-traspaso')->name('almacen.traspasov2.nuevo');
+        Route::view('/historial', 'almacen.Traspasos.v2.historial')->name('almacen.traspasov2.historial');
+    });
 });
 
 Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function () {
@@ -239,15 +301,16 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     });
 });
 
-Route::prefix('portico')->middleware(['auth', 'portico'])->group(function () {
-    Route::view('/', 'portico.index')->name('portico');
-    Route::view('socios', 'portico.Socios.container')->name('portico.socios');
+//PORTICO
+Route::prefix('acceso')->middleware(['auth', 'acceso'])->group(function () {
+    Route::view('/', 'acceso.index')->name('acceso');
+    Route::view('socios', 'acceso.Socios.principal')->name('acceso.socios');
 });
 
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');
 Route::get('ventas/corte/{caja}/{codigopv?}', [ReportesController::class, 'generarCorte'])->name('ventas.corte');
-//Requiscion de compra
-Route::get('requisicion/{folio}/{order?}', [ReportesController::class, 'generarRequisicion'])->name('requisicion');
+//Ordenes de compra (VIEJAS REQUISICIONES)
+Route::get('ordenes/{folio}/{order?}', [ReportesController::class, 'generarRequisicion'])->name('orden');
 //Reporte de existencias actuales
 Route::post('reporte-existencias', [ReportesController::class, 'generarReporteExistencias'])->name('reporte-existencias');
 //Esta ruta debe moverse al departamento de sistemas. cuando almacen e inventarios esten listos

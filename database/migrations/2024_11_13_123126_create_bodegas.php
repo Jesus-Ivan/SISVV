@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('clave', 50)->primary();
             $table->string('descripcion', 255);
             $table->string('tipo', 20);
+            $table->string('naturaleza', 50)->nullable();
             $table->timestamps();
         });
     }

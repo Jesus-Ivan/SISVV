@@ -175,9 +175,14 @@ class Container extends Component
         $this->ventaForm->eliminarPago($pagoIndex);
     }
 
-    public function eliminarArticulo($timeStamp)
+    public function eliminarArticulo($index_eliminar)
     {
-        $this->ventaForm->eliminarArticulo($timeStamp);
+        //Obtener el producto a eliminar
+        $prod = $this->ventaForm->productosTable[$index_eliminar];
+        //Realizar la eliminacion del producto, del arreglo de la tabla
+        $this->ventaForm->eliminarArticulo($prod['chunk']);
+        //Actualizar totales
+        $this->ventaForm->recalcularSubtotales();
     }
 
     //Funcion que se llama, cada vez que el input de cantidad de la venta nueva, cambia
@@ -233,50 +238,78 @@ class Container extends Component
         $this->ventaForm->resetVentas();
     }
 
-
     public function seleccionarProducto($clave)
     {
         //Buscar el producto con sus modificadores y los grupos
         $producto = Producto::with(['modificador', 'grupoModif'])
             ->find($clave);
+        //Validar que ingreso la cantidad
+        $this->validate(
+            ['cantidadProducto' => 'required|numeric'],
+            [
+                'cantidadProducto.required' => 'Se requiere la cantidad',
+                'cantidadProducto.numeric' => 'Debe ser numerico',
+            ]
+        );
 
-        //Si el producto tiene algun grupo de modificador asignado (es compuesto)
-        if (count($producto->grupoModif)) {
-            //Establer las propiedades de produto compuesto, en el componente 
-            $this->producto_compuesto = $producto->toArray();
-            $this->modificadores = $producto->modificador->toArray();
-            $this->gruposModif = $producto->grupoModif->toArray();
-
-            //Agregar descripcion del producto (modificadores posibles)
-            foreach ($this->modificadores as $index => $modif) {
-                $result = Producto::find($modif['clave_modificador']);
-                $this->modificadores[$index]['descripcion'] = $result->descripcion;
-            }
-            //Agregar descripcion del grupo de modificadores
-            foreach ($this->gruposModif as $index => $grupo) {
-                $grupo = $this->gruposModificadores->find($grupo['id_grupo']);
-                if ($grupo) {
-                    $this->gruposModif[$index]['descripcion'] = $grupo->descripcion;
-                } else {
-                    $this->gruposModif[$index]['descripcion'] = 'N/A';
+        try {
+            //Si el producto tiene algun grupo de modificador asignado (es compuesto)
+            if (count($producto->grupoModif)) {
+                //Si la cantidad es negativa
+                if ($this->cantidadProducto <= 0) {
+                    //Lanzar excepcion
+                    throw new Exception("Compuesto negativo");
                 }
+                $this->prepararCompuesto($producto);
+                //Emitir evento para abrir el modal
+                $this->dispatch('open-modal', name: $this->modal_name);
+                //Emitir evento para actualizar el front de los modificadores.
+                $this->dispatch('actualizar-modificadores');
+            } else {
+                //Agregar el producto a la tabla
+                $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time(), true);
+                //Actualizar el total de la venta
+                $this->ventaForm->recalcularSubtotales();
+                //Limpiar las propiedades auxiliares
+                $this->reset('producto_compuesto', 'modificadores', 'gruposModif', 'cantidadProducto');
+                //Emitimos evento para cerrar el componente del modal
+                $this->dispatch('close-modal');
             }
-            //Actualizar el nombre del modal a abrir con el evento 'ctrl' desde el front
-            $this->modal_name = 'modal-modificadores';
-            //Emitir evento para abrir el modal
-            $this->dispatch('open-modal', name: $this->modal_name);
-            //Emitir evento para actualizar el front de los modificadores.
-            $this->dispatch('actualizar-modificadores');
-        } else {
-            //Agregar el producto a la tabla
-            $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time(), true);
-            //Emitimos evento para cerrar el componente del modal
-            $this->dispatch('close-modal');
-            //Limpiar las propiedades auxiliares
-            $this->reset('producto_compuesto', 'modificadores', 'gruposModif', 'cantidadProducto');
-            //Actualizar el total de la venta
-            $this->ventaForm->actualizarTotal();
+        } catch (ValidationException $th) {
+            //Si es una excepcion de validacion, volverla a lanzar a la vista
+            throw $th;
+        } catch (Exception $e) {
+            //Mensaje de sesion para el error (no alert)
+            session()->flash('fail', $e->getMessage());
         }
+    }
+
+    /**
+     * Prepara el modal para los productos compuestos
+     */
+    public function prepararCompuesto($producto)
+    {
+        //Establer las propiedades de produto compuesto, en el componente 
+        $this->producto_compuesto = $producto->toArray();
+        $this->modificadores = $producto->modificador->toArray();
+        $this->gruposModif = $producto->grupoModif->toArray();
+
+        //Agregar descripcion del producto (modificadores posibles)
+        foreach ($this->modificadores as $index => $modif) {
+            $result = Producto::find($modif['clave_modificador']);
+            $this->modificadores[$index]['descripcion'] = $result->descripcion;
+        }
+        //Agregar descripcion del grupo de modificadores
+        foreach ($this->gruposModif as $index => $grupo) {
+            $grupo = $this->gruposModificadores->find($grupo['id_grupo']);
+            if ($grupo) {
+                $this->gruposModif[$index]['descripcion'] = $grupo->descripcion;
+            } else {
+                $this->gruposModif[$index]['descripcion'] = 'N/A';
+            }
+        }
+        //Actualizar el nombre del modal a abrir con el evento 'ctrl' desde el front
+        $this->modal_name = 'modal-modificadores';
     }
 
     public function guardarCompuesto($selected)
@@ -290,7 +323,7 @@ class Container extends Component
         //Agregar los modificadores a la tabla 
         $this->ventaForm->agregarModificadores($selected, $time);
         //Actualizar el total de la venta
-        $this->ventaForm->actualizarTotal();
+        $this->ventaForm->recalcularSubtotales();
     }
 
     public function limpiarCompuesto()

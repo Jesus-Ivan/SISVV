@@ -16,6 +16,7 @@ return new class extends Migration
             $table->integer('folio_venta');
             $table->integer('codigo_catalogo')->nullable();
             $table->integer('clave_producto')->nullable();
+            $table->string('chunk', 50)->nullable();
             $table->string('nombre', 255)->nullable();
             $table->smallInteger('cantidad');
             $table->decimal('precio', 10, 2);
@@ -25,6 +26,9 @@ return new class extends Migration
             $table->dateTime('inicio');
             $table->dateTime('terminado')->nullable();
             $table->string('tiempo', 2)->nullable();
+            $table->softDeletes();
+            $table->integer('id_cancelacion')->nullable();
+            $table->string('motivo_cancelacion', 255)->nullable();
 
             /*//Relaciones
 

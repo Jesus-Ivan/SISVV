@@ -49,11 +49,11 @@ class ReportesController extends Controller
     public function generarTicket(Venta $venta)
     {
         //Con 'with(nombre_relacion)' evitamos el problema N+1
-        $productos = DetallesVentaProducto::with('catalogoProductos')->where('folio_venta', $venta->folio)->get();
+        $productos = DetallesVentaProducto::with('productos')->where('folio_venta', $venta->folio)->get();
         $pagos = DetallesVentaPago::with('tipoPago')->where('folio_venta', $venta->folio)->get();
         $caja = Caja::with('users')->where('corte', $venta->corte_caja)->limit(1)->get();
         $puntoVenta = PuntoVenta::where('clave', $venta->clave_punto_venta)->first();
-        //Enviamos los datos a la vista
+
         $data = [
             'title' => 'VISTA VERDE COUNTRY CLUB',
             'rfc' => 'VVC101110AQ4',

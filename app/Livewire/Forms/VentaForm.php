@@ -54,9 +54,10 @@ class VentaForm extends Form
     //public $totalConDescuento = 0;  //El total de la venta final
 
     #[Locked]
-    public $indexTransferible;        //Es el posible producto a transferir
+    public $indexSeleccionado;        //Es el posible producto a transferir o eliminar
     public $seachVenta = '';          //el parametro de busqueda, del modal de tranferir producto
-    public $lista_transferidos = [];  //La lista de ls productos a transferir
+    public $lista_transferidos = [];  //La lista de los productos a transferir
+    public $lista_eliminados = [];    //La lista de los productos a eliminar
 
     public $permisospv;               //Almacena los permisos del usuario en el punto
 
@@ -133,18 +134,45 @@ class VentaForm extends Form
     }
 
     /**
-     * Elimina los productos agregados con el mismo timeStamp (ideado para eliminar todos aquellos agregados como compuesto)
+     * Elimina los productos agregados con el mismo timeStamp\
+     * y los guarda en una lista temporal de eliminaciones suaves
+     */
+    public function eliminarArticuloBD($timeStamp, $id_eliminacion, $motivo)
+    {
+        //Filtrar los elementos con el mismo timeStamp, de la tabla de productos
+        $new_array = array_filter($this->productosTable, function ($item) use ($timeStamp) {
+            return $item['chunk'] != $timeStamp;
+        });
+        //Filtrar aquellos elementos que se eliminaran
+        $deleted = array_filter($this->productosTable, function ($item) use ($timeStamp) {
+            return $item['chunk'] == $timeStamp;
+        });
+        //Agregar la informacion adicional a los elementos eliminados
+        $deleted = array_map(function ($producto) use ($id_eliminacion, $motivo) {
+            $producto['id_cancelacion'] = $id_eliminacion;
+            $producto['motivo_cancelacion'] = $motivo;
+            return $producto;
+        }, $deleted);
+        //Agregarlos a la lista de eliminados
+        $this->lista_eliminados = array_merge($this->lista_eliminados, $deleted);
+
+        //Re asignar variable filtrada (con los elementos restantes)
+        $this->productosTable = $new_array;
+        //Limpiar la propiedad
+        $this->reset('indexSeleccionado');
+    }
+
+    /**
+     * Retira los elementos del arreglo de la tabla. sin guardarlos en la lista de eliminaciones suaves
      */
     public function eliminarArticulo($timeStamp)
     {
         //Filtrar los elementos con el mismo timeStamp, de la tabla de productos
-        $new_array = array_filter($this->productosTable, function ($item) use ($timeStamp) {
-            return $item['time'] != $timeStamp;
+        $this->productosTable = array_filter($this->productosTable, function ($item) use ($timeStamp) {
+            return $item['chunk'] != $timeStamp;
         });
-        //Re asignar variable
-        $this->productosTable = $new_array;
-        //Calcular los totales
-        $this->recalcularSubtotales();
+        //Limpiar la propiedad (por si habia quedado el registro previo)
+        $this->reset('indexSeleccionado');
     }
 
     public function calcularSubtotal($productoIndex, $eValue)
@@ -156,29 +184,10 @@ class VentaForm extends Form
         $this->actualizarTotal();
     }
 
-    public function incrementarProducto($productoIndex)
-    {
-        //Definimos una variable que apunta a la direccion de memoria del producto
-        $articulo = &$this->productosTable[$productoIndex];
-        //incrementamos en 1 la cantidad
-        $articulo['cantidad']++;
-        //Obtenemos el nuevo subtotal
-        $articulo['subtotal'] = $articulo['cantidad'] * $articulo['precio'];
-        $this->actualizarTotal();
-    }
-
-    public function decrementarProducto($productoIndex)
-    {
-        //Definimos una variable que apunta a la direccion de memoria del producto
-        $articulo = &$this->productosTable[$productoIndex];
-        //Comprobamos si la cantidad es positiva
-        if ($articulo['cantidad'] > 1) {
-            $articulo['cantidad']--;
-            $articulo['subtotal'] = $articulo['cantidad'] * $articulo['precio'];
-        }
-        $this->actualizarTotal();
-    }
-
+    /**
+     * Actualiza la sumatoria del subtotal de la tabla de productos\
+     * (Obtiene el total de la cuenta y actualiza la propiedad correspondiente)
+     */
     public function actualizarTotal()
     {
         $productos = array_filter($this->productosTable, function ($prod) {
@@ -314,7 +323,7 @@ class VentaForm extends Form
             //crear los detalles de los productos
             $this->registrarProductosVenta($folioVenta, $venta);
             //Descontar stocks
-            $this->verificarStock($codigopv, $venta['productosTable']);
+            //$this->verificarStock($codigopv, $venta['productosTable']);
 
             //Crear los detalles de los pagos
             $this->registrarPagosVenta($folioVenta, $venta, $codigopv);
@@ -404,6 +413,7 @@ class VentaForm extends Form
                 } else {
                     //Crear el nuevo item
                     DetallesVentaProducto::create([
+                        'chunk' => $producto['chunk'],
                         'folio_venta' => $folio,
                         'clave_producto' => $producto['clave_producto'],
                         'nombre' => $producto['nombre'],
@@ -416,6 +426,7 @@ class VentaForm extends Form
                     ]);
                 }
             }
+            $this->eliminarProductos();
             //Movemos los productos de venta
             $this->moverProductos();
             //Actualizamos el total de la venta 
@@ -448,11 +459,12 @@ class VentaForm extends Form
             /* 
              *Descontar stock
              */
+            /*
             $productos = array_filter($venta['productosTable'], function ($producto) {
                 return !array_key_exists('moved', $producto);
             });
             $this->verificarStock($codigopv, $productos);
-
+            */
             //Cerramos la venta con la fecha actual
             Venta::where('folio', $folio)->update(['fecha_cierre' => now()->format('Y-m-d H:i:s')]);
         }, 2);
@@ -462,7 +474,7 @@ class VentaForm extends Form
     public function saveProductoTransferible($index)
     {
         //agregar el indice
-        $this->indexTransferible = $index;
+        $this->indexSeleccionado = $index;
     }
 
     /**
@@ -470,15 +482,27 @@ class VentaForm extends Form
      */
     public function agregarTransferidos($folio)
     {
-        //Guardar en la lista el producto que se desea mover de venta
-        $this->lista_transferidos[] = [
-            'folio_destino' => $folio,
-            'producto' => $this->productosTable[$this->indexTransferible]
-        ];
-        //Marcar el producto en el array
-        $this->productosTable[$this->indexTransferible]['moved'] = true;
+        //Producto a transferir
+        $producto_selec = $this->productosTable[$this->indexSeleccionado];
+
+        //resguardar aquellos items de la tabla, que contengan el mismo chunk del item seleccionado
+        $moved = array_filter($this->productosTable, function ($producto) use ($producto_selec) {
+            return $producto['chunk'] ==  $producto_selec['chunk'];
+        });
+        //Agregar el folio de destino a cada articulo
+        $moved_folio = array_map(function ($producto) use ($folio) {
+            $producto['folio_destino'] = $folio;
+            return $producto;
+        }, $moved);
+        //Guardar los productos transferidos en la lista de transferidos
+        $this->lista_transferidos = array_merge($this->lista_transferidos, $moved_folio);
+
+        //Quitar aquellos items de la tabla
+        $this->productosTable = array_filter($this->productosTable, function ($producto) use ($producto_selec) {
+            return $producto['chunk'] !=  $producto_selec['chunk'];
+        });
         //resetear la propiedad
-        $this->reset('indexTransferible');
+        $this->reset('indexSeleccionado');
         //Actualizar el total
         $this->actualizarTotal();
     }
@@ -496,7 +520,7 @@ class VentaForm extends Form
         });
 
         //Si la cantidad de productos de la BD, es diferente de la actual en la tabla. (proveniente de un movimiento de productos)
-        if (count($productos_bd) != count($productos_current)) {
+        if (count($productos_bd) != count($productos_current) + count($this->lista_eliminados) + count($this->lista_transferidos)) {
             throw new Exception('Otro usuario transfirio un producto');
         }
     }
@@ -517,13 +541,35 @@ class VentaForm extends Form
                 throw new Exception("La venta : " . $transferido['folio_destino'] . " Ya esta cerrada ", 1);
             }
             //Mover el producto a la venta destino
-            DetallesVentaProducto::where('id', $transferido['producto']['id'])
+            DetallesVentaProducto::where('id', $transferido['id'])
                 ->update([
-                    'folio_venta' => $transferido['folio_destino']
+                    'folio_venta' => $transferido['folio_destino'],
+                    'cantidad' => $transferido['cantidad'],
+                    'subtotal' => $transferido['subtotal']
                 ]);
             //Actualizar el total de la venta destino
-            $venta->total = $venta->total + $transferido['producto']['subtotal'];
+            $venta->total = $venta->total + $transferido['subtotal'];
             $venta->save();
+        }
+    }
+
+    /**
+     * Realiza la eliminacion SUAVE de los productos
+     */
+    public function eliminarProductos()
+    {
+        //Recorremos todos los items a eliminar
+        foreach ($this->lista_eliminados as $key => $producto) {
+            //Verificamos si el item que se itera, cuenta con un 'id' de la base de datos
+            if (array_key_exists('id', $producto)) {
+                //Actualizar el registro en la BD
+                DetallesVentaProducto::where('id', $producto['id'])
+                    ->update([
+                        'id_cancelacion' => $producto['id_cancelacion'],
+                        'motivo_cancelacion' => $producto['motivo_cancelacion'],
+                        'deleted_at' => now()
+                    ]);
+            }
         }
     }
 
@@ -572,6 +618,7 @@ class VentaForm extends Form
         //Detalles Venta
         foreach ($venta['productosTable'] as $key => $producto) {
             DetallesVentaProducto::create([
+                'chunk' => $producto['chunk'],
                 'folio_venta' => $folio,
                 'clave_producto' => $producto['clave_producto'],
                 'nombre' => $producto['nombre'],
@@ -728,7 +775,10 @@ class VentaForm extends Form
         );
     }
 
-    private function recalcularSubtotales()
+    /**
+     * Realiza la mutiplicacion "subtotal = precio * cantidad" de cada producto de la tabla
+     */
+    public function recalcularSubtotales()
     {
         //Calculamos el subtotal de cada producto de la tabla
         foreach ($this->productosTable as $key => $producto) {
@@ -741,33 +791,53 @@ class VentaForm extends Form
     /**
      * Agrega el NUEVO producto a la tabla
      */
-    public function agregarProducto(Producto $producto, $cantidad, int $time, $autoSum = false)
+    public function agregarProducto(Producto $producto, int $cantidad, int $chunk, $autoSum = false)
     {
-        //Filtramos aquellos productos que no sean modificadores en la tabla
-        $new_array = array_filter($this->productosTable, function ($item) {
-            return !array_key_exists('modif', $item);
+        //Filtramos el producto(de la tabla) que coincida con la clave del producto a ingresar (y no sea modificador)
+        $p_filtrado = array_filter($this->productosTable, function ($item) use ($producto) {
+            return $item['clave_producto'] == $producto->clave
+                && !array_key_exists('modif', $item);
         });
-        dump($new_array);
-        $this->productosTable[] = [
-            'time' => $time,
-            'clave_producto' => $producto->clave,
-            'nombre' => $producto->descripcion,
-            'cantidad' => $cantidad,
-            'precio' => $producto->precio_con_impuestos,
-            'subtotal' => $cantidad * $producto->precio_con_impuestos,
-            'observaciones' => '',
-            'tiempo' => null
-        ];
+        //Si la opcion de autosuma esta activada, y hay un producto con la misma clave en la tabla
+        if ($autoSum && count($p_filtrado)) {
+            //Agregar la cantidad el producto segun el indice del producto filtrado
+            foreach ($p_filtrado as $key => $value) {
+                if ($cantidad <= 0 && abs($cantidad) >= $this->productosTable[$key]['cantidad']) {
+                    //Lanzar excepcion
+                    throw new Exception("Negativo superior");
+                }
+                $this->productosTable[$key]['cantidad'] += $cantidad;
+                $this->productosTable[$key]['subtotal'] += $cantidad * $producto->precio_con_impuestos;
+                break;
+            }
+        } else {
+            //Si no hay producto con la clave (en la tabla) y la cantidad es negativa
+            if (count($p_filtrado) == 0 && $cantidad <= 0) {
+                //Lanzar excepcion
+                throw new Exception("Cant. inicial invalida");
+            }
+            //Agregar directamente el producto
+            $this->productosTable[] = [
+                'chunk' => $chunk,
+                'clave_producto' => $producto->clave,
+                'nombre' => $producto->descripcion,
+                'cantidad' => $cantidad,
+                'precio' => $producto->precio_con_impuestos,
+                'subtotal' => $cantidad * $producto->precio_con_impuestos,
+                'observaciones' => '',
+                'tiempo' => null
+            ];
+        }
     }
 
     /**
      * Agrega los modificadores seleccionados a la tabla
      */
-    public function agregarModificadores(array $modificadores, int $time)
+    public function agregarModificadores(array $modificadores, int $chunk)
     {
         foreach ($modificadores as $key => $modificador) {
             $this->productosTable[] = [
-                'time' => $time,
+                'chunk' => $chunk,
                 'clave_producto' => $modificador['clave_modificador'],
                 'nombre' => $modificador['descripcion'],
                 'cantidad' => $modificador['cantidad'],

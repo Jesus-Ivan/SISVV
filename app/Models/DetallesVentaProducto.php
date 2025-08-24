@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DetallesVentaProducto extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     //Nombre de tabla
     protected $table = 'detalles_ventas_productos';
     //Desactivar los timestamps para este modelo
@@ -24,5 +26,13 @@ class DetallesVentaProducto extends Model
             ->withDefault([
                 'nombre' => 'ERR N/R'
             ]);;
+    }
+
+    public function productos(): BelongsTo
+    {
+        return $this->belongsTo(Producto::class, 'clave_producto')
+            ->withDefault([
+                'descripcion' => 'ERR N/R'
+            ]);
     }
 }

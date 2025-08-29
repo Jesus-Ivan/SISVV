@@ -270,7 +270,7 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::view('notas', 'sistemas.Puntos.notas')->name('sistemas.pv.notas');
         Route::get('/editar/{folioventa}', [SistemasController::class, 'editarVenta'])->name('sistemas.pv.editar');
         Route::view('crear-detalles-caja', 'sistemas.Puntos.detalles-caja')->name('sistemas.pv.detalles-caja');
-        Route::post('crear-detalles-caja', [SistemasController::class, 'detallesCaja'])->name('sistemas.pv.editar');
+        Route::post('crear-detalles-caja', [SistemasController::class, 'detallesCaja'])->name('sistemas.pv.detalles-caja');
 
     });
 

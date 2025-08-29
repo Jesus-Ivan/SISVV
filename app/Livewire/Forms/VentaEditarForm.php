@@ -20,8 +20,6 @@ class VentaEditarForm extends Form
     //Propiedades almacenar los originales
     public $venta, $productos, $pagos;
 
-    public VentaForm $ventaFrom;
-
     /**
      * Guarda los valores originales de la venta en el formulario
      */
@@ -80,13 +78,13 @@ class VentaEditarForm extends Form
             }
         }
         //Buscar caja abierta del punto
-        $resutCaja = $this->ventaFrom->buscarCaja($result->clave_punto_venta);
+        $resutCaja = $this->buscarCaja($result->clave_punto_venta);
         //Crear movimiento de caja
-        $this->ventaFrom->crearMovimientoCaja(
-            $folio_seleccionado,
-            $resutCaja->corte,
+        $this->movimientoCajaCortesia(
+            Venta::find($folio_seleccionado),
             $detalles_pagos->toArray(),
-            PuntosConstants::INGRESO_PENDIENTE_KEY
+            PuntosConstants::INGRESO_PENDIENTE_KEY,
+            $resutCaja->corte,
         );
     }
 
@@ -105,6 +103,44 @@ class VentaEditarForm extends Form
             'solicitante_name' => $solicitante->name,
             'id_motivo' => $motivo_id,
         ]);
+    }
+
+    /**
+     * Registra el movimiento de caja, respecto a la cortesia
+     */
+    public function movimientoCajaCortesia(Venta $venta, $detalles_pago, $tipo_movimiento, $corte_nuevo = null)
+    {
+        foreach ($detalles_pago as $key => $pago) {
+            //Crear registro en la tabla (el movimiento de la venta. en el corte nuevo)
+            DetallesCaja::create([
+                'corte_caja' => $corte_nuevo,
+                'folio_venta' => $venta->folio,
+                'id_socio' => $pago['id_socio'],
+                'nombre' => $pago['nombre'],
+                'monto' =>  array_key_exists('monto_pago', $pago) ? $pago['monto_pago'] : $pago['monto'],
+                'propina' => $pago['propina'],
+                'tipo_movimiento' => $tipo_movimiento,
+                'id_tipo_pago' => $pago['id_tipo_pago'],
+                'fecha_venta' => $venta->fecha_apertura,
+                'fecha_pago' => now() //Agregar la fecha de pago (es pendiente)
+            ]);
+        }
+    }
+
+    /**
+     * Busca La ultima caja abierta en el punto dado
+     */
+    public function buscarCaja($clave_punto)
+    {
+        //Buscamos caja abrierta en el punto actual, en el dia actual
+        $result = Caja::where('clave_punto_venta', $clave_punto)
+            ->whereNull('fecha_cierre')
+            ->first();
+        //Si no hay caja
+        if (!$result) {
+            throw new Exception("No hay caja abierta para este punto de venta");
+        }
+        return  $result;
     }
 
     /**

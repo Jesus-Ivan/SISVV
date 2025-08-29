@@ -81,7 +81,7 @@ class SistemasController extends Controller
     {
         $ventasPagos = DB::table('detalles_ventas_pagos')
             ->join('ventas', 'detalles_ventas_pagos.folio_venta', '=', 'ventas.folio')
-            ->select('detalles_ventas_pagos.*', 'ventas.corte_caja')
+            ->select('detalles_ventas_pagos.*', 'ventas.corte_caja', 'ventas.fecha_apertura')
             ->get();
 
         DB::transaction(function () use ($ventasPagos) {
@@ -95,8 +95,7 @@ class SistemasController extends Controller
                     'propina' => $pago->propina,
                     'tipo_movimiento' => PuntosConstants::INGRESO_KEY,
                     'id_tipo_pago' => $pago->id_tipo_pago,
-                    'created_at' => $pago->created_at,
-                    'updated_at' => $pago->updated_at,
+                    'fecha_venta' => $pago->fecha_apertura,
                 ]);
             }
         });

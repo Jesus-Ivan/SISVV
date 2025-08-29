@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Sistemas\Puntos;
 
+use App\Constants\PuntosConstants;
 use App\Livewire\Forms\VentaEditarForm;
 use App\Models\Caja;
 use App\Models\DetallesVentaPago;
@@ -121,7 +122,7 @@ class NotasEditar extends Component
             'solicitante_id' => 'required',
             'motivo_id' => 'required',
         ]);
-
+    
         try {
             DB::transaction(function () use ($validated) {
                 //Convertir en cortesia

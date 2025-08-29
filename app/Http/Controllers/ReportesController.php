@@ -14,6 +14,7 @@ use App\Libraries\InventarioService;
 use App\Models\Bodega;
 use App\Models\Caja;
 use App\Models\CatalogoVistaVerde;
+use App\Models\DetallesCaja;
 use App\Models\DetallesCompra;
 use App\Models\DetallesPeriodoNomina;
 use App\Models\DetallesRequisicion;
@@ -93,7 +94,7 @@ class ReportesController extends Controller
         //Consulta que obtiene los detalles de los pagos (normales) con su corte de caja
         $corte_caja = DB::table('detalles_caja')
             ->join('ventas', 'detalles_caja.folio_venta', '=', 'ventas.folio')
-            ->select('detalles_caja.*', 'ventas.*')
+            ->select('detalles_caja.*', 'ventas.fecha_apertura')
             ->where([
                 ['detalles_caja.corte_caja', '=', $caja->corte],
                 ['tipo_movimiento', '=', PuntosConstants::INGRESO_KEY]
@@ -102,7 +103,7 @@ class ReportesController extends Controller
         //Consulta que obtiene los detalles de los pagos (pendientes) con su corte de caja
         $corte_pendientes = DB::table('detalles_caja')
             ->join('ventas', 'detalles_caja.folio_venta', '=', 'ventas.folio')
-            ->select('detalles_caja.*', 'ventas.*')
+            ->select('detalles_caja.*', 'ventas.fecha_apertura')
             ->where([
                 ['detalles_caja.corte_caja', '=', $caja->corte],
                 ['tipo_movimiento', '=', PuntosConstants::INGRESO_PENDIENTE_KEY]
@@ -489,32 +490,17 @@ class ReportesController extends Controller
         //Array auxiliar de pagos separados por tipo
         $separados = [];
         //Consulta que obtiene los detalles de los pagos con su corte de caja
-        $detalles_pago = DB::table('detalles_caja')
-            ->join('ventas', 'detalles_caja.folio_venta', '=', 'ventas.folio')
-            ->select(
-                'ventas.folio',
-                'ventas.tipo_venta',
-                'ventas.fecha_apertura',
-                'ventas.corte_caja',
-                'ventas.clave_punto_venta',
-                'ventas.observaciones',
-                'detalles_caja.*'
-            )
-            ->whereIn('detalles_caja.corte_caja', array_column($cajas, 'corte'))
+        $detalles_pago = DetallesCaja::with('venta')
+            ->whereIn('corte_caja', array_column($cajas, 'corte'))
             ->get();
 
         //Obtenemos el total del corte
         $totalVenta = array_sum(array_column($detalles_pago->toArray(), 'monto'));
         //Separar los pagos por tipo
         foreach ($tipos_pago as $pago) {
-            //Separar el ingreso de una venta normal
+            //Separar las ventas por tipo de pago
             $separados[$pago->descripcion] = $detalles_pago
-                ->where('id_tipo_pago', '=', $pago->id)
-                ->where('tipo_movimiento', '=', PuntosConstants::INGRESO_KEY);
-            //Separar el ingreso de una venta (pendiente)
-            $separados_pendientes[$pago->descripcion] = $detalles_pago
-                ->where('id_tipo_pago', '=', $pago->id)
-                ->where('tipo_movimiento', '=', PuntosConstants::INGRESO_PENDIENTE_KEY);
+                ->where('id_tipo_pago', '=', $pago->id);
         }
 
 
@@ -531,7 +517,6 @@ class ReportesController extends Controller
         $data = [
             'header' => $header,
             'detalles_pagos' => $separados,
-            'detalles_pendientes' => $separados_pendientes,
             'totalVenta' => $totalVenta,
             'puntos_venta' => $puntos_venta
         ];

@@ -95,12 +95,13 @@ class Container extends Component
             foreach ($info['datosProductos'] as $key => $producto) {
                 DetallesVentaProducto::create([
                     'folio_venta' => $resultVenta->folio,
-                    'codigo_catalogo' => $producto['codigo_catalogo'],
+                    'clave_producto' => $producto['clave_producto'],
+                    'chunk' =>$producto['chunk'],
                     'nombre' => $producto['nombre'],
                     'cantidad' => $producto['cantidad'],
                     'precio' => $producto['precio'],
                     'subtotal' => $producto['subtotal'],
-                    'inicio' => $producto['inicio'],
+                    'inicio' => now()->format('Y:m:d H:m:s'),
                 ]);
             }
             //Se crea el detalle de los pagos
@@ -177,12 +178,13 @@ class Container extends Component
             foreach ($info['datosProductos'] as $key => $producto) {
                 DetallesVentaProducto::create([
                     'folio_venta' => $resultVenta->folio,
-                    'codigo_catalogo' => $producto['codigo_catalogo'],
+                    'clave_producto' => $producto['clave_producto'],
+                    'chunk' =>$producto['chunk'],
                     'nombre' => $producto['nombre'],
                     'cantidad' => $producto['cantidad'],
                     'precio' => $producto['precio'],
                     'subtotal' => $producto['subtotal'],
-                    'inicio' => $producto['inicio'],
+                    'inicio' => now()->format('Y:m:d H:m:s'),
                 ]);
             }
             //Se crea el detalle de los pagos

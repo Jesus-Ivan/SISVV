@@ -21,7 +21,8 @@ class ProductosVendExport implements FromArray
         $productos = [];
         //Agregamos el encabezado
         $productos[] = [
-            'clave_articulo' => 'CLAVE ARTICULO',
+            'clave_catalogo' => '#CATALOGO',
+            'clave_producto' => 'CLAVE PRODUCTO',
             'folio_venta' => 'FOLIO VENTA',
             'punto' =>  'PUNTO',
             'descripcion' => 'DESCRIPCION',
@@ -39,7 +40,8 @@ class ProductosVendExport implements FromArray
             foreach ($productosVentas as $key => $producto) {
                 //Lo agregamos al array
                 $productos[] = [
-                    'clave_articulo' => $producto->codigo_catalogo,
+                    'clave_catalogo' => $producto->codigo_catalogo,
+                    'clave_producto' => $producto->clave_producto,
                     'folio_venta' => $producto->folio_venta,
                     'punto' =>  $venta['punto_venta']['nombre'],
                     'descripcion' => $producto->nombre ?: $producto->catalogoProductos->nombre,

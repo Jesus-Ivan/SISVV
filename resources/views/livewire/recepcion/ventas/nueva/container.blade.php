@@ -1,4 +1,4 @@
-<div>
+<div @keyup.ctrl.window="$dispatch('open-modal', {name:'agregar-productos'})">
     {{-- Contenido --}}
     <form wire:submit="cerrarVenta">
         <!-- Title -->

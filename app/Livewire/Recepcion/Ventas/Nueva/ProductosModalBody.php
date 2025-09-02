@@ -3,6 +3,10 @@
 namespace App\Livewire\Recepcion\Ventas\Nueva;
 
 use App\Models\CatalogoVistaVerde;
+use App\Models\Grupos;
+use App\Models\Producto;
+use Dotenv\Exception\ValidationException;
+use Exception;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Illuminate\Database\Query\Builder;
@@ -12,22 +16,24 @@ class ProductosModalBody extends Component
 {
     public $searchProduct;          //Almacenamos el campo de busqueda
     public $selectedProducts = [];  //Almacenamos los productos seleccionados [1 => false, 10 => true ....]
+    public $cantidadProducto = 1;
 
-    #[Computed]
-    public function productos()
+    #[Computed()]
+    public function productosNew()
     {
-        if ($this->searchProduct != '') {
-            //Reseteamos el array de productos seleccionados cada vez que se calcula la propiedad
-            $this->reset('selectedProducts');
-            //Obtenemos los productos que coincidan con el nombre buscado y del tipo de 'SER' = servicios
-            return  DB::table('catalogo_vista_verde')
-                ->where('nombre', 'like', '%' . $this->searchProduct . '%')
-                ->where('clave_dpto', 'RECEP')
-                ->whereNot('estado', 0)
-                ->get();
-        } else {
-            return [];
+        //Buscar el grupo de productos referente a los servicios de recepcion
+        $gp_servicio = Grupos::where('descripcion', 'like', '%SERVICIO%')->first();
+        //Preparar consulta base
+        $result = Producto::where('descripcion', 'like', '%' . $this->searchProduct . '%')
+            ->whereNot('estado', 0);
+        //Si hay un grupo definido como servicio
+        if ($gp_servicio) {
+            $result->where('id_grupo', $gp_servicio->id); //Agregar el query
         }
+        return $result
+            ->orderBy('descripcion', 'asc')
+            ->limit(50)
+            ->get();
     }
 
     //Metodo que se ejecuta para guardar los elementos seleccionados
@@ -45,6 +51,52 @@ class ProductosModalBody extends Component
             $this->dispatch('close-modal');
             //Reseteamos el componente
             $this->reset();
+        }
+    }
+
+    public function seleccionarProducto($clave)
+    {
+        //Buscar el producto con sus modificadores y los grupos
+        $producto = Producto::with(['modificador', 'grupoModif'])
+            ->find($clave);
+        //Validar que ingreso la cantidad
+        $this->validate(
+            ['cantidadProducto' => 'required|numeric'],
+            [
+                'cantidadProducto.required' => 'Se requiere la cantidad',
+                'cantidadProducto.numeric' => 'Debe ser numerico',
+            ]
+        );
+
+        try {
+            //Si el producto tiene algun grupo de modificador asignado (es compuesto)
+            if (count($producto->grupoModif)) {
+                //Si la cantidad es negativa
+                if ($this->cantidadProducto <= 0) {
+                    //Lanzar excepcion
+                    throw new Exception("Compuesto negativo");
+                }
+                $this->prepararCompuesto($producto);
+                //Emitir evento para abrir el modal
+                $this->dispatch('open-modal', name: $this->modal_name);
+                //Emitir evento para actualizar el front de los modificadores.
+                $this->dispatch('actualizar-modificadores');
+            } else {
+                //Emitimos evento con el producto seleccionado
+                $this->dispatch('producto-seleccionado', $producto, $this->cantidadProducto);
+                //Actualizar el total de la venta
+                //$this->ventaForm->recalcularSubtotales();
+                //Limpiar las propiedades
+                $this->reset('searchProduct', 'selectedProducts', 'cantidadProducto');
+                //Emitimos evento para cerrar el componente del modal
+                $this->dispatch('close-modal');
+            }
+        } catch (ValidationException $th) {
+            //Si es una excepcion de validacion, volverla a lanzar a la vista
+            throw $th;
+        } catch (Exception $e) {
+            //Mensaje de sesion para el error (no alert)
+            session()->flash('fail', $e->getMessage());
         }
     }
 

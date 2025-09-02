@@ -4,6 +4,7 @@ namespace App\Livewire\Puntos\Ventas\Nueva;
 
 use App\Livewire\Forms\VentaForm;
 use App\Models\CatalogoVistaVerde;
+use App\Models\Grupos;
 use App\Models\GruposModificadores;
 use App\Models\Modificador;
 use App\Models\ModifProducto;
@@ -122,12 +123,19 @@ class Container extends Component
     #[Computed()]
     public function productosNew()
     {
+        //Buscar el grupo de productos referente a los servicios de recepcion
+        $gp_servicio = Grupos::where('descripcion', 'like', '%SERVICIO%')->first();
+        //Preparar consulta base
         $result = Producto::where('descripcion', 'like', '%' . $this->ventaForm->seachProduct . '%')
-            ->whereNot('estado', 0)
+            ->whereNot('estado', 0);
+        //Si hay un grupo definido como servicio
+        if ($gp_servicio) {
+            $result->whereNot('id_grupo', $gp_servicio->id);//Agregar el query
+        }
+        return $result
             ->orderBy('descripcion', 'asc')
             ->limit(50)
             ->get();
-        return $result;
     }
 
     //hook que monitorea la actualizacion del componente

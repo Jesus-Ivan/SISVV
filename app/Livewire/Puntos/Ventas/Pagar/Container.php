@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Puntos\Ventas\Pagar;
 
+use App\Livewire\Caja;
 use App\Livewire\Forms\VentaForm;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
@@ -14,8 +15,6 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 
-
-
 class Container extends Component
 {
 
@@ -23,12 +22,16 @@ class Container extends Component
     public $codigopv;
     public VentaForm $ventaForm;
     public $permisospv;
+    public $caja;
 
     //Hook que se ejecuta al inicio del ciclo del vida del componente
     public function mount($folio, $codigopv, $permisospv)
     {
-        //Buscar la venta
-        $venta = Venta::find($folio);
+        //Buscar la venta junto al corte de caja
+        $venta = Venta::with('caja')->find($folio);
+        //Asignar la caja a la propiedad
+        $this->caja = $venta->caja;
+
         //Guardamos los permisos del usuario en el formulario
         $this->ventaForm->permisospv = $permisospv;
         //Guardar la venta en las propiedades del componente
@@ -123,7 +126,7 @@ class Container extends Component
             //Emitimos evento para abrir el ticket en nueva pestaña
             $this->dispatch('ver-ticket', ['venta' => $this->venta->folio]);
             // Cerrar ventana
-            $this->dispatch('cerrar-pagina'); 
+            $this->dispatch('cerrar-pagina');
         } catch (\Throwable $th) {
             //Obtener mensaje de error
             session()->flash('fail', $th->getMessage());

@@ -94,7 +94,7 @@ class ReportesController extends Controller
         //Consulta que obtiene los detalles de los pagos (normales) con su corte de caja
         $corte_caja = DB::table('detalles_caja')
             ->join('ventas', 'detalles_caja.folio_venta', '=', 'ventas.folio')
-            ->select('detalles_caja.*', 'ventas.fecha_apertura')
+            ->select('detalles_caja.*', 'ventas.fecha_apertura', 'ventas.clave_punto_venta', 'ventas.tipo_venta')
             ->where([
                 ['detalles_caja.corte_caja', '=', $caja->corte],
                 ['tipo_movimiento', '=', PuntosConstants::INGRESO_KEY]
@@ -103,7 +103,7 @@ class ReportesController extends Controller
         //Consulta que obtiene los detalles de los pagos (pendientes) con su corte de caja
         $corte_pendientes = DB::table('detalles_caja')
             ->join('ventas', 'detalles_caja.folio_venta', '=', 'ventas.folio')
-            ->select('detalles_caja.*', 'ventas.fecha_apertura')
+            ->select('detalles_caja.*', 'ventas.fecha_apertura', 'ventas.clave_punto_venta', 'ventas.tipo_venta')
             ->where([
                 ['detalles_caja.corte_caja', '=', $caja->corte],
                 ['tipo_movimiento', '=', PuntosConstants::INGRESO_PENDIENTE_KEY]
@@ -147,6 +147,7 @@ class ReportesController extends Controller
             //Tamaño predeterminado de papel del ticket (80mm x 297mm)
             $pdf->setPaper([0, 0, 226.772, 841.89], 'portrait');
         } else {
+
             $pdf = Pdf::loadView('reportes.ventas', $data);
         }
         return $pdf->stream("corte{{$caja->corte}}.pdf");

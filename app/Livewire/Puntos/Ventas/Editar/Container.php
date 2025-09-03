@@ -6,6 +6,7 @@ use App\Livewire\Forms\VentaForm;
 use App\Models\CatalogoVistaVerde;
 use App\Models\ConceptoCancelacion;
 use App\Models\DetallesVentaProducto;
+use App\Models\Grupos;
 use App\Models\GruposModificadores;
 use App\Models\Producto;
 use App\Models\Socio;
@@ -134,12 +135,19 @@ class Container extends Component
     #[Computed()]
     public function productosNew()
     {
+        //Buscar el grupo de productos referente a los servicios de recepcion
+        $gp_servicio = Grupos::where('descripcion', 'like', '%SERVICIO%')->first();
+        //Preparar consulta base
         $result = Producto::where('descripcion', 'like', '%' . $this->ventaForm->seachProduct . '%')
-            ->whereNot('estado', 0)
+            ->whereNot('estado', 0);
+        //Si hay un grupo definido como servicio
+        if ($gp_servicio) {
+            $result->whereNot('id_grupo', $gp_servicio->id); //Agregar el query
+        }
+        return $result
             ->orderBy('descripcion', 'asc')
             ->limit(50)
             ->get();
-        return $result;
     }
 
     #[Computed()]

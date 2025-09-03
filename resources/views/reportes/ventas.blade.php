@@ -64,8 +64,8 @@
             <tbody>
                 @foreach ($pagos as $pago)
                     <tr>
-                        <td>{{ $pago->folio }}</td>
-                        <td>{{ substr($pago->fecha_apertura, 0, 10) }}</td>
+                        <td>{{ $pago->folio_venta }}</td>
+                        <td>{{ substr($pago->fecha_venta, 0, 10) }}</td>
                         <td style="text-transform: uppercase">{{ $pago->tipo_venta }}</td>
                         <td style="text-align: right">{{ $pago->id_socio }}</td>
                         <td style="text-transform: uppercase">{{ $pago->nombre }}</td>
@@ -114,8 +114,8 @@
             <tbody>
                 @foreach ($pagos as $pago)
                     <tr>
-                        <td>{{ $pago->folio }}</td>
-                        <td>{{ substr($pago->fecha_apertura, 0, 10) }}</td>
+                        <td>{{ $pago->folio_venta }}</td>
+                        <td>{{ substr($pago->fecha_venta, 0, 10) }}</td>
                         <td style="text-transform: uppercase">{{ $pago->tipo_venta }}</td>
                         <td style="text-align: right">{{ $pago->id_socio }}</td>
                         <td style="text-transform: uppercase">{{ $pago->nombre }}</td>

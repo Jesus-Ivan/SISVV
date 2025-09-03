@@ -49,7 +49,6 @@ class Principal extends Component
         } else {
             //Buscar ventas abiertas, en el dia actual, en el punto de venta
             $result = Venta::whereAny(['id_socio', 'nombre'], 'like', '%' . $this->search . '%')
-                ->whereDate('fecha_apertura', $this->fecha)
                 ->whereNull('fecha_cierre')
                 ->where('clave_punto_venta', $this->codigopv)
                 ->orderby('fecha_apertura', 'desc')

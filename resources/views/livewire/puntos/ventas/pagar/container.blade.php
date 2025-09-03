@@ -1,8 +1,17 @@
 <div>
     <!--Info del socio-->
     <div class="m-3">
-        <p>NOMBRE: {{ $venta->id_socio }} {{ $venta->nombre }}</p>
+        <p>NOMBRE: {{ $venta->id_socio }} - {{ $venta->nombre }}</p>
         <p>TIPO VENTA: {{ $venta->tipo_venta }}</p>
+        <div class="flex justify-between">
+            <p>CORTE CAJA: {{ $venta->corte_caja }}</p>
+            <p>CORTE APERTURA: {{ $caja->fecha_apertura }}</p>
+            <p>CORTE CIERRE: {{ $caja->fecha_cierre }}</p>
+        </div>
+        <div class="flex justify-between">
+            <p>FECHA APERTURA: {{ $venta->fecha_apertura }}</p>
+            <p>FECHA CIERRE: {{ $venta->fecha_cierre }}</p>
+        </div>
     </div>
     <!--Linea -->
     <hr class="h-px my-2 bg-gray-300 border-0 dark:bg-gray-700">
@@ -174,7 +183,7 @@
     </div>
     <!--Botones de navegacion (cancelar, pagar venta)-->
     <div class="my-3">
-        <a href="{{ route('pv.ventas', ['codigopv' => $codigopv]) }}"
+        <button x-on:click="$dispatch('cerrar-pagina')"
             class="inline-flex items-center focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
             <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -184,7 +193,7 @@
                     clip-rule="evenodd" />
             </svg>
             Cancelar
-        </a>
+        </button>
         <button type="button" wire:click='pagarVentaPendiente' wire:loading.attr="disabled"
             wire:target='pagarVentaPendiente'
             class="inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">

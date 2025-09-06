@@ -109,18 +109,6 @@ class Container extends Component
     }
 
     #[Computed()]
-    public function productosResult()
-    {
-        //Propiedad que almacena todos los items que coincidan con la busqueda.
-        return CatalogoVistaVerde::where('nombre', 'like', '%' . $this->ventaForm->seachProduct . '%')
-            ->where('clave_dpto', 'PV')
-            ->whereNot('estado', 0)
-            ->orderBy('nombre', 'asc')
-            ->limit(40)
-            ->get();
-    }
-
-    #[Computed()]
     public function productosNew()
     {
         //Buscar el grupo de productos referente a los servicios de recepcion

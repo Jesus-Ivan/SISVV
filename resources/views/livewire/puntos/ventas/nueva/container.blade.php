@@ -147,13 +147,6 @@
         </x-loading-screen>
     </div>
 
-    <!--Modal productos -->
-    <x-modal name="modal-productos" title="Agregar productos">
-        <x-slot name='body'>
-            @include('livewire.puntos.ventas.nueva.include.modal-productos-body')
-        </x-slot>
-    </x-modal>
-
     {{-- NUEVO modal de productos --}}
     <x-modal name="modal-new-producto" title="Seleccionar producto">
         <x-slot name='body'>

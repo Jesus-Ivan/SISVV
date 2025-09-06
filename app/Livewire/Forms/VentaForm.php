@@ -6,9 +6,11 @@ use App\Constants\AlmacenConstants;
 use App\Models\Bodega;
 use App\Models\Caja;
 use App\Models\Copa;
+use App\Models\CorreccionVenta;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
+use App\Models\MotivoCorreccion;
 use App\Models\Producto;
 use App\Models\PuntoVenta;
 use App\Models\Socio;
@@ -427,6 +429,7 @@ class VentaForm extends Form
                 }
             }
             $this->eliminarProductos();
+            $this->crearCorreccion($folio);
             //Movemos los productos de venta
             $this->moverProductos();
             //Actualizamos el total de la venta 
@@ -456,15 +459,7 @@ class VentaForm extends Form
             $this->registrarPagosVenta($folio, $venta, $codigopv);
             //Guardamos los cambios de la tabla de productos
             $this->guardarVentaExistente($folio);
-            /* 
-             *Descontar stock
-             */
-            /*
-            $productos = array_filter($venta['productosTable'], function ($producto) {
-                return !array_key_exists('moved', $producto);
-            });
-            $this->verificarStock($codigopv, $productos);
-            */
+
             //Cerramos la venta con la fecha actual
             Venta::where('folio', $folio)->update(['fecha_cierre' => now()->format('Y-m-d H:i:s')]);
         }, 2);
@@ -558,6 +553,8 @@ class VentaForm extends Form
      */
     public function eliminarProductos()
     {
+        //Usuario actual
+        $user = auth()->user();
         //Recorremos todos los items a eliminar
         foreach ($this->lista_eliminados as $key => $producto) {
             //Verificamos si el item que se itera, cuenta con un 'id' de la base de datos
@@ -567,7 +564,8 @@ class VentaForm extends Form
                     ->update([
                         'id_cancelacion' => $producto['id_cancelacion'],
                         'motivo_cancelacion' => $producto['motivo_cancelacion'],
-                        'deleted_at' => now()
+                        'deleted_at' => now(),
+                        'usuario_cancela' => $user->name
                     ]);
             }
         }
@@ -722,7 +720,10 @@ class VentaForm extends Form
         }
     }
 
-    private function buscarCaja()
+    /**
+     * Busca la caja abierta mas reciente. En el punto que se encuentra el usuario
+     */
+    public function buscarCaja()
     {
         //Buscamos caja abrierta en el punto actual, en el dia actual
         $result = Caja::where('clave_punto_venta', $this->permisospv->clave_punto_venta)
@@ -847,6 +848,32 @@ class VentaForm extends Form
                 'tiempo' => null,
                 'modif' => true
             ];
+        }
+    }
+
+    /**
+     * Crea el registro en la tabla 'correcciones_ventas'\
+     * En caso de haber eliminaciones de productos
+     */
+    public function crearCorreccion($folio_venta)
+    {
+        //Si hay algun producto en la lista para eliminar
+        if (count($this->lista_eliminados)) {
+            //Buscar la caja abierta
+            $caja = $this->buscarCaja();
+            //Buscar el motivo que corresponde a 'ELIMINAR PRODUCTO DE NOTA'
+            $motivo = MotivoCorreccion::where('descripcion', 'like', '%ELIMINAR PRODUCTO%')->first();
+            //Si no hay motivo registrado en la tabla
+            if (!$motivo)
+                throw new Exception("No hay motivo de correccion 'ELIMINAR PRODUCTO DE NOTA' en la tabla 'motivos_correcciones' ", 1);
+            CorreccionVenta::create([
+                'user_name' => auth()->user()->name,
+                'corte_caja' => $caja->corte,
+                'folio_venta' => $folio_venta,
+                'tipo_venta' => $this->tipo_venta,
+                'solicitante_name' => auth()->user()->name,
+                'id_motivo' => $motivo->id
+            ]);
         }
     }
 

@@ -3,10 +3,14 @@
 namespace App\Livewire\Puntos\Ventas\Editar;
 
 use App\Livewire\Forms\VentaForm;
+use App\Models\Caja;
 use App\Models\CatalogoVistaVerde;
 use App\Models\ConceptoCancelacion;
+use App\Models\CorreccionVenta;
 use App\Models\DetallesVentaProducto;
+use App\Models\Grupos;
 use App\Models\GruposModificadores;
+use App\Models\MotivoCorreccion;
 use App\Models\Producto;
 use App\Models\Socio;
 use App\Models\TipoPago;
@@ -17,6 +21,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Validation\Rules\In;
 use Illuminate\Validation\ValidationException;
 
 class Container extends Component
@@ -120,26 +125,21 @@ class Container extends Component
     }
 
     #[Computed()]
-    public function productosResult()
-    {
-        //Propiedad que almacena todos los items que coincidan con la busqueda.
-        return CatalogoVistaVerde::where('nombre', 'like', '%' . $this->ventaForm->seachProduct . '%')
-            ->where('clave_dpto', 'PV')
-            ->whereNot('estado', 0)
-            ->orderBy('nombre', 'asc')
-            ->limit(40)
-            ->get();
-    }
-
-    #[Computed()]
     public function productosNew()
     {
+        //Buscar el grupo de productos referente a los servicios de recepcion
+        $gp_servicio = Grupos::where('descripcion', 'like', '%SERVICIO%')->first();
+        //Preparar consulta base
         $result = Producto::where('descripcion', 'like', '%' . $this->ventaForm->seachProduct . '%')
-            ->whereNot('estado', 0)
+            ->whereNot('estado', 0);
+        //Si hay un grupo definido como servicio
+        if ($gp_servicio) {
+            $result->whereNot('id_grupo', $gp_servicio->id); //Agregar el query
+        }
+        return $result
             ->orderBy('descripcion', 'asc')
             ->limit(50)
             ->get();
-        return $result;
     }
 
     #[Computed()]
@@ -200,17 +200,30 @@ class Container extends Component
     {
         //Obtener el producto a eliminar
         $prod = $this->ventaForm->productosTable[$index];
-        //Si cuenta con un id (de la BD)
-        if (array_key_exists('id', $prod)) {
-            //Guardar el index del item a eliminar
-            $this->ventaForm->indexSeleccionado = $index;
-            //Abrir modal de eliminacion
-            $this->dispatch('open-modal', name: 'modal-motivo eliminacion');
-        } else {
-            //Realizar la eliminacion del producto, del arreglo de la tabla
-            $this->ventaForm->eliminarArticulo($prod['chunk']);
-            //Actualizar totales
-            $this->ventaForm->recalcularSubtotales();
+        try {
+            //Si cuenta con un id (de la BD)
+            if (array_key_exists('id', $prod)) {
+                $caja = $this->ventaForm->buscarCaja(); //Encontrar la caja disponible.
+                if ($caja->max_eliminaciones > 0) {
+                    if ($this->buscarEliminaciones($caja) >= $caja->max_eliminaciones)
+                        throw new Exception("Haz alcanzado el maximo permitido de eliminaciones", 1);
+                    //Guardar el index del item a eliminar
+                    $this->ventaForm->indexSeleccionado = $index;
+                    //Abrir modal de eliminacion
+                    $this->dispatch('open-modal', name: 'modal-motivo eliminacion');
+                } else {
+                    //No hay eliminaciones permitidas
+                    throw new Exception("No hay eliminaciones permitidas", 1);
+                }
+            } else {
+                //Realizar la eliminacion del producto, del arreglo de la tabla
+                $this->ventaForm->eliminarArticulo($prod['chunk']);
+                //Actualizar totales
+                $this->ventaForm->recalcularSubtotales();
+            }
+        } catch (\Throwable $th) {
+            session()->flash('fail', $th->getMessage());
+            $this->dispatch('action-message-venta');
         }
     }
 
@@ -407,6 +420,24 @@ class Container extends Component
         $this->reset('producto_compuesto', 'modificadores', 'gruposModif', 'cantidadProducto', 'modal_name');
         //Emitimos evento para cerrar el componente del modal
         $this->dispatch('close-modal');
+    }
+
+    /**
+     * Busca los registros de eliminaciones de productos, en la tabla 'correcciones_ventas'\
+     * Segun la caja dada como parametro.
+     */
+    public function buscarEliminaciones(Caja $caja): int
+    {
+        //Buscar el motivo que corresponde a 'ELIMINAR PRODUCTO DE NOTA'
+        $motivo = MotivoCorreccion::where('descripcion', 'like', '%ELIMINAR PRODUCTO%')->first();
+        //Si no hay motivo registrado en la tabla
+        if (!$motivo)
+            throw new Exception("No hay motivo de correccion 'ELIMINAR PRODUCTO DE NOTA' en la tabla 'motivos_correcciones' ", 1);
+        //Buscar la cantidad de eliminaciones realizadas por los usuarios.
+        $eliminaciones = CorreccionVenta::where('corte_caja', $caja->corte)
+            ->where('id_motivo', $motivo->id)
+            ->get();
+        return count($eliminaciones);
     }
 
     public function render()

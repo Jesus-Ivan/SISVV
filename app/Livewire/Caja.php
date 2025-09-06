@@ -84,7 +84,8 @@ class Caja extends Component
                         'fecha_apertura' => $fechaApertura,
                         'id_usuario' => $this->usuario->id,
                         'cambio_inicial' => $validated['cambio'],
-                        'clave_punto_venta' => $validated['puntoSeleccionado']
+                        'clave_punto_venta' => $validated['puntoSeleccionado'],
+                        'max_eliminaciones' => $this->usuario()->no_eliminaciones
                     ]);
                     //Retomamos las ventas del turno anterior (Aquellas con la columna 'corte_caja' null)
                     $this->retomarVentas($caja);

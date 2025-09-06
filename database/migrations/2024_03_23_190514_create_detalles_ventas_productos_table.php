@@ -29,6 +29,7 @@ return new class extends Migration
             $table->softDeletes();
             $table->integer('id_cancelacion')->nullable();
             $table->string('motivo_cancelacion', 255)->nullable();
+            $table->string('usuario_cancela', 255)->nullable();
 
             /*//Relaciones
 

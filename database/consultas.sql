@@ -1192,6 +1192,14 @@ INSERT INTO conceptos_almacen VALUES ( 'SPP', 'S. POR PRODUCCION', 'SALIDA', 1);
 INSERT INTO conceptos_almacen VALUES ( 'SPV', 'S. POR VENTA', 'SALIDA', 0);
 INSERT INTO conceptos_almacen VALUES ( 'STA', 'S. POR TRASPASO DE ALMACEN', 'SALIDA', 0);
 
+--CONCEPTOS ELIMINACIONES--
+INSERT INTO conceptos_cancelacion (`id`, `descripcion`, `editable`, `created_at`, `updated_at`) VALUES (1, 'ERROR DE CAPTURA', 0, '2025-09-07 12:27:23', NULL);
+INSERT INTO conceptos_cancelacion (`id`, `descripcion`, `editable`, `created_at`, `updated_at`) VALUES (2, 'PRODUCTO EN MAL ESTADO', 0, '2025-09-07 12:27:23', NULL);
+INSERT INTO conceptos_cancelacion (`id`, `descripcion`, `editable`, `created_at`, `updated_at`) VALUES (3, 'DEMORO EN COCINA', 0, '2025-09-07 12:27:24', NULL);
+INSERT INTO conceptos_cancelacion (`id`, `descripcion`, `editable`, `created_at`, `updated_at`) VALUES (4, 'SOCIO CAMBIO EL PRODUCTO', 0, '2025-09-07 12:27:24', NULL);
+INSERT INTO conceptos_cancelacion (`id`, `descripcion`, `editable`, `created_at`, `updated_at`) VALUES (5, 'OTRO', 1, '2025-09-07 12:27:25', NULL);
+
+
 
 --!		CONSULTAS DE JESUS IVAN		!--
 -- Agregar membresias --

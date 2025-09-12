@@ -16,20 +16,22 @@
     <ul
         class="hidden text-sm font-medium text-center text-gray-500 rounded-lg shadow-sm sm:flex dark:divide-gray-700 dark:text-gray-400">
         <li class="w-full focus-within:z-10">
-            <button @click="activeTab = 'general'" :class="tabClasses('general')"
-                >
+            <button @click="activeTab = 'general'" :class="tabClasses('general')">
                 General
             </button>
         </li>
         <li class="w-full focus-within:z-10">
-            <button @click="activeTab = 'receta'" :class="tabClasses('receta')"
-                >
+            <button @click="activeTab = 'receta'" :class="tabClasses('receta')">
                 Receta
             </button>
         </li>
         <li class="w-full focus-within:z-10">
-            <button @click="activeTab = 'compuesto'" :class="tabClasses('compuesto')"
-                >
+            <button @click="activeTab = 'bodega'" :class="tabClasses('bodega')">
+                Bodega-Producto
+            </button>
+        </li>
+        <li class="w-full focus-within:z-10">
+            <button @click="activeTab = 'compuesto'" :class="tabClasses('compuesto')">
                 Compuesto
             </button>
         </li>
@@ -207,6 +209,47 @@
                                             </svg>
                                             <span class="sr-only">Borrar</span>
                                         </button>
+                                    </td>
+                                </tr>
+                            @endif
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div x-show="activeTab === 'bodega'" x-cloak class="flex justify-center">
+            {{-- Tabla resultados --}}
+            <div class="relative overflow-y-auto shadow-md  sm:rounded-lg">
+                <table class="min-w-96 text-sm  text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-3 py-2">
+                                Punto venta
+                            </th>
+                            <th scope="col" class="px-3 py-2">
+                                Bodega origen
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($this->form->puntos as $index => $pv)
+                            @if (!array_key_exists('deleted', $pv))
+                                <tr wire:key='{{ $index }}'
+                                    class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
+                                    <th scope="row"
+                                        class=" px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                        {{ $pv['nombre'] }}
+                                    </th>
+                                    <td class=" px-3 py-2">
+                                        <select id="sl.{{ $index }}"
+                                            wire:model="form.producto_bodega.{{ $pv['clave'] }}"
+                                            class="block w-full p-1.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                            <option selected value="{{ null }}">Selecciona bodega</option>
+                                            @foreach ($this->form->bodegas as $bodega)
+                                                <option value="{{ $bodega['clave'] }}">{{ $bodega['descripcion'] }}
+                                                </option>
+                                            @endforeach
+                                        </select>
                                     </td>
                                 </tr>
                             @endif

@@ -12,14 +12,9 @@ class DetallesFacturas extends Model
     //Nombre de la tabla
     protected $table = 'detalles_facturas';
     //Propiedades restringidas para asignacion masiva
-    protected $guarded = ['folio'];
+    protected $guarded = ['id'];
     //Clave primaria
-    protected $primaryKey = 'folio';
-
-    public function proveedores(): BelongsTo
-    {
-        return $this->belongsTo(Proveedor::class, 'id_proveedor', 'id');
-    }
+    protected $primaryKey = 'id';
 
     public function presentacion(): BelongsTo
     {

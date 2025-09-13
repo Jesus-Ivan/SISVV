@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('detalles_facturas', function (Blueprint $table) {
-            $table->integer('folio')->autoIncrement()->unsigned();
-            $table->integer('folio_compra');
+            $table->integer('id')->autoIncrement()->unsigned();
+            $table->integer('folio_compra')->unsigned();
             $table->integer('clave_presentacion');
             $table->decimal('cantidad', 10, 2);
             $table->decimal('costo', 10, 2);

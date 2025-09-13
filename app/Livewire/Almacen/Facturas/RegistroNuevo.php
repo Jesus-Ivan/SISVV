@@ -10,6 +10,7 @@ use App\Models\Insumo;
 use App\Models\Presentacion;
 use App\Models\Proveedor;
 use App\Models\Requisicion;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
@@ -109,6 +110,10 @@ class RegistroNuevo extends Component
                 ]);
             }
         }
+        //Multiplicar toda la tabla, para calcular el costo sin iva.
+        foreach ($this->listaPresentaciones as $i => $presentacion) {
+            $this->costoSinIvaActualizado($i);
+        }
     }
 
     /**
@@ -195,18 +200,23 @@ class RegistroNuevo extends Component
                 'listaPresentaciones' => 'required|array|min:1'
             ]);
 
+            //Mutiplicar toda la tabla (calcular el costo sin iva y el importe)
+            foreach ($this->listaPresentaciones as $i => $presentacion) {
+                $this->costoSinIvaActualizado($i);
+            }
+
             //Iniciamos la transaccion
             DB::transaction(function () use ($validated) {
 
                 //Calculamos los valores necesaios
                 $subtotal = array_sum(array_column($validated['listaPresentaciones'], 'importe_sin_impuesto'));
                 $iva = array_sum(array_column($validated['listaPresentaciones'], 'impuesto'));
-                
+
                 //Creamos el registro para la tabla 'Facturas'
                 $result_factura = Facturas::create([
                     'fecha_compra' => $validated['fecha_compra'],
-                    'fecha_vencimiento' => $validated['fecha_vencimiento'],
-                    'folio_entrada' => $validated['folio_entrada'],
+                    'fecha_vencimiento' => $validated['fecha_vencimiento'] ?: NULL,
+                    'folio_entrada' => $validated['folio_entrada'] ?: NULL,
                     'id_proveedor' => $validated['id_proveedor'],
                     'subtotal' => $subtotal,
                     'iva' => $iva,
@@ -236,14 +246,18 @@ class RegistroNuevo extends Component
                     if ($presentacionUpdate) {
                         $nuevaFecha = $validated['fecha_compra'];
                         $fechaExistente = $presentacionUpdate->ultima_compra;
-                        
+                        $costo_rend = round($presentacion['costo_unitario'] / $presentacionUpdate->rendimiento, 2);
+                        $costo_rend_impuesto = round($presentacion['costo_con_impuesto'] / $presentacionUpdate->rendimiento, 2);
+
                         // Si la fecha de compra es mayor a la fecha existente o no cuenta con fecha, actualizamos la fecha
                         if (is_null($fechaExistente) || $nuevaFecha >= $fechaExistente) {
                             $presentacionUpdate->update([
                                 'costo' => $presentacion['costo_unitario'],
                                 'iva' => $presentacion['iva'],
                                 'costo_con_impuesto' => $presentacion['costo_con_impuesto'],
-                                'ultima_compra' => $nuevaFecha
+                                'ultima_compra' => $nuevaFecha,
+                                'costo_rend' => $costo_rend,
+                                'costo_rend_impuesto' => $costo_rend_impuesto,
                             ]);
 
                             //Actualizamos el insumo en la tabla 'Insumos', para ello obtenemos el insumo relacionado a la presentación
@@ -254,18 +268,15 @@ class RegistroNuevo extends Component
 
                                 // Si la nueva fecha de compra es mayor que la del insumo, o no existe, actualizamos el insumo
                                 if (is_null($insumoFechaExistente) || $nuevaFecha >= $insumoFechaExistente) {
-                                    // Obtenemos todas las presentaciones relacionadas con este insumo
-                                    $presentacionesDelInsumo = Presentacion::where('clave_insumo_base', $insumoUpdate->clave)->get();
-
-                                    // Encontramos el costo más alto entre todas las presentaciones
-                                    $costoMasAlto = $presentacionesDelInsumo->max('costo');
-                                    $ivaMasAlto = $presentacionesDelInsumo->max('iva');
-                                    $costoConImpuestoMasAlto = $presentacionesDelInsumo->max('costo_con_impuesto');
+                                    //Encontramos el costo_con_impuesto más alto de las presentaciones
+                                    $presentacion = Presentacion::where('clave_insumo_base', $insumoUpdate->clave)
+                                        ->orderByDesc('costo_con_impuesto')
+                                        ->first();
 
                                     $insumoUpdate->update([
-                                        'costo' => $costoMasAlto,
-                                        'iva' => $ivaMasAlto,
-                                        'costo_con_impuesto' => $costoConImpuestoMasAlto,
+                                        'costo' => $presentacion->costo_rend,
+                                        'iva' => $presentacion->iva,
+                                        'costo_con_impuesto' => $presentacion->costo_rend_impuesto,
                                         'ultima_compra' => $nuevaFecha
                                     ]);
                                 }

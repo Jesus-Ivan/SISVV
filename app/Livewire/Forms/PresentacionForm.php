@@ -13,9 +13,9 @@ class PresentacionForm extends Form
 {
     public $clave, $descripcion, $id_grupo, $id_proveedor, $ultimo_costo, $iva = 16, $costo_iva;
     public $estado = 1, $ultima_compra;
-    public $insumo_base, $unidad_insumo, $rendimiento;
+    public $insumo_base, $unidad_insumo, $rendimiento, $redondeo = true;
     public ?Presentacion $original = null;
-    public $c_rendimiento = null, $c_rendimiento_imp = null; 
+    public $c_rendimiento = null, $c_rendimiento_imp = null;
 
     /**
      * Guarda los valores iniciales, para establecerlos dentro del formulario como array
@@ -33,6 +33,7 @@ class PresentacionForm extends Form
         $this->estado = $presentacion->estado;
         $this->ultima_compra = $presentacion->ultima_compra;
         $this->rendimiento = $presentacion->rendimiento;
+        $this->redondeo = boolval($presentacion->redondeo);
         $this->setInsumoBase($presentacion->clave_insumo_base);
         //Guardar el modelo original
         $this->original = $presentacion;
@@ -97,6 +98,7 @@ class PresentacionForm extends Form
             'id_grupo' => 'required',
             'costo_iva' => 'required',
             'rendimiento' => 'required',
+            'redondeo' => 'required',
             'insumo_base' => 'required',
             'id_proveedor' => 'required',
             'estado' => 'required',
@@ -116,6 +118,7 @@ class PresentacionForm extends Form
             'costo_con_impuesto' => $validated['costo_iva'],
             'clave_insumo_base' => $validated['insumo_base']['clave'],
             'rendimiento' => $validated['rendimiento'],
+            'redondeo' => $validated['redondeo'],
             'id_proveedor' => $validated['id_proveedor'],
             'costo_rend' => $validated['c_rendimiento'],
             'costo_rend_impuesto' => $validated['c_rendimiento_imp'],
@@ -130,12 +133,12 @@ class PresentacionForm extends Form
      */
     public function guardarCambios()
     {
-
         $validated = $this->validate([
             'descripcion' => 'required',
             'id_grupo' => 'required',
             'costo_iva' => 'required',
             'rendimiento' => 'required',
+            'redondeo' => 'required',
             'insumo_base' => 'required',
             'id_proveedor' => 'required',
             'estado' => 'required',
@@ -154,6 +157,7 @@ class PresentacionForm extends Form
         $this->original->costo_con_impuesto = $validated['costo_iva'];
         $this->original->clave_insumo_base = $validated['insumo_base']['clave'];
         $this->original->rendimiento = $validated['rendimiento'];
+        $this->original->redondeo = $validated['redondeo'];
         $this->original->costo_rend = $validated['c_rendimiento'];
         $this->original->costo_rend_impuesto = $validated['c_rendimiento_imp'];
         $this->original->id_proveedor = $validated['id_proveedor'];
@@ -180,5 +184,4 @@ class PresentacionForm extends Form
             $this->c_rendimiento_imp = round($this->costo_iva / $this->rendimiento, 3);
         }
     }
-
 }

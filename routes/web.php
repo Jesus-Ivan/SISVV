@@ -313,5 +313,11 @@ Route::post('reporte-existencias', [ReportesController::class, 'generarReporteEx
 //Esta ruta debe moverse al departamento de sistemas. cuando almacen e inventarios esten listos
 Route::post('/prod-vendidos', [SistemasController::class, 'getReporteVendidos'])->name('prod-vendidos');
 
+Route::get('entradasV2', [ReportesController::class, 'verEntradas'])->name('entradas-v2');
+Route::post('entradasV2', [ReportesController::class, 'obtenerEntradas'])->name('entradas-v2');
+
+Route::get('rep-fac', [ReportesController::class, 'verFacturas'])->name('rep-facturas');
+Route::post('rep-fac', [ReportesController::class, 'obtenerFacturas'])->name('rep-facturas');
+
 
 require __DIR__ . '/auth.php';

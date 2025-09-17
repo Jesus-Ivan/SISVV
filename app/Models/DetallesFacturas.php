@@ -16,6 +16,11 @@ class DetallesFacturas extends Model
     //Clave primaria
     protected $primaryKey = 'id';
 
+    public function factura(): BelongsTo
+    {
+        return $this->belongsTo(Facturas::class, 'folio_factura');
+    }
+
     public function presentacion(): BelongsTo
     {
         return $this->belongsTo(Presentacion::class, 'clave_presentacion', 'clave');

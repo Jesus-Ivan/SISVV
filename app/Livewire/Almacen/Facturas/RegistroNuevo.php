@@ -216,7 +216,7 @@ class RegistroNuevo extends Component
                 $result_factura = Facturas::create([
                     'fecha_compra' => $validated['fecha_compra'],
                     'fecha_vencimiento' => $validated['fecha_vencimiento'] ?: NULL,
-                    'folio_entrada' => $validated['folio_entrada'] ?: NULL,
+                    'folio_requisicion' => $validated['folio_entrada'] ?: NULL,
                     'id_proveedor' => $validated['id_proveedor'],
                     'subtotal' => $subtotal,
                     'iva' => $iva,
@@ -230,7 +230,7 @@ class RegistroNuevo extends Component
                 foreach ($validated['listaPresentaciones'] as $key => $presentacion) {
                     //Creamos los detalles de la factura
                     DetallesFacturas::create([
-                        'folio_compra' => $result_factura->folio,
+                        'folio_factura' => $result_factura->folio,
                         'clave_presentacion' => $presentacion['clave'],
                         'cantidad' => $presentacion['cantidad'],
                         'costo' => $presentacion['costo_unitario'],

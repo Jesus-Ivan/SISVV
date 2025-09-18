@@ -65,7 +65,7 @@ class Principal extends Component
     {
         $this->factura_seleccionada = $folio;
         $this->factura = Facturas::where('folio', $folio)->first();
-        $this->factura_detalles = DetallesFacturas::where('folio_compra', $folio)->get();
+        $this->factura_detalles = DetallesFacturas::where('folio_factura', $folio)->get();
         $this->dispatch('open-modal', name: 'detalles');
     }
 

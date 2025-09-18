@@ -15,7 +15,7 @@ return new class extends Migration
             $table->integer('folio')->autoIncrement()->unsigned();
             $table->date('fecha_compra');
             $table->date('fecha_vencimiento')->nullable();
-            $table->integer('folio_entrada')->nullable();
+            $table->integer('folio_requisicion')->nullable();
             $table->integer('id_proveedor');
             $table->decimal('subtotal', 10, 2);
             $table->decimal('iva', 10, 2);

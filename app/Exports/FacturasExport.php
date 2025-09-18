@@ -54,7 +54,7 @@ class FacturasExport implements FromArray
                 'fecha_factura' => $item['factura']['fecha_compra'],
                 'cuenta_contable' => $item['factura']['cuenta_contable'],
                 'clave_presentacion' => $item['clave_presentacion'],
-                'descripcion' => $item['presentacion']['descripcion'],
+                'descripcion' => $item['descripcion'],
                 'id_proveedor' => $this->getProveedor($item['factura']['id_proveedor']),
                 'cantidad' => $item['cantidad'],
                 'costo_unitario' => $item['costo'],

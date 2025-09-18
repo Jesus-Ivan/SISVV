@@ -232,6 +232,7 @@ class RegistroNuevo extends Component
                     DetallesFacturas::create([
                         'folio_factura' => $result_factura->folio,
                         'clave_presentacion' => $presentacion['clave'],
+                        'descripcion' => $presentacion['descripcion'],
                         'cantidad' => $presentacion['cantidad'],
                         'costo' => $presentacion['costo_unitario'],
                         'iva' => $presentacion['iva'],

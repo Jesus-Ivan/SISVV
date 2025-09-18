@@ -1211,7 +1211,7 @@ class ReportesController extends Controller
         $f_inicio = $req->input('f_inicio');
         $f_fin = $req->input('f_fin');
         //Preparar consulta
-        $result = DetallesFacturas::with(['factura', 'presentacion'])
+        $result = DetallesFacturas::with(['factura'])
             ->whereHas('factura', function ($query) use ($f_inicio, $f_fin, $proveedores) {
                 $query->whereDate('fecha_compra', '>=', $f_inicio)
                     ->whereDate('fecha_compra', '<=', $f_fin)

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Constants\AlmacenConstants;
 use App\Exports\CarteraVencidaExport;
+use App\Exports\CruceInventarioExport;
 use App\Exports\EntradasExport;
 use App\Exports\FacturasExport;
 use App\Exports\RecibosExport;
@@ -1222,6 +1223,71 @@ class ReportesController extends Controller
         return Excel::download(
             new FacturasExport($result->toArray()),
             'Facturas ' . $f_inicio . ' - ' . $f_fin . '.xlsx'
+        );
+    }
+
+
+    /**
+     * Prepara la vista para obtener el reporte que cruza la informacion de las ventas, con el inventario
+     */
+    public function getCruce()
+    {
+        $grupos = Grupos::where('tipo', AlmacenConstants::INSUMOS_KEY)
+            ->get();
+        $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
+        //Establecer fecha inicial
+        $fecha = now()->subDay()->toDateString();
+
+        //Devolver la vista
+        return view('almacen.Documentos.cruze-existencias', [
+            'grupos' => $grupos,
+            'bodegas' => $bodegas,
+            'fecha' => $fecha,
+        ]);
+    }
+
+    /**
+     * Genera el excel que cruza la informacion de las ventas, con el inventario
+     */
+    public function postCruce(Request $request)
+    {
+        $service = new InventarioService(); //Objeto para consultar existencias
+
+        //Obtener los parametros de la peticion post.
+        $folio = $request->input('folio');
+        $bodega = Bodega::find($request->input('clave_bodega'));
+        $fecha = $request->input('fecha');
+        $hora = "00:00";
+        $grupos = $request->input('selected_grupos');   //Array de los id de grupos seleccionados
+
+        $data = [];
+        foreach ($grupos as $grupo_id) {
+            //Consultar las existencias de un grupo de insumos
+            $insumos = $service->consultarInsumos(Grupos::find($grupo_id), $fecha, $hora, $request->input('clave_bodega'));
+            //Obtener los movimientos
+            $entradas_directas = $service->obtenerExistenciasConceptos([AlmacenConstants::ENT_KEY], $fecha, $bodega->clave);
+            $entradas_trasp = $service->obtenerExistenciasConceptos(["ETA"], $fecha, $bodega->clave);
+            $salida_trasp = $service->obtenerExistenciasConceptos(["STA"], $fecha, $bodega->clave);
+            $ventas = $service->obtenerExistenciasConceptos(["SPV"], $fecha, $bodega->clave);
+            $ajustes_inv = $service->obtenerExistenciasConceptos(["EPA", "SPA"], $fecha, $bodega->clave);
+            //Del resultado, agregarlo a los datos, de forma indexada.
+            foreach ($insumos as $row_insumo) {
+                $data[$row_insumo['clave']] = $row_insumo;
+            }
+        }
+
+
+        return Excel::download(
+            new CruceInventarioExport(
+                $data,
+                $ventas,
+                $entradas_directas,
+                $entradas_trasp,
+                $salida_trasp,
+                $ajustes_inv,
+                $fecha
+            ),
+            'Cruce inventario ' . $fecha . ' - ' . $bodega->descripcion . '.xlsx',
         );
     }
 

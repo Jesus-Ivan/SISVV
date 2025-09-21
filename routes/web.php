@@ -147,6 +147,9 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::post('existencias', [ReportesController::class, 'postExistencias'])->name('almacen.documentos.existencias');
         Route::get('tabla-inv-sem', [ReportesController::class, 'getInvSemanal'])->name('almacen.documentos.inv-sem');
         Route::post('tabla-inv-sem', [ReportesController::class, 'postInvSemanal'])->name('almacen.documentos.inv-sem');
+        //Ruta del reporte de cruza de informacion
+        Route::get('cruze-existencias', [ReportesController::class, 'getCruce'])->name('almacen.documentos.cruze');
+        Route::post('cruze-existencias', [ReportesController::class, 'postCruce'])->name('almacen.documentos.cruze');
     });
 
     Route::prefix('entradas-v2')->group(function () {

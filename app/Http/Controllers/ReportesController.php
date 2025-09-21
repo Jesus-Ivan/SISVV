@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Constants\AlmacenConstants;
 use App\Exports\CarteraVencidaExport;
+use App\Exports\CruceInventarioExport;
 use App\Exports\EntradasExport;
 use App\Exports\FacturasExport;
 use App\Exports\RecibosExport;
@@ -1222,6 +1223,42 @@ class ReportesController extends Controller
         return Excel::download(
             new FacturasExport($result->toArray()),
             'Facturas ' . $f_inicio . ' - ' . $f_fin . '.xlsx'
+        );
+    }
+
+
+    /**
+     * Prepara la vista para obtener el reporte que cruza la informacion de las ventas, con el inventario
+     */
+    public function getCruce()
+    {
+        $grupos = Grupos::where('tipo', AlmacenConstants::INSUMOS_KEY)
+            ->get();
+        $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
+        //Establecer fecha inicial
+        $fecha = now()->subDay()->toDateString();
+
+        //Devolver la vista
+        return view('almacen.Documentos.cruze-existencias', [
+            'grupos' => $grupos,
+            'bodegas' => $bodegas,
+            'fecha' => $fecha,
+        ]);
+    }
+
+    /**
+     * Genera el excel que cruza la informacion de las ventas, con el inventario
+     */
+    public function postCruce(Request $request)
+    {
+        $clave_bodega = $request->input('clave_bodega');
+        $fecha = $request->input('fecha');
+
+        $grupos = $request->input('selected_grupos');   //Array de los id de grupos seleccionados
+
+        return Excel::download(
+            new CruceInventarioExport($clave_bodega, $fecha, $grupos),
+            'Cruce inventario ' . $fecha . '.xlsx',
         );
     }
 

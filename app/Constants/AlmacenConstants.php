@@ -55,6 +55,16 @@ class AlmacenConstants
     public const ENT_KEY ="EDA";
 
     /**
+     * Es la clave del concepto de "E. POR TRASPASO ALMACEN" de la tabla 'conceptos_almacen'
+     */
+    public const ENT_TRASP_KEY = "ETA";
+
+    /**
+     * Es la clave del concepto de "S. POR TRASPASO ALMACEN" de la tabla 'conceptos_almacen'
+     */
+    public const SAL_TRASP_KEY = "STA";
+
+    /**
      * Array asociativo que relaciona la clave del punto de venta, con su columna de stock correspondiente de la tabla 'stocks'
      */
     public const PUNTOS_STOCK = [

@@ -2,94 +2,82 @@
 
 namespace App\Exports;
 
+use App\Constants\AlmacenConstants;
+use App\Exports\Sheets\Existencias\BodegaInsumo;
+use App\Libraries\InventarioService;
 use App\Models\Bodega;
-use App\Models\DetallesEntrada;
-use App\Models\Proveedor;
-use Carbon\Carbon;
-use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use App\Models\Grupos;
+use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class CruceInventarioExport implements FromArray
+class CruceInventarioExport implements WithMultipleSheets
 {
-    public $data,  $fecha;
-    public $ventas, $entradas_directas, $entradas_trasp, $salida_trasp, $ajustes_inv;
+    use Exportable;
+    public $clave_bodega, $fecha, $grupos, $service;
 
-
-    public function __construct($data, $ventas, $entradas_directas, $entradas_trasp, $salida_trasp, $ajustes_inv, $fecha)
+    public function __construct($clave_bodega = null, $fecha, $grupos)
     {
-        //Resguardar los valores en las propiedades
-        $this->data = $data;
-        $this->ventas = $ventas;
-        $this->entradas_directas = $entradas_directas;
-        $this->entradas_trasp = $entradas_trasp;
-        $this->salida_trasp = $salida_trasp;
-        $this->ajustes_inv = $ajustes_inv;
-        $fechaAux = Carbon::parse($fecha)->locale('es');
-        $this->fecha = $fechaAux->shortDayName . ' ' . $fechaAux->format('d-m-Y');
+        $this->service = new InventarioService(); //Objeto para consultar existencias
+        $this->clave_bodega = $clave_bodega;
+        $this->fecha = $fecha;
+        $this->grupos = Grupos::whereIn('id', $grupos)->get();
     }
 
-    public function array(): array
+    public function sheets(): array
     {
-        //Encabezados
-        $encabezados = [
-            'clave' => 'CLAVE',
-            'descripcion' => 'DESCRIPCION',
-            'unidad' => 'UNIDAD',
-            'stock_sistema' => 'STOCK SISTEMA',
-            'entrada_directa' => 'E.DIRECTA',
-            'entrada_traspaso' => 'E.TRASPASO',
-            'salida_traspaso' => 'S.TRASPASO',
-            'ventas' => 'VENTAS',
-            'ajuste_inventario' => 'AJUSTE.INV',
-            'stock_final' => 'STOCK FINAL',
-            'stock_real' => 'STOCK REAL',
-        ];
+        $sheets = [];   //Definimos las hojas del excel
 
-        //Crear array con los datos finales
-        $insumos = [];
-        //Agregar fila de la fecha
-        $insumos[] = [
-            'clave' => '',
-            'descripcion' => '',
-            'unidad' => '',
-            'stock_sistema' => $this->fecha,
-            'entrada_directa' => '',
-            'entrada_traspaso' => '',
-            'salida_traspaso' => '',
-            'ventas' => '',
-            'ajuste_inventario' => '',
-            'stock_final' => '',
-            'stock_real' => '',
-        ];
-        //Agregar el encabezado
-        $insumos[] = $encabezados;
-
-        //Interar todos los resultados
-        foreach ($this->data as $key => $item) {
-            //Agreagar cada item
-            $insumos[] = [
-                'clave' => $item['clave'],
-                'descripcion' => $item['descripcion'],
-                'unidad' => $item['unidad_descripcion'],
-                'stock_sistema' => $item['existencias_insumo'],
-                'entrada_directa' => $this->findValue($key, $this->entradas_directas, "total_cantidad"),
-                'entrada_traspaso' => $this->findValue($key, $this->entradas_trasp, "total_cantidad"),
-                'salida_traspaso' => $this->findValue($key, $this->salida_trasp, "total_cantidad"),
-                'ventas' => $this->findValue($key, $this->ventas, "total_cantidad"),
-                'ajuste_inventario' => $this->findValue($key, $this->ajustes_inv, "total_cantidad"),
-                'stock_final' => 0,
-                'stock_real' => 0,
-            ];
+        if (!$this->clave_bodega) {
+            //Buscar todas las bodegas
+            $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
+            foreach ($bodegas as $bodega) {
+                $exis = $this->obtenerInfo($bodega);
+                //Agregar hojas de las existencias de los insumos
+                $sheets[] = new BodegaInsumo(
+                    $exis['insumos'],
+                    $exis['s_vent'],
+                    $exis['e_direc'],
+                    $exis['e_trap'],
+                    $exis['s_trap'],
+                    $exis['ajuste'],
+                    $this->fecha,
+                    $bodega
+                );
+            }
         }
-
-        return ($insumos);
+        return $sheets;
     }
 
     /**
-     * Verifica si existe la key en el array y devuelve el su valor, en caso contrario NULL
+     * Obtiene los datos necesarios para el cruze de existencias-ventas
      */
-    public function findValue(string $key, array $array, $property)
+    private function obtenerInfo(Bodega $bodega)
     {
-        return array_key_exists($key, $array) ? $array[$key][$property] : null;
+        //Insumos iniciales a consultar 
+        $data = [];
+
+        foreach ($this->grupos as $grupo) {
+            //Consultar las existencias de un grupo de insumos
+            $insumos = $this->service->consultarInsumos($grupo, $this->fecha, "00:00", $bodega->clave);
+            //Obtener los movimientos
+            $entradas_directas = $this->service->obtenerExistenciasConceptos([AlmacenConstants::ENT_KEY], $this->fecha, $bodega->clave);
+            $entradas_trasp = $this->service->obtenerExistenciasConceptos(["ETA"], $this->fecha, $bodega->clave);
+            $salida_trasp = $this->service->obtenerExistenciasConceptos(["STA"], $this->fecha, $bodega->clave);
+            $ventas = $this->service->obtenerExistenciasConceptos(["SPV"], $this->fecha, $bodega->clave);
+            $ajustes_inv = $this->service->obtenerExistenciasConceptos(["EPA", "SPA"], $this->fecha, $bodega->clave);
+            //Del resultado, agregarlo a los datos, de forma indexada.
+            foreach ($insumos as $row_insumo) {
+                $data[$row_insumo['clave']] = $row_insumo;
+            }
+        }
+
+        return [
+            'insumos' => $data,
+            'e_direc' => $entradas_directas,
+            'e_trap' => $entradas_trasp,
+            's_trap' => $salida_trasp,
+            's_vent' => $ventas,
+            'ajuste' => $ajustes_inv
+        ];
     }
 }

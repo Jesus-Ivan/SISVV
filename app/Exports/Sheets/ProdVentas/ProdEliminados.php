@@ -30,8 +30,10 @@ class ProdEliminados implements FromArray, WithTitle
         $productos = [];
         //Agregamos el encabezado
         $productos[] = [
-            'clave_catalogo' => '#CATALOGO',
-            'clave_producto' => 'CLAVE PRODUCTO',
+            'id_socio' => 'NO.SOCIO',
+            'nombre' => 'NOMBRE',
+            'clave_catalogo' => '#LEGACY',
+            'clave_producto' => '#PRODUCTO',
             'folio_venta' => 'FOLIO VENTA',
             'punto' =>  'PUNTO',
             'descripcion' => 'DESCRIPCION',
@@ -48,6 +50,8 @@ class ProdEliminados implements FromArray, WithTitle
             foreach ($venta['detalles_productos'] as $key => $producto) {
                 //Lo agregamos al array
                 $productos[] = [
+                    'id_socio' => $venta['id_socio'],
+                    'nombre' => $venta['nombre'],
                     'clave_catalogo' => $producto['codigo_catalogo'],
                     'clave_producto' => $producto['clave_producto'],
                     'folio_venta' => $producto['folio_venta'],

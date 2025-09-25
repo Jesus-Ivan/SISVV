@@ -185,7 +185,12 @@ class NuevoTraspaso extends Component
             'clave_destino.required' => "Seleccione destino",
         ]);
 
+        //Buscar las bodegas
         $bodega_origen = Bodega::find($validated['clave_origen']);
+        $bodega_destino = Bodega::find($validated['clave_destino']);
+
+        // Define el tipo de traspaso concatenando la naturaleza
+        $this->tipo_traspaso = "{$bodega_origen->naturaleza}_{$bodega_destino->naturaleza}";
 
         if ($bodega_origen->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
             $this->traspasoPresentacion();
@@ -207,9 +212,6 @@ class NuevoTraspaso extends Component
             //Bloquear bodega de origen
             $this->locked_b_origen = true;
             $this->locked_b_destino = true;
-
-            // Define el tipo de traspaso concatenando la naturaleza
-            $this->tipo_traspaso = "{$naturaleza_origen}_{$naturaleza_destino}";
 
             //Agregar todos los items (de la requi) a la tabla
             foreach ($result as $key => $value) {
@@ -238,7 +240,29 @@ class NuevoTraspaso extends Component
      */
     public function traspasoInsumo()
     {
+        //Buscar los detalles de la requisicion
+        $detalles = DetallesRequisicion::with('presentacion.insumo.unidad')
+            ->where('folio_requisicion', $this->folio_requisicion)->get();
 
+        //Si hay detalles en la BD
+        if (count($detalles)) {
+            //Bloquear bodega de origen
+            $this->locked_b_origen = true;
+            $this->locked_b_destino = true;
+
+            //Agregar todos los elementos a la tabla
+            foreach ($detalles as $detalle) {
+                //Se anexa el producto al array de la tabla
+                $this->lista_articulos[] = [
+                    'clave' => $detalle->presentacion->insumo->clave,
+                    'descripcion' => $detalle->presentacion->insumo->descripcion,
+                    'cantidad' => $detalle->cantidad * $detalle->presentacion->rendimiento,
+                    'unidad' => $detalle->presentacion->insumo->unidad,
+                    'rendimiento' => null,
+                    'cantidad_insumo' => null,
+                ];
+            }
+        }
         //Emitimos evento para cerrar el componente del modal
         $this->dispatch('close-modal');
     }
@@ -366,10 +390,14 @@ class NuevoTraspaso extends Component
         ];
 
         //Modificar la clave segun la naturaleza de la bodega de destino
-        if ($bodega->naturaleza == AlmacenConstants::PRESENTACION_KEY)
+        if ($bodega->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
             $data['clave_presentacion'] = $row['clave'];
-        else
+        } else {
             $data['clave_insumo'] = $row['clave'];
+            $data['cantidad'] = null;
+            $data['rendimiento'] = null;
+            $data['cantidad_insumo'] = $row['cantidad'];
+        }
         //Creamos el registro de los detalles de traspaso
         DetalleTraspasoNew::create($data);
     }

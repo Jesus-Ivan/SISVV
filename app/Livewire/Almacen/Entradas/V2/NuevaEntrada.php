@@ -140,16 +140,35 @@ class NuevaEntrada extends Component
 
     public function buscarRequisicion()
     {
+        $validated = $this->validate([
+            'clave_bodega' => "required"
+        ], [
+            'clave_bodega.required' => "Seleccione"
+        ]);
+
+        //Buscar la bodega (seleccionada) en la BD
+        $bodega = Bodega::find($validated['clave_bodega']);
+
+        //Segun la naturaleza de la bodega
+        if ($bodega->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
+            $this->requisicionPresentaciones();
+        } else {
+            $this->requisicionInsumos();
+        }
+    }
+
+    /**
+     * Busca los elementos de una requisicion y los prepara\
+     * para el trapaso a una bodega con naturaleza "PRESEN"
+     */
+    public function requisicionPresentaciones()
+    {
         //Buscar los detalles de la requisicion
         $result = DetallesRequisicion::where('folio_requisicion', $this->folio_requi)->get();
         //Si hay al menos 1 registro correspondiente
         if (count($result)) {
             //Bloquear la bodega
             $this->locked_bodega = true;
-
-            //Establecer la bodega seleccionada en almacen
-            $bodega = Bodega::where('descripcion', 'like', '%ALMACEN%')->first();
-            $this->clave_bodega = $bodega->clave;
 
             //Agregar todos los items (de la requi) a la tabla
             foreach ($result as $key => $value) {
@@ -167,6 +186,47 @@ class NuevaEntrada extends Component
                     'id_proveedor' => $value->id_proveedor,
                     'importe' => $value->importe, //Es lo mismo que multiplicar cantidad * costo_con_impuesto
                     'unidad' => $producto->unidad,
+                ];
+            }
+        }
+        //Emitimos evento para cerrar el componente del modal
+        $this->dispatch('close-modal');
+    }
+
+    /**
+     * Busca los elementos de una requisicion y los prepara\
+     * para el trapaso a una bodega con naturaleza "INSUM"
+     */
+    public function requisicionInsumos()
+    {
+        //Buscar los detalles de la requisicion
+        $detalle_requi = DetallesRequisicion::with('presentacion')
+            ->where('folio_requisicion', $this->folio_requi)->get();
+        //Si hay al menos 1 registro correspondiente
+        if (count($detalle_requi)) {
+            //Bloquear la bodega
+            $this->locked_bodega = true;
+
+            //Agregar todos los items (de la requi) a la tabla
+            foreach ($detalle_requi as $key => $detalle) {
+                //Buscar el insumo base
+                $insumo = Insumo::with('unidad')
+                    ->find($detalle->presentacion->clave_insumo_base);
+                $cant_insum = $detalle->cantidad * $detalle->presentacion->rendimiento;
+                $costo_unitario = round($detalle->costo_unitario / $detalle->presentacion->rendimiento, 3);
+                $costo_con_impuesto = round($detalle->costo_con_impuesto / $detalle->presentacion->rendimiento, 3);
+                //Se anexa el producto al array de la tabla
+                $this->articulos_table[] = [
+                    'clave' => $insumo->clave,
+                    'descripcion' => $insumo->descripcion,
+                    'cantidad' => $cant_insum,
+                    'costo' => $costo_unitario,
+                    'iva' => $detalle->iva,
+                    'costo_con_impuesto' => $costo_con_impuesto,
+                    'clave_insumo_base' => $detalle->presentacion->clave_insumo_base,
+                    'id_proveedor' => $detalle->id_proveedor,
+                    'importe' => $cant_insum * $costo_con_impuesto,
+                    'unidad' => $insumo->unidad,
                 ];
             }
         }

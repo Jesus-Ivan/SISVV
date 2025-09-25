@@ -174,14 +174,42 @@ class NuevoTraspaso extends Component
     //Buscamos articulos mediante una requisicion
     public function buscarRequisicion()
     {
+        //Validar bodegas seleccionadas
+        $validated = $this->validate([
+            'folio_requisicion' => 'required',
+            'clave_origen' => "required",
+            'clave_destino' => "required",
+        ], [
+            'folio_requisicion.required' => 'Ingrese requisicion',
+            'clave_origen.required' => "Seleccione rigen",
+            'clave_destino.required' => "Seleccione destino",
+        ]);
+
+        $bodega_origen = Bodega::find($validated['clave_origen']);
+
+        if ($bodega_origen->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
+            $this->traspasoPresentacion();
+        } else {
+            $this->traspasoInsumo();
+        }
+    }
+
+
+    /**
+     * Prepara la tabla para un traspaso de articulos desde un origen\
+     * cuya naturaleza sea "Presentaciones"
+     */
+    public function traspasoPresentacion()
+    {
         //Buscar los detalles de la requisicion
         $result = DetallesRequisicion::where('folio_requisicion', $this->folio_requisicion)->get();
         if (count($result)) {
-            //Establecer la bodega seleccionada en almacen
-            $bodega = Bodega::where('descripcion', 'like', '%ALMACEN%')->first();
-            $this->clave_origen = $bodega->clave;
-
+            //Bloquear bodega de origen
             $this->locked_b_origen = true;
+            $this->locked_b_destino = true;
+
+            // Define el tipo de traspaso concatenando la naturaleza
+            $this->tipo_traspaso = "{$naturaleza_origen}_{$naturaleza_destino}";
 
             //Agregar todos los items (de la requi) a la tabla
             foreach ($result as $key => $value) {
@@ -200,6 +228,19 @@ class NuevoTraspaso extends Component
                 ];
             }
         }
+        //Emitimos evento para cerrar el componente del modal
+        $this->dispatch('close-modal');
+    }
+
+    /**
+     * Prepara la tabla para un traspaso de articulos desde un origen\
+     * cuya naturaleza sea "Insumos"
+     */
+    public function traspasoInsumo()
+    {
+
+        //Emitimos evento para cerrar el componente del modal
+        $this->dispatch('close-modal');
     }
 
     public function aplicarTraspaso()

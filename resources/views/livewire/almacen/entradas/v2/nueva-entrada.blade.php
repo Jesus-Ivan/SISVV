@@ -26,7 +26,6 @@
                     <option value="{{ $b->clave }}">{{ $b->descripcion }}</option>
                 @endforeach
             </select>
-
             @error('clave_bodega')
                 <x-input-error messages="{{ $message }}" />
             @enderror
@@ -182,18 +181,23 @@
                         <div class="inline-flex gap-2">
                             {{-- Folio requi --}}
                             <input type="text" wire:keyup.enter='buscarRequisicion'
-                                class="{{ $locked_bodega ? 'cursor-not-allowed pointer-events-none' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                class="h-11 {{ $locked_bodega ? 'cursor-not-allowed pointer-events-none' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="Folio requisicion" wire:model='folio_requi' />
                             {{-- Select de bodega --}}
-                            <select id="bodega" wire:model='clave_bodega' wire:change ='actualizarItems'
-                                class="{{ $locked_bodega ? 'cursor-not-allowed pointer-events-none' : '' }}  bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                <option selected value="{{ null }}">BODEGA</option>
-                                @foreach ($this->bodegas as $b)
-                                    <option value="{{ $b->clave }}">{{ $b->descripcion }}</option>
-                                @endforeach
-                            </select>
+                            <div class="w-full">
+                                <select id="bodega" wire:model='clave_bodega' wire:change ='actualizarItems'
+                                    class="{{ $locked_bodega ? 'cursor-not-allowed pointer-events-none' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                    <option selected value="{{ null }}">BODEGA</option>
+                                    @foreach ($this->bodegas as $b)
+                                        <option value="{{ $b->clave }}">{{ $b->descripcion }}</option>
+                                    @endforeach
+                                </select>
+                                @error('clave_bodega')
+                                    <x-input-error messages="{{ $message }}" />
+                                @enderror
+                            </div>
                             {{-- Input search --}}
-                            <div class="relative">
+                            <div class="relative h-11">
                                 <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                                     <svg wire:loading.delay.remove wire:target='search_input'
                                         class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"

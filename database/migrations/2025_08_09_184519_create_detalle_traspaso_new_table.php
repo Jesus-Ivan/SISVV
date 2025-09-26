@@ -17,8 +17,8 @@ return new class extends Migration
             $table->integer('clave_presentacion')->nullable();
             $table->integer('clave_insumo')->nullable();
             $table->string('descripcion', 255);
-            $table->decimal('cantidad', 11, 3);
-            $table->decimal('rendimiento', 11, 3);
+            $table->decimal('cantidad', 11, 3)->nullable();
+            $table->decimal('rendimiento', 11, 3)->nullable();
             $table->decimal('cantidad_insumo', 11, 3);
         });
     }

@@ -39,6 +39,8 @@ class NuevoTraspaso extends Component
     public $locked_b_origen = false; //Bodega origen
     #[Locked]
     public $locked_b_destino = false; //Bodega destino
+    //Propiedad para bloquear el folio de requisicion
+    public $locked_folio = false;
 
     //hook que monitorea la actualizacion del componente
     public function updated($property, $value)
@@ -51,6 +53,7 @@ class NuevoTraspaso extends Component
 
         //Evitamos que el usuario ingrese la misma bodega en origen y destino
         if ($property === 'clave_origen' || $property === 'clave_destino') {
+            $this->bloquearFolio();
             if ($this->clave_origen === $this->clave_destino && !empty($this->clave_origen)) {
                 //Restablecemos la ultima bodega actualizada
                 $this->reset($property);
@@ -68,6 +71,25 @@ class NuevoTraspaso extends Component
         $this->fecha = now()->toDateString();
         //Hora inicial
         $this->hora = now()->toTimeString('minute');
+    }
+
+    public function bloquearFolio()
+    {
+        $bodega_origen = Bodega::find($this->clave_origen);
+        $bodega_destino = Bodega::find($this->clave_destino);
+        if (
+            $bodega_origen?->naturaleza == AlmacenConstants::PRESENTACION_KEY
+            && $bodega_destino?->naturaleza == AlmacenConstants::PRESENTACION_KEY
+        ) {
+            $this->locked_folio = true;
+        } elseif (
+            $bodega_origen?->naturaleza == AlmacenConstants::INSUMOS_KEY
+            && $bodega_destino?->naturaleza == AlmacenConstants::PRESENTACION_KEY
+        ) {
+            $this->locked_folio = true;
+        } else {
+            $this->locked_folio = false;
+        }
     }
 
     public function actualizarItems()

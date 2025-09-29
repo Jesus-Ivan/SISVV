@@ -15,6 +15,7 @@ class PresentacionForm extends Form
     public $estado = 1, $ultima_compra;
     public $insumo_base, $unidad_insumo, $rendimiento;
     public ?Presentacion $original = null;
+    public $c_rendimiento = null, $c_rendimiento_imp = null;
 
     /**
      * Guarda los valores iniciales, para establecerlos dentro del formulario como array
@@ -35,6 +36,8 @@ class PresentacionForm extends Form
         $this->setInsumoBase($presentacion->clave_insumo_base);
         //Guardar el modelo original
         $this->original = $presentacion;
+        $this->c_rendimiento = $presentacion->costo_rend;
+        $this->c_rendimiento_imp = $presentacion->costo_rend_impuesto;
     }
 
     /**
@@ -102,6 +105,8 @@ class PresentacionForm extends Form
         $validated['ultimo_costo'] = $this->ultimo_costo;
         $validated['iva'] = $this->iva;
         $validated['ultima_compra'] = $this->ultima_compra; //Agregar la fecha de ultima compra
+        $validated['c_rendimiento'] = $this->c_rendimiento;
+        $validated['c_rendimiento_imp'] = $this->c_rendimiento_imp;
         //Crear el registro en la BD
         Presentacion::create([
             'descripcion' => $validated['descripcion'],
@@ -112,6 +117,8 @@ class PresentacionForm extends Form
             'clave_insumo_base' => $validated['insumo_base']['clave'],
             'rendimiento' => $validated['rendimiento'],
             'id_proveedor' => $validated['id_proveedor'],
+            'costo_rend' => $validated['c_rendimiento'],
+            'costo_rend_impuesto' => $validated['c_rendimiento_imp'],
             'estado' => $validated['estado'],
             'ultima_compra' => $validated['ultima_compra'],
         ]);
@@ -123,7 +130,6 @@ class PresentacionForm extends Form
      */
     public function guardarCambios()
     {
-
         $validated = $this->validate([
             'descripcion' => 'required',
             'id_grupo' => 'required',
@@ -136,6 +142,8 @@ class PresentacionForm extends Form
         //Agregar el iva al array
         $validated['ultimo_costo'] = $this->ultimo_costo;
         $validated['iva'] = $this->iva;
+        $validated['c_rendimiento'] = $this->c_rendimiento;
+        $validated['c_rendimiento_imp'] = $this->c_rendimiento_imp;
 
         //Cambiar los atributos
         $this->original->descripcion = $validated['descripcion'];
@@ -145,8 +153,30 @@ class PresentacionForm extends Form
         $this->original->costo_con_impuesto = $validated['costo_iva'];
         $this->original->clave_insumo_base = $validated['insumo_base']['clave'];
         $this->original->rendimiento = $validated['rendimiento'];
+        $this->original->costo_rend = $validated['c_rendimiento'];
+        $this->original->costo_rend_impuesto = $validated['c_rendimiento_imp'];
         $this->original->id_proveedor = $validated['id_proveedor'];
         $this->original->estado = $validated['estado'];
         $this->original->save();    //Persistir los cambios en la BD
+    }
+
+    /**
+     * Actuliza el costo rendimiento de la presentacion (sin impuesto)
+     */
+    public function costoRendimiento()
+    {
+        if ($this->rendimiento && $this->ultimo_costo) {
+            $this->c_rendimiento = round($this->ultimo_costo / $this->rendimiento, 3);
+        }
+    }
+
+    /**
+     * Actuliza el costo rendimiento de la presentacion (CON impuesto)
+     */
+    public function costoRendimientoImp()
+    {
+        if ($this->costo_iva && $this->rendimiento) {
+            $this->c_rendimiento_imp = round($this->costo_iva / $this->rendimiento, 3);
+        }
     }
 }

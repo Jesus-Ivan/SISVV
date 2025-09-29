@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Constants\AlmacenConstants;
 use App\Exports\CarteraVencidaExport;
+use App\Exports\CruceInventarioExport;
 use App\Exports\EntradasExport;
+use App\Exports\FacturasExport;
 use App\Exports\RecibosExport;
 use App\Exports\SociosExport;
 
@@ -13,12 +15,16 @@ use App\Libraries\InventarioService;
 use App\Models\Bodega;
 use App\Models\Caja;
 use App\Models\CatalogoVistaVerde;
+use App\Models\DetalleEntradaNew;
 use App\Models\DetallesCompra;
+use App\Models\DetallesEntrada;
+use App\Models\DetallesFacturas;
 use App\Models\DetallesPeriodoNomina;
 use App\Models\DetallesRequisicion;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
+use App\Models\Facturas;
 use App\Models\Grupos;
 use App\Models\Insumo;
 use App\Models\OrdenCompra;
@@ -1137,6 +1143,123 @@ class ReportesController extends Controller
         //Definir orientacion y tamaño
         $pdf->setPaper([0, 0, 612.283, 792], 'portrait'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
         return $pdf->stream('existencias' . now()->toDateString() . '.pdf');
+    }
+
+    /**
+     * Prepara la view para el reporte de entradas (Nuevo)
+     */
+    public function verEntradas()
+    {
+        $proveedores = Proveedor::orderBy('nombre')->get();
+        $f_inicio = now()->format("Y-m-d");
+        $f_fin = now()->format("Y-m-d");
+        //Devolver la vista
+        return view('almacen.Documentos.entradas', [
+            'proveedores' => $proveedores,
+            'f_inicio' => $f_inicio,
+            'f_fin' => $f_fin
+        ]);
+    }
+
+    /**
+     * Genera un excel para descargar las (NUEVAS) entradas correspondientes
+     */
+    public function obtenerEntradas(Request $req)
+    {
+        $proveedores = $req->input('selected_proveedores');
+        $f_inicio = $req->input('f_inicio');
+        $f_fin = $req->input('f_fin');
+
+        //Consulta
+        $result = DetalleEntradaNew::with(['proveedor', 'entrada'])
+            ->whereHas('entrada', function ($query) use ($f_inicio, $f_fin) {
+                $query->whereDate('fecha_existencias', '>=', $f_inicio)
+                    ->whereDate('fecha_existencias', '<=', $f_fin);
+            })
+            ->whereIn('id_proveedor', $proveedores)
+            ->get();
+        //Devolvemos el excel
+        return Excel::download(
+            new EntradasExport($result->toArray()),
+            'Entradas ' . $f_inicio . ' - ' . $f_fin . '.xlsx'
+        );
+    }
+
+    /**
+     * Prepara la view para el reporte de facturas (Nuevo)
+     */
+    public function verFacturas()
+    {
+        //Extraer los datos de la peticion
+        $proveedores = Proveedor::orderBy('nombre')->get();
+        $f_inicio = now()->format("Y-m-d");
+        $f_fin = now()->format("Y-m-d");
+        //Devolver la vista
+        return view('almacen.Documentos.facturas', [
+            'proveedores' => $proveedores,
+            'f_inicio' => $f_inicio,
+            'f_fin' => $f_fin
+        ]);
+    }
+
+    /**
+     * Genera un Excel con todos los detalles de las facturas
+     */
+    public function obtenerFacturas(Request $req)
+    {
+        //Extraer los datos de la peticion
+        $proveedores = $req->input('selected_proveedores');
+        $f_inicio = $req->input('f_inicio');
+        $f_fin = $req->input('f_fin');
+        //Preparar consulta
+        $result = DetallesFacturas::with(['factura'])
+            ->whereHas('factura', function ($query) use ($f_inicio, $f_fin, $proveedores) {
+                $query->whereDate('fecha_compra', '>=', $f_inicio)
+                    ->whereDate('fecha_compra', '<=', $f_fin)
+                    ->whereIn('id_proveedor', $proveedores);
+            })
+            ->get();
+        //Devolvemos el excel
+        return Excel::download(
+            new FacturasExport($result->toArray()),
+            'Facturas ' . $f_inicio . ' - ' . $f_fin . '.xlsx'
+        );
+    }
+
+
+    /**
+     * Prepara la vista para obtener el reporte que cruza la informacion de las ventas, con el inventario
+     */
+    public function getCruce()
+    {
+        $grupos = Grupos::where('tipo', AlmacenConstants::INSUMOS_KEY)
+            ->get();
+        $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
+        //Establecer fecha inicial
+        $fecha = now()->subDay()->toDateString();
+
+        //Devolver la vista
+        return view('almacen.Documentos.cruze-existencias', [
+            'grupos' => $grupos,
+            'bodegas' => $bodegas,
+            'fecha' => $fecha,
+        ]);
+    }
+
+    /**
+     * Genera el excel que cruza la informacion de las ventas, con el inventario
+     */
+    public function postCruce(Request $request)
+    {
+        $clave_bodega = $request->input('clave_bodega');
+        $fecha = $request->input('fecha');
+
+        $grupos = $request->input('selected_grupos');   //Array de los id de grupos seleccionados
+
+        return Excel::download(
+            new CruceInventarioExport($clave_bodega, $fecha, $grupos),
+            'Cruce inventario ' . $fecha . '.xlsx',
+        );
     }
 
     /**

@@ -15,4 +15,5 @@ class MovimientosAlmacen extends Model
     protected $guarded = ['id'];
     //Clave primaria
     protected $primaryKey = 'id';
+
 }

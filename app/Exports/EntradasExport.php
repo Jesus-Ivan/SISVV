@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Models\Bodega;
 use App\Models\DetallesEntrada;
 use App\Models\Proveedor;
 use Maatwebsite\Excel\Concerns\FromArray;
@@ -9,78 +10,71 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 
 class EntradasExport implements FromArray
 {
-    public $fInicio;
-    public $fFin;
-    public $id_proveedor;
+    public $data;
+    public $bodegas = [];
 
-    public function __construct($fInicio, $fFin, $id_proveedor)
+    public function __construct($data)
     {
-        $this->fInicio = $fInicio;
-        $this->fFin = $fFin;
-        $this->id_proveedor = $id_proveedor;
+        $this->data = $data;
+        //Crear array indexado de las bodegas
+        $bodegas = Bodega::all();
+        foreach ($bodegas as $key => $row) {
+            $this->bodegas[$row['clave']] = $row['descripcion'];
+        }
     }
 
     public function array(): array
     {
         //Encabezados
         $encabezados = [
-            'codigo_producto' => 'CODIGO',
             'folio_entrada' => 'FOLIO ENTRADA',
-            'nombre' => 'NOMBRE',
+            'clave_presentacion' => '#PRESENTACION',
+            'clave_insumo' => '#INSUMO',
+            'fecha_existencias' => 'FECHA EXISTENCIAS',
+            'bodega' => 'BODEGA',
+            'descripcion' => 'DESCRIPCION',
             'id_proveedor' => 'PROVEEDOR',
             'cantidad' => 'CANTIDAD',
-            'peso' => 'PESO',
             'costo_unitario' => 'COSTO UNITARIO',
-            'importe' => 'IMPORTE',
-            'tipo_compra' => 'TIPO COMPRA',
             'iva' => 'IVA',
-            'fecha_compra' => 'FECHA COMPRA',
+            'costo_con_impuesto' => 'COSTO C.IMPUESTO',
+            'importe_sin_impuesto' => 'IMPORTE SIN IMPUESTO',
+            'impuesto' => 'IMPUESTOS',
+            'importe' => 'IMPORTE FINAL'
         ];
-
-        //Obtener los proveedores
-        $proveedores = Proveedor::all();
-
-        /**
-         * Obtener los detalles de entradas
-         */
-        if ($this->id_proveedor) {
-            $result = DetallesEntrada::where([
-                ['fecha_compra', '>=', $this->fInicio],
-                ['fecha_compra', '<=', $this->fFin],
-                ['id_proveedor', '<=', $this->id_proveedor],
-            ])->get();
-        } else {
-            $result = DetallesEntrada::where([
-                ['fecha_compra', '>=', $this->fInicio],
-                ['fecha_compra', '<=', $this->fFin]
-            ])->get();
-        }
-
 
         //Crear array con los datos finales
         $data = [];
         //Agregar el encabezado
         $data[] = $encabezados;
         //Interar todos los resultados
-        foreach ($result as $item) {
-            //Buscar el proveedor especificio
-            $proveedor = $proveedores->find($item['id_proveedor']);
+        foreach ($this->data as $item) {
             //Agreagar cada item
             $data[] = [
-                'codigo_producto' => $item['codigo_producto'],
                 'folio_entrada' => $item['folio_entrada'],
-                'nombre' => $item['nombre'],
-                'id_proveedor' => $proveedor ? $proveedor->nombre : 'N/R',
+                'clave_presentacion' => $item['clave_presentacion'],
+                'clave_insumo' => $item['clave_insumo'],
+                'fecha_existencias' => $item['entrada']['fecha_existencias'],
+                'bodega' =>  $this->getBodega($item['entrada']['clave_bodega']),
+                'descripcion' => $item['descripcion'],
+                'id_proveedor' => $item['proveedor']['nombre'],
                 'cantidad' => $item['cantidad'],
-                'peso' => $item['peso'],
                 'costo_unitario' => $item['costo_unitario'],
-                'importe' => $item['importe'],
-                'tipo_compra' => $item['tipo_compra'],
                 'iva' => $item['iva'],
-                'fecha_compra' => $item['fecha_compra'],
+                'costo_con_impuesto' => $item['costo_con_impuesto'],
+                'importe_sin_impuesto' => $item['importe_sin_impuesto'],
+                'impuesto' => $item['impuesto'],
+                'importe' => $item['importe']
             ];
         }
 
         return ($data);
+    }
+    /**
+     * Recibe la clave de la bodega y devuelve la descripcion
+     */
+    private function getBodega($clave)
+    {
+        return array_key_exists($clave, $this->bodegas) ? $this->bodegas[$clave] : $clave;
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Recepcion\Ventas\Nueva;
 
+use App\Constants\PuntosConstants;
+use App\Livewire\Forms\VentaForm;
 use App\Models\Caja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
@@ -23,6 +25,8 @@ class Container extends Component
     public $invitado = false;
     #[Locked]
     public $pv;
+
+    public ?VentaForm $form;
 
     public function cerrarVenta()
     {
@@ -151,6 +155,13 @@ class Container extends Component
                     ]);
                 }
             }
+            //Crear movimiento de caja
+            $this->form->crearMovimientoCaja(
+                $resultVenta,
+                $info['datosPagos'],
+                PuntosConstants::INGRESO_KEY,
+                $resultCaja[0]->corte
+            );
 
             //Emitimos evento para abrir el ticket en nueva pestaña
             $this->dispatch('ver-ticket', ['venta' => $resultVenta->folio]);
@@ -197,6 +208,13 @@ class Container extends Component
                     'id_tipo_pago' => $pago['id_tipo_pago'],
                 ]);
             }
+            //Crear movimiento de caja
+            $this->form->crearMovimientoCaja(
+                $resultVenta,
+                $info['datosPagos'],
+                PuntosConstants::INGRESO_KEY,
+                $resultCaja[0]->corte
+            );
             //Emitimos evento para abrir el ticket en nueva pestaña
             $this->dispatch('ver-ticket', ['venta' => $resultVenta->folio]);
         });

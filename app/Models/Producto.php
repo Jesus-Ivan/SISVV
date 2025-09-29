@@ -55,4 +55,5 @@ class Producto extends Model
     {
         return $this->hasMany(ProductoBodega::class, "clave_producto");
     }
+
 }

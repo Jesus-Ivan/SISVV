@@ -18,9 +18,11 @@ return new class extends Migration
             $table->integer('id_socio')->unsigned()->nullable();
             $table->string('nombre', 255);
             $table->decimal('monto', 10,2);
+            $table->decimal('propina', 10,2)->nullable();
             $table->string('tipo_movimiento', 100);
             $table->integer('id_tipo_pago')->unsigned();
-            $table->timestamps();
+            $table->dateTime('fecha_venta')->nullable();
+            $table->dateTime('fecha_pago')->nullable();
         });
     }
 

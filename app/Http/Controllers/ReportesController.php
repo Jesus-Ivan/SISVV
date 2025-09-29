@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\PuntosConstants;
 use App\Constants\AlmacenConstants;
 use App\Exports\CarteraVencidaExport;
 use App\Exports\CruceInventarioExport;
@@ -15,6 +16,7 @@ use App\Libraries\InventarioService;
 use App\Models\Bodega;
 use App\Models\Caja;
 use App\Models\CatalogoVistaVerde;
+use App\Models\DetallesCaja;
 use App\Models\DetalleEntradaNew;
 use App\Models\DetallesCompra;
 use App\Models\DetallesEntrada;
@@ -87,13 +89,6 @@ class ReportesController extends Controller
     //Genera reportes de ventas, con ayuda del corte de caja
     public function generarCorte(Caja $caja, $codigopv = null)
     {
-        /*
-        //Comprobamos si la caja no esta cerrada
-        if (!$caja->fecha_cierre && $caja->clave_punto_venta != 'REC') {
-            return redirect()->route('home');
-        }
-        */
-
         //Quitamos los metodos de pago no permitidos en una venta.
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
             $query->where('descripcion', 'like', 'DEPOSITO')
@@ -102,11 +97,23 @@ class ReportesController extends Controller
         })->get();
         //Array auxiliar de pagos separados por tipo
         $separados = [];
-        //Consulta que obtiene los detalles de los pagos con su corte de caja
-        $detalles_pago = DB::table('detalles_ventas_pagos')
-            ->join('ventas', 'detalles_ventas_pagos.folio_venta', '=', 'ventas.folio')
-            ->select('detalles_ventas_pagos.*', 'ventas.*')
-            ->where('corte_caja', $caja->corte)
+        //Consulta que obtiene los detalles de los pagos (normales) con su corte de caja
+        $corte_caja = DB::table('detalles_caja')
+            ->join('ventas', 'detalles_caja.folio_venta', '=', 'ventas.folio')
+            ->select('detalles_caja.*', 'ventas.fecha_apertura', 'ventas.clave_punto_venta', 'ventas.tipo_venta')
+            ->where([
+                ['detalles_caja.corte_caja', '=', $caja->corte],
+                ['tipo_movimiento', '=', PuntosConstants::INGRESO_KEY]
+            ])
+            ->get();
+        //Consulta que obtiene los detalles de los pagos (pendientes) con su corte de caja
+        $corte_pendientes = DB::table('detalles_caja')
+            ->join('ventas', 'detalles_caja.folio_venta', '=', 'ventas.folio')
+            ->select('detalles_caja.*', 'ventas.fecha_apertura', 'ventas.clave_punto_venta', 'ventas.tipo_venta')
+            ->where([
+                ['detalles_caja.corte_caja', '=', $caja->corte],
+                ['tipo_movimiento', '=', PuntosConstants::INGRESO_PENDIENTE_KEY]
+            ])
             ->get();
 
         //CREAMOS ARRAY DE PUNTOS DE VENTA, PARA LA BUSQUEDA INDEXADA EN LA VIEW DEL REPORTE 'reportes.ventas'
@@ -115,22 +122,28 @@ class ReportesController extends Controller
             $puntos_venta[$value['clave']] = $value['nombre'];
         }
 
-        //Obtenemos el total del corte, sin sumar el metodo de pago 'pendiente'
+        //Obtenemos el total del corte (ventas normales), sin sumar el metodo de pago 'pendiente'
         $totalVenta = 0;
-        foreach ($detalles_pago as $key => $pago) {
+        foreach ($corte_caja as $key => $pago) {
             $result = $tipos_pago->where('id', $pago->id_tipo_pago)->first();
             if ($result->descripcion != 'PENDIENTE')
                 $totalVenta += $pago->monto;
         }
+        //Obtenemos el total del corte (ventas pendientes)
+        foreach ($corte_pendientes as $pago) {
+            $totalVenta += $pago->monto;
+        }
 
-        //Separar los pagos por tipo
+        //Separar los pagos por tipo, (Tanto del corte normal, como las pendientes)
         foreach ($tipos_pago as $pago) {
-            $separados[$pago->descripcion] = $detalles_pago->where('id_tipo_pago', $pago->id);
+            $separados[$pago->descripcion] = $corte_caja->where('id_tipo_pago', $pago->id);
+            $separados_pendientes[$pago->descripcion] = $corte_pendientes->where('id_tipo_pago', $pago->id);
         }
         //Almacenamos la informacion en un array, para la vista del resporte
         $data = [
             'caja' => $caja,
             'detalles_pagos' => $separados,
+            'detalles_pendientes' => $separados_pendientes,
             'totalVenta' => $totalVenta,
             'puntos_venta' => $puntos_venta
         ];
@@ -140,6 +153,7 @@ class ReportesController extends Controller
             //Tamaño predeterminado de papel del ticket (80mm x 297mm)
             $pdf->setPaper([0, 0, 226.772, 841.89], 'portrait');
         } else {
+
             $pdf = Pdf::loadView('reportes.ventas', $data);
         }
         return $pdf->stream("corte{{$caja->corte}}.pdf");
@@ -483,31 +497,19 @@ class ReportesController extends Controller
         //Array auxiliar de pagos separados por tipo
         $separados = [];
         //Consulta que obtiene los detalles de los pagos con su corte de caja
-        $detalles_pago = DB::table('detalles_ventas_pagos')
-            ->join('ventas', 'detalles_ventas_pagos.folio_venta', '=', 'ventas.folio')
-            ->select(
-                'ventas.folio',
-                'ventas.tipo_venta',
-                'ventas.fecha_apertura',
-                'ventas.corte_caja',
-                'ventas.clave_punto_venta',
-                'ventas.observaciones',
-                'detalles_ventas_pagos.id_socio',
-                'detalles_ventas_pagos.nombre',
-                'detalles_ventas_pagos.monto',
-                'detalles_ventas_pagos.propina',
-                'detalles_ventas_pagos.id_tipo_pago',
-            )
+        $detalles_pago = DetallesCaja::with('venta')
             ->whereIn('corte_caja', array_column($cajas, 'corte'))
             ->get();
-
 
         //Obtenemos el total del corte
         $totalVenta = array_sum(array_column($detalles_pago->toArray(), 'monto'));
         //Separar los pagos por tipo
         foreach ($tipos_pago as $pago) {
-            $separados[$pago->descripcion] = $detalles_pago->where('id_tipo_pago', $pago->id);
+            //Separar las ventas por tipo de pago
+            $separados[$pago->descripcion] = $detalles_pago
+                ->where('id_tipo_pago', '=', $pago->id);
         }
+
 
         $header = [
             'title' => 'VISTA VERDE COUNTRY CLUB',

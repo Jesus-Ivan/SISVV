@@ -126,6 +126,24 @@ class Container extends Component
             ->get();
     }
 
+    #[Computed()]
+    public function productosNew()
+    {
+        //Buscar el grupo de productos referente a los servicios de recepcion
+        $gp_servicio = Grupos::where('descripcion', 'like', '%SERVICIO%')->first();
+        //Preparar consulta base
+        $result = Producto::where('descripcion', 'like', '%' . $this->ventaForm->seachProduct . '%')
+            ->whereNot('estado', 0);
+        //Si hay un grupo definido como servicio
+        if ($gp_servicio) {
+            $result->whereNot('id_grupo', $gp_servicio->id);//Agregar el query
+        }
+        return $result
+            ->orderBy('descripcion', 'asc')
+            ->limit(50)
+            ->get();
+    }
+
     //hook que monitorea la actualizacion del componente
     public function updated($property, $value)
     {

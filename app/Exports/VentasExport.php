@@ -19,35 +19,38 @@ class VentasExport implements FromArray
     public function array(): array
     {
         $ventasDia[] = [
+            'movimiento' => 'MOVIMIENTO',
             'folio' => 'FOLIO',
-            'fecha' => 'FECHA',
+            'fecha' => 'FECHA VENTA',
+            'fecha_p' => 'FECHA PAGO',
             'tipo_venta' => 'TIPO VENTA',
             'id_socio' => 'NO. SOCIO',
             'nombre_socio' => 'SOCIO',
             'total' => 'TOTAL',
             'propina' => 'PROPINA',
             'tipo_pago' => 'METODO PAGO',
-            'clave_punto_venta' => 'ZONA',
-            'observaciones' => 'OBSERVACIONES'
+            'clave_punto_venta' => 'ZONA'
+            
         ];
 
         foreach ($this->data['detalles_pagos'] as $tipo_pago) {
             foreach ($tipo_pago as $key => $item) {
                 $ventasDia[] = [
-                    'folio' => $item->folio,
-                    'fecha' => $item->fecha_apertura,
-                    'tipo_venta' => $item->tipo_venta,
+                    'movimiento' => $item->id,
+                    'folio' => $item->folio_venta,
+                    'fecha' => $item->fecha_venta,
+                    'fecha_p' => $item->fecha_pago,
+                    'tipo_venta' => $item->venta->tipo_venta,
                     'id_socio' => $item->id_socio,
                     'nombre_socio' => $item->nombre,
                     'total' => $item->monto,
                     'propina' => $item->propina,
                     'tipo_pago' => $this->metodo_pago[$item->id_tipo_pago],
-                    'clave_punto_venta' => $this->puntos_venta[$item->clave_punto_venta],
-                    'observaciones' => $item->observaciones
+                    'clave_punto_venta' => $this->puntos_venta[$item->venta->clave_punto_venta]
+                    
                 ];
             }
         }
         return $ventasDia;
     }
 }
-

@@ -3,15 +3,19 @@
 namespace App\Livewire\Forms;
 
 use App\Constants\AlmacenConstants;
+use App\Constants\PuntosConstants;
 use App\Models\Bodega;
 use App\Models\Caja;
 use App\Models\Copa;
 use App\Models\CorreccionVenta;
+
+use App\Models\DetallesCaja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
-use App\Models\MotivoCorreccion;
 use App\Models\Producto;
+use App\Models\MotivoCorreccion;
+
 use App\Models\PuntoVenta;
 use App\Models\Socio;
 use App\Models\SocioMembresia;
@@ -43,7 +47,7 @@ class VentaForm extends Form
     public $selected = [];            //Almacena los codigos de productos seleccionados del modal.
 
     public $productosTable = [];      //array de productos, que se muestran en la tabla (productos agregados)
-    #[Locked]
+
     public $pagosTable = [];          //Array de pagos que se muestran en la tabla
     #[Locked]
     public $totalVenta = 0;           //El costo total de los articulos
@@ -224,7 +228,7 @@ class VentaForm extends Form
             $reglas['socioPago'] = 'required';          // Agregar validacion de número de socio si es venta para socio
         }
 
-        $validated = $this->validate($reglas);                                 //Validamos los atributos
+        $validated = $this->validate($reglas);          //Validamos los atributos
 
         $this->validarFirma($validated);                                       //Validamos la firma
         $id_socio = $this->socioPago ? $this->socioPago->id : null; //Si es venta para socio, se obtiene el id del socio
@@ -318,7 +322,6 @@ class VentaForm extends Form
         DB::transaction(function () use ($venta, $codigopv, &$folioVenta) {
             //Crear la venta y guardamos el resultado de la insersion en la BD, en la variable 'resultVenta'
             $resultVenta = $this->registrarVenta($venta, $codigopv, true, $this->tipo_venta);
-
             //Obtenemos el folio
             $folioVenta = $resultVenta->folio;
 
@@ -329,6 +332,12 @@ class VentaForm extends Form
 
             //Crear los detalles de los pagos
             $this->registrarPagosVenta($folioVenta, $venta, $codigopv);
+            //Crear el detalle de caja
+            $this->crearMovimientoCaja(
+                $resultVenta,
+                $venta['pagosTable'],
+                PuntosConstants::INGRESO_KEY
+            );
         }, 2);
         //Limpiamos atributos
         $this->limpiarComponente();
@@ -459,7 +468,14 @@ class VentaForm extends Form
             $this->registrarPagosVenta($folio, $venta, $codigopv);
             //Guardamos los cambios de la tabla de productos
             $this->guardarVentaExistente($folio);
-
+            //Buscamos la venta original, para saber el corte al que pertenece
+            $resultVenta = Venta::find($folio);
+            //Crear el detalle de caja
+            $this->crearMovimientoCaja(
+                $resultVenta,
+                $venta['pagosTable'],
+                PuntosConstants::INGRESO_KEY
+            );
             //Cerramos la venta con la fecha actual
             Venta::where('folio', $folio)->update(['fecha_cierre' => now()->format('Y-m-d H:i:s')]);
         }, 2);
@@ -575,7 +591,7 @@ class VentaForm extends Form
     private function registrarVenta($venta, $codigopv, $isClosed = false, $tipo_venta)
     {
         //Buscamos cajas disponibles en el punto de venta actual
-        $resultCaja = $this->buscarCaja();
+        $resultCaja = $this->buscarCaja($this->permisospv->clave_punto_venta);
         //Obtenemos la fecha-hora de actual, con una instancia de Carbon.
         $fecha_cierre = now()->format('Y-m-d H:i:s');
 
@@ -721,12 +737,12 @@ class VentaForm extends Form
     }
 
     /**
-     * Busca la caja abierta mas reciente. En el punto que se encuentra el usuario
+     * Busca La ultima caja abierta en el punto dado
      */
-    public function buscarCaja()
+    public function buscarCaja($clave_punto)
     {
         //Buscamos caja abrierta en el punto actual, en el dia actual
-        $result = Caja::where('clave_punto_venta', $this->permisospv->clave_punto_venta)
+        $result = Caja::where('clave_punto_venta', $clave_punto)
             ->whereNull('fecha_cierre')
             ->first();
         //Si no hay caja
@@ -852,6 +868,174 @@ class VentaForm extends Form
     }
 
     /**
+     * Crea un registo en 'detalles_caja'.
+     * Modifica la venta pendiente.
+     * Crea registro de la actualizacion en 'correcciones_ventas'
+     */
+    public function pagarPendiente($venta)
+    {
+        //Creamos patron de expresion regular
+        $patron_pendi = "/PENDIENTE/i";
+        $patron_firma = "/FIRMA/i";
+        //Validaciones de tipo de pago
+        foreach ($this->pagosTable as $key => $pago) {
+            //Buscar el metodo de pago que selecciono.
+            $tipo_pago = TipoPago::where('id', $pago['id_tipo_pago'])
+                ->first();
+            //Validar si volvieron a escoger metodo de pago 'pendiente'
+            if (preg_match($patron_pendi, $tipo_pago->descripcion)) {
+                throw new Exception("No puedes pagar con pendiente denuevo", 2);
+            }
+            if ($this->tipo_venta == 'socio' || $this->tipo_venta == 'invitado') {
+                //Verificar la firma del socio
+                if (preg_match($patron_firma, $tipo_pago->descripcion)) {
+                    //Buscamos el socio
+                    $result = Socio::find($pago['id_socio']);
+                    //Si el socio no tiene firma
+                    if (!$result->firma) {
+                        throw new Exception("El socio " . $pago['id_socio'] . " no tiene firma autorizada", 1);
+                    }
+                }
+            }
+        }
+        //Validar el monto total del pago y de los productos
+        $montoTotalVenta = array_sum(array_column($this->productosTable, 'subtotal'));
+        $montoTotalPago =
+            array_sum(array_column($this->pagosTable, 'monto_pago')) + array_sum(array_column($this->pagosTable, 'monto'));
+        if ($montoTotalPago != $montoTotalVenta) {
+            //Mandamos mensaje de sesion al alert
+            throw new Exception("El monto total de pago no es el correcto");
+        }
+
+        DB::transaction(function () use ($venta) {
+            //Buscamos cajas disponibles en el punto de venta actual
+            $resultCaja = $this->buscarCaja($this->permisospv->clave_punto_venta);
+            //Crear o actualizar los metodos de pago de la venta
+            foreach ($this->pagosTable as $key => $pago) {
+                if (array_key_exists('id', $pago)) {
+                    $detalle_pago = DetallesVentaPago::find($pago['id']);
+                    $detalle_pago->id_tipo_pago = $pago['id_tipo_pago'];
+                    $detalle_pago->monto = $pago['monto'];
+                    $detalle_pago->propina = $pago['propina'] ?: null;
+                    $this->updateEstadoCuenta($detalle_pago);
+                    $detalle_pago->save();
+                } else {
+                    $detalle_pago = DetallesVentaPago::create([
+                        'folio_venta' => $venta->folio,
+                        'id_socio' => $pago['id_socio'],
+                        'nombre' => $pago['nombre'],
+                        'monto' => $pago['monto_pago'],
+                        'propina' => $pago['propina'],
+                        'id_tipo_pago' => $pago['id_tipo_pago'],
+                    ]);
+                    $this->crearEstadoCuenta($detalle_pago, $venta);
+                }
+            }
+            //Crear el detalle de caja
+            $this->crearMovimientoCaja(
+                $venta,
+                $this->pagosTable,
+                PuntosConstants::INGRESO_PENDIENTE_KEY,
+                $resultCaja->corte,
+            );
+            //Buscar el motivo de la correccion (venta pendiente)
+            $motivo = MotivoCorreccion::where('descripcion', 'like', '%PENDIENTE%')->first();
+            //Crear el registro en la tabla 'correcciones_ventas'
+            CorreccionVenta::create([
+                'user_name' => auth()->user()->name,
+                'folio_venta' => $venta->folio,
+                'tipo_venta' => $venta->tipo_venta,
+                'solicitante_name' => auth()->user()->name,
+                'id_motivo' => $motivo->id,
+            ]);
+        }, 2);
+    }
+
+    /**
+     * Actualiza el estado de cuenta, referente a la venta pendiente pagada con firma.\
+     * Modifica el saldo del estado de cuenta, y crea la propina en firma.
+     */
+    public function updateEstadoCuenta(DetallesVentaPago $detalle_pago)
+    {
+        $patron_firma = "/FIRMA/i";
+        //Buscar el metodo de pago que selecciono.
+        $tipo_pago = TipoPago::where('id', $detalle_pago->id_tipo_pago)
+            ->first();
+        //Verificar si es firma el metodo seleccionado
+        if (preg_match($patron_firma, $tipo_pago->descripcion)) {
+            //Buscar el estado de cuenta original
+            $edo_cuenta = EstadoCuenta::where('id_venta_pago', $detalle_pago->id)
+                ->first();
+            //Si la propina esta modificada, respecto del original
+            if ($detalle_pago->isDirty('propina')) {
+                //Crear la propina en el estado de cuenta
+                EstadoCuenta::create([
+                    'id_venta_pago' => $edo_cuenta->id_venta_pago,
+                    'id_socio' => $edo_cuenta->id_socio,
+                    'concepto' => "PROPINA " . $edo_cuenta->concepto,
+                    'fecha' => $edo_cuenta->fecha,
+                    'cargo' => $detalle_pago->propina,
+                    'abono' => 0,
+                    'saldo' => $detalle_pago->propina,
+                ]);
+            }
+            //Actualizar el saldo del estado de cuenta
+            $edo_cuenta->cargo = $detalle_pago->monto;
+            $edo_cuenta->abono = 0;
+            $edo_cuenta->saldo = $detalle_pago->monto;
+            $edo_cuenta->save();
+        }
+    }
+
+    /**
+     * Crea el cargo en el estado de cuenta, respecto a la venta.\
+     * Y en caso de propina, la crea (con firma)
+     */
+    public function crearEstadoCuenta(DetallesVentaPago $detalle_pago, $venta)
+    {
+        //Buscamos el punto de venta.
+        $puntoVenta = PuntoVenta::find($venta->clave_punto_venta);
+        $patron_firma = "/FIRMA/i";
+        //Buscar el metodo de pago que selecciono.
+        $tipo_pago = TipoPago::where('id', $detalle_pago->id_tipo_pago)
+            ->first();
+        //Verificar si es firma el metodo seleccionado
+        if (preg_match($patron_firma, $tipo_pago->descripcion)) {
+            //Creamos el concepto en el estado de cuenta (con abono 0)
+            EstadoCuenta::create([
+                'id_socio' => $detalle_pago->id_socio,
+                'id_venta_pago' => $detalle_pago->id,
+                'concepto' => 'NOTA VENTA: ' . $detalle_pago->folio_venta . ' - ' . $puntoVenta->nombre,
+                'fecha' => $venta->fecha_cierre,
+                'cargo' => $detalle_pago->monto,
+                'saldo' => $detalle_pago->monto,
+                'consumo' => true
+            ]);
+            //Verificamos si tiene propina
+            if ($detalle_pago->propina) {
+                //Creamos el concepto de la propina en el estado de cuenta
+                EstadoCuenta::create([
+                    'id_socio' => $detalle_pago->id_socio,
+                    'id_venta_pago' => $detalle_pago->id,
+                    'concepto' => 'PROPINA NOTA VENTA: ' . $detalle_pago->folio_venta . ' - ' . $puntoVenta->nombre,
+                    'fecha' => $venta->fecha_cierre,
+                    'cargo' => $detalle_pago->propina,
+                    'saldo' => $detalle_pago->propina,
+                    'consumo' => false
+                ]);
+            }
+        } else {
+            //Creamos el concepto en el estado de cuenta (con abono total)
+            EstadoCuenta::create([
+                'id_socio' => $detalle_pago->id_socio,
+                'id_venta_pago' => $detalle_pago->id,
+                'concepto' => 'NOTA VENTA: ' . $detalle_pago->folio_venta . ' - ' . $puntoVenta->nombre,
+                'fecha' => $venta->fecha_cierre,
+                'cargo' => $detalle_pago->monto,
+                'abono' => $detalle_pago->monto,
+                'saldo' => 0,
+                'consumo' => true
+    /**
      * Crea el registro en la tabla 'correcciones_ventas'\
      * En caso de haber eliminaciones de productos
      */
@@ -964,5 +1148,40 @@ class VentaForm extends Form
      * Crea el registro de la venta, en la tabla "detalles_caja".
      * Utilizado para el corte de caja (reporte de ventas)
      */
-    private function crearMovimientoCaja($detalle_pago, $caja) {}
+    public function crearMovimientoCaja(Venta $venta, $detalles_pago, $tipo_movimiento, $corte_nuevo = null)
+    {
+        //Si el movimiento de caja es de ingreso normal
+        if ($tipo_movimiento == PuntosConstants::INGRESO_KEY) {
+            foreach ($detalles_pago as $key => $pago) {
+                //Crear registro en la tabla (sin la fecha de pago ya que es una venta normal)
+                DetallesCaja::create([
+                    'corte_caja' => $venta->corte_caja,
+                    'folio_venta' => $venta->folio,
+                    'id_socio' => $pago['id_socio'],
+                    'nombre' => $pago['nombre'],
+                    'monto' =>  array_key_exists('monto_pago', $pago) ? $pago['monto_pago'] : $pago['monto'],
+                    'propina' => $pago['propina'],
+                    'tipo_movimiento' => $tipo_movimiento,
+                    'id_tipo_pago' => $pago['id_tipo_pago'],
+                    'fecha_venta' => $venta->fecha_apertura,
+                ]);
+            }
+        } else {
+            foreach ($detalles_pago as $key => $pago) {
+                //Crear registro en la tabla (el movimiento de la venta. en el corte nuevo)
+                DetallesCaja::create([
+                    'corte_caja' => $corte_nuevo,
+                    'folio_venta' => $venta->folio,
+                    'id_socio' => $pago['id_socio'],
+                    'nombre' => $pago['nombre'],
+                    'monto' =>  array_key_exists('monto_pago', $pago) ? $pago['monto_pago'] : $pago['monto'],
+                    'propina' => $pago['propina'],
+                    'tipo_movimiento' => $tipo_movimiento,
+                    'id_tipo_pago' => $pago['id_tipo_pago'],
+                    'fecha_venta' => $venta->fecha_apertura,
+                    'fecha_pago' => now() //Agregar la fecha de pago (es pendiente)
+                ]);
+            }
+        }
+    }
 }

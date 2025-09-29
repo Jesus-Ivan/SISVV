@@ -30,7 +30,6 @@ return new class extends Migration
             $table->integer('id_cancelacion')->nullable();
             $table->string('motivo_cancelacion', 255)->nullable();
             $table->string('usuario_cancela', 255)->nullable();
-
             /*//Relaciones
 
             $table->foreign('folio_venta')->references('folio')->on('ventas');

@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Forms;
 
+use App\Constants\PuntosConstants;
 use App\Models\Caja;
 use App\Models\CorreccionVenta;
+use App\Models\DetallesCaja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
@@ -75,6 +77,15 @@ class VentaEditarForm extends Form
                 $row->save();
             }
         }
+        //Buscar caja abierta del punto
+        $resutCaja = $this->buscarCaja($result->clave_punto_venta);
+        //Crear movimiento de caja
+        $this->movimientoCajaCortesia(
+            Venta::find($folio_seleccionado),
+            $detalles_pagos->toArray(),
+            PuntosConstants::INGRESO_PENDIENTE_KEY,
+            $resutCaja->corte,
+        );
     }
 
     /**
@@ -93,6 +104,44 @@ class VentaEditarForm extends Form
             'id_motivo' => $motivo_id,
             'corte_caja' => $venta['corte_caja']
         ]);
+    }
+
+    /**
+     * Registra el movimiento de caja, respecto a la cortesia
+     */
+    public function movimientoCajaCortesia(Venta $venta, $detalles_pago, $tipo_movimiento, $corte_nuevo = null)
+    {
+        foreach ($detalles_pago as $key => $pago) {
+            //Crear registro en la tabla (el movimiento de la venta. en el corte nuevo)
+            DetallesCaja::create([
+                'corte_caja' => $corte_nuevo,
+                'folio_venta' => $venta->folio,
+                'id_socio' => $pago['id_socio'],
+                'nombre' => $pago['nombre'],
+                'monto' =>  array_key_exists('monto_pago', $pago) ? $pago['monto_pago'] : $pago['monto'],
+                'propina' => $pago['propina'],
+                'tipo_movimiento' => $tipo_movimiento,
+                'id_tipo_pago' => $pago['id_tipo_pago'],
+                'fecha_venta' => $venta->fecha_apertura,
+                'fecha_pago' => now() //Agregar la fecha de pago (es pendiente)
+            ]);
+        }
+    }
+
+    /**
+     * Busca La ultima caja abierta en el punto dado
+     */
+    public function buscarCaja($clave_punto)
+    {
+        //Buscamos caja abrierta en el punto actual, en el dia actual
+        $result = Caja::where('clave_punto_venta', $clave_punto)
+            ->whereNull('fecha_cierre')
+            ->first();
+        //Si no hay caja
+        if (!$result) {
+            throw new Exception("No hay caja abierta para este punto de venta");
+        }
+        return  $result;
     }
 
     /**
@@ -250,6 +299,28 @@ class VentaEditarForm extends Form
                     }
                 }
             }
+        }
+
+        //Modificar el corte de caja original. 
+        foreach ($pagos_editados as $key => $pago) {
+            //Buscar la venta 
+            $resultVenta = Venta::find($pago['folio_venta']);
+            //Buscar el detalle del pago, registrado en el corte de caja original
+            $result_detalle_caja = DetallesCaja::where([
+                ['corte_caja', '=', $resultVenta->corte_caja],
+                ['folio_venta', '=', $pago['folio_venta']],
+                ['id_socio', '=', $pago['id_socio']],
+                ['monto', '=', $pago['monto']],
+                ['id_tipo_pago', '=', $pago['id_tipo_pago']],
+            ])
+                ->first();
+            dd($result_detalle_caja);
+            //Actualizar la informacion del corte
+            $result_detalle_caja->id_socio = $pago['id_socio'];
+            $result_detalle_caja->nombre = $pago['nombre'];
+            $result_detalle_caja->monto = $pago['monto'];
+            $result_detalle_caja->id_tipo_pago = $pago['id_tipo_pago'];
+            $result_detalle_caja->save();
         }
     }
 

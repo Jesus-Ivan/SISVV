@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\PuntosConstants;
 use App\Exports\ProductosVendExport;
 use App\Models\Caja;
+use App\Models\DetallesCaja;
 use App\Models\Proveedor;
 use App\Models\PuntoVenta;
 use App\Models\User;
 use App\Models\Venta;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 class SistemasController extends Controller
@@ -103,5 +106,34 @@ class SistemasController extends Controller
             'folioVenta' => $folioVenta
         ]);
         return "editando";
+    }
+
+    /**
+     * Se encarga de llenar la tabla 'detalles_caja', por primera vez.
+     * En base a las ventas realizadas
+     */
+    public function detallesCaja(Request $request)
+    {
+        $ventasPagos = DB::table('detalles_ventas_pagos')
+            ->join('ventas', 'detalles_ventas_pagos.folio_venta', '=', 'ventas.folio')
+            ->select('detalles_ventas_pagos.*', 'ventas.corte_caja', 'ventas.fecha_apertura')
+            ->get();
+
+        DB::transaction(function () use ($ventasPagos) {
+            foreach ($ventasPagos as $key => $pago) {
+                DetallesCaja::create([
+                    'corte_caja' => $pago->corte_caja,
+                    'folio_venta' => $pago->folio_venta,
+                    'id_socio' => $pago->id_socio,
+                    'nombre' => $pago->nombre,
+                    'monto' => $pago->monto,
+                    'propina' => $pago->propina,
+                    'tipo_movimiento' => PuntosConstants::INGRESO_KEY,
+                    'id_tipo_pago' => $pago->id_tipo_pago,
+                    'fecha_venta' => $pago->fecha_apertura,
+                ]);
+            }
+        });
+        return 'Creo que funciono xd';
     }
 }

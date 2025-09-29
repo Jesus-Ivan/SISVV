@@ -154,6 +154,13 @@
         </x-slot>
     </x-modal>
 
+    {{-- NUEVO modal de productos --}}
+    <x-modal name="modal-new-producto" title="Seleccionar producto">
+        <x-slot name='body'>
+            @include('livewire.puntos.ventas.nueva.include.modal-new-producto-body')
+        </x-slot>
+    </x-modal>
+
     <!--Modal modificadores -->
     <x-modal name="modal-modificadores"
         title="{{ $cantidadProducto }} Modificadores: {{ $producto_compuesto ? $producto_compuesto['descripcion'] : '' }}">

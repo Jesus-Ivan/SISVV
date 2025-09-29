@@ -93,6 +93,12 @@
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
                                     Rep.Prod.Vendidos</a>
                             </li>
+                            {{-- DETALLES CAJA --}}
+                            <li>
+                                <a href="{{ route('sistemas.pv.detalles-caja') }}"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                    Detalles caja</a>
+                            </li>
                         </ul>
                     </div>
                 </li>

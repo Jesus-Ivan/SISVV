@@ -109,14 +109,20 @@ class Container extends Component
     }
 
     #[Computed()]
-    public function productosResult()
+    public function productosNew()
     {
-        //Propiedad que almacena todos los items que coincidan con la busqueda.
-        return CatalogoVistaVerde::where('nombre', 'like', '%' . $this->ventaForm->seachProduct . '%')
-            ->where('clave_dpto', 'PV')
-            ->whereNot('estado', 0)
-            ->orderBy('nombre', 'asc')
-            ->limit(40)
+        //Buscar el grupo de productos referente a los servicios de recepcion
+        $gp_servicio = Grupos::where('descripcion', 'like', '%SERVICIO%')->first();
+        //Preparar consulta base
+        $result = Producto::where('descripcion', 'like', '%' . $this->ventaForm->seachProduct . '%')
+            ->whereNot('estado', 0);
+        //Si hay un grupo definido como servicio
+        if ($gp_servicio) {
+            $result->whereNot('id_grupo', $gp_servicio->id);//Agregar el query
+        }
+        return $result
+            ->orderBy('descripcion', 'asc')
+            ->limit(50)
             ->get();
     }
 

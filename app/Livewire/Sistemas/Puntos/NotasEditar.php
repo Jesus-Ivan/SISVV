@@ -4,7 +4,9 @@ namespace App\Livewire\Sistemas\Puntos;
 
 use App\Constants\PuntosConstants;
 use App\Livewire\Forms\VentaEditarForm;
+use App\Livewire\Forms\VentaForm;
 use App\Models\Caja;
+use App\Models\ConceptoCancelacion;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\MotivoCorreccion;
@@ -35,6 +37,10 @@ class NotasEditar extends Component
     //Formulario de operaciones
     public VentaEditarForm $editarForm;
 
+    //Utilizados en el modal de eliminacion de articulo
+    public $id_eliminacion = null, $motivo = null;
+    public $producto_eliminar = null;
+
     //Setear el valor obtenido desde del controlador
     public function mount($folio)
     {
@@ -56,6 +62,13 @@ class NotasEditar extends Component
 
         //Resguardar los originales
         $this->editarForm->setOriginal($venta, $productos, $pagos);
+    }
+
+    #[Computed(persist: true)]
+    public function conceptos()
+    {
+        //Buscar los conceptos validos para eliminacion
+        return ConceptoCancelacion::all();
     }
 
     #[Computed()]
@@ -151,7 +164,7 @@ class NotasEditar extends Component
                 //Cambiar el socio titular
                 $this->editarForm->actualizarSocioTitular($validated['venta'], $this->nuevo_socio);
                 //Actualizar los productos
-                $this->editarForm->actualizarProductos($this->productos);
+                $this->editarForm->actualizarProductos($this->productos, $this->solicitante_id);
                 $this->editarForm->actualizarTotal($this->total_productos);
                 //Actualizar los metodos de pago
                 $this->editarForm->actualizarPagos($this->pagos);
@@ -174,12 +187,6 @@ class NotasEditar extends Component
     public function limpiarTitular()
     {
         $this->reset('nuevo_socio');
-    }
-    //Elimina el producto de la tabla
-    public function eliminarProducto($index)
-    {
-        //Marcar el producto como eliminado
-        $this->productos[$index]['deleted'] = true;
     }
 
     public function eliminarPago($index)
@@ -229,6 +236,46 @@ class NotasEditar extends Component
             //Evento para el action message
             $this->dispatch('open-action-message');
         }
+    }
+
+    public function eliminarProducto($index)
+    {
+        //Obtener el producto a eliminar
+        $this->producto_eliminar = $this->productos[$index];
+        //Abrir modal de eliminacion
+        $this->dispatch('open-modal', name: 'modal-motivo eliminacion');
+    }
+
+    public function confirmarEliminacion()
+    {
+        $rules = [
+            'id_eliminacion' => 'required'
+        ];
+        $messages = [
+            'id_eliminacion.required' => 'Seleccione motivo'
+        ];
+        $concepto = $this->conceptos->find($this->id_eliminacion);
+        //Si esta selecionado un concepto editable
+        if ($concepto && $concepto->editable) {
+            $rules['motivo'] = 'required';
+            $messages['motivo.required'] = 'Especifique motivo';
+        };
+        //Validar las propiedades
+        $this->validate($rules, $messages);
+
+        //Recorrer la tabla de productos para marcar el producto a eliminar
+        for ($i = 0; $i < count($this->productos); $i++) {
+            if ($this->productos[$i]['id'] == $this->producto_eliminar['id']) {
+                //Marcar el producto como eliminado
+                $this->productos[$i]['deleted'] = true;
+                $this->productos[$i]['id_cancelacion'] = $this->id_eliminacion;
+                $this->productos[$i]['motivo_cancelacion'] = $this->motivo;
+                break;
+            }
+        }
+        
+        $this->reset('id_eliminacion', 'motivo', 'producto_eliminar');
+        $this->dispatch('close-modal');
     }
 
     private function validateCorreccion()

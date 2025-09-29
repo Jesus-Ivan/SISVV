@@ -39,7 +39,12 @@ class Presentacion extends Model
             ->withDefault([
                 'descripcion' => 'N/A',
                 'tipo' => '',
-                'clasificacion' =>'',
+                'clasificacion' => '',
             ]);
+    }
+
+    public function insumo(): BelongsTo
+    {
+        return $this->belongsTo(Insumo::class, 'clave_insumo_base');
     }
 }

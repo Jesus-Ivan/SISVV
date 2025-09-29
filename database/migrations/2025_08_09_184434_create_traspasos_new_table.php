@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('traspasos_new', function (Blueprint $table) {
             $table->integer('folio')->autoIncrement()->unsigned();
+            $table->integer('folio_requisicion')->nullable();
             $table->integer('id_user');
             $table->string('nombre', 255);
             $table->string('clave_origen', 255);

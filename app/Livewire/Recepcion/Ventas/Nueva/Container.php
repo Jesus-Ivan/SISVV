@@ -100,7 +100,7 @@ class Container extends Component
                 DetallesVentaProducto::create([
                     'folio_venta' => $resultVenta->folio,
                     'clave_producto' => $producto['clave_producto'],
-                    'chunk' => $producto['chunk'],
+                    'chunk' =>$producto['chunk'],
                     'nombre' => $producto['nombre'],
                     'cantidad' => $producto['cantidad'],
                     'precio' => $producto['precio'],
@@ -190,7 +190,7 @@ class Container extends Component
                 DetallesVentaProducto::create([
                     'folio_venta' => $resultVenta->folio,
                     'clave_producto' => $producto['clave_producto'],
-                    'chunk' => $producto['chunk'],
+                    'chunk' =>$producto['chunk'],
                     'nombre' => $producto['nombre'],
                     'cantidad' => $producto['cantidad'],
                     'precio' => $producto['precio'],

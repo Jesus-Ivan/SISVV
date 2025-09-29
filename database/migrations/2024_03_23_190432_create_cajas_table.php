@@ -17,6 +17,7 @@ return new class extends Migration
             $table->dateTime('fecha_apertura');
             $table->dateTime('fecha_cierre')->nullable();
             $table->dateTime('cierre_parcial')->nullable();
+            $table->smallInteger('max_eliminaciones')->default(0);
             $table->decimal('cambio_inicial', 10, 2);
             $table->string('clave_punto_venta', 10);
 

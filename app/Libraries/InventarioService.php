@@ -6,6 +6,7 @@ use App\Constants\AlmacenConstants;
 use App\Models\DetallesRequisicion;
 use App\Models\Grupos;
 use App\Models\Insumo;
+use App\Models\MovimientosAlmacen;
 use App\Models\Presentacion;
 use Carbon\Carbon;
 
@@ -293,5 +294,26 @@ class InventarioService
     {
         //Calcular el importe
         return round($cant * $costo_unitario, 2);
+    }
+
+    /**
+     * Obtiene la sumatoria de los movimientos de almacen. segun el tipo de movimientos y la bodega
+     */
+    public function obtenerExistenciasConceptos(array $clave_conceptos, $fecha_existencias, $clave_bodega)
+    {
+        //Obtener el total de los movimientos, agrupados por clave_insumo
+        $movimientos = MovimientosAlmacen::select('clave_insumo')
+            ->selectRaw('SUM(cantidad_insumo) as total_cantidad')
+            ->whereDate('fecha_existencias', $fecha_existencias)
+            ->whereIn('clave_concepto', $clave_conceptos)
+            ->where('clave_bodega', $clave_bodega)
+            ->groupBy('clave_insumo')
+            ->get()
+            ->toArray();
+        //Extraer las claves
+        $keys = array_column($movimientos, 'clave_insumo');
+        //Combinar las claves y los movimientos correspondientes
+        $final = array_combine($keys, $movimientos);
+        return $final;
     }
 }

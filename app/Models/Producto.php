@@ -45,4 +45,15 @@ class Producto extends Model
     {
         return $this->hasMany(ModifProducto::class, 'clave_producto', 'clave');
     }
+
+    public function receta(): HasMany
+    {
+        return $this->hasMany(Receta::class, 'clave_producto');
+    }
+
+    public function bodega(): HasMany
+    {
+        return $this->hasMany(ProductoBodega::class, "clave_producto");
+    }
+
 }

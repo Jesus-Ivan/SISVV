@@ -61,7 +61,7 @@
                 <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Fecha Factura (Nota)</label>
                 <input datepicker type="date" wire:model='fecha_compra'
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-36 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                @error('folio')
+                @error('fecha_compra')
                     <x-input-error messages="{{ $message }}" />
                 @enderror
             </div>
@@ -124,7 +124,7 @@
             </thead>
             <tbody>
                 @foreach ($listaPresentaciones as $index => $presentacion)
-                    <tr
+                    <tr wire:key="{{ $index }}"
                         class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
                         <th scope="row"
                             class="px-6 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
@@ -155,7 +155,7 @@
                                 class="w-40 max-w-20 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         </td>
                         <td class="px-6 py-2">
-                            $ {{ $presentacion['importe'] }}
+                            $ {{ number_format($presentacion['importe'], 2) }}
                         </td>
                         <td class="px-6 py-2 text-center">
                             <button type="button" wire:click="removePresentacion('{{ $index }}')"
@@ -198,6 +198,19 @@
 
     {{-- MODAL PARA AGREGAR PRESENTACION --}}
     @include('livewire.almacen.facturas.modal-agregar')
+    <!--INDICADOR DE CARGA-->
+    <div wire:loading wire:target='crearFactura'>
+        <x-loading-screen name='loading'>
+            <x-slot name='body'>
+                <div class="flex">
+                    <div class="me-4">
+                        @include('livewire.utils.loading', ['w' => 6, 'h' => 6])
+                    </div>
+                    <p>Guardando factura ...</p>
+                </div>
+            </x-slot>
+        </x-loading-screen>
+    </div>
 
     <!--Alerts-->
     <x-action-message on='open-action-message'>

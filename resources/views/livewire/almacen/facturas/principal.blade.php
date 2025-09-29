@@ -43,7 +43,7 @@
                         SUBTOTAL
                     </th>
                     <th scope="col" class="px-3 py-3">
-                        IVA
+                        IMPUESTO
                     </th>
                     <th scope="col" class="px-3 py-3">
                         TOTAL
@@ -148,25 +148,28 @@
                 <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
-                            <th scope="col" class="px-6 py-3">
+                            <th scope="col" class="px-3 py-2">
                                 CLAVE
                             </th>
-                            <th scope="col" class="px-6 py-3">
+                            <th scope="col" class="px-3 py-2">
                                 PRESENTACIÓN
                             </th>
-                            <th scope="col" class="px-6 py-3">
+                            <th scope="col" class="px-3 py-2">
                                 CANTIDAD
                             </th>
-                            <th scope="col" class="px-6 py-3">
+                            <th scope="col" class="px-3 py-2">
                                 COSTO S/IVA
                             </th>
-                            <th scope="col" class="px-6 py-3">
+                            <th scope="col" class="px-3 py-2">
                                 IVA
                             </th>
-                            <th scope="col" class="px-6 py-3">
+                            <th scope="col" class="px-3 py-2">
+                                IMPUESTO
+                            </th>
+                            <th scope="col" class="px-3 py-2">
                                 COSTO C/IVA
                             </th>
-                            <th scope="col" class="px-6 py-3">
+                            <th scope="col" class="px-3 py-2">
                                 IMPORTE
                             </th>
                         </tr>
@@ -176,25 +179,28 @@
                             <tr wire:key='{{ $index }}'
                                 class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
                                 <th scope="row"
-                                    class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                    class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                     {{ $detalle->clave_presentacion }}
                                 </th>
-                                <td class="px-6 py-4 w-96">
+                                <td class="px-3 py-2 w-96">
                                     {{ $detalle->presentacion->descripcion }}
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-3 py-2">
                                     {{ $detalle->cantidad }}
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-3 py-2">
                                     ${{ $detalle->costo }}
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-3 py-2">
                                     {{ $detalle->iva }} %
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-3 py-2">
                                     ${{ $detalle->impuesto }}
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-3 py-2">
+                                    ${{ $detalle->costo_con_impuesto }}
+                                </td>
+                                <td class="px-3 py-2">
                                     ${{ $detalle->importe }}
                                 </td>
                             </tr>

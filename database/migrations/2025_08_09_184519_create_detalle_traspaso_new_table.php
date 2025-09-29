@@ -14,16 +14,12 @@ return new class extends Migration
         Schema::create('detalle_traspaso_new', function (Blueprint $table) {
             $table->id();
             $table->integer('folio_traspaso');
-            $table->integer('clave_presentacion');
+            $table->integer('clave_presentacion')->nullable();
             $table->integer('clave_insumo')->nullable();
             $table->string('descripcion', 255);
-            $table->decimal('cantidad', 10, 2);
-            $table->decimal('costo_unitario', 10, 2);
-            $table->decimal('iva', 10, 2);
-            $table->decimal('costo_con_impuesto', 10, 2);
-            $table->decimal('importe_sin_impuesto', 10, 2);
-            $table->decimal('impuesto', 10, 2);
-            $table->decimal('importe', 10, 2);
+            $table->decimal('cantidad', 11, 3)->nullable();
+            $table->decimal('rendimiento', 11, 3)->nullable();
+            $table->decimal('cantidad_insumo', 11, 3);
         });
     }
 

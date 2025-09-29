@@ -147,6 +147,9 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::post('existencias', [ReportesController::class, 'postExistencias'])->name('almacen.documentos.existencias');
         Route::get('tabla-inv-sem', [ReportesController::class, 'getInvSemanal'])->name('almacen.documentos.inv-sem');
         Route::post('tabla-inv-sem', [ReportesController::class, 'postInvSemanal'])->name('almacen.documentos.inv-sem');
+        //Ruta del reporte de cruza de informacion
+        Route::get('cruze-existencias', [ReportesController::class, 'getCruce'])->name('almacen.documentos.cruze');
+        Route::post('cruze-existencias', [ReportesController::class, 'postCruce'])->name('almacen.documentos.cruze');
     });
 
     Route::prefix('entradas-v2')->group(function () {
@@ -315,6 +318,12 @@ Route::get('ordenes/{folio}/{order?}', [ReportesController::class, 'generarRequi
 Route::post('reporte-existencias', [ReportesController::class, 'generarReporteExistencias'])->name('reporte-existencias');
 //Esta ruta debe moverse al departamento de sistemas. cuando almacen e inventarios esten listos
 Route::post('/prod-vendidos', [SistemasController::class, 'getReporteVendidos'])->name('prod-vendidos');
+
+Route::get('entradasV2', [ReportesController::class, 'verEntradas'])->name('entradas-v2');
+Route::post('entradasV2', [ReportesController::class, 'obtenerEntradas'])->name('entradas-v2');
+
+Route::get('rep-fac', [ReportesController::class, 'verFacturas'])->name('rep-facturas');
+Route::post('rep-fac', [ReportesController::class, 'obtenerFacturas'])->name('rep-facturas');
 
 
 require __DIR__ . '/auth.php';

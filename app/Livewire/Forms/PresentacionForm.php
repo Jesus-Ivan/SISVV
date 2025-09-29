@@ -15,7 +15,7 @@ class PresentacionForm extends Form
     public $estado = 1, $ultima_compra;
     public $insumo_base, $unidad_insumo, $rendimiento;
     public ?Presentacion $original = null;
-    public $c_rendimiento = null, $c_rendimiento_imp = null; 
+    public $c_rendimiento = null, $c_rendimiento_imp = null;
 
     /**
      * Guarda los valores iniciales, para establecerlos dentro del formulario como array
@@ -130,7 +130,6 @@ class PresentacionForm extends Form
      */
     public function guardarCambios()
     {
-
         $validated = $this->validate([
             'descripcion' => 'required',
             'id_grupo' => 'required',
@@ -180,5 +179,4 @@ class PresentacionForm extends Form
             $this->c_rendimiento_imp = round($this->costo_iva / $this->rendimiento, 3);
         }
     }
-
 }

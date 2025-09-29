@@ -102,6 +102,7 @@ class VentaEditarForm extends Form
             'tipo_venta' => $venta['tipo_venta'],
             'solicitante_name' => $solicitante->name,
             'id_motivo' => $motivo_id,
+            'corte_caja' => $venta['corte_caja']
         ]);
     }
 
@@ -203,12 +204,19 @@ class VentaEditarForm extends Form
     /**
      * Actualiza los productos vendidos
      */
-    public function actualizarProductos(array $productos_editados)
+    public function actualizarProductos(array $productos_editados, $solicitante_id)
     {
+        $solicitante = User::find($solicitante_id);
         foreach ($productos_editados as $key => $producto) {
             if (array_key_exists('deleted', $producto)) {
-                //Eliminar el producto de la venta
-                DetallesVentaProducto::destroy($producto['id']);    // 'id' es el registro del producto relacionado con la venta dentro de la BD. NO se trara del 'id' del producto
+                //Actualizar el registro en la BD (eliminar)
+                DetallesVentaProducto::where('id', $producto['id'])
+                    ->update([
+                        'id_cancelacion' => $producto['id_cancelacion'],
+                        'motivo_cancelacion' => $producto['motivo_cancelacion'],
+                        'deleted_at' => now(),
+                        'usuario_cancela' => $solicitante->name
+                    ]);
             } else {
                 //Revisar si hubo cambio entre los subtotales
                 if ($producto['subtotal'] <> $this->productos[$key]['subtotal']) {

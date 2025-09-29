@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('puntos_venta', function (Blueprint $table) {
             $table->string('clave', 10)->primary();
             $table->string('nombre', 80);
+            $table->boolean('inventariable')->default(true);
         });
     }
 

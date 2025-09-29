@@ -35,4 +35,9 @@ class DetallesVentaProducto extends Model
                 'descripcion' => 'ERR N/R'
             ]);
     }
+
+    public function venta(): BelongsTo
+    {
+        return $this->belongsTo(Venta::class, 'folio_venta', 'folio');
+    }
 }

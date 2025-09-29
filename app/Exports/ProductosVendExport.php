@@ -2,57 +2,38 @@
 
 namespace App\Exports;
 
-use App\Models\DetallesVentaProducto;
-use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use App\Exports\Sheets\ProdVentas\ProdEliminados;
+use App\Exports\Sheets\ProdVentas\ProdVendidos;
+use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class ProductosVendExport implements FromArray
+use function PHPUnit\Framework\isNull;
+
+class ProductosVendExport implements WithMultipleSheets
 {
-    protected $ventas;
+    use Exportable;
+    protected $ventas, $prod_eliminados;
 
-    public function __construct(array $ventas)
+    public function __construct(array $ventas, $prod_eliminados = null)
     {
         $this->ventas = $ventas;
+        //Si no es null
+        if (!is_null($prod_eliminados)) {
+            //Convertirlo en array
+            $this->prod_eliminados = $prod_eliminados->toArray();
+        }
     }
 
-    public function array(): array
+    public function sheets(): array
     {
-        //Array auxiliar de los productos.
-        $productos = [];
-        //Agregamos el encabezado
-        $productos[] = [
-            'clave_articulo' => 'CLAVE ARTICULO',
-            'folio_venta' => 'FOLIO VENTA',
-            'punto' =>  'PUNTO',
-            'descripcion' => 'DESCRIPCION',
-            'cantidad' => 'CANTIDAD',
-            'precio' => 'PRECIO',
-            'importe' => 'IMPORTE',
-            'fecha' => 'FECHA',
-            'observaciones' => 'OBSERVACIONES'
-        ];
-        foreach ($this->ventas as $venta) {
-            //Buscamos todos los productos de la venta
-            $productosVentas = DetallesVentaProducto::with('catalogoProductos')->where('folio_venta', $venta['folio'])
-                ->get();
-            //Para cada producto de una venta
-            foreach ($productosVentas as $key => $producto) {
-                //Lo agregamos al array
-                $productos[] = [
-                    'clave_articulo' => $producto->codigo_catalogo,
-                    'folio_venta' => $producto->folio_venta,
-                    'punto' =>  $venta['punto_venta']['nombre'],
-                    'descripcion' => $producto->nombre ?: $producto->catalogoProductos->nombre,
-                    'cantidad' => $producto->cantidad,
-                    'precio' => $producto->precio,
-                    'importe' => $producto->subtotal,
-                    'fecha' => $producto['inicio'],
-                    //'fecha' => substr($venta['fecha_apertura'], 0, 10),     //Removemos la hora
-                    'observaciones' => $venta['observaciones']
-                ];
-            }
+        $sheets = [];   //Definimos las hojas del excel
+        //La hoja principal de productos vendidos
+        $sheets[] = new ProdVendidos($this->ventas);
+        //Si se paso el array de productos eliminados
+        if (!is_null($this->prod_eliminados)) {
+            //Agregar hoja de productos eliminados
+            $sheets[] = new ProdEliminados($this->prod_eliminados);
         }
-        //Retornamos el array listo
-        return $productos;
+        return $sheets;
     }
 }

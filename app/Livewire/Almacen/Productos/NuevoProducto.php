@@ -4,10 +4,12 @@ namespace App\Livewire\Almacen\Productos;
 
 use App\Constants\AlmacenConstants;
 use App\Livewire\Forms\ProductoForm;
+use App\Models\Bodega;
 use App\Models\Grupos;
 use App\Models\GruposModificadores;
 use App\Models\Insumo;
 use App\Models\Producto;
+use App\Models\PuntoVenta;
 use App\Models\Subgrupos;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +22,19 @@ class NuevoProducto extends Component
 {
     public ProductoForm $form;
 
+
+    public function mount()
+    {
+        $puntos = PuntoVenta::where('inventariable', true)
+            ->get()
+            ->toArray();
+        $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)
+            ->where('naturaleza', AlmacenConstants::INSUMOS_KEY)
+            ->get()
+            ->toArray();
+        $this->form->setProductoBodega($puntos, $bodegas);
+    }
+    
     #[Computed()]
     public function subgrupos()
     {
@@ -97,6 +112,7 @@ class NuevoProducto extends Component
                 $result = $this->form->crearProducto();
                 //Crea las propiedades de la receta del producto nuevo
                 $this->form->crearReceta($result);
+                $this->form->crearProductoBodega($result);
                 //Crea las propiedades de producto compuesto
                 $this->form->crearCompuesto($result);
                 //Limpiar el formulario

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Producto extends Model
 {
@@ -33,5 +34,25 @@ class Producto extends Model
             ->withDefault([
                 'descripcion' => 'N/A',
             ]);
+    }
+
+    public function modificador(): HasMany
+    {
+        return $this->hasMany(Modificador::class, 'clave_producto', 'clave');
+    }
+
+    public function grupoModif(): HasMany
+    {
+        return $this->hasMany(ModifProducto::class, 'clave_producto', 'clave');
+    }
+
+    public function receta(): HasMany
+    {
+        return $this->hasMany(Receta::class, 'clave_producto');
+    }
+
+    public function bodega(): HasMany
+    {
+        return $this->hasMany(ProductoBodega::class, "clave_producto");
     }
 }

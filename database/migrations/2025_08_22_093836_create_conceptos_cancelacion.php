@@ -11,14 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('correcciones_ventas', function (Blueprint $table) {
+        Schema::create('conceptos_cancelacion', function (Blueprint $table) {
             $table->id();
-            $table->string('user_name',200);
-            $table->integer('corte_caja')->nullable();
-            $table->integer('folio_venta');
-            $table->string('tipo_venta',200);
-            $table->string('solicitante_name',255);
-            $table->integer('id_motivo');
+            $table->string('descripcion', 255);
+            $table->boolean('editable')->default(false);
             $table->timestamps();
         });
     }
@@ -28,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('conversiones_cortesias');
+        Schema::dropIfExists('conceptos_cancelacion');
     }
 };

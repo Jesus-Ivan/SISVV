@@ -24,6 +24,16 @@ class Venta extends Model
         return $this->hasMany(DetallesVentaPago::class, 'folio_venta');
     }
 
+    public function detallesProductos(): HasMany
+    {
+        return $this->hasMany(DetallesVentaProducto::class, 'folio_venta');
+    }
+
+    public function correcciones(): HasMany
+    {
+        return $this->hasMany(CorreccionVenta::class, 'folio_venta');
+    }
+
     public function caja(): BelongsTo
     {
         return $this->belongsTo(Caja::class, 'corte_caja');

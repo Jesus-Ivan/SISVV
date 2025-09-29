@@ -11,15 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('correcciones_ventas', function (Blueprint $table) {
+        Schema::create('productos_bodegas', function (Blueprint $table) {
             $table->id();
-            $table->string('user_name',200);
-            $table->integer('corte_caja')->nullable();
-            $table->integer('folio_venta');
-            $table->string('tipo_venta',200);
-            $table->string('solicitante_name',255);
-            $table->integer('id_motivo');
+            $table->string('clave_producto', 255);
+            $table->string('clave_punto', 255);
+            $table->string('clave_bodega', 255);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('conversiones_cortesias');
+        Schema::dropIfExists('productos_bodegas');
     }
 };

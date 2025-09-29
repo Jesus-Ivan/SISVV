@@ -7,6 +7,7 @@ use App\Models\Insumo;
 use App\Models\Modificador;
 use App\Models\ModifProducto;
 use App\Models\Producto;
+use App\Models\ProductoBodega;
 use App\Models\Receta;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
@@ -21,8 +22,12 @@ class ProductoForm extends Form
     public $receta_table = [];
     //Atributos de producto compuesto
     public $grupos_modif = [], $modif = [];
+    //Atributos de producto-bodega
+    public $puntos = [], $bodegas = [], $producto_bodega = [];
     //Producto original
     public ?Producto $original = null;
+    //Relacion 'producto-punto-bodega' original
+    public ?Collection $pb_original = null;
 
     /**
      * Establece las propiedades para editar. y Guarda temporalmente el modelo original
@@ -43,6 +48,27 @@ class ProductoForm extends Form
         $this->setReceta($producto);
         //Establecer valores (compuesto)
         $this->setCompuesto($producto);
+    }
+
+    /**
+     * Inicializa el array de 'producto-bodega'
+     */
+    public function setProductoBodega(array $puntos, array $bodegas, ?Collection $producto_bodega = null)
+    {
+        $this->puntos = $puntos;
+        $this->bodegas = $bodegas;
+        $this->pb_original = $producto_bodega;
+        if (is_null($producto_bodega) || !count($producto_bodega)) {
+            //Agregar el array con los valores vacios
+            foreach ($puntos as $punto) {
+                $this->producto_bodega[$punto['clave']] = "";
+            }
+        } else {
+            //Converir el array y asignarlo a las propiedades
+            foreach ($producto_bodega as $key => $value) {
+                $this->producto_bodega[$value['clave_punto']] = $value['clave_bodega'];
+            }
+        }
     }
 
     public function setReceta(Producto $producto)
@@ -254,6 +280,7 @@ class ProductoForm extends Form
         $this->actualizarGenerales($validated);
         $this->actualizarReceta();
         $this->actualizarCompuesto();
+        $this->actualizarBodega();
     }
 
     /**
@@ -365,6 +392,49 @@ class ProductoForm extends Form
     }
 
     /**
+     * Actualiza o crea los registros en la tabla 'productos_bodegas'
+     */
+    public function actualizarBodega()
+    {
+        //De la lista de insumos para la receta, filtrar aquellos listos para actualizar o crear
+        $fil = array_filter($this->receta_table, function ($insum) {
+            return !array_key_exists('deleted', $insum);
+        });
+
+        //Si hay al menos 1 item, verificar los items
+        if (count($fil) >= 1) {
+            foreach ($this->producto_bodega as $key => $val) {
+                //Validamos que no deje vacio el select
+                if (is_null($val) || !strlen($val))
+                    throw new Exception("Revisar propiedades: Bodega-Producto", 1);
+
+                //Verificamos si hay un registro original en la bd
+                $producto_bodega = $this->pb_original->where('clave_punto', $key)->first();
+                //Si hay registro en la coleccion
+                if ($producto_bodega) {
+                    //Actualizar el registro
+                    $producto_bodega->clave_bodega = $val;
+                    $producto_bodega->save();
+                } else {
+                    //Creamos el resgistro 
+                    ProductoBodega::create([
+                        'clave_producto' =>  $this->original->clave,
+                        'clave_punto' => $key,
+                        'clave_bodega' => $val,
+                    ]);
+                }
+            }
+        } else {
+            //Eliminar los registros de producto-bodega
+            foreach ($this->producto_bodega as $key => $val) {
+                $producto_bodega = $this->pb_original->where('clave_punto', $key)->first();
+                if ($producto_bodega)
+                    $producto_bodega->delete();
+            }
+        }
+    }
+
+    /**
      * Crear los registros en la tabla 'recetas'
      */
     public function crearReceta(Producto $producto)
@@ -381,6 +451,29 @@ class ProductoForm extends Form
                 'cantidad_c_merma' => $insumo['cantidad_con_merma'],
                 'total' => $insumo['total'],
             ]);
+        }
+    }
+
+    /**
+     * Crea la relacion en la tabla 'producto_bodega'\
+     * Relaciona las tablas 'puntos_venta', 'productos' y 'bodegas'\
+     * Descuenta insumos de una bodega X, a partir de la venta de un punto Y.
+     */
+    public function crearProductoBodega(Producto $producto)
+    {
+        //Si hay items en receta_table
+        if (count($this->receta_table)) {
+            foreach ($this->producto_bodega as $key => $val) {
+                if (is_null($val) || !strlen($val)) {
+                    throw new Exception("Propiedades Bodega-Producto: Falta una bodega", 1);
+                }
+                //Creamos el resgistro 
+                ProductoBodega::create([
+                    'clave_producto' =>  $producto->clave,
+                    'clave_punto' => $key,
+                    'clave_bodega' => $val,
+                ]);
+            }
         }
     }
 
@@ -472,7 +565,24 @@ class ProductoForm extends Form
      */
     public function limpiar()
     {
-        $this->reset();
+        $this->reset(
+            'descripcion',
+            'precio',
+            'iva',
+            'costo_con_impuesto',
+            'id_grupo',
+            'id_subgrupo',
+            'estado',
+            'receta_table',
+            'grupos_modif',
+            'modif',
+            'original'
+        );
+
+        //reestablece los valores iniciales para la variable 'producto_bodega'
+        $this->producto_bodega = array_map(function ($val) {
+            return $val = "";
+        }, $this->producto_bodega);
     }
 
     /**

@@ -21,16 +21,16 @@
         </div>
     </div>
     {{-- Info del producto --}}
-    @if (!is_null($ventaForm->indexTransferible))
+    @if (!is_null($ventaForm->indexSeleccionado))
         <div class="flex gap-2">
             <p class="font-bold">Producto:
             <p class="grow">
-                {{ $ventaForm->productosTable[$ventaForm->indexTransferible]['catalogo_productos']['nombre'] }}
+                {{ $ventaForm->productosTable[$ventaForm->indexSeleccionado]['nombre'] }}
             </p>
             </p>
             <p class="font-bold">Cantidad:
             <p>
-                {{ $ventaForm->productosTable[$ventaForm->indexTransferible]['cantidad'] }}
+                {{ $ventaForm->productosTable[$ventaForm->indexSeleccionado]['cantidad'] }}
             </p>
             </p>
         </div>

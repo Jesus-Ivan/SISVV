@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class DetallesCompra extends Model
 {
     use HasFactory;
-    use SoftDeletes;
     //Nombre de la tabla
     protected $table = 'detalles_compras';
     //Propiedades restringidas para asignacion masiva

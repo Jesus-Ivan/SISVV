@@ -4,10 +4,12 @@ namespace App\Livewire\Almacen\Productos;
 
 use App\Constants\AlmacenConstants;
 use App\Livewire\Forms\ProductoForm;
+use App\Models\Bodega;
 use App\Models\Grupos;
 use App\Models\GruposModificadores;
 use App\Models\Insumo;
 use App\Models\Producto;
+use App\Models\PuntoVenta;
 use App\Models\Subgrupos;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -24,10 +26,18 @@ class EditarProducto extends Component
     public function mount($clave)
     {
         //Buscar el producto
-        $producto = Producto::find($clave);
+        $producto = Producto::with('bodega')->find($clave);
         if ($producto) {
             //Setar los valores editables en el form
             $this->form->setValues($producto);
+            $puntos = PuntoVenta::where('inventariable', true)
+                ->get()
+                ->toArray();
+            $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)
+                ->where('naturaleza', AlmacenConstants::INSUMOS_KEY)
+                ->get()
+                ->toArray();
+            $this->form->setProductoBodega($puntos, $bodegas, $producto->bodega);
         } else {
             //redirigir al usuario en caso de no existir la presentacion
             $this->redirectRoute('almacen.productos');
@@ -61,7 +71,6 @@ class EditarProducto extends Component
     {
         //Marcar como eliminado, el insumo de la receta
         $this->form->marcarInsumo($index);
-        
     }
 
     #[On('selected-grupo')]

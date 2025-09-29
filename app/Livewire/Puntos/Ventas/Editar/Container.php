@@ -139,25 +139,7 @@ class Container extends Component
             $result->whereNot('id_grupo', $gp_servicio->id); //Agregar el query
         }
         return $result
-            ->orderBy('descripcion', 'asc')
-            ->limit(50)
-            ->get();
-    }
-
-    #[Computed()]
-    public function productosNew()
-    {
-        //Buscar el grupo de productos referente a los servicios de recepcion
-        $gp_servicio = Grupos::where('descripcion', 'like', '%SERVICIO%')->first();
-        //Preparar consulta base
-        $result = Producto::where('descripcion', 'like', '%' . $this->ventaForm->seachProduct . '%')
-            ->whereNot('estado', 0);
-        //Si hay un grupo definido como servicio
-        if ($gp_servicio) {
-            $result->whereNot('id_grupo', $gp_servicio->id); //Agregar el query
-        }
-        return $result
-            ->orderBy('descripcion', 'asc')
+            ->orderBy('descripcion', 'ASC')
             ->limit(50)
             ->get();
     }
@@ -223,7 +205,7 @@ class Container extends Component
         try {
             //Si cuenta con un id (de la BD)
             if (array_key_exists('id', $prod)) {
-                $caja = $this->ventaForm->buscarCaja(); //Encontrar la caja disponible.
+                $caja = $this->ventaForm->buscarCaja($this->codigopv); //Encontrar la caja disponible.
                 if ($caja->max_eliminaciones > 0) {
                     if ($this->buscarEliminaciones($caja) >= $caja->max_eliminaciones)
                         throw new Exception("Haz alcanzado el maximo permitido de eliminaciones", 1);

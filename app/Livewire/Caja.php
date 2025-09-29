@@ -133,7 +133,7 @@ class Caja extends Component
                     //Obtener los productos vendidos en el corte de caja
                     $productos = $productoServ->getTotalProductos($caja);
                     //Descontar exitencias
-                    $this->descontarStock($productos, $caja);
+                    //$this->descontarStock($productos, $caja);
                     //Emitimos evento para abrir el corte de caja en una pestaña nueva
                     $this->dispatch('generar-corte', $caja);
                 }

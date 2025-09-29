@@ -1035,6 +1035,9 @@ class VentaForm extends Form
                 'abono' => $detalle_pago->monto,
                 'saldo' => 0,
                 'consumo' => true
+            ]);
+        }
+    }
     /**
      * Crea el registro en la tabla 'correcciones_ventas'\
      * En caso de haber eliminaciones de productos
@@ -1044,7 +1047,7 @@ class VentaForm extends Form
         //Si hay algun producto en la lista para eliminar
         if (count($this->lista_eliminados)) {
             //Buscar la caja abierta
-            $caja = $this->buscarCaja();
+            $caja = $this->buscarCaja($this->permisospv->clave_punto_venta);
             //Buscar el motivo que corresponde a 'ELIMINAR PRODUCTO DE NOTA'
             $motivo = MotivoCorreccion::where('descripcion', 'like', '%ELIMINAR PRODUCTO%')->first();
             //Si no hay motivo registrado en la tabla

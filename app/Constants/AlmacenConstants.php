@@ -52,14 +52,14 @@ class AlmacenConstants
     /**
      * Es la clave del concepto de "E. ALMACEN" de la tabla 'conceptos_almacen'
      */
-    public const ENT_KEY ="EDA";
+    public const ENT_KEY = "EDA";
 
     /**
-
      * Es la clave del concepto de "S. POR VENTA" de la tabla 'conceptos_almacen'
      */
-    public const SAL_VENTA_KEY ="SPV";
+    public const SAL_VENTA_KEY = "SPV";
 
+    /**
      * Es la clave del concepto de "E. POR TRASPASO ALMACEN" de la tabla 'conceptos_almacen'
      */
     public const ENT_TRASP_KEY = "ETA";

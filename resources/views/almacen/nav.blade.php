@@ -169,11 +169,11 @@
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
                                     Ordenes Compra</a>
                             </li>
-                            <li>
+                            {{-- <li>
                                 <a href="{{ route('almacen.ordenes') }}"
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
                                     Nueva Orden Compra</a>
-                            </li>
+                            </li> --}}
                         </ul>
                     </div>
                 </li>

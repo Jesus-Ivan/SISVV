@@ -143,7 +143,7 @@
                 </table>
             </div>
             {{-- List butons --}}
-            <div
+            <div style="max-height: 350px; overflow-y: auto;"
                 class="w-64 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 <template x-for="(modif, index) in modificadores_filtrados" :key="index">
                     <button type="button" x-text="modif.descripcion" x-on:click="agregar(modif)"

@@ -44,6 +44,22 @@ class CruceInventarioExport implements WithMultipleSheets
                     $bodega
                 );
             }
+        } else {
+            //Buscar una sola bodega
+            $bodega = Bodega::find($this->clave_bodega);
+            //Obtener las existencias
+            $exis = $this->obtenerInfo($bodega);
+            //Agregar hoja de existencias de los insumos
+            $sheets[] = new BodegaInsumo(
+                $exis['insumos'],
+                $exis['s_vent'],
+                $exis['e_direc'],
+                $exis['e_trap'],
+                $exis['s_trap'],
+                $exis['ajuste'],
+                $this->fecha,
+                $bodega
+            );
         }
         return $sheets;
     }

@@ -1257,7 +1257,7 @@ class ReportesController extends Controller
         $fecha = $request->input('fecha');
 
         $grupos = $request->input('selected_grupos');   //Array de los id de grupos seleccionados
-
+        //dd($clave_bodega,$fecha,$grupos);
         return Excel::download(
             new CruceInventarioExport($clave_bodega, $fecha, $grupos),
             'Cruce inventario ' . $fecha . '.xlsx',

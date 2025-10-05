@@ -18,7 +18,7 @@ class NuevaRequisicion extends Component
     //El articulo (original) que se selecciona en el modal.
     public $articulo_seleccionado;
     //Propiedades auxiliares para el modal de agregar articulos a la orden
-    public $costo_unitario = 0, $iva = 16, $costo_con_impuesto = 0, $id_proveedor, $id_grupo = null;
+    public $costo_unitario = 0, $iva = 16, $costo_con_impuesto = 0, $id_proveedor;
     //Fecha de hoy, para mostrar en la vista y en el registro de la orden de compra
     public $hoy;
     public $tittle = '';

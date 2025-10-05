@@ -44,9 +44,11 @@
                         <x-input-error messages="{{ $message }}" />
                     @enderror
                 </div>
-                {{--OBSERVACIONES--}}
-                <div>   
-                    <input type="text" wire:model='form.observaciones' class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Observaciones"  />
+                {{-- OBSERVACIONES --}}
+                <div>
+                    <input type="text" wire:model='form.observaciones'
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        placeholder="Observaciones" />
                 </div>
                 {{-- BOTON DE GUARDAR ORDEN --}}
                 <button type="button" wire:click='guardarOrden()'
@@ -172,24 +174,10 @@
             <div class="h-auto max-w-4xl overflow-y-auto">
                 <!-- Modal body -->
                 <div class="grid gap-2 grid-cols-3">
-                    {{-- Grupo de Presentaciones --}}
-                    <div class="col-span-1">
-                        <select id="proveedor" wire:model.live='id_grupo'
-                            class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
-                            <option selected value='{{ null }}'>Seleccionar Grupo</option>
-                            @foreach ($this->grupos as $index_grupo => $grupo)
-                                <option wire:key='{{ $index_grupo }}' value="{{ $grupo->id }}">
-                                    {{ $grupo->descripcion }}</option>
-                            @endforeach
-                        </select>
-                        @error('id_grupo')
-                            <x-input-error messages="{{ $message }}" />
-                        @enderror
-                    </div>
                     {{-- BARRA BUSQUEDA ARTICULO --}}
-                    <div class="col-span-2">
+                    <div class="col-span-3">
                         <livewire:search-bar tittle="Codigo o nombre" table="presentaciones" :columns="['clave', 'descripcion']"
-                            primary="clave" event="selected-presentacion" :conditions="[['estado', '=', true], ['id_grupo', '=', $id_grupo]]" />
+                            primary="clave" event="selected-presentacion" :conditions="[['estado', '=', true]]" />
                     </div>
                     {{-- NOMBRE DEL ARTICULO --}}
                     <div class="col-span-2">

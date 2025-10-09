@@ -318,6 +318,8 @@ Route::get('ordenes/{folio}/{order?}', [ReportesController::class, 'generarRequi
 Route::post('reporte-existencias', [ReportesController::class, 'generarReporteExistencias'])->name('reporte-existencias');
 //Esta ruta debe moverse al departamento de sistemas. cuando almacen e inventarios esten listos
 Route::post('/prod-vendidos', [SistemasController::class, 'getReporteVendidos'])->name('prod-vendidos');
+Route::post('/prod-vendidos-tot', [SistemasController::class, 'reporteVendidosTotal'])->name('prod-vendidos-total');
+
 
 Route::get('entradasV2', [ReportesController::class, 'verEntradas'])->name('entradas-v2');
 Route::post('entradasV2', [ReportesController::class, 'obtenerEntradas'])->name('entradas-v2');

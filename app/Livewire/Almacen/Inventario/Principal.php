@@ -38,7 +38,7 @@ class Principal extends Component
     public function inventarios()
     {
         return Inventario::with('bodega')
-            ->whereMonth('fecha_existencias', substr($this->mes, 6, 2))
+            ->whereMonth('fecha_existencias', substr($this->mes, 5, 2))
             ->whereYear('fecha_existencias', substr($this->mes, 0, 4))
             ->where('clave_bodega', 'like', "%$this->clave_bodega%")
             ->paginate(20);

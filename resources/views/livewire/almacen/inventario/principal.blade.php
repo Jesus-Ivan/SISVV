@@ -106,7 +106,7 @@
         </table>
     </div>
     <div>
-        {{$this->inventarios->links()}}
+        {{ $this->inventarios->links() }}
     </div>
 
     {{-- MODAL GRUPOS PRESENTACIONES --}}

@@ -26,8 +26,26 @@
                 <th scope="col" class="px-3 py-3">
                     DIF. IMPORTE
                 </th>
-                <th scope="col" class="px-3 py-3">
-                    CONCEPTO
+                <th scope="col" class="px-3 py-3 flex">
+                    <span class="flex-grow">
+                        CONCEPTO
+                    </span>
+                    <x-dropdown >
+                        <x-slot name="trigger">
+                            <svg class="w-5 h-5 text-gray-800 dark:text-white" aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                                viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-width="4"
+                                    d="M12 6h.01M12 12h.01M12 18h.01" />
+                            </svg>
+                        </x-slot>
+                        <x-slot name="content">
+                            @foreach ($this->conceptos as $item)
+                                <x-dropdown-link
+                                    wire:click="conceptoGeneral('{{ $item->clave }}')">{{ $item->descripcion }}</x-dropdown-link>
+                            @endforeach
+                        </x-slot>
+                    </x-dropdown>
                 </th>
             </tr>
         </thead>

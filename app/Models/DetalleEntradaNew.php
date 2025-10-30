@@ -23,12 +23,21 @@ class DetalleEntradaNew extends Model
         return $this->belongsTo(EntradaNew::class, 'folio_entrada', 'folio');
     }
 
-    public function proveedor():BelongsTo
+    public function proveedor(): BelongsTo
     {
         return $this->belongsTo(Proveedor::class, 'id_proveedor', 'id')
-        ->withDefault([
-            'nombre' => 'N/A',
-        ])
+            ->withDefault([
+                'nombre' => 'N/A',
+            ])
         ;
+    }
+
+    public function insumo(): BelongsTo
+    {
+        return $this->belongsTo(Insumo::class, 'clave_insumo')
+            ->withDefault([
+                'clave' => 0,
+                'descripcion' => 'N/A'
+            ]);
     }
 }

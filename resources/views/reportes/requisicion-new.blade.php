@@ -78,6 +78,7 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
             <th>P.IMPUESTO</th>
             <th>IMPORTE</th>
             <th>PROVEEDOR</th>
+            <th>U.COMPRA</th>
         </tr>
     </thead>
     <tbody>
@@ -90,6 +91,7 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
                 <td>${{ $item['costo_con_impuesto'] }}</td>
                 <td>${{ number_format($item['importe'], 2) }}</td>
                 <td>{{ $proveedores[$item['id_proveedor']] }}</td>
+                <td>{{ $item['presentacion']['ultima_compra'] }}</td>
             </tr>
         @endforeach
     </tbody>

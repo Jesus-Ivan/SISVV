@@ -119,6 +119,17 @@ class InventarioNuevo extends Component
         }
     }
 
+    /**
+     * Establece el concepto general para todos los movimientos de la tabla
+     */
+    public function conceptoGeneral($clave)
+    {
+        foreach ($this->table as $key => $row) {
+            if ($row['diferencia'] != 0)
+                $this->table[$key]['clave_concepto'] = $clave;
+        }
+    }
+
     public function guardar()
     {
         //Concatenar fecha y hora

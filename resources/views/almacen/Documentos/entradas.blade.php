@@ -19,8 +19,7 @@
             this.selectAll = this.selectedItems.length === this.allItems.length;
         }
     }">
-        <form class="max-w-3xl" action="{{ route('entradas-v2') }}" method="POST" target="_blank"
-            id="reporte-form">
+        <form class="max-w-3xl" action="{{ route('entradas-v2') }}" method="POST" target="_blank" id="reporte-form">
             @csrf
             {{-- BARRA DE BUSQUEDA --}}
             <div class="flex m-2 gap-4">
@@ -40,6 +39,16 @@
                         @error('fecha')
                             <x-input-error messages="{{ $message }}" />
                         @enderror
+                    </div>
+                </div>
+                <div class="flex flex-row justify-center">
+                    {{-- CHECKBOX --}}
+                    <div class="flex items-center ">
+                        <input id="convertir_insumos" name="convertir_insumos" type="checkbox"
+                            class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                        <label for="convertir_insumos"
+                            class="ms-2 p-1 text-sm font-medium text-gray-900 dark:text-gray-300">Convertir a
+                            presentaciones</label>
                     </div>
                 </div>
                 <div class="flex grow">

@@ -156,6 +156,7 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         //view de la tabla de productos
         Route::view('/', 'almacen.Entradas.v2.entrada')->name('almacen.entradav2');
         Route::view('/nueva', 'almacen.Entradas.v2.nueva-entrada')->name('almacen.entradav2.nueva');
+        Route::view('/editar/{folio}', 'almacen.Entradas.v2.editar')->name('almacen.entradav2.editar');
         Route::view('/historial', 'almacen.Entradas.v2.historial')->name('almacen.entradav2.historial');
     });
 
@@ -274,7 +275,6 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::get('/editar/{folioventa}', [SistemasController::class, 'editarVenta'])->name('sistemas.pv.editar');
         Route::view('crear-detalles-caja', 'sistemas.Puntos.detalles-caja')->name('sistemas.pv.detalles-caja');
         Route::post('crear-detalles-caja', [SistemasController::class, 'detallesCaja'])->name('sistemas.pv.detalles-caja');
-
     });
 
     //DEPARTAMENTO DE RECEPCIÓN

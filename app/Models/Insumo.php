@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Insumo extends Model
 {
     use HasFactory;
-    
+
     //Nombre de la tabla de referencia
     protected $table = 'insumos';
     //Propiedades restringidas para asignacion masiva
@@ -26,7 +26,7 @@ class Insumo extends Model
     {
         return $this->hasMany(MovimientosAlmacen::class, 'clave_insumo', 'clave');
     }
-    
+
     public function unidad(): BelongsTo
     {
         return $this->belongsTo(Unidad::class, 'id_unidad', 'id')
@@ -42,7 +42,12 @@ class Insumo extends Model
             ->withDefault([
                 'descripcion' => 'N/A',
                 'tipo' => '',
-                'clasificacion' =>'',
+                'clasificacion' => '',
             ]);
+    }
+
+    public function presentaciones(): HasMany
+    {
+        return $this->hasMany(Presentacion::class, 'clave_insumo_base');
     }
 }

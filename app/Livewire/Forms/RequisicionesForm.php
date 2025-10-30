@@ -317,9 +317,9 @@ class RequisicionesForm extends Form
      */
     public function multiplicarTabla()
     {
-        for ($i = 0; $i < count($this->presentaciones); $i++) {
-            $this->actualizarCostoSinIva($i);
-            $this->actualizarImporte($i);
+        foreach ($this->presentaciones as $key => $value) {
+            $this->actualizarCostoSinIva($key);
+            $this->actualizarImporte($key);
         }
     }
 }

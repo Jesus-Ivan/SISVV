@@ -53,7 +53,6 @@ class Cortes extends Component
         }
 
         $query->orderBy('fecha_apertura', 'desc');
-        $this->resetPage();
         return $query->paginate(10);
     }
 

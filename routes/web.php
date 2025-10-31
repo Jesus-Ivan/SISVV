@@ -275,6 +275,7 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::get('/editar/{folioventa}', [SistemasController::class, 'editarVenta'])->name('sistemas.pv.editar');
         Route::view('crear-detalles-caja', 'sistemas.Puntos.detalles-caja')->name('sistemas.pv.detalles-caja');
         Route::post('crear-detalles-caja', [SistemasController::class, 'detallesCaja'])->name('sistemas.pv.detalles-caja');
+        Route::view('cortes', 'sistemas.Puntos.cortes')->name('sistemas.pv.consultar-cortes');
     });
 
     //DEPARTAMENTO DE RECEPCIÓN

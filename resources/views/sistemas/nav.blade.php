@@ -99,6 +99,12 @@
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
                                     Detalles caja</a>
                             </li>
+                            {{-- CONSULTAR CORTES --}}
+                            <li>
+                                <a href="{{ route('sistemas.pv.consultar-cortes') }}"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                    Consultar Cortes</a>
+                            </li>
                         </ul>
                     </div>
                 </li>

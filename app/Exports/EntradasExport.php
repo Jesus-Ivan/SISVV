@@ -2,18 +2,17 @@
 
 namespace App\Exports;
 
+use App\Exports\Sheets\Entradas\Registro;
 use App\Models\Bodega;
-use App\Models\DetallesEntrada;
-use App\Models\Proveedor;
-use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class EntradasExport implements FromArray
+class EntradasExport implements WithMultipleSheets
 {
     public $data;
     public $bodegas = [];
+    public $convertir_insumos = null;
 
-    public function __construct($data)
+    public function __construct($data, $convertir_insumos)
     {
         $this->data = $data;
         //Crear array indexado de las bodegas
@@ -21,19 +20,34 @@ class EntradasExport implements FromArray
         foreach ($bodegas as $key => $row) {
             $this->bodegas[$row['clave']] = $row['descripcion'];
         }
+        $this->convertir_insumos = $convertir_insumos;
     }
 
-    public function array(): array
+    public function sheets(): array
+    {
+        $sheets = [];   //Definimos las hojas del excel
+        //La hoja principal de reporte de entradas
+        $sheets[] = new Registro($this->crearDatos(), 'ORIGINAL');
+        if ($this->convertir_insumos) {
+            //agregar la hoja convertida
+            $sheets[] = new Registro($this->crearDatos(true), 'CONVERTIDO');
+        }
+        return $sheets;
+    }
+
+    public function crearDatos($is_converted = false): array
     {
         //Encabezados
         $encabezados = [
-            'folio_entrada' => 'FOLIO ENTRADA',
+            'folio_entrada' => '#ENTRADA',
             'clave_presentacion' => '#PRESENTACION',
             'clave_insumo' => '#INSUMO',
             'fecha_existencias' => 'FECHA EXISTENCIAS',
             'bodega' => 'BODEGA',
             'descripcion' => 'DESCRIPCION',
             'id_proveedor' => 'PROVEEDOR',
+            'factura' => 'FACTURA',
+            'cuenta_contable' => 'M.PAGO',
             'cantidad' => 'CANTIDAD',
             'costo_unitario' => 'COSTO UNITARIO',
             'iva' => 'IVA',
@@ -50,22 +64,7 @@ class EntradasExport implements FromArray
         //Interar todos los resultados
         foreach ($this->data as $item) {
             //Agreagar cada item
-            $data[] = [
-                'folio_entrada' => $item['folio_entrada'],
-                'clave_presentacion' => $item['clave_presentacion'],
-                'clave_insumo' => $item['clave_insumo'],
-                'fecha_existencias' => $item['entrada']['fecha_existencias'],
-                'bodega' =>  $this->getBodega($item['entrada']['clave_bodega']),
-                'descripcion' => $item['descripcion'],
-                'id_proveedor' => $item['proveedor']['nombre'],
-                'cantidad' => $item['cantidad'],
-                'costo_unitario' => $item['costo_unitario'],
-                'iva' => $item['iva'],
-                'costo_con_impuesto' => $item['costo_con_impuesto'],
-                'importe_sin_impuesto' => $item['importe_sin_impuesto'],
-                'impuesto' => $item['impuesto'],
-                'importe' => $item['importe']
-            ];
+            $data[] = $this->getData($item, $is_converted);
         }
 
         return ($data);
@@ -76,5 +75,103 @@ class EntradasExport implements FromArray
     private function getBodega($clave)
     {
         return array_key_exists($clave, $this->bodegas) ? $this->bodegas[$clave] : $clave;
+    }
+
+    private function getData($item, $is_converted)
+    {
+        if (!$is_converted) {
+            $aux = [
+                'folio_entrada' => $item['folio_entrada'],
+                'clave_presentacion' => $item['clave_presentacion'],
+                'clave_insumo' => $item['clave_insumo'],
+                'fecha_existencias' => $item['entrada']['fecha_existencias'],
+                'bodega' =>  $this->getBodega($item['entrada']['clave_bodega']),
+                'descripcion' => $item['descripcion'],
+                'id_proveedor' => $item['proveedor']['nombre'],
+                'factura' => $item['factura'],
+                'cuenta_contable' => $item['cuenta_contable'],
+                'cantidad' => $item['cantidad'],
+                'costo_unitario' => $item['costo_unitario'],
+                'iva' => $item['iva'],
+                'costo_con_impuesto' => $item['costo_con_impuesto'],
+                'importe_sin_impuesto' => $item['importe_sin_impuesto'],
+                'impuesto' => $item['impuesto'],
+                'importe' => $item['importe']
+            ];
+        } else {
+            $aux = [
+                'folio_entrada' => $item['folio_entrada'],
+                'clave_presentacion' => $this->getClavePresentacion($item),
+                'clave_insumo' => $item['clave_insumo'],
+                'fecha_existencias' => $item['entrada']['fecha_existencias'],
+                'bodega' =>  $this->getBodega($item['entrada']['clave_bodega']),
+                'descripcion' => $this->getDescripcionPresentacion($item),
+                'id_proveedor' => $item['proveedor']['nombre'],
+                'factura' => $item['factura'],
+                'cuenta_contable' => $item['cuenta_contable'],
+                'cantidad' => $this->getCantidadPresentacion($item),
+                'costo_unitario' => $this->getCostoUnitario($item),
+                'iva' => $item['iva'],
+                'costo_con_impuesto' => $this->getCostoImpuesto($item),
+                'importe_sin_impuesto' => $item['importe_sin_impuesto'],
+                'impuesto' => $item['impuesto'],
+                'importe' => $item['importe']
+            ];
+        }
+
+        return $aux;
+    }
+
+
+    private function getClavePresentacion($item)
+    {
+        if ($item['clave_presentacion'])
+            return $item['clave_presentacion'];
+        elseif (reset($item['insumo']['presentaciones']))
+            return reset($item['insumo']['presentaciones'])['clave'];
+        else
+            return 'N/A';
+    }
+
+    private function getDescripcionPresentacion($item)
+    {
+        if ($item['clave_presentacion']) {
+            return $item['descripcion'];
+        } elseif (reset($item['insumo']['presentaciones'])) {
+            return reset($item['insumo']['presentaciones'])['descripcion'];
+        } else {
+            return 'N/A';
+        }
+    }
+
+    private function getCantidadPresentacion($item)
+    {
+        if ($item['clave_presentacion']) {
+            return $item['cantidad'];
+        } else if (reset($item['insumo']['presentaciones'])) {
+            return round($item['cantidad'] / reset($item['insumo']['presentaciones'])['rendimiento'], 4);
+        } else {
+            return 'N/A';
+        }
+    }
+    private function getCostoUnitario($item)
+    {
+        if ($item['clave_presentacion']) {
+            return $item['costo_unitario'];
+        } else if (reset($item['insumo']['presentaciones'])) {
+            return round($item['costo_unitario'] * reset($item['insumo']['presentaciones'])['rendimiento'], 4);
+        } else {
+            return 'N/A';
+        }
+    }
+    private function getCostoImpuesto($item)
+    {
+        if ($item['clave_presentacion']) {
+            return $item['costo_con_impuesto'];
+        } else if (reset($item['insumo']['presentaciones'])) {
+            return round($item['costo_con_impuesto'] * reset($item['insumo']['presentaciones'])['rendimiento'], 4);
+        } else {
+            return 'N/A';
+        }
     }
 }

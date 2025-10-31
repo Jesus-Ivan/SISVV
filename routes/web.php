@@ -156,6 +156,7 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         //view de la tabla de productos
         Route::view('/', 'almacen.Entradas.v2.entrada')->name('almacen.entradav2');
         Route::view('/nueva', 'almacen.Entradas.v2.nueva-entrada')->name('almacen.entradav2.nueva');
+        Route::view('/editar/{folio}', 'almacen.Entradas.v2.editar')->name('almacen.entradav2.editar');
         Route::view('/historial', 'almacen.Entradas.v2.historial')->name('almacen.entradav2.historial');
     });
 
@@ -318,6 +319,8 @@ Route::get('ordenes/{folio}/{order?}', [ReportesController::class, 'generarRequi
 Route::post('reporte-existencias', [ReportesController::class, 'generarReporteExistencias'])->name('reporte-existencias');
 //Esta ruta debe moverse al departamento de sistemas. cuando almacen e inventarios esten listos
 Route::post('/prod-vendidos', [SistemasController::class, 'getReporteVendidos'])->name('prod-vendidos');
+Route::post('/prod-vendidos-tot', [SistemasController::class, 'reporteVendidosTotal'])->name('prod-vendidos-total');
+
 
 Route::get('entradasV2', [ReportesController::class, 'verEntradas'])->name('entradas-v2');
 Route::post('entradasV2', [ReportesController::class, 'obtenerEntradas'])->name('entradas-v2');

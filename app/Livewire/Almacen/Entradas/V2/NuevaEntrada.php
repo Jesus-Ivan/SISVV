@@ -27,6 +27,7 @@ class NuevaEntrada extends Component
     public $selectedItems = [], $articulos_table = [];
     #[Locked]
     public $locked_bodega = false;  //Propiedad para evitar el cambio de bodega
+    public $cuenta = "", $proveedor = "";
 
     //Hook de inicio del vida del componente
     public function mount()
@@ -38,12 +39,22 @@ class NuevaEntrada extends Component
     }
 
     //hook que monitorea la actualizacion del componente
-    public function updated($property, $value)
+    public function updated($property, $val)
     {
         //Si se actualizo el campo de busqueda
         if ($property === 'search_input') {
             //Limpiar los productos seleccionados previamente
             $this->selectedItems = [];
+        }
+        if ($property == "cuenta") {
+            for ($i = 0; $i < count($this->articulos_table); $i++) {
+                $this->articulos_table[$i]['cuenta_contable'] = $val;
+            }
+        }
+        if ($property == "proveedor") {
+            for ($i = 0; $i < count($this->articulos_table); $i++) {
+                $this->articulos_table[$i]['id_proveedor'] = $val;
+            }
         }
     }
 
@@ -117,6 +128,8 @@ class NuevaEntrada extends Component
                 'clave_insumo_base' => $producto->clave_insumo_base,
                 'rendimiento' => $producto->rendimiento,
                 'id_proveedor' => $producto->id_proveedor,
+                'factura' => null,
+                'cuenta_contable' => null,
                 'importe_sin_impuesto' => $importe_sin_impuesto,
                 'impuesto' => $importe - $importe_sin_impuesto,
                 'importe' => $importe,
@@ -184,6 +197,8 @@ class NuevaEntrada extends Component
                     'clave_insumo_base' => $producto->clave_insumo_base,
                     'rendimiento' => $producto->rendimiento,
                     'id_proveedor' => $value->id_proveedor,
+                    'factura' => null,
+                    'cuenta_contable' => null,
                     'importe' => $value->importe, //Es lo mismo que multiplicar cantidad * costo_con_impuesto
                     'unidad' => $producto->unidad,
                 ];
@@ -225,6 +240,8 @@ class NuevaEntrada extends Component
                     'costo_con_impuesto' => $costo_con_impuesto,
                     'clave_insumo_base' => $detalle->presentacion->clave_insumo_base,
                     'id_proveedor' => $detalle->id_proveedor,
+                    'factura' => null,
+                    'cuenta_contable' => null,
                     'importe' => $cant_insum * $costo_con_impuesto,
                     'unidad' => $insumo->unidad,
                 ];
@@ -273,8 +290,14 @@ class NuevaEntrada extends Component
         //calcular subtotal
         $subtotal = round(array_sum(array_column($this->articulos_table, 'importe_sin_impuesto')), 2);
 
-        //Iniciar transaccion
+
         try {
+            //Validar que todas las filas tengan definido el atributo 'cuenta contable'
+            foreach ($validated['articulos_table'] as $row) {
+                if (!$row['cuenta_contable'])
+                    throw new Exception("Falta C.CONTABLE para: " . $row['descripcion']);
+            }
+            //Iniciar transaccion
             DB::transaction(function () use ($user, $validated, $subtotal, $iva) {
                 //Crear registro de la entrada
                 $result = EntradaNew::create([
@@ -297,6 +320,8 @@ class NuevaEntrada extends Component
                     //Crear movimientos de inventario
                     $this->createMovimientoAlmacen($row, $bodega, $result);
                 }
+                //Actualizar costos
+                $this->actualizarCostos($validated);
             }, 2);
             session()->flash('success-entrada', 'Entrada registrada correctamente');   //Mensaje de sesion
             $this->reset('clave_bodega', 'search_input', 'folio_requi', 'observaciones', 'selectedItems', 'articulos_table', 'locked_bodega');     //Limpiar propiedades
@@ -366,6 +391,8 @@ class NuevaEntrada extends Component
             'clave_insumo' => null,
             'descripcion' => $row['descripcion'],
             'id_proveedor' => $row['id_proveedor'],
+            'factura' => $row['factura'] ?: null,
+            'cuenta_contable' => $row['cuenta_contable'],
             'cantidad' => $row['cantidad'],
             'costo_unitario' => $row['costo'],
             'iva' => $row['iva'],
@@ -464,9 +491,30 @@ class NuevaEntrada extends Component
         $this->articulos_table[$index]['costo'] = round($costo_sin_iva, 2);
     }
 
+    /**
+     * Actualiza los costos del insumo o de las presentaciones.\
+     * Segun la naturaleza de la bodega de entrada.
+     */
+    public function actualizarCostos($validated)
+    {
+        $bodega = Bodega::find($validated['clave_bodega']);
+        //Crear instacia del servicio
+        $service = new InventarioService();
+        foreach ($validated['articulos_table'] as $key => $row) {
+            if ($bodega->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
+                $service->actualizarCostoPresen($row, $validated['fecha']);
+            } elseif ($bodega->naturaleza == AlmacenConstants::INSUMOS_KEY) {
+                $service->actualizarCostoInsum($row, $validated['fecha']);
+            } else {
+                throw new Exception("Naturaleza de bodega no valida", 1);
+            }
+        }
+    }
 
     public function render()
     {
-        return view('livewire.almacen.entradas.v2.nueva-entrada');
+        return view('livewire.almacen.entradas.v2.nueva-entrada', [
+            'cuentas' => AlmacenConstants::METODOS_PAGO
+        ]);
     }
 }

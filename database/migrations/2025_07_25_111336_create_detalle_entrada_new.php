@@ -18,6 +18,8 @@ return new class extends Migration
             $table->integer('clave_insumo')->nullable();
             $table->string('descripcion', 255);
             $table->integer('id_proveedor');
+            $table->string('factura', 100)->nullable();
+            $table->string('cuenta_contable', 100)->nullable();
             $table->decimal('cantidad', 11, 3);
             $table->decimal('costo_unitario', 10, 2);
             $table->decimal('iva', 10, 2);

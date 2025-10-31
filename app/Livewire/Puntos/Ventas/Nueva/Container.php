@@ -310,8 +310,8 @@ class Container extends Component
 
     public function guardarCompuesto($selected)
     {
-        //Buscar el producto compuesto, segun el primer modificador seleccionado
-        $producto = Producto::find(reset($selected)['clave_producto']);
+        //Buscar el producto compuesto
+        $producto = Producto::find($this->producto_compuesto['clave']);
         //Generar timeStamp
         $time = time();
         //Agregar el producto a la tabla

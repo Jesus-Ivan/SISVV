@@ -32,6 +32,8 @@ class RequisicionesForm extends Form
         $this->observaciones = $requisicion->observaciones;
         //Buscar los detalles de la requisicion
         $result = DetallesRequisicion::where('folio_requisicion', $requisicion->folio)->get();
+        //Limpiar la tabla
+        $this->presentaciones = [];
         //Agregarlos al array de presentaciones, (utilizado para la vista)
         foreach ($result as $detalle) {
             $this->presentaciones[] = [
@@ -73,7 +75,7 @@ class RequisicionesForm extends Form
             'costo_con_impuesto' => $presentacion['costo_con_impuesto'],
             'impuesto' => $importe - $importe_sin_impuesto,
             'importe_sin_impuesto' => $importe_sin_impuesto,
-            'importe' => $importe,  
+            'importe' => $importe,
         ];
     }
 
@@ -261,6 +263,8 @@ class RequisicionesForm extends Form
                         'costo_unitario' => $item['costo_unitario'],
                         'iva' => $item['iva'],
                         'costo_con_impuesto' => $item['costo_con_impuesto'],
+                        'importe_sin_impuesto' => $item['importe_sin_impuesto'],
+                        'impuesto' => $item['impuesto'],
                         'importe' => $item['importe']
                     ]);
             } else {
@@ -292,6 +296,9 @@ class RequisicionesForm extends Form
                 'iva' => $iva,
                 'total' => $subtotal + $iva
             ]);
+        $requi = Requisicion::find($this->requi_original->folio);
+        //Setear los nuevos valores editables en el form
+        $this->setValues($requi);
     }
 
     /**
@@ -310,9 +317,9 @@ class RequisicionesForm extends Form
      */
     public function multiplicarTabla()
     {
-        for ($i = 0; $i < count($this->presentaciones); $i++) {
-            $this->actualizarCostoSinIva($i);
-            $this->actualizarImporte($i);
+        foreach ($this->presentaciones as $key => $value) {
+            $this->actualizarCostoSinIva($key);
+            $this->actualizarImporte($key);
         }
     }
 }

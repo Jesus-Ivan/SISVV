@@ -3,6 +3,7 @@
 namespace App\Livewire\Almacen\Traspasos\V2;
 
 use App\Constants\AlmacenConstants;
+use App\Libraries\InventarioService;
 use App\Models\Bodega;
 use App\Models\DetallesRequisicion;
 use App\Models\DetalleTraspasoNew;
@@ -135,6 +136,10 @@ class NuevoTraspaso extends Component
         if ($this->clave_origen && $this->clave_destino) {
             $naturaleza_origen = Bodega::find($this->clave_origen)->naturaleza;
             $naturaleza_destino = Bodega::find($this->clave_destino)->naturaleza;
+            //Crear instacia del servicio del inventario
+            $inventario = new InventarioService();
+            //Obtener fecha y hora actuales
+            $hoy = now();
 
             //Filtramos los productos seleccionados
             $total_seleccionados = array_filter($this->selectedItems, function ($val) {
@@ -152,6 +157,7 @@ class NuevoTraspaso extends Component
                     $this->lista_articulos[] = [
                         'clave' => $producto->clave,
                         'descripcion' => $producto->descripcion,
+                        'existencia' => $inventario->existenciasInsumo($producto->clave_insumo_base, $hoy->toDateString(), $hoy->toTimeString(), $this->clave_origen)[0],
                         'cantidad' => 1,
                         'unidad' => $insumo_relacionado->unidad->descripcion,
                         'rendimiento' => $producto->rendimiento,
@@ -165,6 +171,7 @@ class NuevoTraspaso extends Component
                     $this->lista_articulos[] = [
                         'clave' => $producto->clave,
                         'descripcion' => $producto->descripcion,
+                        'existencia' => $inventario->existenciasInsumo($producto->clave, $hoy->toDateString(), $hoy->toTimeString(), $this->clave_origen)[0],
                         'cantidad' => 1,
                         'unidad' => $producto->unidad,
                         'rendimiento' => $producto->rendimiento,
@@ -230,6 +237,10 @@ class NuevoTraspaso extends Component
     {
         //Buscar los detalles de la requisicion
         $result = DetallesRequisicion::where('folio_requisicion', $this->folio_requisicion)->get();
+        //Crear instacia del servicio del inventario
+        $inventario = new InventarioService();
+        //Obtener fecha y hora actuales
+        $hoy = now();
         if (count($result)) {
             //Bloquear bodega de origen
             $this->locked_b_origen = true;
@@ -244,6 +255,7 @@ class NuevoTraspaso extends Component
                 $this->lista_articulos[] = [
                     'clave' => $value->clave_presentacion,
                     'descripcion' => $producto->descripcion,
+                    'existencia' => $inventario->existenciasInsumo($producto->clave_insumo_base, $hoy->toDateString(), $hoy->toTimeString(), $this->clave_origen)[0],
                     'cantidad' => $value->cantidad,
                     'clave_insumo_base' => $producto->clave_insumo_base,
                     'rendimiento' => $producto->rendimiento,
@@ -265,6 +277,10 @@ class NuevoTraspaso extends Component
         //Buscar los detalles de la requisicion
         $detalles = DetallesRequisicion::with('presentacion.insumo.unidad')
             ->where('folio_requisicion', $this->folio_requisicion)->get();
+        //Crear instacia del servicio del inventario
+        $inventario = new InventarioService();
+        //Obtener fecha y hora actuales
+        $hoy = now();
 
         //Si hay detalles en la BD
         if (count($detalles)) {
@@ -278,6 +294,7 @@ class NuevoTraspaso extends Component
                 $this->lista_articulos[] = [
                     'clave' => $detalle->presentacion->insumo->clave,
                     'descripcion' => $detalle->presentacion->insumo->descripcion,
+                    'existencia' => $inventario->existenciasInsumo($detalle->presentacion->clave_insumo_base, $hoy->toDateString(), $hoy->toTimeString(), $this->clave_origen)[0],
                     'cantidad' => $detalle->cantidad * $detalle->presentacion->rendimiento,
                     'unidad' => $detalle->presentacion->insumo->unidad,
                     'rendimiento' => null,

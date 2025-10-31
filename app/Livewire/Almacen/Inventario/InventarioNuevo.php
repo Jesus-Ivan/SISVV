@@ -119,6 +119,17 @@ class InventarioNuevo extends Component
         }
     }
 
+    /**
+     * Establece el concepto general para todos los movimientos de la tabla
+     */
+    public function conceptoGeneral($clave)
+    {
+        foreach ($this->table as $key => $row) {
+            if ($row['diferencia'] != 0)
+                $this->table[$key]['clave_concepto'] = $clave;
+        }
+    }
+
     public function guardar()
     {
         //Concatenar fecha y hora
@@ -127,6 +138,7 @@ class InventarioNuevo extends Component
         $bodega = $this->bodegas->find($this->clave_bodega);
 
         try {
+            $this->validarDiferencias();
             //Si la naturaleza de la bodega seleccionada es de 'presentaciones'
             if ($bodega->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
                 $this->guardarInvPresentacion($fecha);
@@ -143,6 +155,19 @@ class InventarioNuevo extends Component
         }
         //Emitir evento del alert
         $this->dispatch('open-action-message');
+    }
+
+    /**
+     * Lanza una excepcion si no hay al menos 1 valor con diferencia
+     */
+    private function validarDiferencias()
+    {
+        $dif = array_filter($this->table, function ($row) {
+            return $row['diferencia'] != 0;
+        });
+        if (!count($dif)) {
+            throw new Exception("No hay diferencias en el inventario", 1);
+        }
     }
 
     /**

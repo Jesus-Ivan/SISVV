@@ -9,6 +9,7 @@ use App\Models\Insumo;
 use App\Models\MovimientosAlmacen;
 use App\Models\Presentacion;
 use Carbon\Carbon;
+use Exception;
 
 class InventarioService
 {
@@ -66,7 +67,7 @@ class InventarioService
     }
 
     /**
-     * Esta funcion consulta las existencias de los insumos. 
+     * Esta funcion consulta las existencias de los insumos. Segun el grupo al que pertenece
      */
     public function consultarInsumos(Grupos $grupoInsumo, $fecha_inv, $hora_inv, $clave_bodega)
     {
@@ -297,14 +298,15 @@ class InventarioService
     }
 
     /**
-     * Obtiene la sumatoria de los movimientos de almacen. segun el tipo de movimientos y la bodega
+     * Obtiene la sumatoria de los movimientos de almacen. segun el concepto del movimientos y la bodega registrada
      */
-    public function obtenerExistenciasConceptos(array $clave_conceptos, $fecha_existencias, $clave_bodega)
+    public function obtenerMovimientosConceptos(array $clave_conceptos, $fecha_inicio, $fecha_fin, $clave_bodega)
     {
         //Obtener el total de los movimientos, agrupados por clave_insumo
         $movimientos = MovimientosAlmacen::select('clave_insumo')
             ->selectRaw('SUM(cantidad_insumo) as total_cantidad')
-            ->whereDate('fecha_existencias', $fecha_existencias)
+            ->whereDate('fecha_existencias', '>=', $fecha_inicio)
+            ->whereDate('fecha_existencias', '<=', $fecha_fin)
             ->whereIn('clave_concepto', $clave_conceptos)
             ->where('clave_bodega', $clave_bodega)
             ->groupBy('clave_insumo')
@@ -315,5 +317,79 @@ class InventarioService
         //Combinar las claves y los movimientos correspondientes
         $final = array_combine($keys, $movimientos);
         return $final;
+    }
+
+    /**
+     * Actualiza el costo de la presentacion y del insumo base
+     */
+    public function actualizarCostoPresen($row, $fecha)
+    {
+        //Buscar la presentacion, junto al insumo base
+        $presentacion = Presentacion::with('insumo')->find($row['clave']);
+        $insumo = $presentacion->insumo;
+        //nueva fecha de entrada
+        $nuevaFecha = $fecha;
+        //Fechas actual de "ultima compra"
+        $fechaExistente_presen = $presentacion->ultima_compra;
+        $fechaExistente_insum = $insumo->ultima_compra;
+
+        if (is_null($fechaExistente_presen) || $nuevaFecha >= $fechaExistente_presen) {
+            //Actualizar valores de la presentacion
+            $presentacion->costo = $row['costo'];
+            $presentacion->iva = $row['iva'];
+            $presentacion->costo_con_impuesto = $row['costo_con_impuesto'];
+            $presentacion->costo_rend = $row['costo'] / $presentacion->rendimiento;
+            $presentacion->costo_rend_impuesto = $row['costo_con_impuesto'] / $presentacion->rendimiento;
+            $presentacion->ultima_compra = $nuevaFecha;
+            $presentacion->save();
+        }
+        if (is_null($fechaExistente_insum) || $nuevaFecha >= $fechaExistente_insum) {
+            //Actualizar valores del insumo base
+            $insumo->costo = $row['costo'] / $presentacion->rendimiento;
+            $insumo->iva = $row['iva'];
+            $insumo->costo_con_impuesto = $row['costo_con_impuesto'] / $presentacion->rendimiento;
+            $insumo->ultima_compra = $nuevaFecha;
+            $insumo->save();
+        }
+    }
+
+    /**
+     * Actualiza el costo del insumo base y de la presentacion\
+     * Nota: en caso de tener mas de 1 presentacion, actualiza todas las presentaciones.
+     */
+    public function actualizarCostoInsum($row, $fecha)
+    {
+        //Buscar el insumo base y su presentacion(nes)
+        $insu = Insumo::with('presentaciones')->find($row['clave']);
+        $presentaciones = $insu->presentaciones;
+        //nueva fecha de entrada
+        $nuevaFecha = $fecha;
+        //fecha actual de "ultima compra"
+        $fechaExistente_insum = $insu->ultima_compra;
+
+        if (count($presentaciones) > 0) {
+            if (is_null($fechaExistente_insum) || $nuevaFecha >= $fechaExistente_insum) {
+                //Actualizar valores de todas las presentaciones
+                foreach ($presentaciones as $key => $p) {
+                    //Actualizar valores de la presentacion
+                    $p->costo = $row['costo'] * $p->rendimiento;
+                    $p->iva = $row['iva'];
+                    $p->costo_con_impuesto = $row['costo_con_impuesto'] * $p->rendimiento;
+                    $p->costo_rend = $row['costo'];
+                    $p->costo_rend_impuesto = $row['costo_con_impuesto'];
+                    $p->ultima_compra = $nuevaFecha;
+                    $p->save();
+                }
+
+                //Actualizar los costos del insumo
+                $insu->costo = $row['costo'];
+                $insu->iva = $row['iva'];
+                $insu->costo_con_impuesto = $row['costo_con_impuesto'];
+                $insu->ultima_compra = $nuevaFecha;
+                $insu->save();
+            }
+        } else {
+            throw new Exception("No hay presentaciones asignadas al insumo: " . $insu->descripcion);
+        }
     }
 }

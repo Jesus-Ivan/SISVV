@@ -762,12 +762,14 @@ class ReportesController extends Controller
         $requisicion = Requisicion::with('user')->find($folio);
 
         if ($order) {
-            $detalle = DetallesRequisicion::where('folio_requisicion', $folio)
+            $detalle = DetallesRequisicion::with('presentacion')
+                ->where('folio_requisicion', $folio)
                 ->orderBy('id_proveedor', 'ASC')
                 ->orderBy('descripcion', 'ASC')
                 ->get()->toArray();
         } else {
-            $detalle = DetallesRequisicion::where('folio_requisicion', $folio)
+            $detalle = DetallesRequisicion::with('presentacion')
+                ->where('folio_requisicion', $folio)
                 ->get()->toArray();
         }
         //Generamos array, para busqueda indexada
@@ -1171,18 +1173,26 @@ class ReportesController extends Controller
         $proveedores = $req->input('selected_proveedores');
         $f_inicio = $req->input('f_inicio');
         $f_fin = $req->input('f_fin');
+        $convertir_insumos = $req->input('convertir_insumos');
+
+        //Definir array de relaciones
+        $relations = ['proveedor', 'entrada'];
+        //Si esta activada la casilla de conversion de insumos
+        if ($convertir_insumos)
+            array_push($relations, 'insumo.presentaciones');
 
         //Consulta
-        $result = DetalleEntradaNew::with(['proveedor', 'entrada'])
+        $result = DetalleEntradaNew::with($relations)
             ->whereHas('entrada', function ($query) use ($f_inicio, $f_fin) {
                 $query->whereDate('fecha_existencias', '>=', $f_inicio)
                     ->whereDate('fecha_existencias', '<=', $f_fin);
             })
             ->whereIn('id_proveedor', $proveedores)
             ->get();
+
         //Devolvemos el excel
         return Excel::download(
-            new EntradasExport($result->toArray()),
+            new EntradasExport($result->toArray(), $convertir_insumos),
             'Entradas ' . $f_inicio . ' - ' . $f_fin . '.xlsx'
         );
     }
@@ -1238,13 +1248,16 @@ class ReportesController extends Controller
             ->get();
         $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
         //Establecer fecha inicial
-        $fecha = now()->subDay()->toDateString();
+        $fecha = now()->startOfMonth()->toDateString();
+        //Establecer fecha final
+        $fecha_fin = now()->endOfMonth()->toDateString();
 
         //Devolver la vista
         return view('almacen.Documentos.cruze-existencias', [
             'grupos' => $grupos,
             'bodegas' => $bodegas,
             'fecha' => $fecha,
+            'fecha_fin' => $fecha_fin
         ]);
     }
 
@@ -1255,11 +1268,12 @@ class ReportesController extends Controller
     {
         $clave_bodega = $request->input('clave_bodega');
         $fecha = $request->input('fecha');
+        $fecha_fin = $request->input('fecha_fin');
 
         $grupos = $request->input('selected_grupos');   //Array de los id de grupos seleccionados
-
+        
         return Excel::download(
-            new CruceInventarioExport($clave_bodega, $fecha, $grupos),
+            new CruceInventarioExport($clave_bodega, $fecha, $fecha_fin, $grupos),
             'Cruce inventario ' . $fecha . '.xlsx',
         );
     }

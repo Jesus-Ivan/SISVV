@@ -6,7 +6,7 @@
 
     {{-- Titulo --}}
     <div class="container py-2">
-        <h4 class="ms-3 text-2xl font-bold dark:text-white">CRUZAR EXISTENCIAS - VENTAS</h4>
+        <h4 class="ms-3 text-2xl font-bold dark:text-white">CRUZAR EXISTENCIAS</h4>
     </div>
     <div class="flex justify-center" x-data="{
         selectAll: false,
@@ -37,9 +37,20 @@
                             @endforeach
                         </select>
                     </div>
-                    {{-- SELECT FECHA --}}
+                    {{-- SELECT FECHA INICIO --}}
                     <div>
                         <input type="date" value="{{ $fecha }}" id="fecha" name="fecha"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                        @error('fecha')
+                            <x-input-error messages="{{ $message }}" />
+                        @enderror
+                    </div>
+                    <div>
+                        -->
+                    </div>
+                    {{-- SELECT FECHA FIN --}}
+                    <div>
+                        <input type="date" value="{{ $fecha_fin }}" id="fecha_fin" name="fecha_fin"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                         @error('fecha')
                             <x-input-error messages="{{ $message }}" />

@@ -41,13 +41,13 @@ class InventarioNuevo extends Component
         $this->hora_inv = now()->toTimeString("minute");
     }
 
-    #[Computed()]
+    #[Computed(persist: true)]
     public function bodegas()
     {
         return Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
     }
 
-    #[Computed()]
+    #[Computed(persist: true)]
     public function grupos()
     {
         $result = Grupos::where('tipo', AlmacenConstants::INSUMOS_KEY)
@@ -55,7 +55,7 @@ class InventarioNuevo extends Component
         return $result;
     }
 
-    #[Computed()]
+    #[Computed(persist: true)]
     public function conceptos()
     {
         return ConceptoAlmacen::where('visible_inv_fisico', 1)
@@ -127,6 +127,22 @@ class InventarioNuevo extends Component
         foreach ($this->table as $key => $row) {
             if ($row['diferencia'] != 0)
                 $this->table[$key]['clave_concepto'] = $clave;
+        }
+    }
+
+    /**
+     * Reestablece todas la existencias reales a 0\
+     * Multiplica la tabla y calcula los totales.
+     * NOTA: Este movimimiento se realiza en base a la fecha de existencias seleccionada\
+     * y puede causar desfaces de inventario si se ajustan fechas pasadas
+     */
+    public function limpiarExistencias()
+    {
+        //dd($this->table);
+        foreach ($this->table as $key => $row) {
+            //Actualizar las existencias reales
+            $this->table[$key]['existencias_real'] = 0;
+            $this->actualizarReal($key, true);
         }
     }
 
@@ -314,7 +330,7 @@ class InventarioNuevo extends Component
         $dif = $row['existencias_real'] - $row['existencias_presentacion'];     //Calcular diferencia en las existencias de la presentacion
         //Actualizar los atributos
         $row['diferencia'] = $dif;
-        $row['diferencia_importe'] = $dif * $row['costo_con_impuesto'];
+        $row['diferencia_importe'] =  $row['costo_con_impuesto'] > 0 ? $dif * $row['costo_con_impuesto'] : 0;
 
         //Actualizar el concepto del ajuste, segun el valor de la diferencia
         if ($update_concepto) {
@@ -343,7 +359,7 @@ class InventarioNuevo extends Component
         $dif = $row['existencias_real'] - $row['existencias_insumo'];     //Calcular diferencia en las existencias de la presentacion
         //Actualizar los atributos
         $row['diferencia'] = $dif;
-        $row['diferencia_importe'] = $dif * $row['costo_con_impuesto'];
+        $row['diferencia_importe'] = $row['costo_con_impuesto'] > 0 ? $dif * $row['costo_con_impuesto'] : 0;
         //Actualizar el concepto del ajuste
         if ($update_concepto) {
             if ($dif > 0)

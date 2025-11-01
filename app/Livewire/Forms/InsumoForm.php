@@ -39,22 +39,20 @@ class InsumoForm extends Form
         $this->inventariable = boolval($insumo->inventariable);
         $this->elaborado = boolval($insumo->elaborado);
         $this->rendimiento = $insumo->rendimiento_elaborado;
-        //Si es insumo elaborado, buscar los ingredientes (insumos que necesita)
-        if ($insumo->elaborado) {
-            $result = Receta::with('ingrediente')
-                ->where('clave_insumo_elaborado', $insumo->clave)
-                ->get();
-            foreach ($result as $key => $insumo) {
-                $this->subtable[] = [
-                    'id' => $insumo->id,
-                    'clave' => $insumo->clave_insumo,
-                    'descripcion' => $insumo->ingrediente->descripcion,
-                    'cantidad' => $insumo->cantidad,
-                    'unidad' => ['descripcion' => $insumo->ingrediente->unidad->descripcion],
-                    'costo_con_impuesto' => $insumo->ingrediente->costo_con_impuesto,
-                    'total' => $insumo->total,
-                ];
-            }
+        //buscar los ingredientes (insumos que necesita)
+        $result = Receta::with('ingrediente')
+            ->where('clave_insumo_elaborado', $insumo->clave)
+            ->get();
+        foreach ($result as $key => $insumo) {
+            $this->subtable[] = [
+                'id' => $insumo->id,
+                'clave' => $insumo->clave_insumo,
+                'descripcion' => $insumo->ingrediente->descripcion,
+                'cantidad' => $insumo->cantidad,
+                'unidad' => ['descripcion' => $insumo->ingrediente->unidad->descripcion],
+                'costo_con_impuesto' => $insumo->ingrediente->costo_con_impuesto,
+                'total' => $insumo->total,
+            ];
         }
     }
 
@@ -159,6 +157,7 @@ class InsumoForm extends Form
             $this->original->iva = $this->iva;
             $this->original->costo_con_impuesto = $validated['costo_iva'];
             $this->original->inventariable = $this->inventariable;
+            $this->original->elaborado = $this->elaborado;
             //Si es un insumo elaborado, verificar sus propiedades extra
             if ($this->elaborado) {
                 $this->original->rendimiento_elaborado = $validated['rendimiento'];

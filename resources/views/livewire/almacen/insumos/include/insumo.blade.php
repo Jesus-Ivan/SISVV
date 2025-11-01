@@ -104,7 +104,7 @@
         </div>
     </div>
     {{-- Insumo elaborado separador --}}
-    <div class="{{ $this->form->original ? 'pointer-events-none opacity-50' : '' }} flex items-center my-3 ">
+    <div class="flex items-center my-3 ">
         <div class="flex w-60">
             <div class="flex items-center h-5">
                 <input wire:model.live='form.elaborado' id="es-inv" aria-describedby="es-inv-text" type="checkbox"

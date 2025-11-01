@@ -1,5 +1,6 @@
 <div class="relative overflow-x-auto shadow-md sm:rounded-lg my-2">
-    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+    <table wire:loading.remove wire:target='limpiarExistencias, conceptoGeneral'
+        class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
                 <th scope="col" class="px-3 py-3">
@@ -14,8 +15,23 @@
                 <th scope="col" class="px-3 py-3">
                     EXISTENCIA TEÓRICA
                 </th>
-                <th scope="col" class="px-3 py-3">
-                    EXISTENCIA REAL
+                <th scope="col" class="px-3 py-3 flex">
+                    <span class="flex-grow">
+                        EXISTENCIA REAL
+                    </span>
+                    <x-dropdown>
+                        <x-slot name="trigger">
+                            <svg class="w-5 h-5 text-gray-800 dark:text-white" aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                                viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-width="4"
+                                    d="M12 6h.01M12 12h.01M12 18h.01" />
+                            </svg>
+                        </x-slot>
+                        <x-slot name="content">
+                            <x-dropdown-link wire:click="limpiarExistencias">Limpiar existencias</x-dropdown-link>
+                        </x-slot>
+                    </x-dropdown>
                 </th>
                 <th scope="col" class="px-3 py-3">
                     DIFERENCIA
@@ -30,7 +46,7 @@
                     <span class="flex-grow">
                         CONCEPTO
                     </span>
-                    <x-dropdown >
+                    <x-dropdown>
                         <x-slot name="trigger">
                             <svg class="w-5 h-5 text-gray-800 dark:text-white" aria-hidden="true"
                                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
@@ -92,4 +108,13 @@
             @endforeach
         </tbody>
     </table>
+    <div class="w-full" wire:loading wire:target='limpiarExistencias, conceptoGeneral'>
+        <div
+            class="flex items-center justify-center h-56 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+            <div
+                class="w-fit px-3 py-1 text-base font-semibold leading-none text-center text-blue-800 bg-blue-200 rounded-full animate-pulse dark:bg-blue-900 dark:text-blue-200">
+                <p>Ajustando valores ...</p>
+            </div>
+        </div>
+    </div>
 </div>

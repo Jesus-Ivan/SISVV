@@ -118,7 +118,7 @@ class Container extends Component
             ->whereNot('estado', 0);
         //Si hay un grupo definido como servicio
         if ($gp_servicio) {
-            $result->whereNot('id_grupo', $gp_servicio->id);//Agregar el query
+            $result->whereNot('id_grupo', $gp_servicio->id); //Agregar el query
         }
         return $result
             ->orderBy('descripcion', 'ASC')

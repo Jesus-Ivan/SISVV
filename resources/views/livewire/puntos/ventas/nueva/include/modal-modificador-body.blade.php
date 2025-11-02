@@ -16,6 +16,8 @@
     },
     filtrar_modificadores(id_grupo) {
         this.modificadores_filtrados = $wire.modificadores.filter(modif => modif.id_grupo == id_grupo);
+        //Ordenar los resultados filtrados
+        this.modificadores_filtrados = this.modificadores_filtrados.sort((a, b) => a.descripcion.localeCompare(b.descripcion));
     },
     cancelar() {
         $wire.limpiarCompuesto();

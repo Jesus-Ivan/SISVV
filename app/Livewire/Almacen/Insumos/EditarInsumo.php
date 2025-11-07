@@ -18,13 +18,14 @@ class EditarInsumo extends Component
 {
     public InsumoForm $form;
 
-    public function mount($clave){
+    public function mount($clave)
+    {
         //Buscar el insumo
         $insumo = Insumo::find($clave);
         if ($insumo) {
             //Setar los valores editables en el form
             $this->form->setValues($insumo);
-        }else{
+        } else {
             //redirigir al usuario en caso de no existir la presentacion
             $this->redirectRoute('almacen.insumos');
         }
@@ -52,7 +53,8 @@ class EditarInsumo extends Component
         $this->form->agregarInsumo($clave);
     }
 
-    public function eliminarInsumo($indexSubTable){
+    public function eliminarInsumo($indexSubTable)
+    {
         $this->form->marcarInsumo($indexSubTable);
     }
 
@@ -91,11 +93,11 @@ class EditarInsumo extends Component
         $this->form->calcularPrecioSinIva();
     }
 
-    public function changedCantidad(){
-        $this->form->recalcularSubtotales();
-        
+    public function changedCantidad($index)
+    {
+        $this->form->recalcularSubtotales($index);
     }
-    
+
     public function render()
     {
         return view('livewire.almacen.insumos.editar-insumo');

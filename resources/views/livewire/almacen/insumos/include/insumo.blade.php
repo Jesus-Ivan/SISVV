@@ -155,7 +155,10 @@
                             Insumo
                         </th>
                         <th scope="col" class="px-6 py-3">
-                            Cantidad
+                            C.SIN MERMA
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            C.CON MERMA
                         </th>
                         <th scope="col" class="px-6 py-3">
                             Unidad
@@ -186,9 +189,22 @@
                                 <td class="px-6 py-2">
                                     <input type="number" step="0.001"
                                         wire:model='form.subtable.{{ $index }}.cantidad'
-                                        wire:change ='changedCantidad'
+                                        wire:change ='changedCantidad({{ $index }})'
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                         placeholder="0.000" />
+                                    @error('form.subtable.' . $index . '.cantidad')
+                                        <x-input-error messages="{{ $message }}" />
+                                    @enderror
+                                </td>
+                                <td class="px-6 py-2">
+                                    <input type="number" step="0.001"
+                                        wire:model='form.subtable.{{ $index }}.cantidad_c_merma'
+                                        wire:change ='changedCantidad({{ $index }})'
+                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                        placeholder="0.000" />
+                                    @error('form.subtable.' . $index . '.cantidad_c_merma')
+                                        <x-input-error messages="{{ $message }}" />
+                                    @enderror
                                 </td>
                                 <td class="px-6 py-2">
                                     {{ $item['unidad']['descripcion'] }}

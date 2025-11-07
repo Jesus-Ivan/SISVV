@@ -49,6 +49,7 @@ class InsumoForm extends Form
                 'clave' => $insumo->clave_insumo,
                 'descripcion' => $insumo->ingrediente->descripcion,
                 'cantidad' => $insumo->cantidad,
+                'cantidad_c_merma' => $insumo->cantidad_c_merma,
                 'unidad' => ['descripcion' => $insumo->ingrediente->unidad->descripcion],
                 'costo_con_impuesto' => $insumo->ingrediente->costo_con_impuesto,
                 'total' => $insumo->total,
@@ -72,6 +73,7 @@ class InsumoForm extends Form
                 'rendimiento' => 'required|numeric',
                 'subtable' => 'min:1'
             ]);
+            $this->validarReceta();
         } else {
             //Validar las propiedades de un insumo normal
             $validated = $this->validate([
@@ -111,7 +113,7 @@ class InsumoForm extends Form
                         'clave_insumo_elaborado' => $result->clave,
                         'clave_insumo' => $insumo['clave'],
                         'cantidad' => $insumo['cantidad'],
-                        'cantidad_c_merma' => null,
+                        'cantidad_c_merma' => $insumo['cantidad_c_merma'],
                         'total' => $insumo['total'],
                     ]);
                 };
@@ -137,6 +139,7 @@ class InsumoForm extends Form
                 'rendimiento' => 'required|numeric',
                 'subtable' => 'min:1'
             ]);
+            $this->validarReceta();
         } else {
             //Validar las propiedades de un insumo normal
             $validated = $this->validate([
@@ -173,6 +176,7 @@ class InsumoForm extends Form
                         Receta::where('id', $insumo['id'])
                             ->update([
                                 'cantidad' => $insumo['cantidad'],
+                                'cantidad_c_merma' => $insumo['cantidad_c_merma'],
                                 'total' => $insumo['total'],
                             ]);
                     } else {
@@ -181,7 +185,7 @@ class InsumoForm extends Form
                             'clave_insumo_elaborado' => $this->original->clave,
                             'clave_insumo' => $insumo['clave'],
                             'cantidad' => $insumo['cantidad'],
-                            'cantidad_c_merma' => null,
+                            'cantidad_c_merma' => $insumo['cantidad_c_merma'],
                             'total' => $insumo['total'],
                         ]);
                     }
@@ -201,12 +205,11 @@ class InsumoForm extends Form
         //Convertir en array el insumo
         $result = $result->toArray();
         //Agregar propiedades necesarias para la tabla (cantidad y total) de insumo elaborado
-        $result['cantidad'] = 1;
-        $result['total'] = $result['costo_con_impuesto'];
+        $result['cantidad'] = null;
+        $result['cantidad_c_merma'] = null;
+        $result['total'] = 0;
         //Añadir al array
         $this->subtable[] = $result;
-        //Multiplicar cada elemento de la tabla (costo_con_impuesto * cantidad)
-        $this->recalcularSubtotales();
     }
 
     public function calcularPrecioIva()
@@ -220,9 +223,6 @@ class InsumoForm extends Form
         //Calcular costo con iva
         $costo_iva = $this->costo + ($this->costo * ($this->iva / 100));
         $this->costo_iva = round($costo_iva, 2);
-        /**
-         * Corregir cuando se dejan vacios los campos de iva, costo sin impuesto
-         */
     }
     public function calcularPrecioSinIva()
     {
@@ -232,9 +232,6 @@ class InsumoForm extends Form
         //Calcular Costo sin iva
         $costo_sin_iva = ($this->costo_iva * 100) / (100 + $this->iva);
         $this->costo = round($costo_sin_iva, 2);
-        /**
-         * Corregir cuando se dejan vacios los campos de iva, costo sin impuesto
-         */
     }
 
     /**
@@ -245,7 +242,9 @@ class InsumoForm extends Form
         //Eliminar el item del array de insumo elaborado
         unset($this->subtable[$index]);
         //Multiplicar cada elemento de la tabla (costo_con_impuesto * cantidad)
-        $this->recalcularSubtotales();
+        foreach ($this->subtable as $key => $value) {
+            $this->recalcularSubtotales($key);
+        }
     }
 
     /**
@@ -257,22 +256,44 @@ class InsumoForm extends Form
     }
 
     /**
-     * Multiplica toda la tabla de insumos (elaborado).
-     *  total = cantidad * costo_con_impuesto
+     * Multiplica la fila de la tabla de insumos (elaborado).\
+     * total = cantidad_c_merma * costo_con_impuesto.\
+     * Actualiza el costo_con_impuesto del insumo general
      */
-    public function recalcularSubtotales()
+    public function recalcularSubtotales($index)
     {
-        //Funcion para multiplicar cada item del array
-        $func = function (array $value): array {
-            //Si 'cantidad' es un string vacio 
-            if (strlen($value['cantidad']) == 0)
-                $value['cantidad'] = '1';       //asignar un nuevo valor
-            $value['total'] = round($value['cantidad'] * $value['costo_con_impuesto'], 2);
-            return $value;
-        };
-        //Mapeo de la tabla
-        $updatedTable = array_map($func, $this->subtable);
+        //Obtenemos la fila original
+        $row =  $this->subtable[$index];
+        //Si 'cantidad' es un string vacio 
+        if (strlen($row['cantidad']) == 0)
+            $row['cantidad'] = '1';       //asignar un nuevo valor
+        //Si 'cantidad_c_merma' es un string vacio 
+        if (strlen($row['cantidad_c_merma']) == 0)
+            $row['cantidad_c_merma'] = '1';       //asignar un nuevo valor
+        $row['total'] = round($row['cantidad_c_merma'] * $row['costo_con_impuesto'], 2);
+
         //Actualizar la tabla
-        $this->subtable = $updatedTable;
+        $this->subtable[$index] = $row;
+
+        //Calcular el costo con impuesto del insumo elaborado
+        $this->costo_iva = round(array_sum(array_column($this->subtable, 'total')), 2);
+        //calcular el costo sin iva
+        $this->calcularPrecioSinIva();
+    }
+
+    /**
+     * Contiene las reglas para validar los insumos de la receta.\
+     */
+    public function validarReceta()
+    {
+        foreach ($this->subtable as $index => $insumo) {
+            $this->validate([
+                'subtable.' . $index . '.cantidad' => 'required',
+                'subtable.' . $index . '.cantidad_c_merma'  => 'required'
+            ], [
+                'subtable.*.cantidad.required' => 'Obligatorio',
+                'subtable.*.cantidad_c_merma.required' => 'Obligatorio',
+            ]);
+        }
     }
 }

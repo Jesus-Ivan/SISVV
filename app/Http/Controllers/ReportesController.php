@@ -8,6 +8,7 @@ use App\Exports\CarteraVencidaExport;
 use App\Exports\CruceInventarioExport;
 use App\Exports\EntradasExport;
 use App\Exports\FacturasExport;
+use App\Exports\InvSemanalExport;
 use App\Exports\RecibosExport;
 use App\Exports\SociosExport;
 
@@ -51,6 +52,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Luecano\NumeroALetras\NumeroALetras;
+use Maatwebsite\Excel\Excel as ExcelExcel;
 
 class ReportesController extends Controller
 {
@@ -1100,7 +1102,7 @@ class ReportesController extends Controller
     }
 
     /**
-     * Genera el pdf de la semana correspondiente, a la tabla de inventarios
+     * Genera el Excel de la semana correspondiente, a la tabla de inventarios
      */
     public function postInvSemanal(Request $request)
     {
@@ -1123,30 +1125,25 @@ class ReportesController extends Controller
 
         if ($bodega->naturaleza == AlmacenConstants::INSUMOS_KEY) {
             //Obtener los Insumos
-            $result  = Insumo::where('inventariable', 1)
+            $result  = Insumo::with('grupo')
+                ->where('inventariable', 1)
                 ->whereIn('id_grupo', $grupos)
                 ->orderBy('descripcion')
                 ->get();
         } else {
             //Obtener las presentaciones
-            $result = Presentacion::where('estado', 1)
+            $result = Presentacion::with('grupo')
+                ->where('estado', 1)
                 ->whereIn('id_grupo', $grupos)
                 ->orderBy('descripcion')
                 ->get();
         }
 
-        //Cargar la vista del reporte
-        $pdf = Pdf::loadView('reportes.tabla-inv-semanal', [
-            'articulos' => $result,
-            'fechas' => $fechas,
-            'bodega' => $bodega,
-        ]);
-
-        //Definir fuente 
-        $pdf->setOption(['defaultFont' => 'Courier']);
-        //Definir orientacion y tamaño
-        $pdf->setPaper([0, 0, 612.283, 792], 'portrait'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
-        return $pdf->stream('existencias' . now()->toDateString() . '.pdf');
+        //Devolvemos el excel
+        return Excel::download(
+            new InvSemanalExport($result->toArray(), $fechas, $bodega),
+            'Tabla Inventarios ' . $fecha . '.xlsx'
+        );
     }
 
     /**
@@ -1271,7 +1268,7 @@ class ReportesController extends Controller
         $fecha_fin = $request->input('fecha_fin');
 
         $grupos = $request->input('selected_grupos');   //Array de los id de grupos seleccionados
-        
+
         return Excel::download(
             new CruceInventarioExport($clave_bodega, $fecha, $fecha_fin, $grupos),
             'Cruce inventario ' . $fecha . '.xlsx',

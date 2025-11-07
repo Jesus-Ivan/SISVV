@@ -39,7 +39,8 @@ class NuevoInsumo extends Component
         $this->form->agregarInsumo($clave);
     }
 
-    public function eliminarInsumo($indexSubTable){
+    public function eliminarInsumo($indexSubTable)
+    {
         $this->form->eliminarInsumoSeleccionado($indexSubTable);
     }
 
@@ -62,7 +63,7 @@ class NuevoInsumo extends Component
         }
     }
 
-    
+
     public function changedCosto()
     {
         $this->form->calcularPrecioIva();
@@ -77,8 +78,9 @@ class NuevoInsumo extends Component
         $this->form->calcularPrecioSinIva();
     }
 
-    public function changedCantidad(){
-        $this->form->recalcularSubtotales();
+    public function changedCantidad($index)
+    {
+        $this->form->recalcularSubtotales($index);
     }
 
     public function render()

@@ -12,11 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('detalles_transformacion', function (Blueprint $table) {
-            $table->integer('folio_transformaciones');
-            $table->integer('codigo_materia_prima');
-            $table->float('peso_ocupado');
-            $table->smallInteger('cantidad_ocupada');
-            $table->float('merma_transformacion');
+            $table->integer('id')->autoIncrement()->unsigned();
+            $table->integer('folio_transformacion')->unsigned();
+            $table->integer('clave_insumo_elaborado');
+            $table->decimal('cantidad', 11, 3);
+            $table->decimal('rendimiento', 11, 3);
+            $table->decimal('total_elaborado', 11, 3);
+            $table->integer('clave_insumo_receta');
+            $table->decimal('cantidad_insumo', 11, 3);
+            $table->decimal('cantidad_con_merma', 11, 3);
+            $table->decimal('total_sin_merma', 11, 3);
+            $table->decimal('merma', 11, 3);
+            $table->decimal('total_con_merma', 11, 3);
+
 
             /*//Relaciones
 

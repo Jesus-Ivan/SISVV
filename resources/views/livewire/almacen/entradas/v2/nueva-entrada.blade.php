@@ -131,7 +131,7 @@
                             <select wire:model='articulos_table.{{ $index }}.id_proveedor'
                                 class="w-fit bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 <option selected value="{{ null }}">Seleccione</option>
-                                @foreach ($this->proveedores as $i => $p)
+                                @foreach ($this->proveedores as $p)
                                     <option value="{{ $p->id }}">{{ $p->nombre }}</option>
                                 @endforeach
                             </select>

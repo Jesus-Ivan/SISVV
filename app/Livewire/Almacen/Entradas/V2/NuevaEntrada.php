@@ -47,13 +47,13 @@ class NuevaEntrada extends Component
             $this->selectedItems = [];
         }
         if ($property == "cuenta") {
-            for ($i = 0; $i < count($this->articulos_table); $i++) {
-                $this->articulos_table[$i]['cuenta_contable'] = $val;
+            foreach ($this->articulos_table as $key => $value) {
+                $this->articulos_table[$key]['cuenta_contable'] = $val;
             }
         }
         if ($property == "proveedor") {
-            for ($i = 0; $i < count($this->articulos_table); $i++) {
-                $this->articulos_table[$i]['id_proveedor'] = $val;
+            foreach ($this->articulos_table as $key => $value) {
+                $this->articulos_table[$key]['id_proveedor'] = $val;
             }
         }
     }

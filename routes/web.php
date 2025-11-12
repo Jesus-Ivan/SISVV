@@ -166,6 +166,13 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
         Route::view('/nuevo', 'almacen.Traspasos.v2.nuevo-traspaso')->name('almacen.traspasov2.nuevo');
         Route::view('/historial', 'almacen.Traspasos.v2.historial')->name('almacen.traspasov2.historial');
     });
+
+    //Nueva ruta de produccion de insumos
+    Route::prefix('produccion-insumos')->group(function () {
+        Route::view('/', 'almacen.Produccion.produccion')->name('almacen.produccion');
+        Route::view('/nueva-prod', 'almacen.Produccion.nueva-produccion')->name('almacen.produccion.nuevo');
+        Route::view('/historial-prod', 'almacen.Produccion.historial-produccion')->name('almacen.produccion.historial');
+    });
 });
 
 Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function () {

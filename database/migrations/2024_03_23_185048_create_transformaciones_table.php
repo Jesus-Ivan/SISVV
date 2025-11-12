@@ -13,11 +13,12 @@ return new class extends Migration
     {
         Schema::create('transformaciones', function (Blueprint $table) {
             $table->integer('folio')->primary()->unsigned();
-            $table->integer('codigo_insumo');
-            $table->dateTime('fecha');
-            $table->smallInteger('cantidad_ocupada');
-            $table->float('peso_resultante');
-
+            $table->integer('id_user');
+            $table->string('clave_origen', 50);
+            $table->string('clave_destino', 50);
+            $table->string('observaciones', 255)->nullable();
+            $table->dateTime('fecha_existencias');
+            $table->timestamps();
             //Relaciones
 
             //$table->foreign('codigo_insumo')->references('codigo')->on('ICO_insumos');

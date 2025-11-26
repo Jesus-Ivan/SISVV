@@ -1,31 +1,31 @@
-<div>
+<div class="p-2">
     {{-- TITULO --}}
-    <h4 class="flex items-center ms-2 text-2xl font-bold dark:text-white">HISTORIAL PRODUCCION</h4>
+    <h4 class="flex items-center text-2xl font-bold dark:text-white">HISTORIAL PRODUCCION</h4>
     {{-- BARA PRINCIPAL DE BUSQUEDA --}}
     <div class="flex gap-3 items-end">
         {{-- INPUT MES --}}
         <div>
             <label for="name" class="block mb-1 text-base font-medium text-gray-900 dark:text-white">
                 Buscar por mes:</label>
-            <input type="month" wire:model='mes_busqueda'
+            <input type="month" wire:model.live.debounce.500ms='mes_busqueda'
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
         </div>
         {{-- Barra de busqueda --}}
         <div class="w-64">
             <livewire:search-bar tittle="Buscar insumo" table="insumos" :columns="['clave', 'descripcion']" primary="clave"
-                event="selected-articulo" />
+                event="selected-insumo" :conditions="[['elaborado', '=', 1]]" />
         </div>
         {{-- boton de busqueda --}}
         <div>
-            <button type="button" wire:click='actualizar'
+            <button type="button" wire:click='buscar'
                 class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                <svg wire:loading.remove wire:target='actualizar' class="w-6 h-6" aria-hidden="true"
+                <svg wire:loading.remove wire:target='buscar' class="w-6 h-6" aria-hidden="true"
                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
                         d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
                 </svg>
                 <!--Loading indicator-->
-                <div wire:loading wire:target='actualizar'>
+                <div wire:loading wire:target='buscar'>
                     @include('livewire.utils.loading', ['w' => 6, 'h' => 6])
                 </div>
                 <span class="sr-only">Buscar</span>

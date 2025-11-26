@@ -71,6 +71,22 @@ class AlmacenConstants
 
 
     /**
+     * Es la clave del concepto de "E. POR PRODUCCION" de la tabla 'conceptos_almacen'
+     */
+    public const ENT_PROD_KEY = "EPP";
+
+    /**
+     * Es la clave del concepto de "S. POR PRODUCCION" de la tabla 'conceptos_almacen'
+     */
+    public const SAL_PROD_KEY = "SPP";
+
+    /**
+     * Es la clave del concepto de "S. POR MERMA" de la tabla 'conceptos_almacen'
+     */
+    public const SAL_MER_KEY = "SPM";
+
+
+    /**
      * Array asociativo que relaciona la clave del punto de venta, con su columna de stock correspondiente de la tabla 'stocks'
      */
     public const PUNTOS_STOCK = [

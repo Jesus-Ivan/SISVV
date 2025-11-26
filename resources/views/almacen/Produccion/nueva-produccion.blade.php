@@ -5,3 +5,15 @@
     </x-slot>
     <livewire:almacen.produccion.nueva-produccion />
 </x-app-layout>
+<style>
+    input[type="number"] {
+        -webkit-appearance: none;
+        /* Desactiva la apariencia predeterminada */
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        display: none;
+        /* Oculta los botones */
+    }
+</style>

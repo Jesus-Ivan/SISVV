@@ -179,7 +179,8 @@
                             </div>
                             {{-- BODEGA DE ORIGEN --}}
                             <div class="w-full">
-                                <select tabindex="-1"id="b_origen" wire:model='clave_origen' wire:change ='actualizarItems'
+                                <select tabindex="-1"id="b_origen" wire:model='clave_origen'
+                                    wire:change ='actualizarItems'
                                     class="{{ $locked_b_origen ? 'opacity-50 pointer-events-none' : '' }}  bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                     <option selected value="{{ null }}">ORIGEN</option>
                                     @foreach ($this->bodegas as $b)
@@ -192,7 +193,8 @@
                             </div>
                             {{-- BODEGA DE DESTINO --}}
                             <div class="w-full">
-                                <select tabindex="-1" id="b_destino" wire:model='clave_destino' wire:change ='actualizarItems'
+                                <select tabindex="-1" id="b_destino" wire:model='clave_destino'
+                                    wire:change ='actualizarItems'
                                     class="{{ $locked_b_destino ? 'opacity-50 pointer-events-none' : '' }}  bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                     <option selected value="{{ null }}">DESTINO</option>
                                     @foreach ($this->bodegas as $b)
@@ -283,6 +285,7 @@
                         </div>
                     </button>
                 </div>
+            </div>
         </x-slot>
     </x-modal>
 </div>

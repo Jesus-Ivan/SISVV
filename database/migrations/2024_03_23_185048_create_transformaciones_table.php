@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transformaciones', function (Blueprint $table) {
-            $table->integer('folio')->primary()->unsigned();
+            $table->integer('folio')->autoIncrement()->unsigned();
             $table->integer('id_user');
             $table->string('clave_origen', 50);
             $table->string('clave_destino', 50);

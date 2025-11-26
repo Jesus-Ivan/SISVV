@@ -50,4 +50,9 @@ class Insumo extends Model
     {
         return $this->hasMany(Presentacion::class, 'clave_insumo_base');
     }
+
+    public function receta(): HasMany
+    {
+        return $this->hasMany(Receta::class, 'clave_insumo_elaborado');
+    }
 }

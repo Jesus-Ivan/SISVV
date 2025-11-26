@@ -301,7 +301,7 @@ class NuevaEntrada extends Component
             DB::transaction(function () use ($user, $validated, $subtotal, $iva) {
                 //Crear registro de la entrada
                 $result = EntradaNew::create([
-                    'folio_requisicion' => $this->folio_requi,
+                    'folio_requisicion' => $this->folio_requi ?: null,
                     'clave_bodega' => $validated['clave_bodega'],
                     'fecha_existencias' => $validated['fecha_existencias'],
                     'observaciones' => $this->observaciones,

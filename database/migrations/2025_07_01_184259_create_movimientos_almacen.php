@@ -17,6 +17,7 @@ return new class extends Migration
             $table->integer('folio_traspaso')->nullable();
             $table->integer('folio_inventario')->nullable();
             $table->integer('corte_caja')->nullable();
+            $table->integer('folio_transformacion')->nullable();
             $table->string('clave_concepto', 255);
             $table->integer('clave_insumo')->nullable();
             $table->integer('clave_presentacion')->nullable();

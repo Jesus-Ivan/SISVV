@@ -328,7 +328,7 @@ class NuevoTraspaso extends Component
             DB::transaction(function () use ($user, $validated) {
                 //Registro de traspaso
                 $result = TraspasoNew::create([
-                    'folio_requisicion' => $this->folio_requisicion,
+                    'folio_requisicion' => $this->folio_requisicion ?: null,
                     'id_user' => $user->id,
                     'nombre' => $user->name,
                     'clave_origen' => $validated['clave_origen'],

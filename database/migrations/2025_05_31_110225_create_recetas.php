@@ -16,8 +16,8 @@ return new class extends Migration
             $table->integer('clave_producto')->nullable();
             $table->integer('clave_insumo_elaborado')->nullable();
             $table->integer('clave_insumo');
-            $table->decimal('cantidad', 10, 2);
-            $table->decimal('cantidad_c_merma', 10, 2)->nullable();
+            $table->decimal('cantidad', 11, 3);
+            $table->decimal('cantidad_c_merma', 11, 3)->nullable();
             $table->decimal('total', 10, 2)->nullable();
             $table->timestamps();
             $table->softDeletes($column = 'deleted_at');

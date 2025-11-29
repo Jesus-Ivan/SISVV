@@ -619,16 +619,18 @@ class ProductoForm extends Form
      */
     public function validarGrupoModif()
     {
-        foreach ($this->grupos_modif as $index => $value) {
-            $this->validate([
-                'grupos_modif.' . $index . '.incluidos' => 'required|numeric|min:0',
-                'grupos_modif.' . $index . '.maximos'  => 'required|numeric|min:0'
-            ], [
-                'grupos_modif.*.incluidos.required' => 'Obligatorio',
-                'grupos_modif.*.incluidos.min' => 'Mínimo: 0',
-                'grupos_modif.*.maximos.required' => 'Obligatorio',
-                'grupos_modif.*.maximos.min' => 'Mínimo: 0',
-            ]);
+        foreach ($this->grupos_modif as $index => $grupo_modif) {
+            if (!array_key_exists('deleted', $grupo_modif)) {
+                $this->validate([
+                    'grupos_modif.' . $index . '.incluidos' => 'required|numeric|min:0',
+                    'grupos_modif.' . $index . '.maximos'  => 'required|numeric|min:0'
+                ], [
+                    'grupos_modif.*.incluidos.required' => 'Obligatorio',
+                    'grupos_modif.*.incluidos.min' => 'Mínimo: 0',
+                    'grupos_modif.*.maximos.required' => 'Obligatorio',
+                    'grupos_modif.*.maximos.min' => 'Mínimo: 0',
+                ]);
+            }
         }
     }
 
@@ -638,15 +640,17 @@ class ProductoForm extends Form
      */
     public function validarModif()
     {
-        foreach ($this->modif as $index => $value) {
-            $this->validate([
-                'modif.' . $index . '.id_grup_modif' => 'required',
-                'modif.' . $index . '.precio_con_impuestos'  => 'required|numeric|min:0'
-            ], [
-                'modif.*.id_grup_modif.required' => 'Obligatorio',
-                'modif.*.precio_con_impuestos.required' => 'Obligatorio',
-                'modif.*.precio_con_impuestos.min' => 'Mínimo: 0',
-            ]);
+        foreach ($this->modif as $index => $modificador) {
+            if (!array_key_exists('deleted', $modificador)) {
+                $this->validate([
+                    'modif.' . $index . '.id_grup_modif' => 'required',
+                    'modif.' . $index . '.precio_con_impuestos'  => 'required|numeric|min:0'
+                ], [
+                    'modif.*.id_grup_modif.required' => 'Obligatorio',
+                    'modif.*.precio_con_impuestos.required' => 'Obligatorio',
+                    'modif.*.precio_con_impuestos.min' => 'Mínimo: 0',
+                ]);
+            }
         }
     }
 

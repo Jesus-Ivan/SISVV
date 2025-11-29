@@ -44,7 +44,9 @@ class NuevaProduccion extends Component
     #[Computed()]
     public function bodegas()
     {
-        return Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
+        return Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)
+            ->where('naturaleza', AlmacenConstants::INSUMOS_KEY)
+            ->get();
     }
 
     public function mount()
@@ -206,12 +208,34 @@ class NuevaProduccion extends Component
      */
     public function aceptarEdicion()
     {
+        //Validar que los valores de la receta, no sean vacios
+        $this->validarReceta();
         //Guardar cambios
         $this->form->reemplazarReceta($this->insumos_receta, $this->index_editable);
         //emitir evento para cerrar modal
         $this->dispatch('close-modal');
         //Limpiar propiedades editables
         $this->reset('insumo_editable', 'insumos_receta', 'index_editable');
+    }
+
+    /**
+     * Contiene las reglas para validar las cantidades de la receta.\
+     */
+    public function validarReceta()
+    {
+        foreach ($this->insumos_receta as $index => $value) {
+            $this->validate([
+                'insumos_receta.' . $index . '.cantidad' => 'required|numeric|min:0',
+                'insumos_receta.' . $index . '.cantidad_c_merma'  => 'required|numeric|min:0'
+            ], [
+                'insumos_receta.*.cantidad.required' => 'Obligatorio',
+                'insumos_receta.*.cantidad.numeric' => 'Numero',
+                'insumos_receta.*.cantidad.min' => 'Mínimo: 0',
+                'insumos_receta.*.cantidad_c_merma.required' => 'Obligatorio',
+                'insumos_receta.*.cantidad_c_merma.numeric' => 'Numero',
+                'insumos_receta.*.cantidad_c_merma.min' => 'Mínimo: 0',
+            ]);
+        }
     }
 
     public function guardar()

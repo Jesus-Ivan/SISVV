@@ -172,12 +172,15 @@ class NuevaEntrada extends Component
 
     /**
      * Busca los elementos de una requisicion y los prepara\
-     * para el trapaso a una bodega con naturaleza "PRESEN"
+     * para una bodega con naturaleza "PRESEN"
      */
     public function requisicionPresentaciones()
     {
         //Buscar los detalles de la requisicion
-        $result = DetallesRequisicion::where('folio_requisicion', $this->folio_requi)->get();
+        $result = DetallesRequisicion::where('folio_requisicion', $this->folio_requi)
+            ->orderBy('id_proveedor')
+            ->orderBy('descripcion')
+            ->get();
         //Si hay al menos 1 registro correspondiente
         if (count($result)) {
             //Bloquear la bodega
@@ -210,13 +213,16 @@ class NuevaEntrada extends Component
 
     /**
      * Busca los elementos de una requisicion y los prepara\
-     * para el trapaso a una bodega con naturaleza "INSUM"
+     * para una bodega con naturaleza "INSUM"
      */
     public function requisicionInsumos()
     {
         //Buscar los detalles de la requisicion
         $detalle_requi = DetallesRequisicion::with('presentacion')
-            ->where('folio_requisicion', $this->folio_requi)->get();
+            ->where('folio_requisicion', $this->folio_requi)
+            ->orderBy('id_proveedor')
+            ->orderBy('descripcion')
+            ->get();
         //Si hay al menos 1 registro correspondiente
         if (count($detalle_requi)) {
             //Bloquear la bodega

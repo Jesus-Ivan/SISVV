@@ -432,12 +432,18 @@
                                             <input type="number" step="0.001"
                                                 wire:model='insumos_receta.{{ $i }}.cantidad'
                                                 class="block w-full  p-1.5 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                            @error('insumos_receta.' . $i . '.cantidad')
+                                                <x-input-error messages="{{ $message }}" />
+                                            @enderror
                                         </td>
                                         <td class="px-3 py-3 font-medium w-32 text-gray-900 dark:text-white">
                                             <input type="number" step="0.001"
                                                 wire:model='insumos_receta.{{ $i }}.cantidad_c_merma'
                                                 wire:change='calcularTotal({{ $i }})'
                                                 class="block w-full p-1.5 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                            @error('insumos_receta.' . $i . '.cantidad_c_merma')
+                                                <x-input-error messages="{{ $message }}" />
+                                            @enderror
                                         </td>
                                         <td class="px-3 py-3 font-medium w-fit text-gray-900 dark:text-white">
                                             {{ $row['ingrediente']['unidad']['descripcion'] }}

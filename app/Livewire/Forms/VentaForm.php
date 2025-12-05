@@ -419,7 +419,11 @@ class VentaForm extends Form
                     //Actualizar el registro en la BD
                     DetallesVentaProducto::where('id', $producto['id'])
                         ->update(
-                            ['cantidad' => $producto['cantidad'], 'subtotal' => $producto['subtotal']]
+                            [
+                                'cantidad' => $producto['cantidad'],
+                                'subtotal' => $producto['subtotal'],
+                                'observaciones' => $producto['observaciones'],
+                            ]
                         );
                 } else {
                     //Crear el nuevo item

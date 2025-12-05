@@ -62,15 +62,8 @@
                         {{ $producto['nombre'] ?: $producto['catalogo_productos']['nombre'] }}
                     </th>
                     <td class="px-3 py-2 w-32">
-                        @if (array_key_exists('clave_producto', $producto))
-                            <input type="text" aria-label="disabled input"
-                                class="bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                value="{{ $producto['observaciones'] }}" disabled>
-                        @else
-                            <input type="text"
-                                wire:model="ventaForm.productosTable.{{ $productoIndex }}.observaciones"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
-                        @endif
+                        <input type="text" wire:model="ventaForm.productosTable.{{ $productoIndex }}.observaciones"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                     </td>
                     <td class="px-3 py-2 w-32">
                         ${{ $producto['precio'] }}

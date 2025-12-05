@@ -69,7 +69,7 @@
             </div>
             {{-- Corte de caja --}}
             <input type="text" placeholder="Corte de caja" wire:model='venta.corte_caja'
-                wire:keyup.ctrl="searchCajas"
+                wire:keyup.ctrl="searchCajaGeneral"
                 class="h-10 block max-w-32 p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
             <div>
                 {{-- Total Original --}}
@@ -207,6 +207,9 @@
                             IMPORTE
                         </th>
                         <th scope="col" class="px-6 py-3">
+                            PROPINA
+                        </th>
+                        <th scope="col" class="px-6 py-3">
                             ACCIONES
                         </th>
                     </tr>
@@ -235,8 +238,13 @@
                                         @endforeach
                                     </select>
                                 </td>
-                                <td class="px-6 py-1 flex items-center gap-2">
-                                    $<input type="text" wire:model='pagos.{{ $index_pago }}.monto'
+                                <td class="px-6 py-1 ">
+                                    <input type="text" wire:model='pagos.{{ $index_pago }}.monto'
+                                        wire:change='$refresh'
+                                        class="block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                </td>
+                                <td class="px-6 py-1">
+                                    <input type="text" wire:model='pagos.{{ $index_pago }}.propina'
                                         wire:change='$refresh'
                                         class="block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 </td>
@@ -259,6 +267,109 @@
                 </tfoot>
             </table>
         </div>
+    </div>
+    {{-- DETALLES CAJA --}}
+    <div>
+        <h6 class="text-lg font-bold dark:text-white">Detalles caja</h6>
+        {{-- TABLA --}}
+        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">
+                            id
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            CORTE CAJA
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            ID SOCIO
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            NOMBRE
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            MONTO
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            PROPINA
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            TIPO MOVIMIENTO
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            TIPO PAGO
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            F.VENTA
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            F.PAGO
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($detalles_caja as $i => $detalle)
+                        <tr wire:key='{{ $i }}'
+                            class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
+                            <th scope="row"
+                                class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                {{ $detalle['id'] }}
+                            </th>
+                            <td class="px-6 py-4">
+                                <input type="text" wire:model='detalles_caja.{{ $i }}.corte_caja'
+                                    wire:keyup.ctrl="searchDetalleCaja({{ $i }})"
+                                    class="w-16 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            </td>
+                            <td class="px-6 py-4">
+                                <input type="text" wire:model='detalles_caja.{{ $i }}.id_socio'
+                                    class="w-16 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <input type="text" wire:model='detalles_caja.{{ $i }}.nombre'
+                                    class="{{ $venta['tipo_venta'] == 'socio' || $venta['tipo_venta'] == 'invitado' ? '' : ' opacity-50 pointer-events-none' }} block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <input type="number" wire:model='detalles_caja.{{ $i }}.monto'
+                                    class="w-24 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <input type="number" wire:model='detalles_caja.{{ $i }}.propina'
+                                    class="w-24 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <select wire:model='detalles_caja.{{ $i }}.tipo_movimiento'
+                                    class="w-fit block p-2  text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                    <option value="{{ null }}">Tipo Movimiento</option>
+                                    @foreach ($tipo_movimiento as $k => $descripcion)
+                                        <option value="{{ $k }}">{{ $descripcion }}</option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <select wire:model='detalles_caja.{{ $i }}.id_tipo_pago'
+                                    class="w-fit block p-2  text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                    <option value="{{ null }}">Choose a country</option>
+                                    @foreach ($tipos_pago as $i_pago => $pago)
+                                        <option wire:key='{{ $i_pago }}' value="{{ $pago['id'] }}">
+                                            {{ $pago['descripcion'] }}</option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <td class="px-6 py-4">
+                                <input type="datetime" wire:model='detalles_caja.{{ $i }}.fecha_venta'
+                                    class=" block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            </td>
+                            <td class="px-6 py-4">
+                                <input type="datetime" wire:model='detalles_caja.{{ $i }}.fecha_pago'
+                                    class=" block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
     </div>
 
     {{-- Botones de accion --}}
@@ -370,6 +481,65 @@
 
         </x-slot>
     </x-modal>
+    {{-- Modal de cortes de caja (para los detalles de caja de la venta) --}}
+    <x-modal title="Seleccionar corte para detalle: {{ $i_movimiento_caja }}" name='cortesDetallesCaja'>
+        <x-slot name='body'>
+            <div class="max-h-96 overflow-y-auto shadow-md sm:rounded-lg">
+                <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">
+                                CORTE
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                USUARIO
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                FECHA APERTURA
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                FECHA CIERRE
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                PUNTO
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                Action
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($this->cajas as $i => $caja)
+                            <tr wire:key='{{ $i }}'
+                                class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                                <th scope="row"
+                                    class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                    {{ $caja->corte }}
+                                </th>
+                                <td class="px-6 py-4">
+                                    {{ $caja->users->name }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    {{ $caja->fecha_apertura }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    {{ $caja->fecha_cierre }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    {{ $caja->clave_punto_venta }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    <a wire:click='selectCajaDetalle({{ $caja->corte }})'
+                                        class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Seleccionar</a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </x-slot>
+    </x-modal>
+
     {{-- Modal de motivo eliminacion --}}
     <x-modal name="modal-motivo eliminacion" title="Eliminar producto">
         <x-slot name='body'>

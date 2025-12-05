@@ -51,7 +51,7 @@ class ProdVendidos implements FromArray, WithTitle
                     'precio' => $producto['precio'],
                     'importe' => $producto['subtotal'],
                     'fecha' => $producto['inicio'],
-                    'observaciones' => $venta['observaciones']
+                    'observaciones' => $producto['observaciones'] .' '. $venta['observaciones']
                 ];
             }
         }

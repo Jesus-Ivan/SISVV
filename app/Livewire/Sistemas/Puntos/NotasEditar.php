@@ -7,6 +7,7 @@ use App\Livewire\Forms\VentaEditarForm;
 use App\Livewire\Forms\VentaForm;
 use App\Models\Caja;
 use App\Models\ConceptoCancelacion;
+use App\Models\DetallesCaja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\MotivoCorreccion;
@@ -29,7 +30,8 @@ class NotasEditar extends Component
     //Para las cortesias
     public $observaciones;
     //Datos editables
-    public $venta = [], $productos = [], $pagos = [];
+    public $venta = [], $productos = [], $pagos = [], $detalles_caja = [];
+    public $i_movimiento_caja = null;
 
     //Nuevo socio
     public $nuevo_socio;
@@ -55,10 +57,15 @@ class NotasEditar extends Component
             ->get()
             ->toArray();
 
+        $detalles_caja = DetallesCaja::where('folio_venta', $folio)
+            ->get()
+            ->toArray();
+
         //Setear valores editables
         $this->venta = $venta;
         $this->productos =  $productos;
         $this->pagos = $pagos;
+        $this->detalles_caja = $detalles_caja;
 
         //Resguardar los originales
         $this->editarForm->setOriginal($venta, $productos, $pagos);
@@ -110,18 +117,46 @@ class NotasEditar extends Component
     /**
      * Funcion que abre el modal de 'cajas'. En cada peticion se actualiza la propiedad computarizada que lo rellena
      */
-    public function searchCajas()
+    public function searchCajaGeneral()
     {
         //Abrir modal de cajas
         $this->dispatch('open-modal', name: 'modalCortes');
     }
+
+    /**
+     * Funcion que abre el modal de 'cajas'. Para cada detalle de caja
+     */
+    public function searchDetalleCaja($i)
+    {
+        $this->i_movimiento_caja = $i;
+        //Abrir modal de cajas
+        $this->dispatch('open-modal', name: 'cortesDetallesCaja');
+    }
+
+
     /**
      * Cambia la el corte de caja actual de la venta, por el seleccionado
      */
     public function selectCaja($corte)
     {
+        //Obtenemos el corte original de la venta
+        $corte_viejo = $this->venta['corte_caja'];
+        //Actualizamos los detalles de caja con el nuevo corte
+        foreach ($this->detalles_caja as $i => $row) {
+            if ($row['corte_caja'] == $corte_viejo) {
+                $this->detalles_caja[$i]['corte_caja'] = $corte;
+            }
+        }
         //Actualizamos el nuevo corte de caja de la venta
         $this->venta['corte_caja'] = $corte;
+        //Cerrar modal
+        $this->dispatch('close-modal');
+    }
+
+    public function selectCajaDetalle($corte_nuevo)
+    {
+        //Reemplazar el corte
+        $this->detalles_caja[$this->i_movimiento_caja]['corte_caja'] = $corte_nuevo;
         //Cerrar modal
         $this->dispatch('close-modal');
     }
@@ -135,7 +170,7 @@ class NotasEditar extends Component
             'solicitante_id' => 'required',
             'motivo_id' => 'required',
         ]);
-    
+
         try {
             DB::transaction(function () use ($validated) {
                 //Convertir en cortesia
@@ -273,7 +308,7 @@ class NotasEditar extends Component
                 break;
             }
         }
-        
+
         $this->reset('id_eliminacion', 'motivo', 'producto_eliminar');
         $this->dispatch('close-modal');
     }
@@ -294,11 +329,16 @@ class NotasEditar extends Component
         $puntos = PuntoVenta::all()->toArray();
         $tipos_pago = TipoPago::all()->toArray();
         $motivos_correccion = MotivoCorreccion::all()->toArray();
+        $tipo_mov_caja = [
+            PuntosConstants::INGRESO_KEY => "INGRESO",
+            PuntosConstants::INGRESO_PENDIENTE_KEY => "INGRESO PENDIENTE",
+        ];
         return view('livewire.sistemas.puntos.notas-editar', [
             'users' => $users,
             'puntos' => $puntos,
             'tipos_pago' => $tipos_pago,
-            'motivos_correccion' => $motivos_correccion
+            'motivos_correccion' => $motivos_correccion,
+            'tipo_movimiento' => $tipo_mov_caja
         ]);
     }
 }

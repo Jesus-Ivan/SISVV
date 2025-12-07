@@ -7,7 +7,7 @@
             class="{{ $this->ventaForm->tipo_venta == 'general' || $this->ventaForm->tipo_venta == 'empleado' || $this->ventaForm->tipo_venta == 'invitado' ? 'opacity-50 pointer-events-none' : 'opacity-100' }}">
             {{-- Componente de busqueda de socios --}}
             <livewire:search-bar tittle="Buscar No. Socio o Nombre" table="socios" :columns="['id', 'nombre', 'apellido_p', 'apellido_m']" primary="id"
-                event="on-selected-socio" :conditions="[['deleted_at', '=', $var]]" />
+                event="selected-socio-pago" :conditions="[['deleted_at', '=', $var]]" />
             @if (session('socioActivo'))
                 <x-input-error messages="{{ session('socioActivo') }}" />
             @endif

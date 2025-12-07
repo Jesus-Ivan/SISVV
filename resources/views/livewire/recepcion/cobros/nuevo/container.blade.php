@@ -5,9 +5,10 @@
             <!--No de socio -->
             <div class="relative max-w-lg">
                 {{-- Componente de busqueda de socios --}}
-                <livewire:search-bar tittle="Buscar Socios" table="socios" :columns="['id', 'nombre', 'apellido_p', 'apellido_m']" primary="id"
+                <livewire:search-bar tittle="Buscar No. Socio o Nombre" table="socios" :columns="['id', 'nombre', 'apellido_p', 'apellido_m']" primary="id"
                     event="on-selected-socio" :conditions="[['deleted_at', '=', $var]]" />
             </div>
+
             <!--Info -->
             <div>
                 <p>Nombre: {{ $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m }}</p>

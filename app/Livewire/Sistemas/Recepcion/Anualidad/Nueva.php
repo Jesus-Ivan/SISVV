@@ -236,6 +236,8 @@ class Nueva extends Component
     }
     public function render()
     {
-        return view('livewire.sistemas.recepcion.anualidad.nueva');
+        return view('livewire.sistemas.recepcion.anualidad.nueva',[
+            'var' => null
+        ]);
     }
 }

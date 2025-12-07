@@ -15,14 +15,14 @@
         <!--Autocomplete search component-->
         <div
             class="w-2/6 {{ $this->ventaForm->tipo_venta == 'general' || $this->ventaForm->tipo_venta == 'empleado' ? 'pointer-events-none opacity-60' : '' }}">
-            <livewire:autocomplete :params="[
-                'table' => ['name' => 'socios', 'columns' => ['id', 'nombre', 'apellido_p', 'apellido_m']],
-            ]" primaryKey="id" event="on-selected-socio" />
-            {{--Error de validacion--}}
+            {{-- Componente de busqueda de socios --}}
+            <livewire:search-bar tittle="Buscar No. Socio o Nombre" table="socios" :columns="['id', 'nombre', 'apellido_p', 'apellido_m']" primary="id"
+                event="on-selected-socio" :conditions="[['deleted_at', '=', $var]]" />
+            {{-- Error de validacion --}}
             @error('ventaForm.socio')
                 <x-input-error messages="{{ $message }}" />
             @enderror
-            {{--Error de membresia, cancelada--}}
+            {{-- Error de membresia, cancelada --}}
             @if (session('fail_socio'))
                 <x-input-error messages="{{ session('fail_socio') }}" />
             @endif

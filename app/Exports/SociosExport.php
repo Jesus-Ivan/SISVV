@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\Cuota;
 use App\Models\IntegrantesSocio;
+use App\Models\Socio;
 use App\Models\SocioCuota;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromArray;
@@ -16,7 +17,7 @@ class SociosExport implements FromArray
     public function array(): array
     {
         //Array auxiliar de los socios
-        $socios = DB::table('socios')
+        $socios = Socio::query()
             ->join('socios_membresias', 'socios.id', '=', 'socios_membresias.id_socio')
             ->select(
                 'socios.id',

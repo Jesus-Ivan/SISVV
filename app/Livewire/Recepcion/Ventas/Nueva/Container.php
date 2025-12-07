@@ -230,6 +230,8 @@ class Container extends Component
 
     public function render()
     {
-        return view('livewire.recepcion.ventas.nueva.container');
+        return view('livewire.recepcion.ventas.nueva.container', [
+            'val' => null
+        ]);
     }
 }

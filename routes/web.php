@@ -285,9 +285,6 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::view('cortes', 'sistemas.Puntos.cortes')->name('sistemas.pv.consultar-cortes');
     });
 
-    //DEPARTAMENTO DE RECEPCIÓN
-    Route::view('membresias', 'sistemas.Recepcion.membresias')->name('sistemas.membresias');
-
     //HERRAMIENTAS ADICIONALES A SISTEMAS
     Route::prefix('registros')->group(function () {
         Route::view('/', 'sistemas.Herramientas.registros')->name('sistemas.registros');
@@ -302,6 +299,8 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
 
     //RECEPCION
     Route::prefix('recepcion')->group(function () {
+        Route::view('/cuotas', 'sistemas.Recepcion.cuotas')->name('sistemas.cuotas');
+        Route::view('/', 'sistemas.Recepcion.lista-socios')->name('sistemas.lista-socios');
         Route::view('/cargo-mensualidades', 'sistemas.Recepcion.cargo-mensualidades')->name('sistemas.cargoMensualidades');
         Route::post('/cargo-mensualidades', [CargosController::class, 'cargarMensualidades'])->name('sistemas.cargoMensualidades');
         Route::view('/recargos', 'sistemas.Recepcion.recargos')->name('sistemas.recargos');

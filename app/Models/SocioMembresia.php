@@ -18,8 +18,14 @@ class SocioMembresia extends Model
     protected $guarded = ['id'];
     //Clave primaria
     protected $primaryKey = 'id';
-    
-    public function membresia(): BelongsTo{
+
+    public function membresia(): BelongsTo
+    {
         return $this->belongsTo(Membresias::class, 'clave_membresia');
+    }
+
+    public function socio()
+    {
+        return $this->belongsTo(Socio::class, 'id_socio', 'id');
     }
 }

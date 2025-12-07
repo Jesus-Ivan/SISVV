@@ -17,6 +17,8 @@ class Container extends Component
     }
     public function render()
     {
-        return view('livewire.puntos.socios.container');
+        return view('livewire.puntos.socios.container', [
+            'var' => null
+        ]);
     }
 }

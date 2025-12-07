@@ -36,9 +36,7 @@ return new class extends Migration
             $table->string('curp', 18)->nullable();
             $table->string('rfc', 13)->nullable();
             $table->boolean('firma', 0)->nullable();
-            //Relaciones
-
-            //$table->foreign('clave_membresia')->references('clave')->on('membresias');
+            $table->softDeletes();
         });
     }
 
@@ -47,6 +45,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('socios');
+        Schema::table('socios', function (Blueprint $table) {
+            $table->dropSoftDeletes();
+        });
+        //Schema::dropIfExists('socios');
     }
 };

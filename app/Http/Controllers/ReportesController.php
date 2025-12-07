@@ -164,7 +164,7 @@ class ReportesController extends Controller
     public function generarEstadoCuenta($socio, $tipo, $vista, $fInicio, $fFin, $option)
     {
         //Buscamos el socio
-        $resultSocio = Socio::find($socio);
+        $resultSocio = Socio::withTrashed()->find($socio);
         $header = [
             'title' => 'VISTA VERDE COUNTRY CLUB',
             'rfc' => 'VVC101110AQ4',

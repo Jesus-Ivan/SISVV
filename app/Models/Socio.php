@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Socio extends Model
 {
     use HasFactory;
+    use SoftDeletes;
+    
     //Nombre de tabla
     protected $table = 'socios';
     //Desactivar los timestamps para este modelo

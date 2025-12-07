@@ -63,7 +63,7 @@
                             </td>
                             {{-- TIPO MEMBRESIA --}}
                             <td class="min-w-60 px-6 py-4">
-                                {{ $socio->descripcion }}
+                                {{ $socio->socioMembresia->membresia->descripcion }}
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <a href="{{ route('recepcion.socios.editar', $socio->id) }}">

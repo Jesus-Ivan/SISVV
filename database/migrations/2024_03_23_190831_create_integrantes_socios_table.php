@@ -21,6 +21,7 @@ return new class extends Migration
             $table->date('fecha_nac')->nullable();
             $table->string('parentesco', 20)->nullable();
             $table->string('tel_integrante', 10)->nullable();
+            $table->softDeletes();
 
             //Relaciones
 
@@ -33,6 +34,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('integrantes_socios');
+        Schema::table('integrantes_socios', function (Blueprint $table) {
+            $table->dropSoftDeletes();
+        });
     }
 };

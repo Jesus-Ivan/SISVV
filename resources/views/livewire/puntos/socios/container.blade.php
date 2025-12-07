@@ -45,9 +45,9 @@
         </a>
         <!--Search bar-->
         <div class="w-full">
-            <livewire:autocomplete :params="[
-                'table' => ['name' => 'socios', 'columns' => ['id', 'nombre', 'apellido_p', 'apellido_m']],
-            ]" primaryKey="id" event="on-selected-socio" />
+            {{-- Componente de busqueda de socios --}}
+            <livewire:search-bar tittle="Buscar No. Socio o Nombre" table="socios" :columns="['id', 'nombre', 'apellido_p', 'apellido_m']" primary="id"
+                event="on-selected-socio" :conditions="[['deleted_at', '=', $var]]" />
         </div>
     </div>
     <!-- Linea -->

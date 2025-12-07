@@ -444,6 +444,8 @@ class Container extends Component
 
     public function render()
     {
-        return view('livewire.puntos.ventas.editar.container');
+        return view('livewire.puntos.ventas.editar.container', [
+            'var' => null
+        ]);
     }
 }

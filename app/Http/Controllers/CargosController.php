@@ -27,6 +27,7 @@ class CargosController extends Controller
                 ['clave_membresia', '=', 'EVE'],
                 ['clave_membresia', '=', 'INT']
             ])
+            ->whereHas('socio')
             ->get();
 
         //Iniciamos transaccion
@@ -96,6 +97,8 @@ class CargosController extends Controller
         $socios_membresias = SocioMembresia::orWhere(function (Builder $query) {
             $query->whereNot('estado', '=', 'CAN')
                 ->whereNot('clave_membresia', '=', 'INT');
+        })->whereHas('socio', function ($query) {
+            $query->whereNull('deleted_at');
         })->get();
 
         //Obtenemos el registro correspondiente al recargo de la tabla 'cuotas'
@@ -151,10 +154,11 @@ class CargosController extends Controller
         //Creamos una fecha de carbon con el dia 1 del mes anterior.
         $fechaAnterior = Carbon::parse($fecha)->day(1)->subMonth();
         //Obtenemos todas las membresias 'MEN', junto a su consumo minimo (por socio)
-        $membresias = DB::table('socios_membresias')
+        $membresias = SocioMembresia::with('membresia')
+            ->where('estado', 'MEN')
             ->join('membresias', 'socios_membresias.clave_membresia', '=', 'membresias.clave')
-            ->where('socios_membresias.estado', 'MEN')
             ->select('socios_membresias.*', 'membresias.consumo_minimo')
+            ->whereHas('socio')
             ->get();
         //Buscamos la cuota correspondiente a la diferencia de consumo (multa)
         $cuota = Cuota::where('tipo', 'MUL')

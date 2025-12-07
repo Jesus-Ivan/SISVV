@@ -21,15 +21,15 @@ class Socios extends Component
 
     public function render()
     {
-        $result = DB::table('socios')
-            ->join('socios_membresias', 'socios.id', '=', 'socios_membresias.id_socio')
-            ->join('membresias', 'socios_membresias.clave_membresia', '=', 'membresias.clave')
-            ->select('socios.*', 'membresias.descripcion')
-            ->where('socios.nombre', 'like', '%' . $this->search . '%')
-            ->orwhere('socios.apellido_p', 'like', '%' . $this->search . '%')
-            ->orwhere('socios.apellido_m', 'like', '%' . $this->search . '%')
-            ->orWhere('socios.id', '=', $this->search)
-            ->orderByDesc('socios.id')
+        $result = Socio::query()
+            ->with('socioMembresia.membresia')
+            ->where(function ($q) {
+                $q->where('nombre', 'like', '%' . $this->search . '%')
+                    ->orwhere('apellido_p', 'like', '%' . $this->search . '%')
+                    ->orwhere('apellido_m', 'like', '%' . $this->search . '%')
+                    ->orWhere('id', '=', $this->search);
+            })
+            ->orderBy('id', 'desc')
             ->paginate(10);
 
         return view('livewire.recepcion.socios', [

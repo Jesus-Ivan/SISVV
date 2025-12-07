@@ -4,9 +4,10 @@
         <div class="grid grid-flow-col">
             <!--No de socio -->
             <div class="relative max-w-lg">
-                {{-- Componente de busqueda de socios --}}
-                <livewire:search-bar tittle="Buscar No. Socio o Nombre" table="socios" :columns="['id', 'nombre', 'apellido_p', 'apellido_m']" primary="id"
-                    event="on-selected-socio" :conditions="[['deleted_at', '=', $var]]" />
+                <!--Autocomplete search component-->
+                <livewire:autocomplete :params="[
+                    'table' => ['name' => 'socios', 'columns' => ['id', 'nombre', 'apellido_p', 'apellido_m']],
+                ]" primaryKey="id" event="on-selected-socio" />
             </div>
             <!--Info -->
             <div>

@@ -18,16 +18,17 @@ use Livewire\Form;
 class VentaEditarForm extends Form
 {
     //Propiedades almacenar los originales
-    public $venta, $productos, $pagos;
+    public $venta, $productos, $pagos, $det_caja;
 
     /**
      * Guarda los valores originales de la venta en el formulario
      */
-    public function setOriginal($venta_original, $productos_original, $pagos_original)
+    public function setOriginal($venta_original, $productos_original, $pagos_original, $det_original)
     {
         $this->venta = $venta_original;
         $this->productos = $productos_original;
         $this->pagos = $pagos_original;
+        $this->det_caja = $det_original;
     }
 
     /**
@@ -234,7 +235,7 @@ class VentaEditarForm extends Form
     /**
      * Actualiza los pagos, si hubo alguna modificacion
      */
-    public function actualizarPagos(array $pagos_editados)
+    public function actualizarPagos(array $pagos_editados, array $venta_editada)
     {
         $firma = TipoPago::where("descripcion", 'like', '%FIRMA%')->first();
         foreach ($pagos_editados as $key => $pago) {
@@ -252,7 +253,7 @@ class VentaEditarForm extends Form
                 $diff = array_diff_assoc($pago, $this->pagos[$key]);
                 //Si hubo diferencias
                 if (count($diff) > 0) {
-                    //Actualizar el pago en la BD
+                    //Actualizar el pago en la BD tabla 'detalles_ventas_pagos'
                     DetallesVentaPago::where('id', $pago['id'])->update($diff);
                     //Si existe la clave 'id_socio' en la diferencia (significa que se modifico)
                     if (array_key_exists('id_socio', $diff)) {
@@ -268,6 +269,37 @@ class VentaEditarForm extends Form
                             'cargo' => $diff['monto'],
                             'abono' => $diff['monto']
                         ]);
+                    }
+
+                    //Si existe la clave 'propina'
+                    if (array_key_exists('propina', $diff)) {
+                        //Verificar el tipo de venta
+                        if ($venta_editada['tipo_venta'] == 'socio' || $venta_editada['tipo_venta'] == 'invitado') {
+                            //Verificar si existe la propina en el estado de cuenta.
+                            $edo_cuenta = EstadoCuenta::where('id_venta_pago', $pago['id'])
+                                ->where('concepto', "like", "PROPINA%")
+                                ->first();
+                            //Obtener el estado de cuenta respectivo a la venta
+                            $edo_cuenta_venta = EstadoCuenta::where('id_venta_pago', $pago['id'])
+                                ->first();
+                            //Si no hay propina en la BD
+                            if (!$edo_cuenta) {
+                                //Crear el registro de la propina en la BD
+                                EstadoCuenta::create([
+                                    'id_venta_pago' => $edo_cuenta_venta->id_venta_pago,
+                                    'id_socio' => $edo_cuenta_venta->id_socio,
+                                    'concepto' => 'PROPINA '.$edo_cuenta_venta->concepto,
+                                    'fecha' => $edo_cuenta_venta->fecha,
+                                    'cargo' => $diff['propina'],
+                                    'abono' => $diff['propina'],
+                                    'saldo' => $edo_cuenta_venta,
+                                ]);
+                            } else {
+                                $edo_cuenta->cargo = $diff['propina'];
+                                $edo_cuenta->abono = $diff['propina'];
+                                $edo_cuenta->save();
+                            }
+                        }
                     }
 
                     if (array_key_exists('id_tipo_pago', $diff)) {
@@ -300,29 +332,13 @@ class VentaEditarForm extends Form
                 }
             }
         }
-
-        //Modificar el corte de caja original. 
-        foreach ($pagos_editados as $key => $pago) {
-            //Buscar la venta 
-            $resultVenta = Venta::find($pago['folio_venta']);
-            //Buscar el detalle del pago, registrado en el corte de caja original
-            $result_detalle_caja = DetallesCaja::where([
-                ['corte_caja', '=', $resultVenta->corte_caja],
-                ['folio_venta', '=', $pago['folio_venta']],
-                ['id_socio', '=', $pago['id_socio']],
-                ['monto', '=', $pago['monto']],
-                ['id_tipo_pago', '=', $pago['id_tipo_pago']],
-            ])
-                ->first();
-            dd($result_detalle_caja);
-            //Actualizar la informacion del corte
-            $result_detalle_caja->id_socio = $pago['id_socio'];
-            $result_detalle_caja->nombre = $pago['nombre'];
-            $result_detalle_caja->monto = $pago['monto'];
-            $result_detalle_caja->id_tipo_pago = $pago['id_tipo_pago'];
-            $result_detalle_caja->save();
-        }
     }
+
+    /**
+     * Esta funcion actualiza los detalles de caja.\
+     * O elimina los registros segun sea el caso.
+     */
+    public function actualizarCaja(array $detalles_caja) {}
 
     /**
      * Si el parametro 'nuevo_total' es diferente al total de la propiedad, actualiza el total de la venta en la tabla 'ventas'
@@ -358,13 +374,21 @@ class VentaEditarForm extends Form
             Venta::destroy($venta['folio']);
             //Buscar los productos
             $result_productos = DetallesVentaProducto::where('folio_venta', $venta['folio'])
-                ->get()->toArray();
+                ->get();
             //Buscar los pagos
             $result_pagos = DetallesVentaPago::where('folio_venta', $venta['folio'])
                 ->get()->toArray();
-            //Eliminar los detalles de la compra
-            DetallesVentaProducto::destroy(array_column($result_productos, 'id'));
+            //Buscar los detalles de caja
+            $det_caja = DetallesCaja::where('folio_venta', $venta['folio'])
+                ->get()->toArray();
+            /**
+             * Eliminar los detalles de la compra
+             * */
+            foreach ($result_productos as $key => $p) {
+                $p->forceDelete();
+            }
             DetallesVentaPago::destroy(array_column($result_pagos, 'id'));
+            DetallesCaja::destroy(array_column($det_caja, "id"));
             //Si la venta es de tipo socio o invitado
             if ($venta['tipo_venta'] == 'socio' || $venta['tipo_venta'] == 'invitado') {
                 //Eliminar la venta del socio de su estado de cuenta

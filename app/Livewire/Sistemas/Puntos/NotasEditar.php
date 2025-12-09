@@ -17,6 +17,7 @@ use App\Models\TipoPago;
 use App\Models\User;
 use App\Models\Venta;
 use Exception;
+use FontLib\Table\Type\name;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -68,7 +69,7 @@ class NotasEditar extends Component
         $this->detalles_caja = $detalles_caja;
 
         //Resguardar los originales
-        $this->editarForm->setOriginal($venta, $productos, $pagos);
+        $this->editarForm->setOriginal($venta, $productos, $pagos, $detalles_caja);
     }
 
     #[Computed(persist: true)]
@@ -112,6 +113,18 @@ class NotasEditar extends Component
     public function onSelectedSocio(Socio $socio)
     {
         $this->nuevo_socio = $socio->toArray();
+    }
+
+    public function updating($property, $value)
+    {
+        //Creamos patron de expresion regular
+        $patron = "/pagos\.\d+\.id_socio/";
+
+        if (preg_match($patron, $property)) {
+            //Obtenemos el indice del item de la tabla pagos
+            $index = substr($property, 6, 1);
+            $this->actualizarDetallesCaja($index, $value);
+        }
     }
 
     /**
@@ -202,7 +215,9 @@ class NotasEditar extends Component
                 $this->editarForm->actualizarProductos($this->productos, $this->solicitante_id);
                 $this->editarForm->actualizarTotal($this->total_productos);
                 //Actualizar los metodos de pago
-                $this->editarForm->actualizarPagos($this->pagos);
+                $this->editarForm->actualizarPagos($this->pagos, $validated['venta']);
+                //Actualizar detalles de caja
+                $this->editarForm->actualizarCaja($this->detalles_caja, $validated['venta']);
 
                 //Crear el registro de la bitacora
                 $this->editarForm->registrarCorreccion($validated['venta'], $validated['solicitante_id'], $validated['motivo_id']);
@@ -232,27 +247,74 @@ class NotasEditar extends Component
     public function buscarSocioPago($index)
     {
         //Buscar al socio
-        $socio = Socio::find($this->pagos[$index]['id_socio']);
+        $socio_nuevo = Socio::find($this->pagos[$index]['id_socio']);
+        //Obtener copia local del item del pago
+        $pago = $this->editarForm->pagos[$index];
         //Si existe
-        if ($socio) {
-            //Cambiar al socio del metodo de pago
-            $this->pagos[$index]['nombre'] = $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m;
+        if ($socio_nuevo) {
+            //Cambiar el nombre al socio del metodo de pago (temporal)
+            $this->pagos[$index]['nombre'] = $socio_nuevo->nombre . ' ' . $socio_nuevo->apellido_p . ' ' . $socio_nuevo->apellido_m;
         } else {
             //Si no existe, mostrar el mensaje de error
             session()->flash('fail', 'No existe el socio');
             //evento para abrir el action message
             $this->dispatch('open-action-message');
             //Reestablecer el valor original del id
-            $this->pagos[$index]['id_socio'] = $this->editarForm->pagos[$index]['id_socio'];
+            $this->pagos[$index]['id_socio'] = $pago['id_socio'];
             //Reestablecer el nombre original
-            $this->pagos[$index]['nombre'] = $this->editarForm->pagos[$index]['nombre'];
+            $this->pagos[$index]['nombre'] = $pago['nombre'];
+        }
+    }
+
+    public function buscarSocioDetalleCaja($index)
+    {
+        //Buscar al socio
+        $socio_nuevo = Socio::find($this->detalles_caja[$index]['id_socio']);
+        //Obtener copia local del item del pago
+        $pago = $this->editarForm->det_caja[$index];
+        //Si existe
+        if ($socio_nuevo) {
+            //Cambiar el nombre al socio del metodo de pago (temporal)
+            $this->detalles_caja[$index]['nombre'] = $socio_nuevo->nombre . ' ' . $socio_nuevo->apellido_p . ' ' . $socio_nuevo->apellido_m;
+        } else {
+            //Si no existe, mostrar el mensaje de error
+            session()->flash('fail', 'No existe el socio');
+            //evento para abrir el action message
+            $this->dispatch('open-action-message');
+            //Reestablecer el valor original del id
+            $this->detalles_caja[$index]['id_socio'] = $pago['id_socio'];
+            //Reestablecer el nombre original
+            $this->detalles_caja[$index]['nombre'] = $pago['nombre'];
+        }
+    }
+
+    /**
+     * Actualiza los detalles de caja, antes de actualizar la propiedad del id_socio de la tabla pagos
+     */
+    public function actualizarDetallesCaja($index, $new_value)
+    {
+        //Obtener copia local del item del pago
+        $pago = $this->pagos[$index];
+        //Buscar el nuevo socio
+        $socio_nuevo = Socio::find($new_value);
+        foreach ($this->detalles_caja as $key => $d_caja) {
+            //Si el detalle de caja coincide con el ide del socio de pago original
+            if ($d_caja['id_socio'] == $pago['id_socio']) {
+                //Actualizar el id (por el nuevo id de socio) del detalle de caja y el nombre
+                $this->detalles_caja[$key]['id_socio'] = $socio_nuevo->id;
+                $this->detalles_caja[$key]['nombre'] = $socio_nuevo->nombre . ' ' . $socio_nuevo->apellido_p . ' ' . $socio_nuevo->apellido_m;
+            }
         }
     }
 
     public function eliminarNota()
     {
-        $validated = $this->validateCorreccion();
+        $this->dispatch("open-modal", name: "modal-eliminacion");
+    }
 
+    public function confirmarEliminacionNota()
+    {
+        $validated = $this->validateCorreccion();
         try {
             DB::transaction(function () use ($validated) {
                 //Eliminar la nota
@@ -279,6 +341,11 @@ class NotasEditar extends Component
         $this->producto_eliminar = $this->productos[$index];
         //Abrir modal de eliminacion
         $this->dispatch('open-modal', name: 'modal-motivo eliminacion');
+    }
+
+    public function eliminarDetalleCaja($index)
+    {
+        $this->detalles_caja[$index]['deleted'] = true;
     }
 
     public function confirmarEliminacion()

@@ -145,7 +145,12 @@
 @script
     <script>
         $wire.on('ver-recibo', (e) => {
-            window.open('http://127.0.0.1:8000/recepcion/cobros/recibo/' + e[0].folio, '_blank');
+            // Generar la URL base de la ruta en Blade, usando un marcador temporal (por ejemplo, 'TEMP_FOLIO')
+            let ruta = "{{ route('recepcion.cobros.recibo', ['folio' => 'TEMP_FOLIO']) }}"
+            // Reemplazar el marcador temporal con el valor real de 'folio' usando JavaScript
+            let ruta_final = ruta.replace('TEMP_FOLIO', e[0].folio);
+            //Abrir en una pestaña el recibo
+            window.open(ruta_final, '_blank');
         });
     </script>
 @endscript

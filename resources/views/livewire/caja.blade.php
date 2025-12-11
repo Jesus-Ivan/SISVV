@@ -176,9 +176,15 @@
 @script
     <script>
         $wire.on('generar-corte', (e) => {
-            window.open('http://127.0.0.1:8000/ventas/corte/' + e[0].corte + '/' + e[0].clave_punto_venta,
-            '_blank');
-            console.log(e);
+            //Obtener el folio del corte y punto, a partir de la informacion contenida en el evento
+            let folio = e[0].corte;
+            let punto = e[0].clave_punto_venta;
+            // Generar la URL base de la ruta en Blade, usando un marcador temporal (por ejemplo, 'TEMP_FOLIO')
+            let ruta = "{{ route('ventas.corte', ['caja' => 'TEMP_FOLIO', 'codigopv' => 'TEMP_PV']) }}"
+            // Reemplazar el marcador temporal con el valor real de 'folio' usando JavaScript
+            let ruta_final = ruta.replace('TEMP_FOLIO', folio).replace('TEMP_PV', punto);
+            //Abrir en una pestaña el ticket
+            window.open(ruta_final, '_blank');
         });
     </script>
 @endscript

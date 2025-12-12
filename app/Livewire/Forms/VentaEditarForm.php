@@ -12,6 +12,7 @@ use App\Models\EstadoCuenta;
 use App\Models\TipoPago;
 use App\Models\User;
 use App\Models\Venta;
+use DragonCode\Support\Facades\Helpers\Arr;
 use Exception;
 use Livewire\Form;
 
@@ -288,7 +289,7 @@ class VentaEditarForm extends Form
                                 EstadoCuenta::create([
                                     'id_venta_pago' => $edo_cuenta_venta->id_venta_pago,
                                     'id_socio' => $edo_cuenta_venta->id_socio,
-                                    'concepto' => 'PROPINA '.$edo_cuenta_venta->concepto,
+                                    'concepto' => 'PROPINA ' . $edo_cuenta_venta->concepto,
                                     'fecha' => $edo_cuenta_venta->fecha,
                                     'cargo' => $diff['propina'],
                                     'abono' => $diff['propina'],
@@ -338,7 +339,30 @@ class VentaEditarForm extends Form
      * Esta funcion actualiza los detalles de caja.\
      * O elimina los registros segun sea el caso.
      */
-    public function actualizarCaja(array $detalles_caja) {}
+    public function actualizarCaja(array $detalles_caja_editados)
+    {
+        //dd($detalles_caja_editados);
+        $firma = TipoPago::where("descripcion", 'like', '%FIRMA%')->first();
+        foreach ($detalles_caja_editados as $key => $detalle) {
+            //Calcular la diferencia entre el array
+            $diff = array_diff_assoc($detalle, $this->det_caja[$key]);
+            //Si el nuevo tipo de pago es firma
+            if ($detalle['id_tipo_pago'] == $firma->id) {
+                if ($this->venta['tipo_venta'] == 'empleado' || $this->venta['tipo_venta'] == 'general')
+                    throw new Exception('"FIRMA" no valido para el tipo de venta. Revisar Detalles de caja');
+            }
+            //Si el detalle de caja tiene marca de eliminacion
+            if (array_key_exists('deleted', $detalle)) {
+                DetallesCaja::destroy($detalle['id']);
+                //De lo contrario si hay algun cambio en el array
+            } elseif (count($diff)) {
+                //Actualizar los detalles de caja
+                DetallesCaja::where("id", $detalle['id'])
+                    ->update($diff)
+                    ->limit(1);
+            }
+        }
+    }
 
     /**
      * Si el parametro 'nuevo_total' es diferente al total de la propiedad, actualiza el total de la venta en la tabla 'ventas'

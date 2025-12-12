@@ -118,19 +118,24 @@
                                     {{ $pago['id_socio'] }}
                                 </th>
                                 <td class="px-6 py-4">
-                                    <select wire:model="ventaForm.pagosTable.{{ $index }}.id_tipo_pago"
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                        <option>Selecciona</option>
-                                        @foreach ($this->metodosPago as $metodo)
-                                            <option value="{{ $metodo->id }}">{{ $metodo->descripcion }}</option>
-                                        @endforeach
-                                    </select>
+                                    @if ($pago['editable'])
+                                        <select wire:model="ventaForm.pagosTable.{{ $index }}.id_tipo_pago"
+                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                            <option>Selecciona</option>
+                                            @foreach ($this->metodosPago as $metodo)
+                                                <option value="{{ $metodo->id }}">{{ $metodo->descripcion }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    @else
+                                        {{ $pago['tipo_pago']['descripcion'] }}
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 ">
                                     <div class="flex gap-2 items-center">
                                         $<input type="number"
                                             wire:model="ventaForm.pagosTable.{{ $index }}.propina"
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                                            class="{{ !$pago['editable'] ? 'opacity-50 pointer-events-none' : '' }}  bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
@@ -138,7 +143,7 @@
                                         @if (array_key_exists('id', $pago))
                                             $<input type="number"
                                                 wire:model.live.debounce.500ms ="ventaForm.pagosTable.{{ $index }}.monto"
-                                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                                                class="{{ !$pago['editable'] ? 'opacity-50 pointer-events-none' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                                         @else
                                             $<input type="number"
                                                 wire:model.live.debounce.500ms="ventaForm.pagosTable.{{ $index }}.monto_pago"

@@ -71,7 +71,7 @@
             <tbody>
                 <tr style="{{ $recibo['facturado'] ? 'background-color: gray' : '' }}">
                     <td>
-                        <a href="http://localhost:8000/recepcion/cobros/recibo/{{ $recibo['folio'] }}">
+                        <a href="{{ route('recepcion.cobros.recibo', ['folio' => $recibo['folio']]) }}">
                             {{ $recibo['folio'] }}
                         </a>
                     </td>

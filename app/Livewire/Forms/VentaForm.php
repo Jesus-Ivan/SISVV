@@ -956,6 +956,19 @@ class VentaForm extends Form
     }
 
     /**
+     * Verifica si los pagos de la venta tienen un id_pago diferente a pendiente.\
+     * Agrega una marca para identificar los pagos editables\
+     */
+    public function verificarPagos()
+    {
+        //Obtener el metodo de pago pendiente
+        $metodo_pago = TipoPago::where("descripcion", "like", "%PENDI%")->first();
+        foreach ($this->pagosTable as $key => $p) {
+            $this->pagosTable[$key]['editable'] = $p['id_tipo_pago'] == $metodo_pago->id;
+        }
+    }
+
+    /**
      * Actualiza el estado de cuenta, referente a la venta pendiente pagada con firma.\
      * Modifica el saldo del estado de cuenta, y crea la propina en firma.
      */
@@ -1175,6 +1188,9 @@ class VentaForm extends Form
             }
         } else {
             foreach ($detalles_pago as $key => $pago) {
+                //Si el pago no es editable, omitir el registro del detalle de caja
+                if (!$pago['editable'])
+                    continue;
                 //Crear registro en la tabla (el movimiento de la venta. en el corte nuevo)
                 DetallesCaja::create([
                     'corte_caja' => $corte_nuevo,

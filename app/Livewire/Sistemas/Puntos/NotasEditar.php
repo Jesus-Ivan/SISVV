@@ -217,7 +217,7 @@ class NotasEditar extends Component
                 //Actualizar los metodos de pago
                 $this->editarForm->actualizarPagos($this->pagos, $validated['venta']);
                 //Actualizar detalles de caja
-                $this->editarForm->actualizarCaja($this->detalles_caja, $validated['venta']);
+                $this->editarForm->actualizarCaja($this->detalles_caja);
 
                 //Crear el registro de la bitacora
                 $this->editarForm->registrarCorreccion($validated['venta'], $validated['solicitante_id'], $validated['motivo_id']);

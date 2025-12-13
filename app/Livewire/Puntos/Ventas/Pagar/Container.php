@@ -57,6 +57,8 @@ class Container extends Component
             ->where('folio_venta', $venta->folio)
             ->get()
             ->toArray();
+        //Rectificamos los pagos
+        $this->ventaForm->verificarPagos();
         //Despues de buscar los productos, actualizarTotal
         $this->ventaForm->actualizarTotal();
     }

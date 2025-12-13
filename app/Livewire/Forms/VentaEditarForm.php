@@ -292,8 +292,8 @@ class VentaEditarForm extends Form
                                     'concepto' => 'PROPINA ' . $edo_cuenta_venta->concepto,
                                     'fecha' => $edo_cuenta_venta->fecha,
                                     'cargo' => $diff['propina'],
-                                    'abono' => $diff['propina'],
-                                    'saldo' => $edo_cuenta_venta,
+                                    'abono' => $firma->id == $pago['id_tipo_pago'] ? 0 : $diff['propina'],
+                                    'saldo' => $firma->id == $pago['id_tipo_pago'] ? $diff['propina'] : 0,
                                 ]);
                             } else {
                                 $edo_cuenta->cargo = $diff['propina'];
@@ -358,8 +358,7 @@ class VentaEditarForm extends Form
             } elseif (count($diff)) {
                 //Actualizar los detalles de caja
                 DetallesCaja::where("id", $detalle['id'])
-                    ->update($diff)
-                    ->limit(1);
+                    ->update($diff);
             }
         }
     }

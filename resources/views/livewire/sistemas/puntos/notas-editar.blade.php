@@ -289,16 +289,16 @@
                             NOMBRE
                         </th>
                         <th scope="col" class="px-3 py-1">
-                            MONTO
-                        </th>
-                        <th scope="col" class="px-3 py-1">
-                            PROPINA
-                        </th>
-                        <th scope="col" class="px-3 py-1">
                             TIPO MOVIMIENTO
                         </th>
                         <th scope="col" class="px-3 py-1">
                             TIPO PAGO
+                        </th>
+                        <th scope="col" class="px-3 py-1">
+                            MONTO
+                        </th>
+                        <th scope="col" class="px-3 py-1">
+                            PROPINA
                         </th>
                         <th scope="col" class="px-3 py-1">
                             F.VENTA
@@ -334,14 +334,6 @@
                                         class="{{ $venta['tipo_venta'] == 'socio' || $venta['tipo_venta'] == 'invitado' ? '' : ' opacity-50 pointer-events-none' }} block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 </td>
                                 <td class="px-3 py-1 text-right">
-                                    <input type="number" wire:model='detalles_caja.{{ $i }}.monto'
-                                        class="w-24 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                </td>
-                                <td class="px-3 py-1 text-right">
-                                    <input type="number" wire:model='detalles_caja.{{ $i }}.propina'
-                                        class="w-24 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                </td>
-                                <td class="px-3 py-1 text-right">
                                     <select wire:model='detalles_caja.{{ $i }}.tipo_movimiento'
                                         class="w-36 block p-2  text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                         <option value="{{ null }}">Tipo Movimiento</option>
@@ -359,6 +351,14 @@
                                                 {{ $pago['descripcion'] }}</option>
                                         @endforeach
                                     </select>
+                                </td>
+                                <td class="px-3 py-1 text-right">
+                                    <input type="number" wire:model='detalles_caja.{{ $i }}.monto'
+                                        class="w-24 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                </td>
+                                <td class="px-3 py-1 text-right">
+                                    <input type="number" wire:model='detalles_caja.{{ $i }}.propina'
+                                        class="w-24 block p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 </td>
                                 <td class="px-3 py-1">
                                     <p class="w-32">{{ $detalle['fecha_venta'] }}</p>

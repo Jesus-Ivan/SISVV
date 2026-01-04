@@ -33,6 +33,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Bandera para descontar stock
+    |--------------------------------------------------------------------------
+    |
+    | Bandera de configuracion del sistema para descuento de inventario
+    | Al final de cada corte de caja. Se realiza la explosion de insumos.
+    |
+    */
+
+    'discount_stock' => env('SISVV_DISCOUNT_STOCK', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Debug Mode
     |--------------------------------------------------------------------------
     |

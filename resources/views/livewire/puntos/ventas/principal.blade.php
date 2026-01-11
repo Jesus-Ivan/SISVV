@@ -65,25 +65,38 @@
     {{-- MODAL DE ADVERTENCIA DE TRASPASO DE VENTAS --}}
     <x-modal title="Pasar ventas" name="modalAdvertencia">
         <x-slot name='body'>
-            <div class="text-center">
-                <svg class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                </svg>
-                <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¡¡ Advertencia !!
-                </h3>
-                <p class="text-gray-500 dark:text-gray-400 w-96">
-                    ¿Realmente deseas traspasar las ventas abiertas al siguiente turno?
-                </p>
-                <p id="status">
-                    {{ $status_message }}
-                </p>
+            <div wire:loading.remove wire:target='pasarVentas'
+            class="text-center">
+                <div class="text-center">
+                    <svg class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                    <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¡¡ Advertencia !!
+                    </h3>
+                    <p class="text-gray-500 dark:text-gray-400 w-96">
+                        ¿Realmente deseas traspasar las ventas abiertas al siguiente turno?
+                    </p>
+                    <p id="status" class="my-4 font-bold">
+                        {{ $status_message }}
+                    </p>
+                </div>
+                <button type="button" wire:click ="pasarVentas"
+                    class="mt-3 focus:outline-none text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-green-900">
+                    Confirmar trapaso y cerrar caja
+                </button>
             </div>
-            <button type="button" wire:click ="pasarVentas"
-                class="mt-3 focus:outline-none text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-green-900">
-                Confirmar trapaso y cerrar caja
-            </button>
+
+            <div wire:loading wire:target='pasarVentas'>
+                <div
+                    class="flex items-center justify-center bg-neutral-secondary-soft h-56 w-96 border border-default text-fg-brand-strong text-xs font-medium rounded-base">
+                    <p
+                        class="text-sm p-4 ring-1 ring-inset ring-brand-subtle text-fg-brand-strong font-medium rounded-sm bg-brand-softer animate-pulse">
+                        Generando movimientos... 
+                    </p>
+                </div>
+            </div>
         </x-slot>
     </x-modal>
 </div>

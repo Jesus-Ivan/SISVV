@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Sistemas\Puntos;
 
+use App\Libraries\ProductosService;
 use App\Models\Caja;
 use App\Models\PuntoVenta;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -54,6 +56,24 @@ class Cortes extends Component
 
         $query->orderBy('fecha_apertura', 'desc');
         return $query->paginate(10);
+    }
+
+    public function generarExplosion(Caja $caja)
+    {
+        $productoServ = new ProductosService;
+        try {
+            DB::transaction(function () use ($caja, $productoServ) {
+                //Obtener los productos vendidos en el corte de caja
+                $productos = $productoServ->getTotalProductos($caja);
+                //Descontar exitencias
+                if (config('app.discount_stock'))
+                    $productoServ->descontarStock($productos, $caja);
+            });
+            session()->flash("success", "Explosion generada correctamente");
+        } catch (\Throwable $th) {
+            session()->flash("fail", $th->getMessage());
+        }
+        $this->dispatch("explosion-insumo");
     }
 
     public function render()

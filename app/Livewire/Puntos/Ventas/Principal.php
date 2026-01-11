@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Puntos\Ventas;
 
+use App\Libraries\ProductosService;
 use App\Models\Caja;
 use App\Models\CambioTurno;
 use App\Models\TipoPago;
@@ -88,9 +89,11 @@ class Principal extends Component
     public function pasarVentas()
     {
         $usuario = auth()->user();          //Usuario autenticado
+        $productoServ = new ProductosService;
+
         //Intentamos hacer la modificacion de las ventas
         try {
-            DB::transaction(function () use ($usuario) {
+            DB::transaction(function () use ($usuario, $productoServ) {
 
                 //Buscamos el ultimo registro de caja abierta, con el usuario autenticado, en el punto actual.
                 $caja =  Caja::whereNull('fecha_cierre')
@@ -134,6 +137,12 @@ class Principal extends Component
                 //Cerramos caja
                 $caja->fecha_cierre = now()->format('Y-m-d H:i:s');
                 $caja->save();
+
+                //Obtener los productos vendidos en el corte de caja
+                $productos = $productoServ->getTotalProductos($caja);
+                //Descontar exitencias
+                if (config('app.discount_stock'))
+                    $productoServ->descontarStock($productos, $caja);
             }, 2);
             //Emitimos evento para modificar el modal
             $this->status_message = 'Ventas asignadas al siguiente turno';

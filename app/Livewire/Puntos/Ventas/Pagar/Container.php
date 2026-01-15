@@ -53,8 +53,7 @@ class Container extends Component
             ->get()
             ->toArray();
         //Buscamos los detalles de los pagos y los guardamos en el formulario
-        $this->ventaForm->pagosTable = DetallesVentaPago::with('tipoPago')
-            ->where('folio_venta', $venta->folio)
+        $this->ventaForm->pagosTable = DetallesVentaPago::where('folio_venta', $venta->folio)
             ->get()
             ->toArray();
         //Rectificamos los pagos
@@ -104,6 +103,8 @@ class Container extends Component
         try {
             //Intentamos agregar el pago seleccionado
             $this->ventaForm->agregarPago($this->metodosPago);
+            //Verificar si es editable
+            $this->ventaForm->verificarUltimoPago();
             //Emitimos evento para cerrar el componente del modal
             $this->dispatch('close-modal');
         } catch (ValidationException $e) {

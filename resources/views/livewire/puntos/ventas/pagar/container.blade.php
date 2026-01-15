@@ -118,18 +118,14 @@
                                     {{ $pago['id_socio'] }}
                                 </th>
                                 <td class="px-6 py-4">
-                                    @if ($pago['editable'])
-                                        <select wire:model="ventaForm.pagosTable.{{ $index }}.id_tipo_pago"
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                            <option>Selecciona</option>
-                                            @foreach ($this->metodosPago as $metodo)
-                                                <option value="{{ $metodo->id }}">{{ $metodo->descripcion }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    @else
-                                        {{ $pago['tipo_pago']['descripcion'] }}
-                                    @endif
+                                    <select wire:model="ventaForm.pagosTable.{{ $index }}.id_tipo_pago"
+                                        class="{{ !$pago['editable'] ? 'opacity-50 pointer-events-none' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                        <option>Selecciona</option>
+                                        @foreach ($this->metodosPago as $metodo)
+                                            <option value="{{ $metodo->id }}">{{ $metodo->descripcion }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                 <td class="px-6 py-4 ">
                                     <div class="flex gap-2 items-center">

@@ -969,6 +969,16 @@ class VentaForm extends Form
     }
 
     /**
+     * Agrega una marca para el ultimo pago editable agregado\
+     * Utilizado para las ventas pendientes.
+     */
+    public function verificarUltimoPago()
+    {
+        $last_key = array_key_last($this->pagosTable);
+        $this->pagosTable[$last_key]['editable'] = true;
+    }
+
+    /**
      * Actualiza el estado de cuenta, referente a la venta pendiente pagada con firma.\
      * Modifica el saldo del estado de cuenta, y crea la propina en firma.
      */

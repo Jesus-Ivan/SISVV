@@ -1,7 +1,7 @@
 {{-- Tabla --}}
 <div class="ms-3 mx-3" wire:loading.class='animate-pulse pointer-events-none' wire:target='order'>
     <div class="relative  shadow-md sm:rounded-lg">
-        <div class="flex items-center gap-5">
+        <div class="flex items-center gap-5 my-2">
             {{-- FECHA DE INICIO --}}
             <input type="date" id="fInicio" wire:model='f_inicio'
                 class="block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-64 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
@@ -42,6 +42,9 @@
                             FOLIO
                         </th>
                         <th scope="col" class="px-6 py-3">
+                            RESPONSABLE
+                        </th>
+                        <th scope="col" class="px-6 py-3">
                             FECHA
                         </th>
                         <th scope="col" class="px-4 py-3">
@@ -67,6 +70,9 @@
                             class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                             <td class="px-6 py-2">
                                 {{ $orden->folio }}
+                            </td>
+                            <td class="px-6 py-2">
+                                {{ $orden->user_name }}
                             </td>
                             <td class="px-6 py-2">
                                 {{ $orden->created_at }}

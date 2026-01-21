@@ -91,7 +91,8 @@
                             {{ $detalles->folio_traspaso }}
                         </th>
                         <td class="px-6 py-2">
-                            {{ $detalles->traspaso->fecha_existencias }}
+                            <p class="font-semibold">{{ $detalles->traspaso->fecha_existencias }}</p>
+                            <p>{{ $detalles->traspaso->nombre }}</p>
                         </td>
                         <td class="px-6 py-2">
                             {{ $detalles->clave_presentacion ?: $detalles->clave_insumo }}

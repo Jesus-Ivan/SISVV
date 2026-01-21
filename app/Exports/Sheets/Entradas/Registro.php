@@ -29,10 +29,11 @@ class Registro implements FromArray, WithTitle
             //Agreagar cada item
             $insumos[] = [
                 'folio_entrada' => $item['folio_entrada'],
-                'clave_presentacion' => $item['clave_presentacion'],
-                'clave_insumo' => $item['clave_insumo'],
                 'fecha_existencias' => $item['fecha_existencias'],
                 'bodega' =>  $item['bodega'],
+                'user_name' =>  $item['user_name'],
+                'clave_presentacion' => $item['clave_presentacion'],
+                'clave_insumo' => $item['clave_insumo'],
                 'descripcion' => $item['descripcion'],
                 'id_proveedor' => $item['id_proveedor'],
                 'factura' => $item['factura'],

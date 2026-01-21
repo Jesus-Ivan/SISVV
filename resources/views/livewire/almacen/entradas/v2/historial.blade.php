@@ -44,34 +44,34 @@
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                    <th scope="col" class="px-6 py-2">
+                    <th scope="col" class="px-3 py-2">
                         ENTRADA
                     </th>
-                    <th scope="col" class="px-6 py-2">
+                    <th scope="col" class="px-3 py-2">
                         FECHA EXISTENCIAS
                     </th>
-                    <th scope="col" class="px-6 py-2">
+                    <th scope="col" class="px-3 py-2">
                         #
                     </th>
-                    <th scope="col" class="px-4 py-2">
+                    <th scope="col" class="px-3 py-2">
                         DESCRIPCIÓN
                     </th>
-                    <th scope="col" class="px-4 py-2">
+                    <th scope="col" class="px-3 py-2">
                         PROVEEDOR
                     </th>
-                    <th scope="col" class="px-4 py-2">
+                    <th scope="col" class="px-3 py-2">
                         CANTIDAD
                     </th>
-                    <th scope="col" class="px-4 py-2">
+                    <th scope="col" class="px-3 py-2">
                         COSTO UNITARIO
                     </th>
-                    <th scope="col" class="px-6 py-2">
+                    <th scope="col" class="px-3 py-2">
                         IVA
                     </th>
-                    <th scope="col" class="px-4 py-2">
+                    <th scope="col" class="px-3 py-2">
                         C.C.IMPUESTO
                     </th>
-                    <th scope="col" class="px-4 py-2">
+                    <th scope="col" class="px-3 py-2">
                         TOTAL
                     </th>
                 </tr>
@@ -80,34 +80,35 @@
                 @foreach ($this->entradas as $index => $detalle)
                     <tr wire:key='{{ $index }}'
                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <td class="px-6 py-2">
+                        <td class="px-3 py-2">
                             {{ $detalle->folio_entrada }}
                         </td>
-                        <td class="px-6 py-2">
-                            {{ $detalle->entrada->fecha_existencias }}
+                        <td class="px-3 py-2">
+                            <p class="font-semibold">{{ $detalle->entrada->fecha_existencias }}</p>
+                            <p>{{ $detalle->entrada->nombre }}</p>
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-3 py-2">
                             {{ $detalle->clave_presentacion ?: $detalle->clave_insumo }}
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-3 py-2">
                             {{ $detalle->descripcion }}
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-3 py-2">
                             {{ $detalle->proveedor->nombre }}
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-3 py-2">
                             {{ $detalle->cantidad }}
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-3 py-2">
                             ${{ $detalle->costo_unitario }}
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-3 py-2">
                             {{ $detalle->iva }}
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-3 py-2">
                             {{ $detalle->costo_con_impuesto }}
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-3 py-2">
                             ${{ $detalle->importe }}
                         </td>
                     </tr>

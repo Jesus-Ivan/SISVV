@@ -31,31 +31,34 @@
             <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
-                        <th scope="col" class="px-6 py-2">
+                        <th scope="col" class="px-3 py-2">
                             FOLIO
                         </th>
-                        <th scope="col" class="px-6 py-2">
+                        <th scope="col" class="px-3 py-2">
                             REQUISICION
                         </th>
-                        <th scope="col" class="px-6 py-2">
+                        <th scope="col" class="px-3 py-2">
                             FECHA EXISTENCIAS
                         </th>
-                        <th scope="col" class="px-6 py-2">
+                        <th scope="col" class="px-3 py-2">
                             BODEGA
                         </th>
-                        <th scope="col" class="px-6 py-2">
+                        <th scope="col" class="px-3 py-2">
+                            RESPONSABLE
+                        </th>
+                        <th scope="col" class="px-3 py-2">
                             OBSERVACIONES
                         </th>
-                        <th scope="col" class="px-6 py-2">
+                        <th scope="col" class="px-3 py-2">
                             SUBTOTAL
                         </th>
-                        <th scope="col" class="px-6 py-3">
+                        <th scope="col" class="px-3 py-3">
                             IVA
                         </th>
-                        <th scope="col" class="px-6 py-3">
+                        <th scope="col" class="px-3 py-3">
                             TOTAL
                         </th>
-                        <th scope="col" class="px-6 py-3">
+                        <th scope="col" class="px-3 py-3">
                             ACCIONES
                         </th>
                     </tr>
@@ -64,31 +67,34 @@
                     @foreach ($this->entradas as $index => $entrada)
                         <tr wire:key='{{ $entrada->folio }}'
                             class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                            <td class="px-6 py-2">
+                            <td class="px-3 py-2">
                                 {{ $entrada->folio }}
                             </td>
-                            <td class="px-6 py-2">
+                            <td class="px-3 py-2">
                                 {{ $entrada->folio_requisicion }}
                             </td>
-                            <td class="px-6 py-2">
+                            <td class="px-3 py-2">
                                 {{ $entrada->fecha_existencias }}
                             </td>
-                            <td class="px-6 py-2">
+                            <td class="px-3 py-2">
                                 {{ $entrada->bodega->descripcion }}
                             </td>
-                            <td class="px-6 py-2  max-w-64">
+                            <td class="px-3 py-2  max-w-64">
+                                {{ $entrada->nombre }}
+                            </td>
+                            <td class="px-3 py-2  max-w-64">
                                 {{ $entrada->observaciones }}
                             </td>
-                            <td class="px-6 py-2">
+                            <td class="px-3 py-2">
                                 ${{ number_format($entrada->subtotal, 2) }}
                             </td>
-                            <td class="px-6 py-2">
+                            <td class="px-3 py-2">
                                 ${{ number_format($entrada->iva, 2) }}
                             </td>
-                            <td class="px-6 py-2">
+                            <td class="px-3 py-2">
                                 ${{ number_format($entrada->total, 2) }}
                             </td>
-                            <td class="px-6 py-2 flex ">
+                            <td class="px-3 py-2 inline-flex ">
                                 {{-- EDITAR --}}
                                 <a href="{{ route('almacen.entradav2.editar', ['folio' => $entrada->folio]) }}"
                                     class="px-3.5 py-1.5 text-green-700 border border-green-700 hover:bg-green-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:focus:ring-green-800 dark:hover:bg-green-500">
@@ -104,11 +110,10 @@
                                 </a>
                                 {{-- Detalles --}}
                                 <a type="button" wire:click="verDetalles({{ $entrada->folio }})"
-                                    class="w-auto text-gray-700 hover:text-white border border-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-3 py-1.5 text-center dark:border-gray-500 dark:text-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800">
+                                    class="px-3.5 py-1.5 w-auto text-gray-700 hover:text-white border border-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm text-center dark:border-gray-500 dark:text-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-800">
                                     <div wire:loading.remove.delay wire:target='verDetalles({{ $entrada->folio }})'>
-                                        <svg class="w-5 h-5" aria-hidden="true"
-                                            xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                            fill="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                            width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                                             <path fill-rule="evenodd"
                                                 d="M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Zm4.996 2a1 1 0 0 0 0 2h.01a1 1 0 1 0 0-2h-.01ZM11 8a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-6Zm-4.004 3a1 1 0 1 0 0 2h.01a1 1 0 1 0 0-2h-.01ZM11 11a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-6Zm-4.004 3a1 1 0 1 0 0 2h.01a1 1 0 1 0 0-2h-.01ZM11 14a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-6Z"
                                                 clip-rule="evenodd" />

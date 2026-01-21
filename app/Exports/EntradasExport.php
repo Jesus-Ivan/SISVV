@@ -40,10 +40,11 @@ class EntradasExport implements WithMultipleSheets
         //Encabezados
         $encabezados = [
             'folio_entrada' => '#ENTRADA',
-            'clave_presentacion' => '#PRESENTACION',
-            'clave_insumo' => '#INSUMO',
             'fecha_existencias' => 'FECHA EXISTENCIAS',
             'bodega' => 'BODEGA',
+            'user_name' => 'RESPONSABLE',
+            'clave_presentacion' => '#PRESENTACION',
+            'clave_insumo' => '#INSUMO',
             'descripcion' => 'DESCRIPCION',
             'id_proveedor' => 'PROVEEDOR',
             'factura' => 'FACTURA',
@@ -82,10 +83,11 @@ class EntradasExport implements WithMultipleSheets
         if (!$is_converted) {
             $aux = [
                 'folio_entrada' => $item['folio_entrada'],
-                'clave_presentacion' => $item['clave_presentacion'],
-                'clave_insumo' => $item['clave_insumo'],
                 'fecha_existencias' => $item['entrada']['fecha_existencias'],
                 'bodega' =>  $this->getBodega($item['entrada']['clave_bodega']),
+                'user_name' => $item['entrada']['nombre'],
+                'clave_presentacion' => $item['clave_presentacion'],
+                'clave_insumo' => $item['clave_insumo'],
                 'descripcion' => $item['descripcion'],
                 'id_proveedor' => $item['proveedor']['nombre'],
                 'factura' => $item['factura'],
@@ -101,10 +103,11 @@ class EntradasExport implements WithMultipleSheets
         } else {
             $aux = [
                 'folio_entrada' => $item['folio_entrada'],
-                'clave_presentacion' => $this->getClavePresentacion($item),
-                'clave_insumo' => $item['clave_insumo'],
                 'fecha_existencias' => $item['entrada']['fecha_existencias'],
                 'bodega' =>  $this->getBodega($item['entrada']['clave_bodega']),
+                'user_name' => $item['entrada']['nombre'],
+                'clave_presentacion' => $this->getClavePresentacion($item),
+                'clave_insumo' => $item['clave_insumo'],
                 'descripcion' => $this->getDescripcionPresentacion($item),
                 'id_proveedor' => $item['proveedor']['nombre'],
                 'factura' => $item['factura'],

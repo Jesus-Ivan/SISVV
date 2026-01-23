@@ -56,13 +56,35 @@ use Maatwebsite\Excel\Excel as ExcelExcel;
 
 class ReportesController extends Controller
 {
+    /**
+     * Genera el pdf del ticket de venta
+     */
     public function generarTicket(Venta $venta)
     {
+        /*
         //Con 'with(nombre_relacion)' evitamos el problema N+1
-        $productos = DetallesVentaProducto::with('productos')->where('folio_venta', $venta->folio)->get();
+        $productos = DetallesVentaProducto::with('productos')
+            ->where('folio_venta', $venta->folio)
+            ->get();
+        */
         $pagos = DetallesVentaPago::with('tipoPago')->where('folio_venta', $venta->folio)->get();
         $caja = Caja::with('users')->where('corte', $venta->corte_caja)->limit(1)->get();
         $puntoVenta = PuntoVenta::where('clave', $venta->clave_punto_venta)->first();
+
+        $columns = [
+            'folio_venta',
+            'codigo_catalogo',
+            'clave_producto',
+            'nombre',
+            'precio'
+        ];
+        $productos = DetallesVentaProducto::with('productos')
+            ->select($columns)
+            ->selectRaw('SUM(cantidad) as cantidad')
+            ->where('folio_venta', $venta->folio)
+            ->groupBy($columns)
+            // Nota: Lee la advertencia abajo sobre el GROUP BY
+            ->get();
 
         $data = [
             'title' => 'VISTA VERDE COUNTRY CLUB',

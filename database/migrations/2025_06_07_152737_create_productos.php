@@ -19,7 +19,8 @@ return new class extends Migration
             $table->decimal('precio_con_impuestos', 10, 2);
             $table->integer('id_grupo');
             $table->integer('id_subgrupo')->nullable();
-            $table->integer('estado')->default(1);
+            $table->boolean('estado')->default(1);
+            $table->boolean('auto_suma')->default(true);
             $table->timestamps();
         });
     }

@@ -356,8 +356,11 @@ class Container extends Component
                 //Emitir evento para actualizar el front de los modificadores.
                 $this->dispatch('actualizar-modificadores');
             } else {
-                //Agregar el producto a la tabla
-                $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time(), true);
+                //Si esta habilitada la opcion de auto_suma
+                if ($producto->auto_suma)
+                    $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time(), true);
+                else
+                    $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time());
                 //Actualizar el total de la venta
                 $this->ventaForm->actualizarTotal();
                 //Limpiar las propiedades auxiliares

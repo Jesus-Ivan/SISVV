@@ -5,6 +5,7 @@ namespace App\Livewire\Almacen\Traspasos\V2;
 use App\Constants\AlmacenConstants;
 use App\Models\Bodega;
 use App\Models\DetalleTraspasoNew;
+use App\Models\TraspasoNew;
 use Carbon\Carbon;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -43,7 +44,7 @@ class Historial extends Component
             ->whereHas('traspaso', function ($query) use ($mes) {
                 $query->whereMonth('fecha_existencias', $mes->month)
                     ->whereYear('fecha_existencias', $mes->year);
-                    
+
 
                 if (!empty($this->clave_origen)) {
                     $query->where('clave_origen', $this->clave_origen);
@@ -57,6 +58,12 @@ class Historial extends Component
         if (strlen($this->primary) > 0) {
             $detalles->whereAny(['clave_presentacion', 'clave_insumo'], $this->primary);
         }
+        $detalles->orderBy(
+            TraspasoNew::select('fecha_existencias')
+                ->whereColumn("traspasos_new.folio", "detalle_traspaso_new.folio_traspaso")
+                ->limit(1),
+            "DESC"
+        );
 
         return $detalles->paginate(10);
     }

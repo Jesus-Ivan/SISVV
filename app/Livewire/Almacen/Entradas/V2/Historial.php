@@ -5,6 +5,7 @@ namespace App\Livewire\Almacen\Entradas\V2;
 use App\Constants\AlmacenConstants;
 use App\Models\Bodega;
 use App\Models\DetalleEntradaNew;
+use App\Models\EntradaNew;
 use Carbon\Carbon;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -55,6 +56,12 @@ class Historial extends Component
                         ->whereYear('fecha_existencias', $mes->year);
                 })
                 ->whereAny(['clave_presentacion', 'clave_insumo'],  $this->primary) //Agregar condicion de busqueda para la clave primaria seleccionada
+                ->orderBy(
+                    EntradaNew::select('fecha_existencias')
+                        ->whereColumn('entradas_new.folio', 'detalle_entrada_new.folio_entrada') // Relación
+                        ->limit(1),
+                    'DESC'
+                )
                 ->paginate(10);
         } else {
             //Preparar la consulta 
@@ -64,6 +71,12 @@ class Historial extends Component
                         ->whereMonth('fecha_existencias', $mes->month)
                         ->whereYear('fecha_existencias', $mes->year);
                 })
+                ->orderBy(
+                    EntradaNew::select('fecha_existencias')
+                        ->whereColumn('entradas_new.folio', 'detalle_entrada_new.folio_entrada') // Relación
+                        ->limit(1),
+                    'DESC'
+                )
                 ->paginate(10);
         }
 

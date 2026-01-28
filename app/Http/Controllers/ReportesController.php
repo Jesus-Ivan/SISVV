@@ -1173,7 +1173,7 @@ class ReportesController extends Controller
         $convertir_insumos = $req->input('convertir_insumos');
 
         //Definir array de relaciones
-        $relations = ['proveedor', 'entrada'];
+        $relations = ['proveedor', 'entrada', "insumo.unidad"];
         //Si esta activada la casilla de conversion de insumos
         if ($convertir_insumos)
             array_push($relations, 'insumo.presentaciones');
@@ -1186,7 +1186,7 @@ class ReportesController extends Controller
             })
             ->whereIn('id_proveedor', $proveedores)
             ->get();
-
+            
         //Devolvemos el excel
         return Excel::download(
             new EntradasExport($result->toArray(), $convertir_insumos),

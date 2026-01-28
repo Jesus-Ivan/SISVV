@@ -39,6 +39,7 @@ class Registro implements FromArray, WithTitle
                 'factura' => $item['factura'],
                 'cuenta_contable' => $item['cuenta_contable'],
                 'cantidad' => $item['cantidad'],
+                'unidad' => $item['unidad'],
                 'costo_unitario' => $item['costo_unitario'],
                 'iva' => $item['iva'],
                 'costo_con_impuesto' => $item['costo_con_impuesto'],

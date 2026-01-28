@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Puntos\Ventas\Nueva;
 
+use App\Jobs\ImprimirComandaJob;
 use App\Livewire\Forms\VentaForm;
 use App\Models\CatalogoVistaVerde;
 use App\Models\Grupos;
@@ -12,6 +13,7 @@ use App\Models\Producto;
 use App\Models\Socio;
 use App\Models\SocioMembresia;
 use App\Models\TipoPago;
+use App\Models\Venta;
 use Exception;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -19,6 +21,8 @@ use Livewire\Component;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
+use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
+use Mike42\Escpos\Printer;
 
 class Container extends Component
 {
@@ -195,6 +199,7 @@ class Container extends Component
 
     public function guardarVentaNueva()
     {
+        $folioVenta = 0;
         try {
             //Guardamos la venta
             $folioVenta = $this->ventaForm->guardarVentaNueva($this->codigopv);
@@ -208,6 +213,9 @@ class Container extends Component
         } catch (Exception $e) {
             session()->flash('fail', $e->getMessage());
         }
+
+        //Imprimimos en la impresora de red.
+        ImprimirComandaJob::dispatch($folioVenta);
         $this->dispatch('action-message-venta');
     }
 
@@ -262,12 +270,7 @@ class Container extends Component
                 //Emitir evento para actualizar el front de los modificadores.
                 $this->dispatch('actualizar-modificadores');
             } else {
-                //Si esta habilitada la opcion de auto_suma
-                if ($producto->auto_suma)
-                    $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time(), true);
-                else
-                    $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time());
-
+                $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time());
                 //Actualizar el total de la venta
                 $this->ventaForm->recalcularSubtotales();
                 //Limpiar las propiedades auxiliares

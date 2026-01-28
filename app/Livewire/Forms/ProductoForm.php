@@ -17,7 +17,7 @@ class ProductoForm extends Form
 {
     //Atributos del producto GENERAL
     public $descripcion, $precio, $iva = 16, $costo_con_impuesto;
-    public $id_grupo, $id_subgrupo, $estado = 1, $auto_sum = false;
+    public $id_grupo, $id_subgrupo, $estado = 1, $print_default = false;
     //Atributos de producto RECETA
     public $receta_table = [];
     //Atributos de producto compuesto
@@ -44,7 +44,7 @@ class ProductoForm extends Form
         $this->id_grupo = $producto->id_grupo;
         $this->id_subgrupo = $producto->id_subgrupo;
         $this->estado = $producto->estado;
-        $this->auto_sum = boolval($producto->auto_suma);
+        $this->print_default = boolval($producto->print_default);
         //Establecer valores (receta)
         $this->setReceta($producto);
         //Establecer valores (compuesto)
@@ -259,7 +259,7 @@ class ProductoForm extends Form
             'id_grupo' => $validated['id_grupo'],
             'id_subgrupo' => $this->id_subgrupo,
             'estado' => $this->estado,
-            'auto_suma' => $this->auto_sum
+            'print_default' => $this->print_default
         ]);
 
         return $result;
@@ -298,7 +298,7 @@ class ProductoForm extends Form
         $this->original->id_grupo = $validated['id_grupo'];
         $this->original->id_subgrupo = $this->id_subgrupo;
         $this->original->estado = $this->estado;
-        $this->original->auto_suma = $this->auto_sum;
+        $this->original->print_default = $this->print_default;
         //Actualizar el registro en la bd
         $this->original->save();
     }

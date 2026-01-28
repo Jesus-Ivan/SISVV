@@ -61,12 +61,6 @@ class ReportesController extends Controller
      */
     public function generarTicket(Venta $venta)
     {
-        /*
-        //Con 'with(nombre_relacion)' evitamos el problema N+1
-        $productos = DetallesVentaProducto::with('productos')
-            ->where('folio_venta', $venta->folio)
-            ->get();
-        */
         $pagos = DetallesVentaPago::with('tipoPago')->where('folio_venta', $venta->folio)->get();
         $caja = Caja::with('users')->where('corte', $venta->corte_caja)->limit(1)->get();
         $puntoVenta = PuntoVenta::where('clave', $venta->clave_punto_venta)->first();
@@ -78,13 +72,17 @@ class ReportesController extends Controller
             'nombre',
             'precio'
         ];
-        $productos = DetallesVentaProducto::with('productos')
+        $productos_result = DetallesVentaProducto::with('productos')
             ->select($columns)
             ->selectRaw('SUM(cantidad) as cantidad')
             ->where('folio_venta', $venta->folio)
             ->groupBy($columns)
-            // Nota: Lee la advertencia abajo sobre el GROUP BY
             ->get();
+
+        $productos = array_map(function ($product) {
+            $product['subtotal'] = $product['cantidad'] * $product['precio'];
+            return $product;
+        }, $productos_result->toArray());
 
         $data = [
             'title' => 'VISTA VERDE COUNTRY CLUB',

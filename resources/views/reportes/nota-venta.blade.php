@@ -100,17 +100,18 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
     <tbody>
         @foreach ($productos as $producto)
             <tr>
-                <td>{{ $producto->nombre ?: $producto->catalogoProductos->nombre }}</td>
-                <td style="text-align: center">{{ $producto->cantidad }}</td>
-                <td>{{ $producto->precio }}</td>
-                <td>{{ $producto->subtotal }}</td>
+                <td>{{ array_key_exists('nombre', $producto) ? $producto['nombre'] : $producto['catalogoProductos']['nombre'] }}
+                </td>
+                <td style="text-align: center">{{ $producto['cantidad'] }}</td>
+                <td>{{ $producto['precio'] }}</td>
+                <td>{{ number_format($producto['subtotal'], 2) }}</td>
             </tr>
         @endforeach
     </tbody>
 </table>
 <hr>
 <p style="text-align: right; margin-right: 10pt; font-size: 11pt">TOTAL:
-    ${{ array_sum(array_column($productos->toArray(), 'subtotal')) }}</p>
+    ${{ number_format(array_sum(array_column($productos, 'subtotal')), 2) }}</p>
 @if (count($pagos))
     <h4>DETALLES DE PAGO</h4>
     <table>

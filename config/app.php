@@ -45,6 +45,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | IP de la impresora Predeterminada para imprimir
+    |--------------------------------------------------------------------------
+    |
+    | Es la impresora que utilizara el sistema para imprimir comandas en cocina.
+    | Mediante el protocolo ESC/POS
+    |
+    */
+    'printer_default' => env('SISVV_IP_PRINTER', '127.0.0.1'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Debug Mode
     |--------------------------------------------------------------------------
     |

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->integer('id_grupo');
             $table->integer('id_subgrupo')->nullable();
             $table->boolean('estado')->default(1);
-            $table->boolean('auto_suma')->default(true);
+            $table->boolean('print_default')->default(false);
             $table->timestamps();
         });
     }

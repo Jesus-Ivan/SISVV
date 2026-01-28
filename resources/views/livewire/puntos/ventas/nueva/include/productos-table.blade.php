@@ -72,14 +72,6 @@
                     </tr>
                 @endforeach
             </tbody>
-            <tfoot>
-                <tr class="font-semibold text-gray-900 dark:text-white">
-                    <th scope="row" class="px-6 py-3 text-base">Total</th>
-                    <td class="px-2 py-2"></td>
-                    <td class="px-2 py-2"></td>
-                    <td class="px-2 py-2">${{ $this->ventaForm->totalVenta }}</td>
-                </tr>
-            </tfoot>
         </table>
         @error('ventaForm.productosTable')
             <x-input-error messages="{{ $message }}" />

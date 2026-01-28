@@ -137,18 +137,14 @@
                         <div class="flex py-2">
                             <div class="flex items-center h-5">
                                 <input id="auto-sum-checkbox" aria-describedby="auto-sum-checkbox-text" type="checkbox"
-                                    wire:model='form.auto_sum'
+                                    wire:model='form.print_default'
                                     class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                             </div>
                             <div class="ms-2 text-sm">
-                                <label for="auto-sum-checkbox" class="font-medium text-gray-900 dark:text-gray-300">Auto
-                                    suma</label>
-                                <p id="auto-sum-checkbox-text"
-                                    class="text-xs font-normal text-gray-500 dark:text-gray-300">Suma automaticamente la
-                                    cantidad en Puntos de Venta</p>
+                                <label for="auto-sum-checkbox" class="font-medium text-gray-900 dark:text-gray-300">Impresion en cocina</label>
                                 <p id="auto-sum-checkbox-text"
                                     class="text-xs font-normal text-gray-500 dark:text-gray-300">
-                                    NOTA: No afecta productos con propiedades: Compuesto.
+                                    Envia comanda a la impresora por defecto del sistema
                                 </p>
                             </div>
                         </div>

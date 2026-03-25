@@ -108,6 +108,37 @@ class ReportesController extends Controller
         return $pdf->stream('venta.pdf');
     }
 
+    /**
+     * Genera la comanda para cocina. En formato PDF.\
+     * Apto para la reimpresion local el caso de error
+     */
+    public function generarComanda($folio, $inicio)
+    {
+        //Buscar la informacion de la venta
+        $venta = Venta::with(['puntoVenta'])
+            ->find($folio);
+        $f_inicio = Carbon::parse($inicio);
+        //Obtener productos de venta (con el mismo folio, la misma marca de inicio, y sean imprimibles)
+        $productos_result = DetallesVentaProducto::where('folio_venta', $folio)
+            ->whereDate('inicio', $f_inicio->toDateString())
+            ->whereTime('inicio', $f_inicio)
+            ->whereNotNull('id_estado')
+            ->get();
+        //return $productos_result;
+        $data = [
+            "venta" => $venta,
+            "productos" => $productos_result,
+            "f_inicio" => $f_inicio
+        ];
+
+
+        $pdf = Pdf::loadView('reportes.comanda', $data);
+        $pdf->setOption(['defaultFont' => 'Times-Roman']);
+        //Tamaño predeterminado de papel del ticket (80mm x 297mm)
+        $pdf->setPaper([0, 0, 226.772, 841.89], 'portrait');
+        return $pdf->stream('comanda.pdf');
+    }
+
     //Genera reportes de ventas, con ayuda del corte de caja
     public function generarCorte(Caja $caja, $codigopv = null)
     {

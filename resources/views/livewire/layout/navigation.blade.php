@@ -18,7 +18,7 @@ new class extends Component {
 <nav x-data="{ open: false }" class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
+        <div class="flex justify-between h-12">
             <div class="flex">
                 <!-- drawer init and show (button) -->
                 <div class="shrink-0 flex items-center">
@@ -78,7 +78,7 @@ new class extends Component {
                                     <span class="flex-1 ms-3 whitespace-nowrap">Almacén</span>
                                 </a>
                             </li>
-                            {{-- <li>
+                            <li>
                                 <a href="{{ route('cocina') }}"
                                     class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                     <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
@@ -90,8 +90,7 @@ new class extends Component {
 
                                     <span class="flex-1 ms-3 whitespace-nowrap">Cocina</span>
                                 </a>
-                            </li> --}}
-
+                            </li>
                             {{-- <li>
                                 <a href="#"
                                     class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">

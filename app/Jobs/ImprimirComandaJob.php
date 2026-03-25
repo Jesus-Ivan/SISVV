@@ -2,12 +2,18 @@
 
 namespace App\Jobs;
 
+use App\Constants\PuntosConstants;
+use App\Events\ErrorImpresora;
+use App\Events\NuevaComanda;
+use App\Models\DetallesVentaProducto;
 use App\Models\Venta;
+use App\Services\TicketPrinterService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 use Mike42\Escpos\Printer;
 
@@ -17,10 +23,10 @@ class ImprimirComandaJob implements ShouldQueue
 
     protected $folio_venta;
 
-    // El número de reintentos si algo falla (ej. impresora ocupada)
-    public $tries = 15;
-    // Segundos a esperar antes de reintentar
-    public $backoff = 10;
+    // El número de reintentos si algo falla (ej. impresora ocupada) (3 tri)
+    public $tries = 3;
+    // Segundos a esperar antes de reintentar (5 seg)
+    public $backoff = 5;
 
     /**
      * Create a new job instance.
@@ -33,45 +39,39 @@ class ImprimirComandaJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(TicketPrinterService $printerService): void
     {
+        //Buscar la informacion de la venta
+        $venta = Venta::with(['puntoVenta'])
+            ->find($this->folio_venta);
+        //Obtener productos de venta (en cola)
+        $productos_result = DetallesVentaProducto::where('folio_venta', $this->folio_venta)
+            ->where('id_estado', PuntosConstants::ID_ESTADO_PRODUCTO_COLA)
+            ->get();
         try {
-            //Buscar la informacion de la venta
-            $venta = Venta::with(['puntoVenta', 'detallesProductos'])
-                ->find($this->folio_venta);
-            $connector = new NetworkPrintConnector(config('app.printer_default'), 9100);
-            $printer = new Printer($connector);
-            /**
-             * HEADER
-             */
-            $printer->setEmphasis(true);
-            $printer->setJustification(Printer::JUSTIFY_CENTER);
-            $printer->text($venta->puntoVenta->nombre . "\n");
-            $printer->setJustification();   // Reset 
-            $printer->setEmphasis(false);
-            $printer->feed(2);
-            $printer->text("VENTA: " . $this->folio_venta . "\n");
-            $printer->text("NOMBRE: " . $venta->nombre . "\n");
-            $printer->text("ACCION: " . $venta->id_socio . "\n");
-            $printer->text("--------------------------------\n");
-            /**
-             * BODY
-             */
-            foreach ($venta->detallesProductos as $key => $producto) {
-                $printer->setJustification(Printer::JUSTIFY_RIGHT);
-                $printer->text($producto->inicio . "\n");
-                $printer->setJustification();   // Reset 
-                $printer->text($producto->cantidad . " " . $producto->nombre . "\n");
-                $printer->text("-" . $producto->observaciones . "\n");
-                $printer->feed();
-            }
-            $printer->feed(3);
-            $printer->cut();
+            $printerService->imprimirComanda($productos_result, $venta);
 
-            $printer->close();
+            //Actualizar registros
+            DB::transaction(function () use ($productos_result) {
+                foreach ($productos_result as $key => $p) {
+                    $p->id_estado = PuntosConstants::ID_ESTADO_PRODUCTO_IMPRESO;
+                    $p->save();
+                }
+            }, 2);
+            //Avisamos en tiempo real La comanda nueva (si hay al menos 1 producto en cola, impreso)
+            if (count($productos_result) > 0)
+                broadcast(new NuevaComanda($venta));
         } catch (\Throwable $th) {
-            // Si falla, el job se reintentará automáticamente según $tries
-            throw $th;
+            //Actualizar registros en caso de error
+            DB::transaction(function () use ($productos_result) {
+                foreach ($productos_result as $key => $p) {
+                    $p->id_estado = PuntosConstants::ID_ESTADO_PRODUCTO_ERROR;
+                    $p->save();
+                }
+            }, 2);
+
+            //Avisamos en tiempo real (el error de la impresora de cocina)
+            broadcast(new ErrorImpresora($th->getMessage(), $venta));
         }
     }
 }

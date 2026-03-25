@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  redis: 
+    image: redis:6.2-alpine
+    container_name: redis_server
+    restart: always
+    ports:
+        - '6379:6379'
+    command: redis-server --loglevel warning --requirepass test_redis
+  

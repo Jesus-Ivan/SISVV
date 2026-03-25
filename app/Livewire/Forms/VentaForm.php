@@ -4,6 +4,7 @@ namespace App\Livewire\Forms;
 
 use App\Constants\AlmacenConstants;
 use App\Constants\PuntosConstants;
+use App\Events\ComandaModificada;
 use App\Models\Bodega;
 use App\Models\Caja;
 use App\Models\Copa;
@@ -409,7 +410,11 @@ class VentaForm extends Form
         //Creamos una fecha de inicio para los detalles de los productos que se van a guardar
         $inicio = now()->format('Y-m-d H:i:s');
 
-        DB::transaction(function () use ($folio, $inicio) {
+        //variables auxiliares
+        $is_deleted = null;
+        $is_moved = null;
+
+        DB::transaction(function () use ($folio, $inicio, &$is_deleted, &$is_moved) {
             //Revisar si hubo algun movimiento de mercancia en la BD.
             $this->verificarProductos($folio);
             //Recorremos todos los items de la tabla
@@ -438,16 +443,22 @@ class VentaForm extends Form
                         'subtotal' => $producto['subtotal'],
                         'inicio' => $inicio,
                         'tiempo' => $producto['tiempo'],
+                        'id_estado' => $producto['print_default'] ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null
                     ]);
                 }
             }
-            $this->eliminarProductos();
+            $is_deleted = $this->eliminarProductos();
             $this->crearCorreccion($folio);
             //Movemos los productos de venta
-            $this->moverProductos();
-            //Actualizamos el total de la venta 
+            $is_moved = $this->moverProductos();
+            //Actualizamos el total de la venta de origen
             Venta::where('folio', $folio)->update(['total' => $this->totalVenta]);
         }, 2);
+
+        if ($is_deleted || $is_moved) {
+            //Avisamos en tiempo real (la modificacion de la venta)
+            broadcast(new ComandaModificada(Venta::find($folio)));
+        }
     }
 
     //Cerrar una venta existente (actualiza toda la venta)
@@ -543,8 +554,10 @@ class VentaForm extends Form
     /**
      * Mueve los productos correspondientes y actualiza el total de la venta destino
      */
-    private function moverProductos()
+    private function moverProductos(): bool
     {
+        //Bandera para identificar si el metodo realizo alguna accion
+        $band = false;
         //Recorrer la lista de productos a transferir
         foreach ($this->lista_transferidos as $key => $transferido) {
             //comprobar si la venta destino, esta abierta
@@ -565,14 +578,18 @@ class VentaForm extends Form
             //Actualizar el total de la venta destino
             $venta->total = $venta->total + $transferido['subtotal'];
             $venta->save();
+            $band = true; //Actualizar bandera
         }
+        return $band;
     }
 
     /**
      * Realiza la eliminacion SUAVE de los productos
      */
-    public function eliminarProductos()
+    public function eliminarProductos(): bool
     {
+        //Bandera para identificar si el metodo realizo alguna accion
+        $band = false;
         //Usuario actual
         $user = auth()->user();
         //Recorremos todos los items a eliminar
@@ -587,8 +604,10 @@ class VentaForm extends Form
                         'deleted_at' => now(),
                         'usuario_cancela' => $user->name
                     ]);
+                $band = true;   //Actualizar bandera
             }
         }
+        return $band;
     }
 
     //Esta funcion registra la venta en la tabla "ventas"
@@ -646,6 +665,7 @@ class VentaForm extends Form
                 'subtotal' => $producto['subtotal'],
                 'inicio' => $inicio,
                 'tiempo' => $producto['tiempo'],
+                'id_estado' => $producto['print_default'] ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null
             ]);
         }
     }
@@ -846,7 +866,8 @@ class VentaForm extends Form
                 'precio' => $producto->precio_con_impuestos,
                 'subtotal' => $cantidad * $producto->precio_con_impuestos,
                 'observaciones' => '',
-                'tiempo' => null
+                'tiempo' => null,
+                'print_default' => $producto->print_default
             ];
         }
     }
@@ -866,7 +887,8 @@ class VentaForm extends Form
                 'subtotal' => $modificador['precio'] * $modificador['cantidad'],
                 'observaciones' => '',
                 'tiempo' => null,
-                'modif' => true
+                'modif' => true,
+                'print_default' => $modificador['print_default']
             ];
         }
     }

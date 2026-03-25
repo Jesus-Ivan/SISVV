@@ -1200,6 +1200,14 @@ INSERT INTO conceptos_cancelacion (`id`, `descripcion`, `editable`, `created_at`
 INSERT INTO conceptos_cancelacion (`id`, `descripcion`, `editable`, `created_at`, `updated_at`) VALUES (5, 'OTRO', 1, '2025-09-07 12:27:25', NULL);
 
 
+--ESTADO PRODUCTOS VENTAS (COMANDAS)
+INSERT INTO `estado_productos_ventas` (`id`, `descripcion`, `created_at`, `updated_at`) VALUES ('0', 'EN COLA', NULL, NULL);
+INSERT INTO `estado_productos_ventas` (`id`, `descripcion`, `created_at`, `updated_at`) VALUES ('1', 'IMPRESO', NULL, NULL);
+INSERT INTO `estado_productos_ventas` (`id`, `descripcion`, `created_at`, `updated_at`) VALUES ('2', 'LISTO', NULL, NULL);
+INSERT INTO `estado_productos_ventas` (`id`, `descripcion`, `created_at`, `updated_at`) VALUES ('3', 'ERROR', NULL, NULL);
+INSERT INTO `estado_productos_ventas` (`id`, `descripcion`, `created_at`, `updated_at`) VALUES ('4', 'CANCELADO', NULL, NULL);
+
+
 
 --!		CONSULTAS DE JESUS IVAN		!--
 -- Agregar membresias --

@@ -106,28 +106,31 @@
                 @foreach ($this->ventaForm->productosTable as $productoIndex => $producto)
                     <tr wire:key="{{ $productoIndex }}"
                         class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
-
                         {{-- DESCRIPCION --}}
                         <th scope="row"
                             class=" px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                             {{ $producto['nombre'] ?: $producto['catalogo_productos']['nombre'] }}
                         </th>
-                        <td class="px-3 py-2 w-32">
-                            <input type="text"
-                                wire:model="ventaForm.productosTable.{{ $productoIndex }}.observaciones"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                        <td class="px-3 py-2 w-56">
+                            @if (array_key_exists('id', $producto))
+                                <p class="font-semibold">{{ $producto['observaciones'] }}</p>
+                            @else
+                                <input type="text"
+                                    wire:model="ventaForm.productosTable.{{ $productoIndex }}.observaciones"
+                                    class=" bg-gray-50 border border-gray-400 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                            @endif
                         </td>
-                        <td class="px-2 py-2 w-32">
+                        <td class="px-2 py-2 w-28">
                             ${{ $producto['precio'] }}
                         </td>
                         {{-- INPUTS DE CANTIDAD --}}
-                        <td class="px-2 py-2 w-32">
+                        <td class="px-2 py-2 w-24">
                             {{ $producto['cantidad'] }}
                         </td>
                         <td class="px-2 py-2 w-32">
                             ${{ number_format($producto['subtotal'], 2) }}
                         </td>
-                        <td class="px-2 py-2 w-32">
+                        <td class="px-2 py-2 w-28">
                             @if (!array_key_exists('modif', $producto))
                                 <button type="button" wire:click="eliminarArticulo({{ $productoIndex }})"
                                     class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm py-1.5 px-3 text-center inline-flex items-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">

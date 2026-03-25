@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Puntos\Ventas\Nueva;
 
+use App\Constants\PuntosConstants;
 use App\Jobs\ImprimirComandaJob;
 use App\Livewire\Forms\VentaForm;
 use App\Models\CatalogoVistaVerde;
+use App\Models\DetallesVentaProducto;
 use App\Models\Grupos;
 use App\Models\GruposModificadores;
 use App\Models\Modificador;
@@ -207,15 +209,14 @@ class Container extends Component
             $this->dispatch('ver-ticket', ['venta' => $folioVenta]);
             //Emitimos mensaje de sesion 
             session()->flash('success', 'Venta guardada correctamente');
+            //Creamos JOB para la impresora de red.
+            ImprimirComandaJob::dispatch($folioVenta);
         } catch (ValidationException $th) {
             //Si es una excepcion de validacion, volverla a lanzar a la vista
             throw $th;
         } catch (Exception $e) {
             session()->flash('fail', $e->getMessage());
         }
-
-        //Imprimimos en la impresora de red.
-        ImprimirComandaJob::dispatch($folioVenta);
         $this->dispatch('action-message-venta');
     }
 
@@ -228,6 +229,8 @@ class Container extends Component
             $this->dispatch('ver-ticket', ['venta' => $folioVenta]);
             //Mensaje de sesion para el alert
             session()->flash('success', 'Venta cerrada correctamente');
+            //Creamos JOB para la impresora de red.
+            ImprimirComandaJob::dispatch($folioVenta);
         } catch (ValidationException $th) {
             //Si es una excepcion de validacion, volverla a lanzar a la vista
             throw $th;
@@ -297,10 +300,11 @@ class Container extends Component
         $this->modificadores = $producto->modificador->toArray();
         $this->gruposModif = $producto->grupoModif->toArray();
 
-        //Agregar descripcion del producto (modificadores posibles)
+        //Agregar descripcion del producto (modificadores posibles) y marca de impresion automatica en cocina
         foreach ($this->modificadores as $index => $modif) {
             $result = Producto::find($modif['clave_modificador']);
             $this->modificadores[$index]['descripcion'] = $result->descripcion;
+            $this->modificadores[$index]['print_default'] = $result->print_default;
         }
         //Agregar descripcion del grupo de modificadores
         foreach ($this->gruposModif as $index => $grupo) {

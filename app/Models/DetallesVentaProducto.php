@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\BroadcastsEvents;
 
 class DetallesVentaProducto extends Model
 {
@@ -39,5 +40,14 @@ class DetallesVentaProducto extends Model
     public function venta(): BelongsTo
     {
         return $this->belongsTo(Venta::class, 'folio_venta', 'folio');
+    }
+
+    public function EstadoProductoVenta(): BelongsTo
+    {
+        return $this->belongsTo(EstadoProductoVenta::class, 'id_estado', 'id')
+            ->withDefault([
+                'id' => 'X',
+                'descripcion' => 'ERR N/R'
+            ]);
     }
 }

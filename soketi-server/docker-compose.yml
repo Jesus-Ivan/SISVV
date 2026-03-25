@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  soketi:
+    image: 'quay.io/soketi/soketi:1.4-16-debian'
+    container_name: soketi_server_2
+    ports:
+      - '6001:6001'
+      - '9601:9601'
+    environment:
+      # Estos son los valores que luego pondrás en tu Laravel .env
+      - SOKETI_DEFAULT_APP_ID=390981ac-b6c4-4ac8-8c6e-0061957cc911
+      - SOKETI_DEFAULT_APP_KEY=qjNnyu+KY7H8vgAnBTYamZ8NJYNMJYdD8bnIjb3WW8g
+      - SOKETI_DEFAULT_APP_SECRET=63f4945d921d599f27ae4fdf5bada3f1
+      # Configuraciones extra útiles
+      - SOKETI_DEBUG=1
+      - SOKETI_ALLOW_ORIGIN=*
+    restart: unless-stopped

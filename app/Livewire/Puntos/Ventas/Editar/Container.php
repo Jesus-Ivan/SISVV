@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Puntos\Ventas\Editar;
 
+use App\Jobs\ImprimirComandaJob;
 use App\Livewire\Forms\VentaForm;
 use App\Models\Caja;
 use App\Models\CatalogoVistaVerde;
@@ -287,6 +288,8 @@ class Container extends Component
             $this->dispatch('ver-ticket', ['venta' => $this->venta->folio]);
             //redirigir al usuario
             $this->redirectRoute('pv.ventas', ['codigopv' => $this->codigopv]);
+            //Imprimir comanda en cocina
+            ImprimirComandaJob::dispatch($this->venta->folio);
         } catch (ValidationException $th) {
             //Lanzar la excepcion de validacion a la vista
             throw $th;
@@ -304,6 +307,8 @@ class Container extends Component
             $this->dispatch('ver-ticket', ['venta' => $this->venta->folio]);
             //redirigir al usuario
             $this->redirectRoute('pv.ventas', ['codigopv' => $this->codigopv]);
+            //Imprimir comanda en cocina
+            ImprimirComandaJob::dispatch($this->venta->folio);
         } catch (ValidationException $th) {
             throw $th;
         } catch (Exception $e) {
@@ -356,11 +361,7 @@ class Container extends Component
                 //Emitir evento para actualizar el front de los modificadores.
                 $this->dispatch('actualizar-modificadores');
             } else {
-                //Si esta habilitada la opcion de auto_suma
-                if ($producto->auto_suma)
-                    $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time(), true);
-                else
-                    $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time());
+                $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time());
                 //Actualizar el total de la venta
                 $this->ventaForm->actualizarTotal();
                 //Limpiar las propiedades auxiliares

@@ -40,7 +40,7 @@ class Kernel extends HttpKernel
 
         'api' => [
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
@@ -66,8 +66,9 @@ class Kernel extends HttpKernel
         'recepcion' => \App\Http\Middleware\RecepcionPermisos::class,
         'sistemas' => \App\Http\Middleware\SistemasPermisos::class,
         'puntos' => \App\Http\Middleware\PuntosPermisos::class,
-        'almacen'=>\App\Http\Middleware\AlmacenPermisos::class,
-        'administracion'=>\App\Http\Middleware\AdministracionPermisos::class,
+        'almacen' => \App\Http\Middleware\AlmacenPermisos::class,
+        'administracion' => \App\Http\Middleware\AdministracionPermisos::class,
         'acceso' =>  \App\Http\Middleware\AccesoPermisos::class,
+        'cocina' => \App\Http\Middleware\CocinaPermisos::class,
     ];
 }

@@ -1,8 +1,10 @@
 <?php
 
+use App\Events\TestEvent;
 use App\Http\Controllers\AdministracionController;
 use App\Http\Controllers\CargosController;
 use App\Http\Controllers\CatalogoController;
+use App\Http\Controllers\CocinaController;
 use App\Http\Controllers\EdoCuentaController;
 use App\Http\Controllers\ExcelController;
 use App\Http\Controllers\PuntosController;
@@ -209,13 +211,14 @@ Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function ()
     Route::view('caja', 'recepcion.caja.caja')->middleware(['auth'])->name('recepcion.caja');
 });
 
-Route::prefix('cocina')->middleware(['auth'])->group(function () {
+Route::prefix('cocina')->middleware(['auth', 'cocina'])->group(function () {
     Route::view('/', 'cocina.index')->name('cocina');
 
     Route::prefix('ordenes')->group(function () {
         Route::view('/', 'cocina.Ordenes.ordenes')->name('cocina.ordenes');
         Route::view('ver/{folio}', 'cocina.Ordenes.ver')->name('cocina.ver');
-        Route::view('historial', 'cocina.Ordenes.historial')->name('cocina.ordenes.historial');
+        Route::get('reporte', [CocinaController::class, 'vistaOrdenes'])->name('cocina.ordenes.reporte');
+        Route::post('reporte', [CocinaController::class, 'obtenerReporteOrdenes'])->name('cocina.ordenes.reporte');
     });
 
     Route::view('inventarios', 'cocina.Inventarios.inventarios')->name('cocina.inventarios');
@@ -255,7 +258,9 @@ Route::prefix('pv/{codigopv}')->middleware(['auth', 'puntos'])->group(function (
 
 
     Route::get('socios', [PuntosController::class, 'verSocios'])->name('pv.socios');
-    Route::get('caja', [PuntosController::class, 'caja'])->middleware(['auth'])->name('pv.caja');
+    Route::get('caja', [PuntosController::class, 'caja'])->name('pv.caja');
+
+    Route::get('comandas', [PuntosController::class, 'verComandas'])->name('pv.comandas');
 });
 
 Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
@@ -318,6 +323,7 @@ Route::prefix('acceso')->middleware(['auth', 'acceso'])->group(function () {
 });
 
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');
+Route::get('comanda/ticket/{folio}/{inicio}', [ReportesController::class, 'generarComanda'])->name('comandas.ticket');
 Route::get('ventas/corte/{caja}/{codigopv?}', [ReportesController::class, 'generarCorte'])->name('ventas.corte');
 //Ordenes de compra (VIEJAS REQUISICIONES)
 Route::get('ordenes/{folio}/{order?}', [ReportesController::class, 'generarRequisicion'])->name('orden');

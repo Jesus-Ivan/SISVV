@@ -159,4 +159,14 @@ class PuntosController extends Controller
         $codigopv = $request->segment(2); //'codigopv' está en el segundo segmento de la ruta
         return view('puntos.Inventario.salidas', ['codigopv' => $codigopv, 'permisospv' => $permisospv]);
     }
+
+    /**
+     * Dirige al usuario al modulo de comandas erroneas
+     */
+    public function verComandas(Request $request)
+    {
+        $permisospv = $request->get('permisos_pv');
+        $codigopv = $request->segment(2);
+        return view('puntos.Comandas.comandas', ['codigopv' => $codigopv, 'permisospv' => $permisospv]);
+    }
 }

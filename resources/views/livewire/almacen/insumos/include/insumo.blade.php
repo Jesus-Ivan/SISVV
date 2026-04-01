@@ -103,7 +103,6 @@
             </div>
         </div>
     </div>
-    <button wire:click='abrir'>xddddd</button>
     {{-- Insumo elaborado separador --}}
     <div class="flex items-center my-3 ">
         <div class="flex w-60">

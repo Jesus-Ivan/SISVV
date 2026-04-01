@@ -91,11 +91,17 @@ class ProductosService
                 $f_existencias->hours(23)->minutes(30)->seconds(00);
             }
             foreach ($prod['receta'] as $key => $insumo) {
+                //Obtener el insumo de la receta (desde la BD)
+                $insumo_aux = $insumos->find($insumo['clave_insumo']);
+                //Si no hay insumo registrado
+                if (!$insumo_aux)
+                    continue;   //Omitir interacion
+
                 MovimientosAlmacen::create([
                     'corte_caja' => $caja->corte,
                     'clave_concepto' => AlmacenConstants::SAL_VENTA_KEY,
                     'clave_insumo' => $insumo['clave_insumo'],
-                    'descripcion' => $insumos->find($insumo['clave_insumo'])->descripcion,
+                    'descripcion' => $insumo_aux->descripcion,
                     'clave_bodega' => reset($bodega)['clave_bodega'],
                     'cantidad_insumo' => -1 * ($insumo['cantidad'] * $prod['total_vendido']),
                     'costo' => 0,

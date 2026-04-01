@@ -85,6 +85,8 @@ class NuevoInsumo extends Component
 
     public function render()
     {
-        return view('livewire.almacen.insumos.nuevo-insumo');
+        return view('livewire.almacen.insumos.nuevo-insumo', [
+            'mode_editable' => false
+        ]);
     }
 }

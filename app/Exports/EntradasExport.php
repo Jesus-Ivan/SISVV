@@ -39,6 +39,7 @@ class EntradasExport implements WithMultipleSheets
     {
         //Encabezados
         $encabezados = [
+            'deleted_at' => 'INSU/PRES ELIMINADO',
             'folio_entrada' => '#ENTRADA',
             'fecha_existencias' => 'FECHA EXISTENCIAS',
             'bodega' => 'BODEGA',
@@ -83,6 +84,7 @@ class EntradasExport implements WithMultipleSheets
     {
         if (!$is_converted) {
             $aux = [
+                'deleted_at' => $item['insumo']['deleted_at'] ? 'SI' : '',
                 'folio_entrada' => $item['folio_entrada'],
                 'fecha_existencias' => $item['entrada']['fecha_existencias'],
                 'bodega' =>  $this->getBodega($item['entrada']['clave_bodega']),
@@ -104,6 +106,7 @@ class EntradasExport implements WithMultipleSheets
             ];
         } else {
             $aux = [
+                'deleted_at' => $item['insumo']['deleted_at'] ? 'SI' : '',
                 'folio_entrada' => $item['folio_entrada'],
                 'fecha_existencias' => $item['entrada']['fecha_existencias'],
                 'bodega' =>  $this->getBodega($item['entrada']['clave_bodega']),

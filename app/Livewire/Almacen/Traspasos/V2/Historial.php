@@ -90,7 +90,8 @@ class Historial extends Component
         }
 
         return view('livewire.almacen.traspasos.v2.historial', [
-            'tipo_articulo' => $tipo_articulo
+            'tipo_articulo' => $tipo_articulo,
+            'var' => $tipo_articulo ? '1' : null
         ]);
     }
 }

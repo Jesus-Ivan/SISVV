@@ -69,7 +69,7 @@ class InventarioService
     /**
      * Esta funcion consulta las existencias de los insumos. Segun el grupo al que pertenece
      */
-    public function consultarInsumos(Grupos $grupoInsumo, $fecha_inv, $hora_inv, $clave_bodega)
+    public function consultarInsumos(Grupos $grupoInsumo, $fecha_inv, $hora_inv, $clave_bodega, $eliminados = null)
     {
         //Preparamos la fecha limite
         $fechaLimite = Carbon::parse($fecha_inv . $hora_inv);
@@ -81,15 +81,19 @@ class InventarioService
             ['clave_bodega', '=', $clave_bodega]
         ];
         //Obtenemos las presentaciones activas con las existencias
-        $existencias = Insumo::query()->with('unidad')
+        $q = Insumo::query()->with('unidad')
             ->where([
                 ['inventariable', '=', 1],
                 ['id_grupo', '=', $grupoInsumo->id]
             ])
             ->withSum([
                 'movimientosAlmacen' => fn($query) => $query->where($condiciones)
-            ], 'cantidad_insumo')
-            ->get();
+            ], 'cantidad_insumo');
+
+        if ($eliminados)
+            $q->withTrashed();  //Agregamos los insumos eliminados
+        //Ejecutamos la consulta
+        $existencias = $q->get();
 
         //Simplificar el array y agregar atributo extra.
         foreach ($existencias as $row) {
@@ -129,10 +133,12 @@ class InventarioService
                 ->where('folio_requisicion', $folio)->get();
             //Buscar cada insumo base
             foreach ($detalles as $key => $detalle) {
-                $result[] = Insumo::with('unidad')
+                $insum = Insumo::with('unidad')
                     ->select('clave', 'descripcion', 'id_grupo', 'id_unidad', 'ultima_compra')
                     ->where('clave', $detalle->presentacion->clave_insumo_base)
                     ->first();
+                if ($insum)
+                    $result[] = $insum;
             }
         } else {
             //Obtener todos los insumos activos, incluidos en algun grupo.

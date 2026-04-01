@@ -1,4 +1,6 @@
 <div class="p-2" @keyup.ctrl.window="$dispatch('open-modal', {name:'modal-articulos'})">
+    {{-- ALERT PRESENTACIONES SIN INSUMO --}}
+    <x-top-alert></x-top-alert>
     {{-- Tittle and button --}}
     <div>
         <div class="inline-flex flex-grow">

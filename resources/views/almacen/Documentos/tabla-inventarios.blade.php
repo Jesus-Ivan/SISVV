@@ -7,6 +7,7 @@
     {{-- Titulo --}}
     <div class="container py-2">
         <h4 class="ms-3 text-2xl font-bold dark:text-white">TABLA DE INVENTARIOS SEMANAL</h4>
+        <p class="ms-3 font-semibold">Nota: No muestra insumos eliminados previamente</p>
     </div>
     <div class="flex justify-center" x-data="{
         selectAll: false,

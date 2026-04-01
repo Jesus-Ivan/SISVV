@@ -78,6 +78,9 @@ class ProductoForm extends Form
             ->get();
         //Agregarlos al array de la tabla editable
         foreach ($result as $i => $insumo) {
+            //Si no hay ingrediente definido para la receta (ELIMINACION SUAVE)
+            if (!$insumo->ingrediente)
+                continue;   //Omitir iteracion
             $this->receta_table[] = [
                 'id' => $insumo->id,        //ID, del registo en la BD.
                 'clave' => $insumo->clave_insumo,

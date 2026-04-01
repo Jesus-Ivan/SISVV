@@ -99,68 +99,108 @@
             </thead>
             <tbody>
                 @foreach ($articulos_table as $index => $item)
-                    <tr wire:key='{{ $index }}'
-                        class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <th scope="row"
-                            class="w-fit px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            {{ $item['clave'] }}
-                        </th>
-                        <td class="px-3 py-2">
-                            {{ $item['descripcion'] }}
-                        </td>
-                        <td class="px-3 py-2">
-                            <select wire:model='articulos_table.{{ $index }}.id_proveedor'
-                                class="w-fit bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                <option selected value="{{ null }}">Seleccione</option>
-                                @foreach ($this->proveedores as $i => $p)
-                                    <option value="{{ $p->id }}">{{ $p->nombre }}</option>
-                                @endforeach
-                            </select>
-                        </td>
-                        <td class="px-3 py-2">
-                            <input type="text" wire:model='articulos_table.{{ $index }}.factura'
-                                class="max-w-20 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                placeholder="N/D" />
-                        </td>
-                        <td class="px-3 py-2">
-                            <select wire:model='articulos_table.{{ $index }}.cuenta_contable'
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                <option value="{{ null }}" selected>C.Contable</option>
-                                @foreach ($cuentas as $c_contable)
-                                    <option value="{{ $c_contable }}">{{ $c_contable }}</option>
-                                @endforeach
-                            </select>
-                        </td>
-                        <td class="px-3 py-2">
-                            {{ $item['cantidad'] }}
-                        </td>
-                        <td class="px-3 py-2">
-                            {{ $item['unidad'] ? $item['unidad']['descripcion'] : '' }}
-                        </td>
-                        <td class="px-3 py-2 flex items-center">
-                            $
-                            <input type="number" wire:model='articulos_table.{{ $index }}.costo'
-                                wire:change='updateCostoIva({{ $index }})'
-                                class="max-w-20 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                placeholder="0.0" />
-                        </td>
-                        <td class="px-3 py-2">
-                            <input type="number" wire:model='articulos_table.{{ $index }}.iva'
-                                wire:change='updateCostoIva({{ $index }})'
-                                class="max-w-16 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                placeholder="0.0" />
-                        </td>
-                        <td class="px-3 py-2 flex items-center">
-                            $
-                            <input type="number" wire:model='articulos_table.{{ $index }}.costo_con_impuesto'
-                                wire:change='updateCostoSinIva({{ $index }})'
-                                class="max-w-20 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                placeholder="0.0" />
-                        </td>
-                        <td class="px-3 py-2">
-                            ${{ number_format($item['importe'], 2) }}
-                        </td>
-                    </tr>
+                    @if ($item['insumo']['clave'])
+                        <tr wire:key='{{ $index }}'
+                            class=" bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
+                            <th scope="row"
+                                class="w-fit px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                {{ $item['clave'] }}
+                            </th>
+                            <td class="px-3 py-2">
+                                {{ $item['descripcion'] }}
+                            </td>
+                            <td class="px-3 py-2">
+                                <select wire:model='articulos_table.{{ $index }}.id_proveedor'
+                                    class="w-fit bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                    <option selected value="{{ null }}">Seleccione</option>
+                                    @foreach ($this->proveedores as $i => $p)
+                                        <option value="{{ $p->id }}">{{ $p->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <td class="px-3 py-2">
+                                <input type="text" wire:model='articulos_table.{{ $index }}.factura'
+                                    class="max-w-20 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                    placeholder="N/D" />
+                            </td>
+                            <td class="px-3 py-2">
+                                <select wire:model='articulos_table.{{ $index }}.cuenta_contable'
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                    <option value="{{ null }}" selected>C.Contable</option>
+                                    @foreach ($cuentas as $c_contable)
+                                        <option value="{{ $c_contable }}">{{ $c_contable }}</option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <td class="px-3 py-2">
+                                {{ $item['cantidad'] }}
+                            </td>
+                            <td class="px-3 py-2">
+                                {{ $item['unidad'] ? $item['unidad']['descripcion'] : '' }}
+                            </td>
+                            <td class="px-3 py-2 flex items-center">
+                                $
+                                <input type="number" wire:model='articulos_table.{{ $index }}.costo'
+                                    wire:change='updateCostoIva({{ $index }})'
+                                    class="max-w-20 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                    placeholder="0.0" />
+                            </td>
+                            <td class="px-3 py-2">
+                                <input type="number" wire:model='articulos_table.{{ $index }}.iva'
+                                    wire:change='updateCostoIva({{ $index }})'
+                                    class="max-w-16 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                    placeholder="0.0" />
+                            </td>
+                            <td class="px-3 py-2 flex items-center">
+                                $
+                                <input type="number"
+                                    wire:model='articulos_table.{{ $index }}.costo_con_impuesto'
+                                    wire:change='updateCostoSinIva({{ $index }})'
+                                    class="max-w-20 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                    placeholder="0.0" />
+                            </td>
+                            <td class="px-3 py-2">
+                                ${{ number_format($item['importe'], 2) }}
+                            </td>
+                        </tr>
+                    @else
+                        <tr wire:key='{{ $index }}'
+                            class="text-red-700 bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
+                            <th scope="row" class="w-fit px-3 py-2 font-medium whitespace-nowrap ">
+                                {{ $item['clave'] }}
+                            </th>
+                            <td class="px-3 py-2">
+                                {{ $item['descripcion'] }}
+                            </td>
+                            <td class="px-3 py-2">
+                                {{ $this->proveedores->find($item['id_proveedor'])->nombre }}
+                            </td>
+                            <td class="px-3 py-2">
+                                {{ $item['factura'] }}
+                            </td>
+                            <td class="px-3 py-2">
+                                {{ $item['cuenta_contable'] }}
+                            </td>
+                            <td class="px-3 py-2">
+                                {{ $item['cantidad'] }}
+                            </td>
+                            <td class="px-3 py-2">
+                                {{ $item['unidad'] ? $item['unidad']['descripcion'] : '' }}
+                            </td>
+                            <td class="px-3 py-2 flex items-center">
+                                ${{ $item['costo'] }}
+                            </td>
+                            <td class="px-3 py-2">
+                                {{ $item['iva'] }}
+                            </td>
+                            <td class="px-3 py-2 flex items-center">
+                                ${{ $item['costo_con_impuesto'] }}
+                            </td>
+                            <td class="px-3 py-2">
+                                ${{ number_format($item['importe'], 2) }}
+                            </td>
+                        </tr>
+                    @endif
                 @endforeach
             </tbody>
         </table>

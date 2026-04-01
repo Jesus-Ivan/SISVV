@@ -116,7 +116,8 @@ class Historial extends Component
             }
         }
         return view('livewire.almacen.entradas.v2.historial', [
-            'is_presentacion' => $is_presentacion
+            'is_presentacion' => $is_presentacion,
+            'var' => $is_presentacion ? '1' : null
         ]);
     }
 }

@@ -1,4 +1,6 @@
 <div class="ms-3 mx-3" @keyup.ctrl.window="$dispatch('open-modal', {name:'modal-articulos'})">
+    {{-- ALERT PRESENTACIONES SIN INSUMO --}}
+    <x-top-alert></x-top-alert>
     {{-- BOTÓN Y TITULO --}}
     <div>
         <div class="inline-flex flex-grow my-3">

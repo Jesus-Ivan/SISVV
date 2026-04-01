@@ -103,6 +103,7 @@
             </div>
         </div>
     </div>
+    <button wire:click='abrir'>xddddd</button>
     {{-- Insumo elaborado separador --}}
     <div class="flex items-center my-3 ">
         <div class="flex w-60">
@@ -239,28 +240,71 @@
     </div>
 
     {{-- Botones de accion --}}
-    <div>
-        {{-- Boton de regresar --}}
-        <a type="button" href="{{ route('almacen.insumos') }}"
-            class="my-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
-            <svg class="w-5 h-5 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
-                height="24" fill="none" viewBox="0 0 24 24">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M5 12h14M5 12l4-4m-4 4 4 4" />
-            </svg>Regresar
-        </a>
-        {{-- Boton de guardar cambios --}}
-        <a type="button" wire:click='guardar'
-            class="my-2 text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
-            <svg class="w-5 h-5 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
-                height="24" fill="currentColor" viewBox="0 0 24 24">
-                <path fill-rule="evenodd"
-                    d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7.414A2 2 0 0 0 20.414 6L18 3.586A2 2 0 0 0 16.586 3H5Zm10 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM8 7V5h8v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1Z"
-                    clip-rule="evenodd" />
-            </svg>
-            Guardar Insumo
-        </a>
+    <div class="flex gap-2">
+        <div class="flex grow">
+            {{-- Boton de regresar --}}
+            <a type="button" href="{{ route('almacen.insumos') }}"
+                class="my-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
+                <svg class="w-5 h-5 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                    height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5 12h14M5 12l4-4m-4 4 4 4" />
+                </svg>Regresar
+            </a>
+            {{-- Boton de guardar cambios --}}
+            <a type="button" wire:click='guardar'
+                class="my-2 text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                <svg class="w-5 h-5 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                    height="24" fill="currentColor" viewBox="0 0 24 24">
+                    <path fill-rule="evenodd"
+                        d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7.414A2 2 0 0 0 20.414 6L18 3.586A2 2 0 0 0 16.586 3H5Zm10 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM8 7V5h8v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1Z"
+                        clip-rule="evenodd" />
+                </svg>
+                Guardar Insumo
+            </a>
+        </div>
+        {{-- ELIMINAR BOTON --}}
+        @if ($mode_editable)
+            <button type="button" wire:click='removerInsumo'
+                class="h-fit px-5 py-2 my-2 text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm   text-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900">
+                Eliminar insumo
+            </button>
+        @endif
     </div>
+
+    {{-- Modal de articulos --}}
+    <x-modal name="modal-eliminacion" title="¿Desea eliminar el insumo?">
+        <x-slot name='body'>
+            {{-- Modal content  --}}
+            <p>La siguiente accion no se puede revertir. </p>
+            <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Elementos afectados:</h3>
+            <ul class="max-w-2xl space-y-1 text-gray-500 list-disc list-inside dark:text-gray-400">
+                <li>
+                    Requisiciones, Entradas y Traspasos.
+                </li>
+                <li>
+                    Reporte de existencias, Reporte de entradas y Cruce existencias/Movimientos.
+                </li>
+                <li>
+                    Recetas y Insumos elaborados.
+                </li>
+            </ul>
+            <button wire:click='confirmarEliminacionSuave'
+                class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
+                <svg wire:loading.remove wire:target='confirmarEliminacionSuave' class="w-5 h-5 me-2"
+                    aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                    <path fill-rule="evenodd"
+                        d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                        clip-rule="evenodd" />
+                </svg>
+                <!--Loading indicator-->
+                <div wire:loading wire:target='confirmarEliminacionSuave'>
+                    @include('livewire.utils.loading', ['w' => 6, 'h' => 6])
+                </div>
+                Confirmar
+            </button>
+        </x-slot>
+    </x-modal>
 
     <!--Alerts-->
     <x-action-message on='open-action-message'>

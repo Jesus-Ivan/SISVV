@@ -43,7 +43,12 @@ class InsumoForm extends Form
         $result = Receta::with('ingrediente')
             ->where('clave_insumo_elaborado', $insumo->clave)
             ->get();
+
         foreach ($result as $key => $insumo) {
+            //Si no hay ingrediente definido para la receta (ELIMINACION SUAVE)
+            if (!$insumo->ingrediente)
+                continue;   //Omitir iteracion
+            //Agregar el insumo de la receta, a la tabla de insumo elaborado.
             $this->subtable[] = [
                 'id' => $insumo->id,
                 'clave' => $insumo->clave_insumo,
@@ -211,6 +216,17 @@ class InsumoForm extends Form
         //Añadir al array
         $this->subtable[] = $result;
     }
+
+    /**
+     * Realiza la eliminacion suave del insumo en la BD
+     */
+    public function eliminacionSuave()
+    {
+        if ($this->original) {
+            $this->original->delete();
+        }
+    }
+
 
     public function calcularPrecioIva()
     {

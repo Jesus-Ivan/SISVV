@@ -39,6 +39,7 @@ class EntradasExport implements WithMultipleSheets
     {
         //Encabezados
         $encabezados = [
+            'deleted_at' => 'INSU/PRES ELIMINADO',
             'folio_entrada' => '#ENTRADA',
             'clave_presentacion' => '#PRESENTACION',
             'clave_insumo' => '#INSUMO',
@@ -82,6 +83,7 @@ class EntradasExport implements WithMultipleSheets
     {
         if (!$is_converted) {
             $aux = [
+                'deleted_at' => $item['insumo']['deleted_at'] ? 'SI' : '',
                 'folio_entrada' => $item['folio_entrada'],
                 'clave_presentacion' => $item['clave_presentacion'],
                 'clave_insumo' => $item['clave_insumo'],
@@ -102,6 +104,7 @@ class EntradasExport implements WithMultipleSheets
             ];
         } else {
             $aux = [
+                'deleted_at' => $item['insumo']['deleted_at'] ? 'SI' : '',
                 'folio_entrada' => $item['folio_entrada'],
                 'clave_presentacion' => $this->getClavePresentacion($item),
                 'clave_insumo' => $item['clave_insumo'],

@@ -30,10 +30,10 @@
         <div class="flex w-96">
             @if ($tipo_articulo)
                 <livewire:search-bar tittle="Buscar presentacion" table="presentaciones" :columns="['clave', 'descripcion']"
-                    primary="clave" event="selected-articulo" />
+                    primary="clave" event="selected-articulo" :conditions="[['estado', '=', $var]]"/>
             @else
                 <livewire:search-bar tittle="Buscar insumo" table="insumos" :columns="['clave', 'descripcion']" primary="clave"
-                    event="selected-articulo" />
+                    event="selected-articulo" :conditions="[['deleted_at', '=', $var]]" />
             @endif
             <div>
                 <button type="button" wire:click='buscar'

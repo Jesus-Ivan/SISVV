@@ -102,20 +102,27 @@ class NuevaEntrada extends Component
         });
         //Instancia de la clase para el servicio de inventario
         $invService = new InventarioService();
+        //Definir array de presentaciones sin insumo
+        $presentaciones_invalidas = [];
 
         //Recorrer todo el array de seleccionados
         foreach ($total_seleccionados as $key => $value) {
             if (Bodega::find($this->clave_bodega)->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
                 //Se busca la presentacion en base a su clave.
-                $producto = Presentacion::find($key);
+                $producto = Presentacion::with('insumo')->find($key);
+                //Si no encontro algun insumo asociado a la presentacion   
+                if (!$producto?->insumo) {
+                    $presentaciones_invalidas[] = $producto;
+                    continue;   //(omitir iteracion)  
+                }
             } else {
                 //Se busca el insumo del producto en base a su clave.
                 $producto = Insumo::with('unidad')->find($key);
             }
             //Calcular calcular el importe_sin_impuesto
-            $importe_sin_impuesto = $invService->obtenerImporte($producto['costo'], 1);
+            $importe_sin_impuesto = $invService->obtenerImporte($producto->costo, 1);
             //Calcular importe con impuesto
-            $importe = $invService->obtenerImporte($producto['costo_con_impuesto'], 1);
+            $importe = $invService->obtenerImporte($producto->costo_con_impuesto, 1);
 
             //Se anexa el producto al array de la tabla
             $this->articulos_table[] = [
@@ -147,6 +154,7 @@ class NuevaEntrada extends Component
         $this->selectedItems = [];
         //Limpiar campo de busqueda
         $this->search_input = '';
+        $this->validateInsumos($presentaciones_invalidas);
         //Emitimos evento para cerrar el componente del modal
         $this->dispatch('close-modal');
     }
@@ -181,6 +189,9 @@ class NuevaEntrada extends Component
             ->orderBy('id_proveedor')
             ->orderBy('descripcion')
             ->get();
+        //Definir array de presentaciones sin insumo
+        $presentaciones_invalidas = [];
+
         //Si hay al menos 1 registro correspondiente
         if (count($result)) {
             //Bloquear la bodega
@@ -188,7 +199,16 @@ class NuevaEntrada extends Component
 
             //Agregar todos los items (de la requi) a la tabla
             foreach ($result as $key => $value) {
-                $producto = Presentacion::find($value->clave_presentacion);
+                $producto = Presentacion::with('insumo')
+                    ->find($value->clave_presentacion);
+
+                //Si no encontro algun insumo asociado a la presentacion   
+                if (!$producto?->insumo) {
+                    //guardar el detalle de la requisicion
+                    $presentaciones_invalidas[] = $producto;
+                    continue;   //(omitir iteracion)  
+                }
+
                 //Se anexa el producto al array de la tabla
                 $this->articulos_table[] = [
                     'clave' => $value->clave_presentacion,
@@ -207,6 +227,7 @@ class NuevaEntrada extends Component
                 ];
             }
         }
+        $this->validateInsumos($presentaciones_invalidas);
         //Emitimos evento para cerrar el componente del modal
         $this->dispatch('close-modal');
     }
@@ -217,6 +238,8 @@ class NuevaEntrada extends Component
      */
     public function requisicionInsumos()
     {
+        //Definir array de presentaciones sin insumo
+        $presentaciones_invalidas = [];
         //Buscar los detalles de la requisicion
         $detalle_requi = DetallesRequisicion::with('presentacion')
             ->where('folio_requisicion', $this->folio_requi)
@@ -233,6 +256,14 @@ class NuevaEntrada extends Component
                 //Buscar el insumo base
                 $insumo = Insumo::with('unidad')
                     ->find($detalle->presentacion->clave_insumo_base);
+
+                //Si no encontro algun insumo asociado a la presentacion   
+                if (!$insumo) {
+                    //guardar el detalle de la requisicion
+                    $presentaciones_invalidas[] = $detalle;
+                    continue;   //(omitir iteracion)  
+                }
+
                 $cant_insum = $detalle->cantidad * $detalle->presentacion->rendimiento;
                 $costo_unitario = round($detalle->costo_unitario / $detalle->presentacion->rendimiento, 3);
                 $costo_con_impuesto = round($detalle->costo_con_impuesto / $detalle->presentacion->rendimiento, 3);
@@ -253,6 +284,7 @@ class NuevaEntrada extends Component
                 ];
             }
         }
+        $this->validateInsumos($presentaciones_invalidas);
         //Emitimos evento para cerrar el componente del modal
         $this->dispatch('close-modal');
     }
@@ -295,7 +327,6 @@ class NuevaEntrada extends Component
         $iva = round(array_sum(array_column($this->articulos_table, 'impuesto')), 2);
         //calcular subtotal
         $subtotal = round(array_sum(array_column($this->articulos_table, 'importe_sin_impuesto')), 2);
-
 
         try {
             //Validar que todas las filas tengan definido el atributo 'cuenta contable'
@@ -514,6 +545,24 @@ class NuevaEntrada extends Component
             } else {
                 throw new Exception("Naturaleza de bodega no valida", 1);
             }
+        }
+    }
+
+    /**
+     * Si hay al menos 1 elemento en el array.\
+     * Emite evento para mostrar un alert.
+     * Con aquellas presentaciones que no cuentan con insumos.
+     */
+    public function validateInsumos(array $presentaciones_invalidas)
+    {
+        //Si hubo alguna presentacion sin insumo
+        if (count($presentaciones_invalidas)) {
+            $data = [
+                'tittle' => '¡Advertencia!',
+                'message' => 'No se encontraron insumos para: '
+                    . implode(', ', array_column($presentaciones_invalidas, 'descripcion'))
+            ];
+            $this->dispatch('error-presentaciones', $data);
         }
     }
 

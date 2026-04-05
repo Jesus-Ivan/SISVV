@@ -84,11 +84,15 @@ class ProductosService
             }
             //Fechas auxiliares
             $f_apertura = Carbon::parse($caja->fecha_apertura);
-            $f_existencias = Carbon::parse($caja->fecha_cierre);
-            //Si la fecha de apertura es diferente a la de existencias
-            if (!$f_apertura->isSameDay($f_existencias)) {
+            $f_cierre = Carbon::parse($caja->fecha_cierre);
+            //Si la fecha de apertura es diferente a la de cierre
+            if (!$f_apertura->isSameDay($f_cierre)) {
                 //Modificar la fecha, para que coincida con la fecha de existencias ('movimientos_almacen')
-                $f_existencias->hours(23)->minutes(30)->seconds(00);
+                $f_apertura->hours(23)->minutes(30)->seconds(00);
+                
+                $f_existencias = $f_apertura->clone();
+            } else {
+                $f_existencias = $f_cierre->clone();
             }
             foreach ($prod['receta'] as $key => $insumo) {
                 //Obtener el insumo de la receta (desde la BD)

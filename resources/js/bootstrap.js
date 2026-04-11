@@ -30,5 +30,3 @@ window.Echo = new Echo({
     forceTLS: false,
     enabledTransports: ['ws', 'wss'],
 });
-
-//Pusher.logToConsole = true; // <-- Añade esta línea temporalmente

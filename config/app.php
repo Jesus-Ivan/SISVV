@@ -45,6 +45,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Bandera de impresion automatica en las zonas de impresion
+    |--------------------------------------------------------------------------
+    |
+    | Determina si se imprimen automaticamente las comandas en las zonas recpectivas.\
+    | Independientemente de la configuracion de cada Producto.
+    |
+    */
+    'auto_printer' => env('SISVV_AUTO_PRINT', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | IP de la impresora Predeterminada para imprimir
     |--------------------------------------------------------------------------
     |

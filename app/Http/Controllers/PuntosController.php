@@ -129,7 +129,7 @@ class PuntosController extends Controller
     {
         $permisospv = $request->get('permisos_pv'); //Obtenemos los permisos incrutados en la peticion
         $codigopv = $request->segment(2); //'codigopv' está en el segundo segmento de la ruta
-        return view('puntos.caja.caja', ['codigopv' => $codigopv, 'permisospv' => $permisospv]);
+        return view('puntos.Caja.caja', ['codigopv' => $codigopv, 'permisospv' => $permisospv]);
     }
 
     public function prodVendidos(Request $request)

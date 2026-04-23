@@ -23,6 +23,7 @@ return new class extends Migration
             $table->decimal('subtotal', 10, 2);
             $table->string('observaciones', 255)->nullable();
             $table->string('id_estado', 1)->nullable();
+            $table->smallInteger('id_zona')->nullable();
             $table->dateTime('inicio');
             $table->dateTime('terminado')->nullable();
             $table->string('tiempo', 2)->nullable();

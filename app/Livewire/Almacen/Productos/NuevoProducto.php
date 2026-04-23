@@ -9,8 +9,10 @@ use App\Models\Grupos;
 use App\Models\GruposModificadores;
 use App\Models\Insumo;
 use App\Models\Producto;
+use App\Models\ProductoZona;
 use App\Models\PuntoVenta;
 use App\Models\Subgrupos;
+use App\Models\ZonaImpresion;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -32,9 +34,12 @@ class NuevoProducto extends Component
             ->where('naturaleza', AlmacenConstants::INSUMOS_KEY)
             ->get()
             ->toArray();
+        $zonas = ZonaImpresion::all()->toArray();
+
         $this->form->setProductoBodega($puntos, $bodegas);
+        $this->form->setProductoZona($zonas);
     }
-    
+
     #[Computed()]
     public function subgrupos()
     {
@@ -113,6 +118,8 @@ class NuevoProducto extends Component
                 //Crea las propiedades de la receta del producto nuevo
                 $this->form->crearReceta($result);
                 $this->form->crearProductoBodega($result);
+                //Crear las propiedades de zonas de impresion
+                $this->form->crearProductoZona($result);
                 //Crea las propiedades de producto compuesto
                 $this->form->crearCompuesto($result);
                 //Limpiar el formulario
@@ -122,6 +129,7 @@ class NuevoProducto extends Component
             session()->flash('success', 'Producto registrado correctamente');
             //Evento para abrir el alert
             $this->dispatch('open-action-message');
+            $this->dispatch('succes-producto');             //Evento para limpiar alphine (front)
         } catch (ValidationException $th) {
             //Lanzar la excepcion de validacion a la vista
             throw $th;

@@ -1,5 +1,6 @@
 <div x-data="{
     activeTab: 'general',
+    printDefault: $wire.form.print_default,
     tabClasses(tabName) {
         const isActive = this.activeTab === tabName;
         let classes = 'inline-block w-full p-3 border-r border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-blue-300 focus:outline-none ';
@@ -10,8 +11,11 @@
             classes += 'bg-white hover:text-gray-700 hover:bg-gray-50 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700';
         }
         return classes;
+    },
+    clear() {
+        this.printDefault = $wire.form.print_default;
     }
-}">
+}" x-on:succes-producto.window="clear()">
     {{-- TABS --}}
     <ul
         class="hidden text-sm font-medium text-center text-gray-500 rounded-lg shadow-sm sm:flex dark:divide-gray-700 dark:text-gray-400">
@@ -26,8 +30,8 @@
             </button>
         </li>
         <li class="w-full focus-within:z-10">
-            <button @click="activeTab = 'bodega'" :class="tabClasses('bodega')">
-                Bodega-Producto
+            <button @click="activeTab = 'impresora'" :class="tabClasses('impresora')">
+                Zona de impresion
             </button>
         </li>
         <li class="w-full focus-within:z-10">
@@ -133,117 +137,162 @@
                             @enderror
                         </div>
                     </div>
-                    <div>
-                        <div class="flex py-2">
-                            <div class="flex items-center h-5">
-                                <input id="auto-sum-checkbox" aria-describedby="auto-sum-checkbox-text" type="checkbox"
-                                    wire:model='form.print_default'
-                                    class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                            </div>
-                            <div class="ms-2 text-sm">
-                                <label for="auto-sum-checkbox" class="font-medium text-gray-900 dark:text-gray-300">Impresion en cocina</label>
-                                <p id="auto-sum-checkbox-text"
-                                    class="text-xs font-normal text-gray-500 dark:text-gray-300">
-                                    Envia comanda a la impresora por defecto del sistema
-                                </p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
         <div x-show="activeTab === 'receta'" x-cloak>
-            {{-- Componente de busqueda de insumos --}}
-            <livewire:search-bar tittle="Buscar insumo" table="insumos" :columns="['clave', 'descripcion']" primary="clave"
-                event="selected-receta" :conditions="[['inventariable', '=', 1]]" />
-            {{-- Tabla resultados --}}
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-                <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                        <tr>
-                            <th scope="col" class="px-3 py-2">
-                                #
-                            </th>
-                            <th scope="col" class="px-3 py-2">
-                                Insumo
-                            </th>
-                            <th scope="col" class="px-3 py-2">
-                                Cantidad
-                            </th>
-                            <th scope="col" class="px-3 py-2">
-                                Cantidad c/merma
-                            </th>
-                            <th scope="col" class="px-3 py-2">
-                                Unidad
-                            </th>
-                            <th scope="col" class="px-3 py-2">
-                                Total
-                            </th>
-                            <th scope="col" class="px-3 py-2">
-                                Action
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($this->form->receta_table as $index => $insumo)
-                            @if (!array_key_exists('deleted', $insumo))
-                                <tr wire:key='{{ $index }}'
-                                    class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
-                                    <th scope="row"
-                                        class="w-24 px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                        {{ $insumo['clave'] }}
+            <div class="grid grid-cols-3 gap-4">
+                <div class="col-span-2">
+                    {{-- Componente de busqueda de insumos --}}
+                    <livewire:search-bar tittle="Buscar insumo" table="insumos" :columns="['clave', 'descripcion']" primary="clave"
+                        event="selected-receta" :conditions="[['inventariable', '=', 1]]" />
+                    {{-- Tabla receta --}}
+                    <div class="shadow-md overflow-x-auto sm:rounded-lg">
+                        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                            <thead
+                                class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                                <tr>
+                                    <th scope="col" class="px-3 py-2">
+                                        #
                                     </th>
-                                    <td class="w-6/12 px-3 py-2">
-                                        {{ $insumo['descripcion'] }}
-                                    </td>
-                                    <td class="px-3 py-2 w-32">
-                                        <input type="number"
-                                            wire:model='form.receta_table.{{ $index }}.cantidad'
-                                            wire:change='actualizarTotal' step="0.001" placeholder="0.001"
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
-                                    </td>
-                                    <td class="px-3 py-2 w-32">
-                                        <input type="number"
-                                            wire:model='form.receta_table.{{ $index }}.cantidad_con_merma'
-                                            step="0.001" placeholder="0.001"
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
-                                    </td>
-                                    <td class="px-3 py-2 w-32">
-                                        {{ $insumo['unidad']['descripcion'] }}
-                                    </td>
-                                    <td class="px-3 py-2">
-                                        $ {{ number_format($insumo['total'], 2) }}
-                                    </td>
-                                    <td class="px-3 py-2">
-                                        <button type="button" wire:click="eliminarInsumo({{ $index }})"
-                                            class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                                fill="currentColor" class="w-5 h-5">
-                                                <path fill-rule="evenodd"
-                                                    d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
-                                            <span class="sr-only">Borrar</span>
-                                        </button>
-                                    </td>
+                                    <th scope="col" class="px-3 py-2">
+                                        Insumo
+                                    </th>
+                                    <th scope="col" class="px-3 py-2">
+                                        Cantidad
+                                    </th>
+                                    <th scope="col" class="px-3 py-2">
+                                        Cantidad c/merma
+                                    </th>
+                                    <th scope="col" class="px-3 py-2">
+                                        Unidad
+                                    </th>
+                                    <th scope="col" class="px-3 py-2">
+                                        Total
+                                    </th>
+                                    <th scope="col" class="px-3 py-2">
+                                        Action
+                                    </th>
                                 </tr>
-                            @endif
-                        @endforeach
-                    </tbody>
-                </table>
+                            </thead>
+                            <tbody>
+                                @foreach ($this->form->receta_table as $index => $insumo)
+                                    @if (!array_key_exists('deleted', $insumo))
+                                        <tr wire:key='{{ $index }}'
+                                            class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
+                                            <th scope="row"
+                                                class="w-24 px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                                {{ $insumo['clave'] }}
+                                            </th>
+                                            <td class="w-6/12 px-3 py-2">
+                                                {{ $insumo['descripcion'] }}
+                                            </td>
+                                            <td class="px-3 py-2  min-w-32">
+                                                <input type="number"
+                                                    wire:model='form.receta_table.{{ $index }}.cantidad'
+                                                    wire:change='actualizarTotal' step="0.001" placeholder="0.001"
+                                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                                            </td>
+                                            <td class="px-3 py-2 min-w-32">
+                                                <input type="number"
+                                                    wire:model='form.receta_table.{{ $index }}.cantidad_con_merma'
+                                                    step="0.001" placeholder="0.001"
+                                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                                            </td>
+                                            <td class="px-3 py-2 w-32">
+                                                {{ $insumo['unidad']['descripcion'] }}
+                                            </td>
+                                            <td class="px-3 py-2 min-w-28">
+                                                $ {{ number_format($insumo['total'], 2) }}
+                                            </td>
+                                            <td class="px-3 py-2">
+                                                <button type="button"
+                                                    wire:click="eliminarInsumo({{ $index }})"
+                                                    class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center  dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                        fill="currentColor" class="w-5 h-5">
+                                                        <path fill-rule="evenodd"
+                                                            d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                            clip-rule="evenodd" />
+                                                    </svg>
+                                                    <span class="sr-only">Borrar</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endif
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {{-- Tabla bodegas --}}
+                <div class="overflow-x-auto sm:rounded-lg shadow-md ">
+                    <table class="w-full text-sm  text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-3 py-2">
+                                    Punto venta
+                                </th>
+                                <th scope="col" class="px-3 py-2">
+                                    Bodega origen
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($this->form->puntos as $index => $pv)
+                                @if (!array_key_exists('deleted', $pv))
+                                    <tr wire:key='{{ $index }}'
+                                        class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
+                                        <th scope="row"
+                                            class=" px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                            {{ $pv['nombre'] }}
+                                        </th>
+                                        <td class=" px-3 py-2">
+                                            <select id="sl.{{ $index }}"
+                                                wire:model="form.producto_bodega.{{ $pv['clave'] }}"
+                                                class="block w-full p-1.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                                <option selected value="{{ null }}">Selecciona bodega
+                                                </option>
+                                                @foreach ($this->form->bodegas as $bodega)
+                                                    <option value="{{ $bodega['clave'] }}">
+                                                        {{ $bodega['descripcion'] }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                    </tr>
+                                @endif
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-        <div x-show="activeTab === 'bodega'" x-cloak class="flex justify-center">
-            {{-- Tabla resultados --}}
-            <div class="relative overflow-y-auto shadow-md  sm:rounded-lg">
-                <table class="min-w-96 text-sm  text-left rtl:text-right text-gray-500 dark:text-gray-400">
+        <div x-show="activeTab === 'impresora'" x-cloak class="flex justify-center">
+            <div>
+                <div class="flex py-2">
+                    <div class="flex items-center h-5">
+                        <input id="auto-sum-checkbox" aria-describedby="auto-sum-checkbox-text" type="checkbox"
+                            wire:model='form.print_default' x-on:click="printDefault = !printDefault"
+                            class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    </div>
+                    <div class="ms-2 text-sm">
+                        <label for="auto-sum-checkbox" class="font-medium text-gray-900 dark:text-gray-300">Impresion
+                            automatica</label>
+                        <p id="auto-sum-checkbox-text" class="text-xs font-normal text-gray-500 dark:text-gray-300">
+                            Envia comanda a la Zona de impresión asignada
+                        </p>
+                    </div>
+                </div>
+                <table x-show="printDefault" x-transition
+                    class="w-fit text-sm shadow-md text-left rtl:text-right text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
                             <th scope="col" class="px-3 py-2">
                                 Punto venta
                             </th>
                             <th scope="col" class="px-3 py-2">
-                                Bodega origen
+                                Impresora predeterminada
                             </th>
                         </tr>
                     </thead>
@@ -258,11 +307,13 @@
                                     </th>
                                     <td class=" px-3 py-2">
                                         <select id="sl.{{ $index }}"
-                                            wire:model="form.producto_bodega.{{ $pv['clave'] }}"
+                                            wire:model="form.producto_zona.{{ $pv['clave'] }}"
                                             class="block w-full p-1.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                            <option selected value="{{ null }}">Selecciona bodega</option>
-                                            @foreach ($this->form->bodegas as $bodega)
-                                                <option value="{{ $bodega['clave'] }}">{{ $bodega['descripcion'] }}
+                                            <option selected value="{{ null }}">Selecciona bodega
+                                            </option>
+                                            @foreach ($this->form->zonas_impresion as $zona)
+                                                <option value="{{ $zona['id'] }}">
+                                                    {{ $zona['descripcion'] }}
                                                 </option>
                                             @endforeach
                                         </select>

@@ -6,6 +6,7 @@ use App\Constants\PuntosConstants;
 use App\Events\ComandaLista;
 use App\Jobs\ReimprimirComandaJob;
 use App\Models\DetallesVentaProducto;
+use App\Models\ZonaImpresion;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
@@ -81,6 +82,12 @@ class Ordenes extends Component
             $currentPage,
             ['path' => route('cocina.ordenes')] // Importante para que los links funcionen
         );
+    }
+
+    #[Computed()]
+    public function zonas()
+    {
+        return ZonaImpresion::all();
     }
 
     public function getListeners()

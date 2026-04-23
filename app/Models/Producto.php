@@ -55,4 +55,9 @@ class Producto extends Model
     {
         return $this->hasMany(ProductoBodega::class, "clave_producto");
     }
+
+    public function zonasImpresion(): HasMany
+    {
+        return $this->hasMany(ProductoZona::class, "clave_producto");
+    }
 }

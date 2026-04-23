@@ -1344,7 +1344,7 @@ INSERT INTO permisos (clave,descripcion)
 VALUES
 ('ADMIN','ADMINISTRACION'),
 ('ALMC','ALMACEN'),
-('COCI','COCINA'),
+('COC','COCINA'),
 ('BAR','BAR'),
 ('BARR','BARRA/RESTAURANT'),
 ('CADD','CADDIE'),

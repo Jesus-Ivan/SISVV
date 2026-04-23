@@ -16,7 +16,7 @@ use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
 use App\Models\Producto;
 use App\Models\MotivoCorreccion;
-
+use App\Models\ProductoZona;
 use App\Models\PuntoVenta;
 use App\Models\Socio;
 use App\Models\SocioMembresia;
@@ -26,7 +26,6 @@ use App\Models\Venta;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Locked;
-use Livewire\Attributes\Validate;
 use Livewire\Form;
 
 class VentaForm extends Form
@@ -417,6 +416,8 @@ class VentaForm extends Form
         DB::transaction(function () use ($folio, $inicio, &$is_deleted, &$is_moved) {
             //Revisar si hubo algun movimiento de mercancia en la BD.
             $this->verificarProductos($folio);
+            //Obtener la venta principal
+            $result = Venta::find($folio);
             //Recorremos todos los items de la tabla
             foreach ($this->productosTable as $key => $producto) {
                 //Verificamos si el item que se itera, cuenta con un 'id' de la base de datos
@@ -431,6 +432,7 @@ class VentaForm extends Form
                             ]
                         );
                 } else {
+                    $zona = $this->obtenerZona($producto, $result);
                     //Crear el nuevo item
                     DetallesVentaProducto::create([
                         'chunk' => $producto['chunk'],
@@ -443,7 +445,8 @@ class VentaForm extends Form
                         'subtotal' => $producto['subtotal'],
                         'inicio' => $inicio,
                         'tiempo' => $producto['tiempo'],
-                        'id_estado' => $producto['print_default'] ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null
+                        'id_estado' => $producto['print_default'] ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null,
+                        'id_zona' => $zona?->id_zona
                     ]);
                 }
             }
@@ -648,12 +651,20 @@ class VentaForm extends Form
         ]);
     }
 
-    //Registra los detalles de los productos en la tabla "detalles_ventas_productos"
+    /**
+     * Registra los detalles de los productos en la tabla "detalles_ventas_productos"\
+     * Determina si el producto es imprimible\
+     * Determina la zona de impresion
+     */
     private function registrarProductosVenta($folio, $venta)
     {
         $inicio = now()->format('Y-m-d H:i:s');
+        //Obtener venta original (de la BD)
+        $result = Venta::find($folio);
+
         //Detalles Venta
         foreach ($venta['productosTable'] as $key => $producto) {
+            $zona = $this->obtenerZona($producto, $result);
             DetallesVentaProducto::create([
                 'chunk' => $producto['chunk'],
                 'folio_venta' => $folio,
@@ -665,9 +676,26 @@ class VentaForm extends Form
                 'subtotal' => $producto['subtotal'],
                 'inicio' => $inicio,
                 'tiempo' => $producto['tiempo'],
-                'id_estado' => $producto['print_default'] ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null
+                'id_estado' => $producto['print_default'] ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null,
+                'id_zona' => $zona?->id_zona
             ]);
         }
+    }
+
+    /**
+     * Obtiene la zona de impresion de destino, del producto
+     */
+    public function obtenerZona(array $producto, Venta $result)
+    {
+        $zona = null;
+        if ($producto['print_default']) {
+            //Buscar las zonas de impresion
+            $zona = ProductoZona::where([
+                ['clave_producto', '=', $producto['clave_producto']],
+                ['clave_punto', '=', $result->clave_punto_venta]
+            ])->first();
+        }
+        return $zona;
     }
 
     //Registra los detalles de los productos en la tabla "detalles_ventas_pagos"

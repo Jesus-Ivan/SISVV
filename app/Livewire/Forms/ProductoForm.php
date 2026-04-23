@@ -8,6 +8,7 @@ use App\Models\Modificador;
 use App\Models\ModifProducto;
 use App\Models\Producto;
 use App\Models\ProductoBodega;
+use App\Models\ProductoZona;
 use App\Models\Receta;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
@@ -22,12 +23,16 @@ class ProductoForm extends Form
     public $receta_table = [];
     //Atributos de producto compuesto
     public $grupos_modif = [], $modif = [];
-    //Atributos de producto-bodega
+    //Atributos de producto-bodega (RECETA)
     public $puntos = [], $bodegas = [], $producto_bodega = [];
     //Producto original
     public ?Producto $original = null;
     //Relacion 'producto-punto-bodega' original
     public ?Collection $pb_original = null;
+
+    //Atributos para Zonas de impresion
+    public ?Collection $pz_original = null; //Relacion 'producto-punto-zona' original
+    public $zonas_impresion = [], $producto_zona = [];
 
     /**
      * Establece las propiedades para editar. y Guarda temporalmente el modelo original
@@ -68,6 +73,27 @@ class ProductoForm extends Form
             //Converir el array y asignarlo a las propiedades
             foreach ($producto_bodega as $key => $value) {
                 $this->producto_bodega[$value['clave_punto']] = $value['clave_bodega'];
+            }
+        }
+    }
+
+    /**
+     * Inicializa el array de las zonas de impresion 'producto_zona'
+     */
+    public function setProductoZona(array $zonas_impresion, ?Collection $producto_zona = null)
+    {
+        $this->zonas_impresion = $zonas_impresion;
+        $this->pz_original = $producto_zona;
+
+        if (is_null($producto_zona) || !count($producto_zona)) {
+            //Agregar el array con los valores vacios
+            foreach ($this->puntos as $punto) {
+                $this->producto_zona[$punto['clave']] = "";
+            }
+        } else {
+            //Converir el array y asignarlo a las propiedades
+            foreach ($producto_zona as $key => $value) {
+                $this->producto_zona[$value['clave_punto']] = $value['id_zona'];
             }
         }
     }
@@ -283,6 +309,7 @@ class ProductoForm extends Form
         $this->actualizarReceta();
         $this->actualizarCompuesto();
         $this->actualizarBodega();
+        $this->actualizarZonas();
     }
 
     /**
@@ -409,7 +436,7 @@ class ProductoForm extends Form
             foreach ($this->producto_bodega as $key => $val) {
                 //Validamos que no deje vacio el select
                 if (is_null($val) || !strlen($val))
-                    throw new Exception("Revisar propiedades: Bodega-Producto", 1);
+                    throw new Exception("Propiedades Receta: Faltan bodegas", 1);
 
                 //Verificamos si hay un registro original en la bd
                 $producto_bodega = $this->pb_original->where('clave_punto', $key)->first();
@@ -433,6 +460,36 @@ class ProductoForm extends Form
                 $producto_bodega = $this->pb_original->where('clave_punto', $key)->first();
                 if ($producto_bodega)
                     $producto_bodega->delete();
+            }
+        }
+    }
+
+    /**
+     * Actualiza o crea los registros en la tabla 'productos_zonas_impresion'
+     */
+    public function actualizarZonas()
+    {
+        if ($this->print_default) {
+            foreach ($this->producto_zona as $clave_punto => $id_zona) {
+                //Validamos que no deje vacio el select
+                if (is_null($id_zona) || !strlen($id_zona))
+                    throw new Exception("Propiedades Zona impresion: completar configuracion", 1);
+
+                //Verificamos si hay un registro original en la bd
+                $prod_zona = $this->pz_original->where('clave_punto', $clave_punto)->first();
+                //Si hay registro en la coleccion
+                if ($prod_zona) {
+                    //Actualizar el registro
+                    $prod_zona->id_zona = $id_zona;
+                    $prod_zona->save();
+                } else {
+                    //Creamos el resgistro 
+                    ProductoZona::create([
+                        'clave_producto' =>  $this->original->clave,
+                        'clave_punto' => $clave_punto,
+                        'id_zona' => $id_zona,
+                    ]);
+                }
             }
         }
     }
@@ -468,13 +525,36 @@ class ProductoForm extends Form
         if (count($this->receta_table)) {
             foreach ($this->producto_bodega as $key => $val) {
                 if (is_null($val) || !strlen($val)) {
-                    throw new Exception("Propiedades Bodega-Producto: Falta una bodega", 1);
+                    throw new Exception("Propiedades Receta: Falta una bodega", 1);
                 }
                 //Creamos el resgistro 
                 ProductoBodega::create([
                     'clave_producto' =>  $producto->clave,
                     'clave_punto' => $key,
                     'clave_bodega' => $val,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Crea la relacion en la tabla 'productos_zonas_impresion'\
+     * Relaciona las tablas 'puntos_venta', 'productos' y 'zonas_impresion'\
+     * Para imprimir X producto, en Y zona de impresion. Segun el punto Z de la venta.
+     */
+    public function crearProductoZona(Producto $producto)
+    {
+        //Si el producto es imprimible
+        if ($this->print_default) {
+            foreach ($this->producto_zona as $key => $val) {
+                if (is_null($val) || !strlen($val)) {
+                    throw new Exception("Propiedades Zona de impresion: Falta configuracion", 1);
+                }
+                //Creamos el resgistro 
+                ProductoZona::create([
+                    'clave_producto' =>  $producto->clave,
+                    'clave_punto' => $key,
+                    'id_zona' => $val,
                 ]);
             }
         }
@@ -580,13 +660,17 @@ class ProductoForm extends Form
             'grupos_modif',
             'modif',
             'original',
-            'auto_sum'
+            'print_default'
         );
 
         //reestablece los valores iniciales para la variable 'producto_bodega'
         $this->producto_bodega = array_map(function ($val) {
             return $val = "";
         }, $this->producto_bodega);
+        //reestablece los valores iniciales para la variable 'producto_bodega'
+        $this->producto_zona = array_map(function ($val) {
+            return $val = "";
+        }, $this->producto_zona);
     }
 
     /**

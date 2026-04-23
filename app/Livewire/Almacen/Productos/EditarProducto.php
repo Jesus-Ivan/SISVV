@@ -11,6 +11,7 @@ use App\Models\Insumo;
 use App\Models\Producto;
 use App\Models\PuntoVenta;
 use App\Models\Subgrupos;
+use App\Models\ZonaImpresion;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -26,7 +27,8 @@ class EditarProducto extends Component
     public function mount($clave)
     {
         //Buscar el producto
-        $producto = Producto::with('bodega')->find($clave);
+        $producto = Producto::with('bodega', 'zonasImpresion')->find($clave);
+        $zonas = ZonaImpresion::all()->toArray();
         if ($producto) {
             //Setar los valores editables en el form
             $this->form->setValues($producto);
@@ -38,6 +40,7 @@ class EditarProducto extends Component
                 ->get()
                 ->toArray();
             $this->form->setProductoBodega($puntos, $bodegas, $producto->bodega);
+            $this->form->setProductoZona($zonas, $producto->zonasImpresion);
         } else {
             //redirigir al usuario en caso de no existir la presentacion
             $this->redirectRoute('almacen.productos');

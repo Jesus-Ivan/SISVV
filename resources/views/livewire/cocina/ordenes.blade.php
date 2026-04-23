@@ -34,6 +34,14 @@
     <form class="flex" method="GET" wire:submit='buscar'>
         @csrf
         <div class="flex gap-4 w-full">
+            {{-- Select Zona de impresion --}}
+            <select id="zona"
+                class="block w-fit p-2 text-sm h-10 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <option selected value="{{ null }}">Zona impresion</option>
+                @foreach ($this->zonas as $item)
+                    <option value="{{ $item->id }}">{{ $item->descripcion }}</option>
+                @endforeach
+            </select>
             <input type="date" wire:model='fecha_busqueda'
                 class="w-fit bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
             <button type="submit" wire:click='buscar'
@@ -166,8 +174,8 @@
                                     </td>
                                     <td class="p-2 w-10">
                                         <input id="checkbox.{{ $key }}.{{ $i }}" type="checkbox"
-                                            name="selected_items[]" value="{{ $item['id'] }}" x-model="selectedItems"
-                                            x-on:change="updateSelectAllState"
+                                            name="selected_items[]" value="{{ $item['id'] }}"
+                                            x-model="selectedItems" x-on:change="updateSelectAllState"
                                             class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                     </td>
                                 </tr>

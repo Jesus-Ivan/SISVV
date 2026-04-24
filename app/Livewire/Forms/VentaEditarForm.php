@@ -38,9 +38,16 @@ class VentaEditarForm extends Form
     public function cortesia($folio_seleccionado, $observaciones)
     {
         $result = Venta::find($folio_seleccionado);    //Buscar datos generales, en la tabla 'ventas'
+        $cortesia = TipoPago::where('descripcion', 'like', '%CORTESIA%')->first();
+        $pendi = TipoPago::where('descripcion', 'like', '%PENDIENTE%')->first();
+        $is_pendiente = false;  //Bandera de venta pendiente
         if (!$result) {
             //Si no hay registros, lanzar error
             throw new Exception("No se encontro la venta " . $folio_seleccionado);
+        }
+        if (!$cortesia || !$pendi) {
+            //Si no hay registros, lanzar error
+            throw new Exception("No se encontro tipo de pago: CORTESIA o PENDIENTE");
         }
         //Buscar los productos de la venta
         $detalles_productos = DetallesVentaProducto::where('folio_venta', $folio_seleccionado)
@@ -49,45 +56,40 @@ class VentaEditarForm extends Form
         $detalles_pagos = DetallesVentaPago::where('folio_venta', $folio_seleccionado)
             ->get();
 
-        //Actualizar el tipo de venta, total y observaciones
-        $result->tipo_venta = 'cortesia';
-        $result->total = 0;
+        //Actualizar observaciones de la venta
         $result->observaciones = $observaciones;
         $result->save();
-        //Actualizar los productos
-        foreach ($detalles_productos as $key => $producto) {
-            $producto->subtotal = 0;
-            $producto->save();
-        }
-        //Actualizar el metodo de pago
+        //Actualizar el metodo de pago y actualizar bandera
         foreach ($detalles_pagos as $key => $pago) {
-            $pago->id_tipo_pago = 1;
-            $pago->monto = 0;
+            if ($pago->id_tipo_pago == $pendi->id)
+                $is_pendiente = true; //Cambiar la bandera de pendiente
+            $pago->id_tipo_pago = $cortesia->id;
             $pago->save();
         }
-        //Comprobar si la venta tiene id_socio
-        if ($result->id_socio) {
-            //Obtenemos los ID de los pagos de la venta, en la tabla 'detalles_ventas_pagos'
-            $id_pagos = array_column($detalles_pagos->toArray(), 'id');
-            //Buscar los registros correspondientes de pagos de la venta, en el estado de cuenta
-            $estado_cuenta = EstadoCuenta::whereIn('id_venta_pago', $id_pagos)->get();
-            //Actualizamos el estado de cuenta, para la cortesia
-            foreach ($estado_cuenta as $key => $row) {
-                $row->cargo = 0;
-                $row->abono = 0;
-                $row->saldo = 0;
+        //Si la venta era pendiente
+        if ($is_pendiente) {
+            //Buscar caja abierta del punto
+            $resutCaja = $this->buscarCaja($result->clave_punto_venta);
+            //Crear movimiento de caja (cambio de pendiente a cortesia)
+            $this->movimientoCajaCortesia(
+                Venta::find($folio_seleccionado),
+                $detalles_pagos->toArray(),
+                PuntosConstants::INGRESO_PENDIENTE_KEY,
+                $resutCaja->corte,
+            );
+        } else {
+            //Actualizar los detalles de caja.
+            $d_caja = DetallesCaja::where(
+                [
+                    ['folio_venta', '=', $folio_seleccionado],
+                    ['tipo_movimiento', '=', PuntosConstants::INGRESO_KEY]
+                ]
+            )->get();
+            foreach ($d_caja as $key => $row) {
+                $row->id_tipo_pago = $cortesia->id;
                 $row->save();
             }
         }
-        //Buscar caja abierta del punto
-        $resutCaja = $this->buscarCaja($result->clave_punto_venta);
-        //Crear movimiento de caja
-        $this->movimientoCajaCortesia(
-            Venta::find($folio_seleccionado),
-            $detalles_pagos->toArray(),
-            PuntosConstants::INGRESO_PENDIENTE_KEY,
-            $resutCaja->corte,
-        );
     }
 
     /**

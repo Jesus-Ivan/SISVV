@@ -84,7 +84,8 @@ class Container extends Component
                 $query->where('descripcion', 'like', 'DEPOSITO')
                     ->orWhere('descripcion', 'like', 'CHEQUE')
                     ->orWhere('descripcion', 'like', '%SALDO%')
-                    ->orWhere('descripcion', 'like', '%PENDI%');
+                    ->orWhere('descripcion', 'like', '%PENDI%')
+                    ->orWhere('descripcion', 'like', '%CORTESIA%');
             })->get();
         } else {
             //Retirar firma
@@ -93,7 +94,8 @@ class Container extends Component
                     ->orWhere('descripcion', 'like', 'CHEQUE')
                     ->orWhere('descripcion', 'like', '%SALDO%')
                     ->orWhere('descripcion', 'like', 'FIRMA')
-                    ->orWhere('descripcion', 'like', '%PENDI%');
+                    ->orWhere('descripcion', 'like', '%PENDI%')
+                    ->orWhere('descripcion', 'like', '%CORTESIA%');
             })->get();
         }
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\ComprobacionesImport;
 use App\Imports\PeriodoImport;
 use App\Models\DetallesPeriodoNomina;
 use App\Models\PeriodoNomina;
@@ -73,7 +74,7 @@ class AdministracionController extends Controller
      */
     public function eliminarNomina($ref)
     {
-        try { 
+        try {
             DB::transaction(function () use ($ref) {
                 //Eliminamos la informacion de la BD
                 PeriodoNomina::where('referencia', $ref)->delete();
@@ -110,5 +111,37 @@ class AdministracionController extends Controller
             $periodos = [];
         }
         return view('administracion.Nomina.imprimir-periodo', ['periodos' => $periodos]);
+    }
+
+    public function cargarComporbaciones()
+    {
+        return view('administracion.Comprobaciones.cargar-periodo');
+    }
+
+    /**
+     * Realiza el registro de la informacion de las comporbaciones en la BD mediante una peticion http POST
+     */
+    public function subirComporbaciones(Request $request)
+    {
+        $fecha_inicio = $request->input('fInicio');
+        $fecha_fin = $request->input('fFin');
+        $archivo = $request->file('comprobaciones');
+
+        try {
+            //Validamos que haya un archivo
+            $request->validate([
+                'comprobaciones' => [
+                    'required',
+                    'file',
+                ]
+            ]);
+            //Importar la informacion
+            Excel::import(new ComprobacionesImport($fecha_inicio, $fecha_fin), $archivo);
+            //redirigimos al usuario
+            return redirect()->route('administracion.cargar-comp')->with('success', 'Comprobaciones cargadas correctamente');
+        } catch (\Throwable $th) {
+            //redirigimos al usuario
+            return redirect()->route('administracion.cargar-comp')->with('error', $th->getMessage());
+        }
     }
 }

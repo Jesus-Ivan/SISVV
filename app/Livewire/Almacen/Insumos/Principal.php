@@ -19,7 +19,8 @@ class Principal extends Component
     public function insumos()
     {
         $result = Insumo::with(['unidad','grupo'])
-            ->whereAny(['descripcion', 'clave'], 'like', "%$this->search_input%");
+            ->whereAny(['descripcion', 'clave'], 'like', "%$this->search_input%")
+            ->orderBy('descripcion', 'asc');
 
         //Si $grupo es diferente de ""
         if (strlen($this->grupo) > 0) {

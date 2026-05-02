@@ -27,6 +27,10 @@
                                         inventario</a>
                                 </li>
                                 <li>
+                                    <a href="{{ route('pv.solicitud-mercancia', ['codigopv' => $codigopv]) }}"
+                                        class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Solicitud de Mercancia</a>
+                                </li>
+                                <li>
                                     <a href="{{ route('pv.salidas', ['codigopv' => $codigopv]) }}"
                                         class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Salidas</a>
                                 </li>

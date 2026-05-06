@@ -30,41 +30,6 @@
             </button>
         </div>
     </div>
-    {{-- SEARCH BAR --}}
-    <form class="flex" method="GET" wire:submit='buscar'>
-        @csrf
-        <div class="flex gap-4 w-full">
-            {{-- Select Zona de impresion --}}
-            <select id="zona"
-                class="block w-fit p-2 text-sm h-10 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                <option selected value="{{ null }}">Zona impresion</option>
-                @foreach ($this->zonas as $item)
-                    <option value="{{ $item->id }}">{{ $item->descripcion }}</option>
-                @endforeach
-            </select>
-            <input type="date" wire:model='fecha_busqueda'
-                class="w-fit bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
-            <button type="submit" wire:click='buscar'
-                class="text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
-                <svg wire:loading.remove wire:target='buscar' class="w-5 h-5" aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
-                        d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
-                </svg>
-                <!--Loading indicator-->
-                <div wire:loading wire:target='buscar'>
-                    @include('livewire.utils.loading', ['w' => 6, 'h' => 6])
-                </div>
-                <span class="sr-only">Buscar</span>
-            </button>
-        </div>
-        <span>
-            <button type="button" x-on:click="confirmar"
-                class="w-60 justify-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                Confirmar ordenes
-            </button>
-        </span>
-    </form>
     {{-- CARDS --}}
     <div class="flex overflow-x-auto gap-3 my-2">
         <!--CARD DE ORDEN-->
@@ -164,9 +129,8 @@
                                         class="w-10 p-2 font-medium text-lg text-gray-900 whitespace-nowrap dark:text-white">
                                         {{ $item['cantidad'] }}
                                     </th>
-                                    <td class="p-2 {{ $item['id_estado'] == $estado_error ? 'text-red-500' : '' }}">
+                                    <td class="{{ $item['id_estado'] == $estado_error ? 'text-red-500' : '' }}">
                                         <label for="checkbox.{{ $key }}.{{ $i }}"
-                                            x-on:click="updateId({{ $item['id'] }})"
                                             class="{{ $item['id_estado'] == $estado_listo ? 'line-through' : '' }}">
                                             <p class="font-bold">{{ $item['nombre'] }}</p>
                                             <p>{{ $item['observaciones'] }}</p>
@@ -174,8 +138,8 @@
                                     </td>
                                     <td class="p-2 w-10">
                                         <input id="checkbox.{{ $key }}.{{ $i }}" type="checkbox"
-                                            name="selected_items[]" value="{{ $item['id'] }}"
-                                            x-model="selectedItems" x-on:change="updateSelectAllState"
+                                            name="selected_items[]" value="{{ $item['id'] }}" x-model="selectedItems"
+                                            x-on:change="updateSelectAllState();updateId({{ $item['id'] }})"
                                             class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                     </td>
                                 </tr>
@@ -186,12 +150,28 @@
             </div>
         @endforeach
     </div>
+    {{-- PAGINATOR & BUTTON READY --}}
+    <div class="flex mt-5">
+        {{-- PAGINATOR --}}
+        <div class="w-full">
+            {{ $this->ordenes->links() }}
+        </div>
+        <div>
+            <button type="button" x-on:click="confirmar"
+                class="py-2 px-3 w-44 text-sm font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                <svg class="w-5 h-5 text-white me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor" viewBox="0 0 24 24">
+                    <path fill-rule="evenodd"
+                        d="M12 2c-.791 0-1.55.314-2.11.874l-.893.893a.985.985 0 0 1-.696.288H7.04A2.984 2.984 0 0 0 4.055 7.04v1.262a.986.986 0 0 1-.288.696l-.893.893a2.984 2.984 0 0 0 0 4.22l.893.893a.985.985 0 0 1 .288.696v1.262a2.984 2.984 0 0 0 2.984 2.984h1.262c.261 0 .512.104.696.288l.893.893a2.984 2.984 0 0 0 4.22 0l.893-.893a.985.985 0 0 1 .696-.288h1.262a2.984 2.984 0 0 0 2.984-2.984V15.7c0-.261.104-.512.288-.696l.893-.893a2.984 2.984 0 0 0 0-4.22l-.893-.893a.985.985 0 0 1-.288-.696V7.04a2.984 2.984 0 0 0-2.984-2.984h-1.262a.985.985 0 0 1-.696-.288l-.893-.893A2.984 2.984 0 0 0 12 2Zm3.683 7.73a1 1 0 1 0-1.414-1.413l-4.253 4.253-1.277-1.277a1 1 0 0 0-1.415 1.414l1.985 1.984a1 1 0 0 0 1.414 0l4.96-4.96Z"
+                        clip-rule="evenodd" />
+                </svg>
+                Comanda(s) lista(s)
+            </button>
+        </div>
+    </div>
     {{-- NOTIFICACION en tiempo real (alphine js) --}}
     <x-notification />
-    {{-- PAGINATOR --}}
-    <div>
-        {{ $this->ordenes->links() }}
-    </div>
+
     {{-- INDICADOR DE CARGA --}}
     <div wire:loading wire:target='confirmarOrdenes'>
         <x-loading-screen name='loading'>

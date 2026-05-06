@@ -69,58 +69,38 @@
             </div>
         </div>
     </form>
-    {{-- TABLA DE COMANDAS --}}
-    <div class="relative shadow-md sm:rounded-lg mx-3">
-        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                    <th scope="col" class="px-3 py-2">
-                        #
-                    </th>
-                    <th scope="col" class="px-3 py-2">
-                        PRODUCTO
-                    </th>
-                    <th scope="col" class="px-3 py-2">
-                        FECHA
-                    </th>
-                    <th scope="col" class="px-3 py-2">
-                        SOCIO
-                    </th>
-                    <th scope="col" class="px-3 py-2">
-                        ESTADO
-                    </th>
-                    <th scope="col" class="px-3 py-2">
-                        <span class="sr-only">ACCIONES</span>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($this->productos as $i => $prod)
-                    <tr wire:key='{{ $i }}'
-                        class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <th scope="row"
-                            class=" text-xl px-3 py-1 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            {{ $prod->cantidad }}
-                        </th>
-                        <td class="px-3 py-1">
-                            <p class="font-bold">
-                                {{ $prod->nombre }}
+    {{-- SEGUNDA TABLA --}}
+    <div class="grid grid-cols-3 gap-4">
+        @foreach ($this->ordenes as $i => $orden)
+            <div wire:key='{{ $i }}'
+                class="relative p-3 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                {{-- HEADER --}}
+                <div>
+                    <div class="flex justify-between items-center">
+                        <div class="flex gap-1 items-end">
+                            <p class="font-bold dark:text-white">
+                                Venta:
+                            <p class="font-normal">{{ $orden['venta']['folio'] }}</p>
                             </p>
-                            <p>{{ $prod->observaciones }}</p>
-                        </td>
-                        <td class="px-3 py-1">
-                            {{ $prod->inicio }}
-                        </td>
-                        <td class="px-3 py-1">
-                            {{ $prod->venta->nombre }}
-                        </td>
-                        <td class="px-3 py-1">
-                            @include('livewire.puntos.comandas.include.estado')
-                        </td>
-                        <td class="px-3 py-1 text-right">
-                            <a href="{{ route('comandas.ticket', ['folio' => $prod->folio_venta, 'inicio' => $prod->inicio]) }}"
+                        </div>
+                        <p class="font-bold text-gray-700 dark:text-gray-400">
+                            {{ $orden['venta']['punto_venta']['nombre'] }}
+                        </p>
+                    </div>
+                    <div class="flex gap-1 items-end">
+                        <h6 class="font-bold dark:text-white">Cliente:</h6>
+                        <p class="font-normal text-gray-700 dark:text-gray-400">{{ $orden['venta']['id_socio'] }}
+                            {{ $orden['venta']['nombre'] }}</p>
+                    </div>
+                    <div class="flex gap-1 items-end">
+                        <div class="grid grid-cols-2 w-full">
+                            <p>{{ substr($orden['inicio'], 0, 10) }}</p>
+                            <p class="font-bold">{{ substr($orden['inicio'], 11, 5) }}</p>
+                        </div>
+                        <div>
+                            <a href="{{ route('comandas.ticket', ['folio' => $orden['venta']['folio'], 'inicio' => $orden['inicio']]) }}"
                                 target="_blank"
-                                class="text-green-700 border border-green-700 hover:bg-green-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:focus:ring-green-800 dark:hover:bg-green-500">
+                                class="py-1.5 text-green-700 border border-green-700 hover:bg-green-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:focus:ring-green-800 dark:hover:bg-green-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                     class="w-5 h-5">
                                     <path fill-rule="evenodd"
@@ -129,11 +109,52 @@
                                 </svg>
                                 <span class="sr-only">Reimpresion</span>
                             </a>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+                        </div>
+                    </div>
+
+                </div>
+                <hr class="h-px my-2 bg-gray-200 border-0 dark:bg-gray-700">
+                {{-- BODY --}}
+                <div>
+                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="p-2">
+                                    #
+                                </th>
+                                <th scope="col" class="p-2">
+                                    Platillo
+                                </th>
+                                <th scope="col" class="p-2">
+                                    sta
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($orden['detalles'] as $key => $prod)
+                                <tr wire:key='p.{{ $i }}.{{ $key }}'
+                                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                    <th scope="row"
+                                        class="w-10 p-2 font-medium text-lg text-gray-900 whitespace-nowrap dark:text-white">
+                                        {{ $prod['cantidad'] }}
+                                    </th>
+                                    <td>
+                                        <p class="font-bold">{{ $prod['nombre'] }}</p>
+                                        <p>{{ $prod['observaciones'] }}</p>
+                                    </td>
+                                    <td class="p-2 w-10">
+                                        @include('livewire.puntos.comandas.include.estado')
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endforeach
+    </div>
+    <div>
+        {{ $this->ordenes->links() }}
     </div>
     {{-- NOTIFICACION en tiempo real (alphine js) --}}
     <x-notification />

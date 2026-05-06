@@ -6,5 +6,5 @@
     <!-- Title -->
     <h4 class="text-2xl font-bold dark:text-white mx-2">COMANDAS COCINA</h4>
 
-    <livewire:puntos.comandas.principal />
+    <livewire:puntos.comandas.principal :codigopv="$codigopv"/>
 </x-app-layout>

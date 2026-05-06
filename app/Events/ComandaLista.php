@@ -31,7 +31,7 @@ class ComandaLista implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('comandas'),
+            new Channel('comandas-general'),
         ];
     }
 

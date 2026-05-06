@@ -50,4 +50,9 @@ class DetallesVentaProducto extends Model
                 'descripcion' => 'ERR N/R'
             ]);
     }
+
+    public function zonaImpresion(): BelongsTo
+    {
+        return $this->belongsTo(ZonaImpresion::class, 'id_zona', 'id');
+    }
 }

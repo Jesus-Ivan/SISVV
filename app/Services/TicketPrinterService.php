@@ -2,27 +2,25 @@
 
 namespace App\Services;
 
-use App\Constants\PuntosConstants;
 use App\Models\Venta;
+use App\Models\ZonaImpresion;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Mike42\Escpos\Printer;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 
 class TicketPrinterService
 {
     /**
-     * Imprime la comanda en la impresora por defecto del sistema\
-     * En caso de imprimir algun producto, devuelve true.
+     * Imprime la comanda en la impresora
      */
-    public function imprimirComanda($productos_result, Venta $venta)
+    public function imprimirComanda($productos_result, Venta $venta, ZonaImpresion $zona)
     {
         //Si hay algun producto por imprimir
         if (count($productos_result) > 0) {
-            $connector = new NetworkPrintConnector(config('app.printer_default'), 9100);
+            $connector = new NetworkPrintConnector($zona->ip, 9100, 3);
             $printer = new Printer($connector);
             $f_inicio = Carbon::parse($productos_result[0]->inicio)->format('d-m-Y H:i');
-            $line = "------------------------\n";
+            $line = "--------------------------------\n";
 
             /**
              * Configuracion inicial

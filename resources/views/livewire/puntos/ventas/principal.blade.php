@@ -65,8 +65,7 @@
     {{-- MODAL DE ADVERTENCIA DE TRASPASO DE VENTAS --}}
     <x-modal title="Pasar ventas" name="modalAdvertencia">
         <x-slot name='body'>
-            <div wire:loading.remove wire:target='pasarVentas'
-            class="text-center">
+            <div wire:loading.remove wire:target='pasarVentas' class="text-center">
                 <div class="text-center">
                     <svg class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
@@ -93,7 +92,7 @@
                     class="flex items-center justify-center bg-neutral-secondary-soft h-56 w-96 border border-default text-fg-brand-strong text-xs font-medium rounded-base">
                     <p
                         class="text-sm p-4 ring-1 ring-inset ring-brand-subtle text-fg-brand-strong font-medium rounded-sm bg-brand-softer animate-pulse">
-                        Generando movimientos... 
+                        Generando movimientos...
                     </p>
                 </div>
             </div>

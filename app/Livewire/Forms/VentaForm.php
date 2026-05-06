@@ -4,8 +4,7 @@ namespace App\Livewire\Forms;
 
 use App\Constants\AlmacenConstants;
 use App\Constants\PuntosConstants;
-use App\Events\ComandaModificada;
-use App\Models\Bodega;
+use App\Events\ComandaDetails;
 use App\Models\Caja;
 use App\Models\Copa;
 use App\Models\CorreccionVenta;
@@ -409,11 +408,7 @@ class VentaForm extends Form
         //Creamos una fecha de inicio para los detalles de los productos que se van a guardar
         $inicio = now()->format('Y-m-d H:i:s');
 
-        //variables auxiliares
-        $is_deleted = null;
-        $is_moved = null;
-
-        DB::transaction(function () use ($folio, $inicio, &$is_deleted, &$is_moved) {
+        DB::transaction(function () use ($folio, $inicio) {
             //Revisar si hubo algun movimiento de mercancia en la BD.
             $this->verificarProductos($folio);
             //Obtener la venta principal
@@ -450,17 +445,37 @@ class VentaForm extends Form
                     ]);
                 }
             }
-            $is_deleted = $this->eliminarProductos();
+            $this->eliminarProductos();
             $this->crearCorreccion($folio);
             //Movemos los productos de venta
-            $is_moved = $this->moverProductos();
+            $this->moverProductos();
             //Actualizamos el total de la venta de origen
             Venta::where('folio', $folio)->update(['total' => $this->totalVenta]);
         }, 2);
 
-        if ($is_deleted || $is_moved) {
-            //Avisamos en tiempo real (la modificacion de la venta)
-            broadcast(new ComandaModificada(Venta::find($folio)));
+
+        //Verificamos si hay productos modificados
+        if (count($this->lista_eliminados) || count($this->lista_transferidos)) {
+            //Generar array unificado de productos eliminados y movidos de la venta
+            $modified_productos = array_merge($this->lista_eliminados, $this->lista_transferidos);
+            //Buscar los productos, junto a la zona de impresion.
+            $result_productos = DetallesVentaProducto::with('zonaImpresion')
+                ->whereIn('id', array_column($modified_productos, 'id'))
+                ->withTrashed()
+                ->get();
+            //Agrupar por id_zona los productos
+            $prod_sorted = $result_productos->groupBy('id_zona');
+
+            foreach ($prod_sorted as $id_zona => $collection) {
+                $zona = $collection[0]->zonaImpresion;
+                if (!$id_zona || !$zona) continue;
+                //Avisamos en tiempo real (la modificacion de la venta)
+                broadcast(new ComandaDetails(
+                    PuntosConstants::COMANDA_ACTUALIZADA_EVENT,
+                    Venta::find($folio),
+                    $zona
+                ));
+            }
         }
     }
 
@@ -557,10 +572,8 @@ class VentaForm extends Form
     /**
      * Mueve los productos correspondientes y actualiza el total de la venta destino
      */
-    private function moverProductos(): bool
+    private function moverProductos()
     {
-        //Bandera para identificar si el metodo realizo alguna accion
-        $band = false;
         //Recorrer la lista de productos a transferir
         foreach ($this->lista_transferidos as $key => $transferido) {
             //comprobar si la venta destino, esta abierta
@@ -581,18 +594,14 @@ class VentaForm extends Form
             //Actualizar el total de la venta destino
             $venta->total = $venta->total + $transferido['subtotal'];
             $venta->save();
-            $band = true; //Actualizar bandera
         }
-        return $band;
     }
 
     /**
      * Realiza la eliminacion SUAVE de los productos
      */
-    public function eliminarProductos(): bool
+    public function eliminarProductos()
     {
-        //Bandera para identificar si el metodo realizo alguna accion
-        $band = false;
         //Usuario actual
         $user = auth()->user();
         //Recorremos todos los items a eliminar
@@ -610,7 +619,6 @@ class VentaForm extends Form
                 $band = true;   //Actualizar bandera
             }
         }
-        return $band;
     }
 
     //Esta funcion registra la venta en la tabla "ventas"

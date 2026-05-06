@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Venta;
+use App\Models\ZonaImpresion;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -11,16 +12,18 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class ComandaReimpresa implements ShouldBroadcast
+class ComandaDetails implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public $type;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(public Venta $venta)
+    public function __construct($type, public Venta $venta, public ZonaImpresion $zona, public string $message = '')
     {
-        //
+        $this->type = $type;
     }
 
     /**
@@ -31,12 +34,12 @@ class ComandaReimpresa implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('comandas'),
+            new Channel('comandas-' . $this->zona->id),
         ];
     }
 
     public function broadcastAs()
     {
-        return 'reimpresion-comanda';
+        return 'comanda-details';
     }
 }

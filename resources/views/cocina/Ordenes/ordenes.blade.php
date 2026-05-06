@@ -5,6 +5,6 @@
     </x-slot>
     {{-- Contenido --}}
     <div class="m-2">
-        <livewire:cocina.ordenes />
+        <livewire:cocina.ordenes.comandas />
     </div>
 </x-app-layout>

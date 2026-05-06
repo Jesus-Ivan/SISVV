@@ -42,4 +42,24 @@ class PuntosConstants
      * Representa el estado (producto cancelado) de un producto, de una venta concreta.
      */
     public const ID_ESTADO_PRODUCTO_CANCELADO = '4';
+
+    /**
+     * Refrencia al 'type' utilizado para el payload del evento 'ComandaDetails'
+     */
+    public const COMANDA_NUEVA_EVENT ='comanda-nueva';
+
+    /**
+     * Refrencia al 'type' utilizado para el payload del evento 'ComandaDetails'
+     */
+    public const COMANDA_ERROR_EVENT ='comanda-error';
+
+    /**
+     * Refrencia al 'type' utilizado para el payload del evento 'ComandaDetails'
+     */
+    public const COMANDA_ACTUALIZADA_EVENT ='comanda-modificada';
+
+    /**
+     * Refrencia al 'type' utilizado para el payload del evento 'ComandaDetails'
+     */
+    public const COMANDA_REIMP_EVENT ='comanda-reimpresa';
 }

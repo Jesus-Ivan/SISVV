@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Cocina;
+namespace App\Livewire\Cocina\Ordenes;
 
 use App\Constants\PuntosConstants;
 use App\Events\ComandaLista;
@@ -12,25 +12,31 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Modelable;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-class Ordenes extends Component
+class ListaComandas extends Component
 {
     use WithPagination;
-    public $fecha_busqueda = '';
 
-    //Hook al inicio del vida del componente
-    public function mount()
-    {
-        $this->fecha_busqueda = now()->format('Y-m-d');
-        //$this->fecha_busqueda = "2026-02-13";
-    }
+    #[Modelable] 
+    public $fecha = '';
+    
+    public $zona = '';
 
     // Hook que se ejecuta despues de actualizar la pagina (paginacion)
     public function updatedPage($page)
     {
         $this->dispatch('clear-ids');
+    }
+
+    //Funcion especial de livewire para suscribirse a canales para los WebSocket
+    public function getListeners()
+    {
+        return [
+            "echo:comandas-$this->zona,.comanda-details" => 'handleEventDetails',
+        ];
     }
 
     #[Computed()]
@@ -40,7 +46,8 @@ class Ordenes extends Component
          * Consulta de los productos
          */
         $productos_result = DetallesVentaProducto::with(['venta.puntoVenta'])
-            ->whereDate('inicio', $this->fecha_busqueda)
+            ->where('id_zona', '=', $this->zona)
+            ->whereDate('inicio', $this->fecha)
             ->whereNotNull('id_estado')
             ->orderby('inicio', 'ASC')
             ->get()
@@ -90,33 +97,48 @@ class Ordenes extends Component
         return ZonaImpresion::all();
     }
 
-    public function getListeners()
+    public function handleEventDetails($payload)
     {
-        return [
-            "echo:comandas,.nueva-comanda" => 'handleNuevaComanda',
-            "echo:comandas,.error-impresion" => 'handleEventError',
-            "echo:comandas,.reimpresion-comanda" => 'render',
-            "echo:comandas,.comanda-modificada" => 'handleModif'
-        ];
-    }
-
-    public function handleEventError($payload)
-    {
+        $type = $payload['type'];
         $venta = $payload['venta'];
-        // Despachamos un evento simple de navegador (reproducir audio)
-        $this->dispatch('play-error-sound', $venta);
+        $zona = $payload['zona'];
+        $message = $payload['message'];
+
+        switch ($type) {
+            case PuntosConstants::COMANDA_NUEVA_EVENT:
+                $this->nuevaComanda($venta, $zona);
+                break;
+            case PuntosConstants::COMANDA_ERROR_EVENT:
+                $this->eventError($venta, $zona);
+                break;
+            case PuntosConstants::COMANDA_REIMP_EVENT:
+                //render
+                break;
+            case PuntosConstants::COMANDA_ACTUALIZADA_EVENT:
+                $this->handleModif($venta);
+                break;
+        }
     }
 
-    public function handleNuevaComanda($payload)
+    public function eventError(array $venta, array $zona)
     {
-        $venta = $payload['venta'];
-        // Despachamos un evento simple de navegador (reproducir audio)
-        $this->dispatch('play-standard-sound', $venta);
+        if ($zona['id'] == $this->zona) {
+            // Despachamos un evento simple de navegador (reproducir audio)
+            $this->dispatch('play-error-sound', $venta);
+        }
     }
 
-    public function handleModif($payload)
+    public function nuevaComanda(array $venta, array $zona)
     {
-        $message = "Comanda " . $payload['venta']['folio'] . " modificada: " . $payload['venta']['nombre'];
+        if ($zona['id'] == $this->zona) {
+            // Despachamos un evento simple de navegador (reproducir audio)
+            $this->dispatch('play-standard-sound', $venta);
+        }
+    }
+
+    public function handleModif(array $venta)
+    {
+        $message = "Comanda " . $venta['folio'] . " modificada: " . $venta['nombre'];
         $this->dispatch('show-modif', $message);
     }
 
@@ -129,7 +151,7 @@ class Ordenes extends Component
     public function reimprimirComanda($folio, $inicio)
     {
         //Creamos JOB para la impresora de red.
-        ReimprimirComandaJob::dispatch($folio, Carbon::parse($inicio));
+        ReimprimirComandaJob::dispatch($folio, Carbon::parse($inicio), $this->zona);
     }
 
     public function confirmarOrdenes(array $value)
@@ -138,18 +160,20 @@ class Ordenes extends Component
         $result = DB::table('detalles_ventas_productos')
             ->join('ventas', 'detalles_ventas_productos.folio_venta', '=', 'ventas.folio')
             ->select(
-                'detalles_ventas_productos.id',
-                'detalles_ventas_productos.folio_venta',
-                'detalles_ventas_productos.clave_producto',
-                'detalles_ventas_productos.nombre',
-                'detalles_ventas_productos.observaciones',
-                'detalles_ventas_productos.cantidad',
-                'detalles_ventas_productos.id_estado',
-                'detalles_ventas_productos.inicio',
-                'detalles_ventas_productos.terminado',
-                'detalles_ventas_productos.deleted_at',
-                'ventas.corte_caja',
-                'ventas.clave_punto_venta',
+                [
+                    'detalles_ventas_productos.id',
+                    'detalles_ventas_productos.folio_venta',
+                    'detalles_ventas_productos.clave_producto',
+                    'detalles_ventas_productos.nombre',
+                    'detalles_ventas_productos.observaciones',
+                    'detalles_ventas_productos.cantidad',
+                    'detalles_ventas_productos.id_estado',
+                    'detalles_ventas_productos.inicio',
+                    'detalles_ventas_productos.terminado',
+                    'detalles_ventas_productos.deleted_at',
+                    'ventas.corte_caja',
+                    'ventas.clave_punto_venta'
+                ]
             )
             ->whereNull('detalles_ventas_productos.deleted_at')
             ->whereIn('detalles_ventas_productos.id', $value)
@@ -178,7 +202,7 @@ class Ordenes extends Component
 
     public function render()
     {
-        return view('livewire.cocina.ordenes', [
+        return view('livewire.cocina.ordenes.lista-comandas', [
             'estado_en_cola' => PuntosConstants::ID_ESTADO_PRODUCTO_COLA,
             'estado_impreso' => PuntosConstants::ID_ESTADO_PRODUCTO_IMPRESO,
             'estado_listo' => PuntosConstants::ID_ESTADO_PRODUCTO_LISTO,

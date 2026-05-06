@@ -3,9 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\PuntosConstants;
-use App\Events\ComandaReimpresa;
-use App\Events\ErrorImpresora;
-use App\Events\NuevaComanda;
+use App\Events\ComandaDetails;
 use App\Models\DetallesVentaProducto;
 use App\Models\Venta;
 use App\Services\TicketPrinterService;
@@ -33,7 +31,7 @@ class ReimprimirComandaJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public $folio_venta, public Carbon $inicio) {}
+    public function __construct(public $folio_venta, public Carbon $inicio, public string $id_zona) {}
 
     /**
      * Execute the job.
@@ -43,15 +41,19 @@ class ReimprimirComandaJob implements ShouldQueue
         //Buscar la informacion de la venta
         $venta = Venta::with(['puntoVenta'])
             ->find($this->folio_venta);
-        //Obtener productos de venta (con el mismo folio, la misma marca de inicio, y sean imprimibles)
-        $productos_result = DetallesVentaProducto::where('folio_venta', $this->folio_venta)
+        //Obtener productos de venta (con el mismo folio, la misma marca de inicio, sean imprimibles, en la zona de impresion determinada)
+        $productos_result = DetallesVentaProducto::with('zonaImpresion')
+            ->where('folio_venta', $this->folio_venta)
             ->whereDate('inicio', $this->inicio->toDateString())
             ->whereTime('inicio', $this->inicio->toTimeString())
             ->whereNotNull('id_estado')
+            ->where('id_zona', $this->id_zona)
             ->get();
 
         try {
-            $printerService->imprimirComanda($productos_result, $venta);
+            //Obtenemos la zona de impresion, desde los productos
+            $zona =  $productos_result[0]->zonaImpresion;
+            $printerService->imprimirComanda($productos_result, $venta, $zona);
 
             //Actualizar registros
             DB::transaction(function () use ($productos_result) {
@@ -66,7 +68,7 @@ class ReimprimirComandaJob implements ShouldQueue
                 }
             }, 2);
             //Avisamos en tiempo real La comanda reimpresa
-            broadcast(new ComandaReimpresa($venta));
+            broadcast(new ComandaDetails(PuntosConstants::COMANDA_REIMP_EVENT, $venta, $zona,));
         } catch (\Throwable $th) {
             //Actualizar registros en caso de error
             DB::transaction(function () use ($productos_result) {
@@ -77,7 +79,7 @@ class ReimprimirComandaJob implements ShouldQueue
             }, 2);
 
             //Avisamos en tiempo real (el error de la impresora de cocina)
-            broadcast(new ErrorImpresora($th->getMessage(), $venta));
+            broadcast(new ComandaDetails(PuntosConstants::COMANDA_ERROR_EVENT, $venta, $zona, $th->getMessage()));
         }
     }
 }

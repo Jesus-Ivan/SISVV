@@ -28,6 +28,7 @@ class NuevaEntrada extends Component
     #[Locked]
     public $locked_bodega = false;  //Propiedad para evitar el cambio de bodega
     public $cuenta = "", $proveedor = "";
+    public $nat_movimiento = "";    //Determina la naturaleza del movimiento a realizar
 
     //Hook de inicio del vida del componente
     public function mount()
@@ -76,12 +77,13 @@ class NuevaEntrada extends Component
     #[Computed()]
     public function articulos()
     {
-        if ($this->clave_bodega == '') {
+        if ($this->clave_bodega == '' || empty($this->nat_movimiento)) {
             return [];
-        } elseif (Bodega::find($this->clave_bodega)->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
+        }
+        if ($this->nat_movimiento == AlmacenConstants::PRESENTACION_KEY) {
             $result = Presentacion::whereAny(['descripcion', 'clave'], 'like', "%$this->search_input%")
                 ->where('estado', true);
-        } elseif (Bodega::find($this->clave_bodega)->naturaleza == AlmacenConstants::INSUMOS_KEY) {
+        } elseif ($this->nat_movimiento == AlmacenConstants::INSUMOS_KEY) {
             $result = Insumo::whereAny(['descripcion', 'clave'], 'like', "%$this->search_input%")
                 ->where('inventariable', true);
         }
@@ -107,7 +109,7 @@ class NuevaEntrada extends Component
 
         //Recorrer todo el array de seleccionados
         foreach ($total_seleccionados as $key => $value) {
-            if (Bodega::find($this->clave_bodega)->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
+            if ($this->nat_movimiento == AlmacenConstants::PRESENTACION_KEY) {
                 //Se busca la presentacion en base a su clave.
                 $producto = Presentacion::with('insumo')->find($key);
                 //Si no encontro algun insumo asociado a la presentacion   
@@ -162,16 +164,15 @@ class NuevaEntrada extends Component
     public function buscarRequisicion()
     {
         $validated = $this->validate([
-            'clave_bodega' => "required"
+            'clave_bodega' => "required",
+            'nat_movimiento' => "required",
         ], [
-            'clave_bodega.required' => "Seleccione"
+            'clave_bodega.required' => "Seleccione",
+            'nat_movimiento.required' => "Requerido",
         ]);
 
-        //Buscar la bodega (seleccionada) en la BD
-        $bodega = Bodega::find($validated['clave_bodega']);
-
-        //Segun la naturaleza de la bodega
-        if ($bodega->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
+        //Segun la naturaleza del movimiento
+        if ($this->nat_movimiento == AlmacenConstants::PRESENTACION_KEY) {
             $this->requisicionPresentaciones();
         } else {
             $this->requisicionInsumos();
@@ -348,14 +349,12 @@ class NuevaEntrada extends Component
                     'id_user' => $user->id,
                     'nombre' => $user->name,
                 ]);
-                //Buscar la bodega, despues de crear el registro de la entrada
-                $bodega = Bodega::find($result->clave_bodega);
                 //Recorrer todos los articulos de la tabla
                 foreach ($validated['articulos_table'] as $key => $row) {
                     //Crear detalles de la entrada
-                    $this->createDetalleEntrada($row, $bodega, $result);
+                    $this->createDetalleEntrada($row, $result);
                     //Crear movimientos de inventario
-                    $this->createMovimientoAlmacen($row, $bodega, $result);
+                    $this->createMovimientoAlmacen($row, $result);
                 }
                 //Actualizar costos
                 $this->actualizarCostos($validated);
@@ -371,9 +370,9 @@ class NuevaEntrada extends Component
     /**
      * Realiza el registro del movimiento en la tabla 'movimientos_almacen' segun la bodega dada
      */
-    public function createMovimientoAlmacen(array $row, Bodega $bodega, EntradaNew $entrada)
+    public function createMovimientoAlmacen(array $row, EntradaNew $entrada)
     {
-        if ($bodega->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
+        if ($this->nat_movimiento == AlmacenConstants::PRESENTACION_KEY) {
             //Movimientos de almacen (presentaciones)
             MovimientosAlmacen::create([
                 'folio_entrada' => $entrada->folio,
@@ -391,7 +390,7 @@ class NuevaEntrada extends Component
                 'importe' => $row['importe'],
                 'fecha_existencias' => $entrada->fecha_existencias,
             ]);
-        } elseif ($bodega->naturaleza == AlmacenConstants::INSUMOS_KEY) {
+        } elseif ($this->nat_movimiento == AlmacenConstants::INSUMOS_KEY) {
             //Movimientos de almacen (insumos)
             MovimientosAlmacen::create([
                 'folio_entrada' => $entrada->folio,
@@ -408,14 +407,14 @@ class NuevaEntrada extends Component
             ]);
         } else {
             //Lanzar excepcion
-            throw new Exception("La bodega: " . $bodega->descripcion . ", no tiene naturaleza definida", 1);
+            throw new Exception("Seleccione naturaleza del movimiento", 1);
         }
     }
 
     /**
      * Crea el registro en la tabla 'entradas_new', segun el tipo
      */
-    public function createDetalleEntrada(array $row, Bodega $bodega, EntradaNew $entrada)
+    public function createDetalleEntrada(array $row, EntradaNew $entrada)
     {
         //Si el proveedor es null o un string vacio
         if (is_null($row['id_proveedor']) || $row['id_proveedor'] == "")
@@ -440,10 +439,15 @@ class NuevaEntrada extends Component
         ];
 
         //Modificar la clave segun la naturaleza de la bodega de destino
-        if ($bodega->naturaleza == AlmacenConstants::PRESENTACION_KEY)
+        if ($this->nat_movimiento  == AlmacenConstants::PRESENTACION_KEY) {
             $data['clave_presentacion'] = $row['clave'];
-        else
+            //Buscar la presentacion original en la BD
+            $presentacion = Presentacion::find($data['clave_presentacion']);
+            //Agregar la clave del insumo_base al array
+            $data['clave_insumo'] = $presentacion->clave_insumo_base;
+        } else {
             $data['clave_insumo'] = $row['clave'];
+        }
         //Crear el registro del detalle de la entrada
         DetalleEntradaNew::create($data);
     }
@@ -534,13 +538,12 @@ class NuevaEntrada extends Component
      */
     public function actualizarCostos($validated)
     {
-        $bodega = Bodega::find($validated['clave_bodega']);
         //Crear instacia del servicio
         $service = new InventarioService();
         foreach ($validated['articulos_table'] as $key => $row) {
-            if ($bodega->naturaleza == AlmacenConstants::PRESENTACION_KEY) {
+            if ($this->nat_movimiento == AlmacenConstants::PRESENTACION_KEY) {
                 $service->actualizarCostoPresen($row, $validated['fecha']);
-            } elseif ($bodega->naturaleza == AlmacenConstants::INSUMOS_KEY) {
+            } elseif ($this->nat_movimiento == AlmacenConstants::INSUMOS_KEY) {
                 $service->actualizarCostoInsum($row, $validated['fecha']);
             } else {
                 throw new Exception("Naturaleza de bodega no valida", 1);
@@ -569,7 +572,11 @@ class NuevaEntrada extends Component
     public function render()
     {
         return view('livewire.almacen.entradas.v2.nueva-entrada', [
-            'cuentas' => AlmacenConstants::METODOS_PAGO
+            'cuentas' => AlmacenConstants::METODOS_PAGO,
+            'nat_bodegas' => [
+                AlmacenConstants::PRESENTACION_KEY => 'PRESENTACIONES',
+                AlmacenConstants::INSUMOS_KEY => 'INSUMOS'
+            ]
         ]);
     }
 }

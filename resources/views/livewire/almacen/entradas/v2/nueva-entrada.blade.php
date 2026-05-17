@@ -99,9 +99,6 @@
                         Cantidad
                     </th>
                     <th scope="col" class="px-3 py-2">
-                        Unidad
-                    </th>
-                    <th scope="col" class="px-3 py-2">
                         C.Unitario
                     </th>
                     <th scope="col" class="px-3 py-2">
@@ -158,9 +155,6 @@
                                 class="max-w-20 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="0.0" />
                         </td>
-                        <td class="px-3 py-2">
-                            {{ $item['unidad'] ? $item['unidad']['descripcion'] : '' }}
-                        </td>
                         <td class="px-3 py-2 flex items-center">
                             $
                             <input type="number" wire:model='articulos_table.{{ $index }}.costo'
@@ -205,66 +199,77 @@
     <x-modal name="modal-articulos" title="AÑADIR INSUMO/PRESENTACION">
         <x-slot name='body'>
             <!-- Modal content -->
-            <div class="h-auto max-w-4xl overflow-y-auto">
+            <div class="h-auto overflow-y-auto">
                 <!-- Modal body -->
-                <div class="p-1 w-full max-w-2xl max-h-full">
+                <div class="p-1">
                     {{-- Barra de busqueda --}}
-                    <div class="relative">
-                        <div class="inline-flex gap-2">
-                            {{-- Folio requi --}}
-                            <input type="text" wire:keyup.enter='buscarRequisicion'
-                                class="h-11 {{ $locked_bodega ? 'cursor-not-allowed pointer-events-none' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                placeholder="Folio requisicion" wire:model='folio_requi' />
-                            {{-- Select de bodega --}}
-                            <div class="w-full">
-                                <select id="bodega" wire:model='clave_bodega' wire:change ='actualizarItems'
-                                    class="{{ $locked_bodega ? 'cursor-not-allowed pointer-events-none' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                    <option selected value="{{ null }}">BODEGA</option>
-                                    @foreach ($this->bodegas as $b)
-                                        <option value="{{ $b->clave }}">{{ $b->descripcion }}</option>
-                                    @endforeach
-                                </select>
-                                @error('clave_bodega')
-                                    <x-input-error messages="{{ $message }}" />
-                                @enderror
-                            </div>
-                            {{-- Input search --}}
-                            <div class="relative h-11">
-                                <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                    <svg wire:loading.delay.remove wire:target='search_input'
-                                        class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-                                    </svg>
-                                    <!--Loading indicator-->
-                                    <div wire:loading.delay wire:target='search_input'>
-                                        @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
-                                    </div>
+                    <div class="inline-flex gap-2">
+                        {{-- Folio requi --}}
+                        <input type="text" wire:keyup.enter='buscarRequisicion'
+                            class="h-11 {{ $locked_bodega ? 'cursor-not-allowed pointer-events-none' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-20 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                            placeholder="Folio requ." wire:model='folio_requi' />
+                        {{-- Select de bodega --}}
+                        <div>
+                            <select id="bodega" wire:model='clave_bodega' wire:change ='actualizarItems'
+                                class="{{ $locked_bodega ? 'cursor-not-allowed pointer-events-none' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-fit p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                <option selected value="{{ null }}">BODEGA</option>
+                                @foreach ($this->bodegas as $b)
+                                    <option value="{{ $b->clave }}">{{ $b->descripcion }}</option>
+                                @endforeach
+                            </select>
+                            @error('clave_bodega')
+                                <x-input-error messages="{{ $message }}" />
+                            @enderror
+                        </div>
+                        {{-- Select naturaleza movimiento --}}
+                        <div>
+                            <select id="nat" wire:model='nat_movimiento' wire:change ='actualizarItems'
+                                class="w-fit {{ $locked_bodega ? 'cursor-not-allowed pointer-events-none' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                <option selected value="{{ null }}">NAT.MOV.</option>
+                                @foreach ($nat_bodegas as $key => $nat)
+                                    <option value="{{ $key }}">{{ $nat }}</option>
+                                @endforeach
+                            </select>
+                            @error('nat_movimiento')
+                                <x-input-error messages="{{ $message }}" />
+                            @enderror
+                        </div>
+                        {{-- Input search --}}
+                        <div class="relative h-11">
+                            <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                                <svg wire:loading.delay.remove wire:target='search_input'
+                                    class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                                </svg>
+                                <!--Loading indicator-->
+                                <div wire:loading.delay wire:target='search_input'>
+                                    @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
                                 </div>
-
-                                <input type="text" wire:model.live.debounce.500ms="search_input"
-                                    class="w-96 p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                    placeholder="Código o Descripción" />
                             </div>
+
+                            <input type="text" wire:model.live.debounce.500ms="search_input"
+                                class="w-96 p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                placeholder="Código o Descripción" />
                         </div>
                     </div>
                     <!-- Result table-->
-                    <div class="overflow-y-auto h-80 my-2" wire:loading.class='animate-pulse'
+                    <div class="overflow-y-auto h-96 my-2" wire:loading.class='animate-pulse'
                         wire:target='actualizarItems, buscarRequisicion'>
                         <table class=" w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                             <thead
                                 class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                                 <tr>
-                                    <th scope="col" class="p-4">
+                                    <th scope="col" class="p-3">
                                     </th>
-                                    <th scope="col" class="px-6 py-3">
+                                    <th scope="col" class="p-3">
                                         CODIGO
                                     </th>
-                                    <th scope="col" class="py-3">
+                                    <th scope="col" class="p-3">
                                         DESCRIPCIÓN
                                     </th>
-                                    <th scope="col" class="px-6 py-3">
+                                    <th scope="col" class="p-3">
                                         C.C.IVA
                                     </th>
                                 </tr>
@@ -273,24 +278,24 @@
                                 @foreach ($this->articulos as $row)
                                     <tr wire:key='{{ $row->clave }}'
                                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600">
-                                        <td class="w-4 p-4">
+                                        <td class="p-3">
                                             <input id="checkbox-{{ $row->clave }}" type="checkbox"
                                                 wire:model="selectedItems.{{ $row->clave }}"
                                                 class="w-6 h-6 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                         </td>
                                         <th scope="row"
-                                            class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                            class="p-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                             {{ $row->clave }}
                                         </th>
-                                        <td class="w-96 font-medium text-gray-900  dark:text-white">
+                                        <td class="font-medium text-gray-900  dark:text-white">
                                             <div class="flex items-center">
                                                 <label for="checkbox-{{ $row->clave }}"
-                                                    class="w-96 py-4 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                                                    class="p-3 w-full text-sm font-medium text-gray-900 dark:text-gray-300">
                                                     {{ $row->descripcion }}
                                                 </label>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 font-medium w-fit text-gray-900 dark:text-white">
+                                        <td class="p-3 font-medium w-fit text-gray-900 dark:text-white">
                                             ${{ $row->costo_con_impuesto }}
                                         </td>
                                     </tr>

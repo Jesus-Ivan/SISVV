@@ -23,5 +23,5 @@
             @include('livewire.puntos.ventas.include.nota-card')
         @endforeach
     </div>
-    <div>{{$this->ventasHoy->links()}}</div>
+    <div>{{ $this->ventasHoy->links() }}</div>
 </div>

@@ -4,7 +4,7 @@ namespace App\Livewire\Forms;
 
 use App\Constants\AlmacenConstants;
 use App\Constants\PuntosConstants;
-use App\Models\Bodega;
+use App\Events\ComandaDetails;
 use App\Models\Caja;
 use App\Models\Copa;
 use App\Models\CorreccionVenta;
@@ -15,7 +15,7 @@ use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
 use App\Models\Producto;
 use App\Models\MotivoCorreccion;
-
+use App\Models\ProductoZona;
 use App\Models\PuntoVenta;
 use App\Models\Socio;
 use App\Models\SocioMembresia;
@@ -25,7 +25,6 @@ use App\Models\Venta;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Locked;
-use Livewire\Attributes\Validate;
 use Livewire\Form;
 
 class VentaForm extends Form
@@ -412,6 +411,8 @@ class VentaForm extends Form
         DB::transaction(function () use ($folio, $inicio) {
             //Revisar si hubo algun movimiento de mercancia en la BD.
             $this->verificarProductos($folio);
+            //Obtener la venta principal
+            $result = Venta::find($folio);
             //Recorremos todos los items de la tabla
             foreach ($this->productosTable as $key => $producto) {
                 //Verificamos si el item que se itera, cuenta con un 'id' de la base de datos
@@ -426,6 +427,7 @@ class VentaForm extends Form
                             ]
                         );
                 } else {
+                    $zona = $this->obtenerZona($producto, $result);
                     //Crear el nuevo item
                     DetallesVentaProducto::create([
                         'chunk' => $producto['chunk'],
@@ -438,6 +440,8 @@ class VentaForm extends Form
                         'subtotal' => $producto['subtotal'],
                         'inicio' => $inicio,
                         'tiempo' => $producto['tiempo'],
+                        'id_estado' => $producto['print_default'] ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null,
+                        'id_zona' => $zona?->id_zona
                     ]);
                 }
             }
@@ -445,9 +449,34 @@ class VentaForm extends Form
             $this->crearCorreccion($folio);
             //Movemos los productos de venta
             $this->moverProductos();
-            //Actualizamos el total de la venta 
+            //Actualizamos el total de la venta de origen
             Venta::where('folio', $folio)->update(['total' => $this->totalVenta]);
         }, 2);
+
+
+        //Verificamos si hay productos modificados
+        if (count($this->lista_eliminados) || count($this->lista_transferidos)) {
+            //Generar array unificado de productos eliminados y movidos de la venta
+            $modified_productos = array_merge($this->lista_eliminados, $this->lista_transferidos);
+            //Buscar los productos, junto a la zona de impresion.
+            $result_productos = DetallesVentaProducto::with('zonaImpresion')
+                ->whereIn('id', array_column($modified_productos, 'id'))
+                ->withTrashed()
+                ->get();
+            //Agrupar por id_zona los productos
+            $prod_sorted = $result_productos->groupBy('id_zona');
+
+            foreach ($prod_sorted as $id_zona => $collection) {
+                $zona = $collection[0]->zonaImpresion;
+                if (!$id_zona || !$zona) continue;
+                //Avisamos en tiempo real (la modificacion de la venta)
+                broadcast(new ComandaDetails(
+                    PuntosConstants::COMANDA_ACTUALIZADA_EVENT,
+                    Venta::find($folio),
+                    $zona
+                ));
+            }
+        }
     }
 
     //Cerrar una venta existente (actualiza toda la venta)
@@ -587,6 +616,7 @@ class VentaForm extends Form
                         'deleted_at' => now(),
                         'usuario_cancela' => $user->name
                     ]);
+                $band = true;   //Actualizar bandera
             }
         }
     }
@@ -629,12 +659,20 @@ class VentaForm extends Form
         ]);
     }
 
-    //Registra los detalles de los productos en la tabla "detalles_ventas_productos"
+    /**
+     * Registra los detalles de los productos en la tabla "detalles_ventas_productos"\
+     * Determina si el producto es imprimible\
+     * Determina la zona de impresion
+     */
     private function registrarProductosVenta($folio, $venta)
     {
         $inicio = now()->format('Y-m-d H:i:s');
+        //Obtener venta original (de la BD)
+        $result = Venta::find($folio);
+
         //Detalles Venta
         foreach ($venta['productosTable'] as $key => $producto) {
+            $zona = $this->obtenerZona($producto, $result);
             DetallesVentaProducto::create([
                 'chunk' => $producto['chunk'],
                 'folio_venta' => $folio,
@@ -646,8 +684,26 @@ class VentaForm extends Form
                 'subtotal' => $producto['subtotal'],
                 'inicio' => $inicio,
                 'tiempo' => $producto['tiempo'],
+                'id_estado' => $producto['print_default'] ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null,
+                'id_zona' => $zona?->id_zona
             ]);
         }
+    }
+
+    /**
+     * Obtiene la zona de impresion de destino, del producto
+     */
+    public function obtenerZona(array $producto, Venta $result)
+    {
+        $zona = null;
+        if ($producto['print_default']) {
+            //Buscar las zonas de impresion
+            $zona = ProductoZona::where([
+                ['clave_producto', '=', $producto['clave_producto']],
+                ['clave_punto', '=', $result->clave_punto_venta]
+            ])->first();
+        }
+        return $zona;
     }
 
     //Registra los detalles de los productos en la tabla "detalles_ventas_pagos"
@@ -846,7 +902,8 @@ class VentaForm extends Form
                 'precio' => $producto->precio_con_impuestos,
                 'subtotal' => $cantidad * $producto->precio_con_impuestos,
                 'observaciones' => '',
-                'tiempo' => null
+                'tiempo' => null,
+                'print_default' => $producto->print_default
             ];
         }
     }
@@ -866,7 +923,8 @@ class VentaForm extends Form
                 'subtotal' => $modificador['precio'] * $modificador['cantidad'],
                 'observaciones' => '',
                 'tiempo' => null,
-                'modif' => true
+                'modif' => true,
+                'print_default' => $modificador['print_default']
             ];
         }
     }

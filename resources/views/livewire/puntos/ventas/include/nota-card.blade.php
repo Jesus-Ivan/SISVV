@@ -3,12 +3,12 @@
     {{-- HEAD --}}
     <div>
         <h4 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
-            {{ $item->nombre }}
+            {{ $item->id_socio }} {{ $item->nombre }}
         </h4>
         <h3 class="font-bold tracking-tight text-gray-900 dark:text-white">
             <div class="grid col-span-2 grid-cols-2">
-                <p>Venta: {{ $item->folio }} - {{ $item->tipo_venta }}</p>
-                <p>Socio: {{ $item->id_socio ? $item->id_socio : '' }}</p>
+                <p class="uppercase">Folio: {{ $item->folio }}</p>
+                <p class="uppercase">Tipo venta: {{ $item->tipo_venta }}</p>
             </div>
         </h3>
     </div>
@@ -16,21 +16,6 @@
     <div>
         <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">
             {{ $item->fecha_apertura }}
-        </p>
-
-        {{-- <ul class="max-w-md space-y-1 text-gray-500 list-disc list-inside dark:text-gray-400">
-            <li>
-                At least 10 characters
-            </li>
-            <li>
-                At least one lowercase character
-            </li>
-            <li>
-                Inclusion of at least one special charact
-            </li>
-        </ul> --}}
-        <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">
-            Subtotal: ${{ $item->total }}
         </p>
     </div>
 </a>

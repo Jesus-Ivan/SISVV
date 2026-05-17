@@ -56,13 +56,33 @@ use Maatwebsite\Excel\Excel as ExcelExcel;
 
 class ReportesController extends Controller
 {
+    /**
+     * Genera el pdf del ticket de venta
+     */
     public function generarTicket(Venta $venta)
     {
-        //Con 'with(nombre_relacion)' evitamos el problema N+1
-        $productos = DetallesVentaProducto::with('productos')->where('folio_venta', $venta->folio)->get();
         $pagos = DetallesVentaPago::with('tipoPago')->where('folio_venta', $venta->folio)->get();
         $caja = Caja::with('users')->where('corte', $venta->corte_caja)->limit(1)->get();
         $puntoVenta = PuntoVenta::where('clave', $venta->clave_punto_venta)->first();
+
+        $columns = [
+            'folio_venta',
+            'codigo_catalogo',
+            'clave_producto',
+            'nombre',
+            'precio'
+        ];
+        $productos_result = DetallesVentaProducto::with('productos')
+            ->select($columns)
+            ->selectRaw('SUM(cantidad) as cantidad')
+            ->where('folio_venta', $venta->folio)
+            ->groupBy($columns)
+            ->get();
+
+        $productos = array_map(function ($product) {
+            $product['subtotal'] = $product['cantidad'] * $product['precio'];
+            return $product;
+        }, $productos_result->toArray());
 
         $data = [
             'title' => 'VISTA VERDE COUNTRY CLUB',
@@ -86,6 +106,37 @@ class ReportesController extends Controller
         //Tamaño predeterminado de papel del ticket (80mm x 297mm)
         $pdf->setPaper([0, 0, 226.772, 841.89], 'portrait');
         return $pdf->stream('venta.pdf');
+    }
+
+    /**
+     * Genera la comanda para cocina. En formato PDF.\
+     * Apto para la reimpresion local el caso de error
+     */
+    public function generarComanda($folio, $inicio)
+    {
+        //Buscar la informacion de la venta
+        $venta = Venta::with(['puntoVenta'])
+            ->find($folio);
+        $f_inicio = Carbon::parse($inicio);
+        //Obtener productos de venta (con el mismo folio, la misma marca de inicio, y sean imprimibles)
+        $productos_result = DetallesVentaProducto::where('folio_venta', $folio)
+            ->whereDate('inicio', $f_inicio->toDateString())
+            ->whereTime('inicio', $f_inicio)
+            ->whereNotNull('id_estado')
+            ->get();
+        //return $productos_result;
+        $data = [
+            "venta" => $venta,
+            "productos" => $productos_result,
+            "f_inicio" => $f_inicio
+        ];
+
+
+        $pdf = Pdf::loadView('reportes.comanda', $data);
+        $pdf->setOption(['defaultFont' => 'Times-Roman']);
+        //Tamaño predeterminado de papel del ticket (80mm x 297mm)
+        $pdf->setPaper([0, 0, 226.772, 841.89], 'portrait');
+        return $pdf->stream('comanda.pdf');
     }
 
     //Genera reportes de ventas, con ayuda del corte de caja

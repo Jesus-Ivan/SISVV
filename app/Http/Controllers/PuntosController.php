@@ -129,7 +129,7 @@ class PuntosController extends Controller
     {
         $permisospv = $request->get('permisos_pv'); //Obtenemos los permisos incrutados en la peticion
         $codigopv = $request->segment(2); //'codigopv' está en el segundo segmento de la ruta
-        return view('puntos.caja.caja', ['codigopv' => $codigopv, 'permisospv' => $permisospv]);
+        return view('puntos.Caja.caja', ['codigopv' => $codigopv, 'permisospv' => $permisospv]);
     }
 
     public function prodVendidos(Request $request)
@@ -160,6 +160,15 @@ class PuntosController extends Controller
         return view('puntos.Inventario.salidas', ['codigopv' => $codigopv, 'permisospv' => $permisospv]);
     }
 
+    /**
+     * Dirige al usuario al modulo de comandas erroneas
+     */
+    public function verComandas(Request $request)
+    {
+        $permisospv = $request->get('permisos_pv');
+        $codigopv = $request->segment(2);
+        return view('puntos.Comandas.comandas', ['codigopv' => $codigopv, 'permisospv' => $permisospv]);
+    }
     public function solicitarMercancia(Request $request)
     {
         $permisospv = $request->get('permisos_pv'); //Obtenemos los permisos incrutados en la peticion

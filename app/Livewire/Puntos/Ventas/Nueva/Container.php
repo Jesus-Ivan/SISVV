@@ -2,8 +2,11 @@
 
 namespace App\Livewire\Puntos\Ventas\Nueva;
 
+use App\Constants\PuntosConstants;
+use App\Jobs\ImprimirComandaJob;
 use App\Livewire\Forms\VentaForm;
 use App\Models\CatalogoVistaVerde;
+use App\Models\DetallesVentaProducto;
 use App\Models\Grupos;
 use App\Models\GruposModificadores;
 use App\Models\Modificador;
@@ -12,6 +15,7 @@ use App\Models\Producto;
 use App\Models\Socio;
 use App\Models\SocioMembresia;
 use App\Models\TipoPago;
+use App\Models\Venta;
 use Exception;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -19,6 +23,8 @@ use Livewire\Component;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
+use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
+use Mike42\Escpos\Printer;
 
 class Container extends Component
 {
@@ -197,6 +203,7 @@ class Container extends Component
 
     public function guardarVentaNueva()
     {
+        $folioVenta = 0;
         try {
             //Guardamos la venta
             $folioVenta = $this->ventaForm->guardarVentaNueva($this->codigopv);
@@ -204,6 +211,8 @@ class Container extends Component
             $this->dispatch('ver-ticket', ['venta' => $folioVenta]);
             //Emitimos mensaje de sesion 
             session()->flash('success', 'Venta guardada correctamente');
+            //Creamos JOB para la impresora de red.
+            ImprimirComandaJob::dispatch($folioVenta);
         } catch (ValidationException $th) {
             //Si es una excepcion de validacion, volverla a lanzar a la vista
             throw $th;
@@ -222,6 +231,8 @@ class Container extends Component
             $this->dispatch('ver-ticket', ['venta' => $folioVenta]);
             //Mensaje de sesion para el alert
             session()->flash('success', 'Venta cerrada correctamente');
+            //Creamos JOB para la impresora de red.
+            ImprimirComandaJob::dispatch($folioVenta);
         } catch (ValidationException $th) {
             //Si es una excepcion de validacion, volverla a lanzar a la vista
             throw $th;
@@ -264,8 +275,7 @@ class Container extends Component
                 //Emitir evento para actualizar el front de los modificadores.
                 $this->dispatch('actualizar-modificadores');
             } else {
-                //Agregar el producto a la tabla
-                $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time(), true);
+                $this->ventaForm->agregarProducto($producto, $this->cantidadProducto, time());
                 //Actualizar el total de la venta
                 $this->ventaForm->recalcularSubtotales();
                 //Limpiar las propiedades auxiliares
@@ -292,10 +302,11 @@ class Container extends Component
         $this->modificadores = $producto->modificador->toArray();
         $this->gruposModif = $producto->grupoModif->toArray();
 
-        //Agregar descripcion del producto (modificadores posibles)
+        //Agregar descripcion del producto (modificadores posibles) y marca de impresion automatica en cocina
         foreach ($this->modificadores as $index => $modif) {
             $result = Producto::find($modif['clave_modificador']);
             $this->modificadores[$index]['descripcion'] = $result->descripcion;
+            $this->modificadores[$index]['print_default'] = $result->print_default;
         }
         //Agregar descripcion del grupo de modificadores
         foreach ($this->gruposModif as $index => $grupo) {

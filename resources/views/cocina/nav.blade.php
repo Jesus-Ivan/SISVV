@@ -16,19 +16,21 @@
                         class="z-10 hidden font-normal bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600">
                         <ul class="py-2 text-sm text-gray-700 dark:text-gray-400" aria-labelledby="dropdownLargeButton">
                             <li>
-                                <a href="{{route('cocina.ordenes')}}"
-                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Ordenes
-                                    del dia</a>
+                                <a href="{{ route('cocina.ordenes') }}"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Monitor
+                                    produccion</a>
                             </li>
                             <li>
-                                <a href="{{route('cocina.ordenes.historial')}}"
-                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Historial</a>
+                                <a href="{{ route('cocina.ordenes.reporte') }}"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Reporte
+                                    produccion</a>
                             </li>
 
                         </ul>
                     </div>
                 </li>
-                <li>
+
+                {{-- <li>
                     <button id="inventarios" data-dropdown-toggle="dropdownInventarios"
                         class="flex items-center justify-between w-full py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 md:w-auto dark:text-white md:dark:hover:text-blue-500 dark:focus:text-white dark:border-gray-700 dark:hover:bg-gray-700 md:dark:hover:bg-transparent">Inventarios
                         <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -65,7 +67,7 @@
                 <li>
                     <a href="{{route('cocina.mermas')}}"
                         class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">Mermas</a>
-                </li>
+                </li> --}}
             </ul>
         </div>
     </div>

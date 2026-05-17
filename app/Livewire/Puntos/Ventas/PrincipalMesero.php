@@ -14,6 +14,14 @@ class PrincipalMesero extends Component
     public $search = '';
     public $codigopv;
 
+    public function getListeners()
+    {
+        return [
+            "echo:comandas,.nueva-comanda" => 'render',
+            "echo:comandas,.comanda-modificada" => 'render'
+        ];
+    }
+
     #[Computed()]
     public function ventasHoy()
     {

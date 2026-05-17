@@ -37,6 +37,14 @@ class Principal extends Component
         $this->pendientes = TipoPago::where('descripcion', 'like', '%PENDIENTE%')->first();
     }
 
+    public function getListeners()
+    {
+        return [
+            "echo:comandas,.nueva-comanda" => 'render',
+            "echo:comandas,.comanda-modificada" => 'render'
+        ];
+    }
+
     #[Computed()]
     public function ventasHoy()
     {

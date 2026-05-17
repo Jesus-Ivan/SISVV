@@ -26,7 +26,7 @@
                             <li>
                                 <a href="{{ route('almacen.produccion.nuevo') }}"
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Nueva
-                                    produccion</a>
+                                    producción</a>
                             </li>
                             <li>
                                 <a href="{{ route('almacen.produccion.historial') }}"
@@ -35,7 +35,7 @@
                         </ul>
                     </div>
                 </div>
-                <h4 class="flex items-center ms-2 text-2xl font-bold dark:text-white">PRODUCCION DE INSUMOS</h4>
+                <h4 class="flex items-center ms-2 text-2xl font-bold dark:text-white">PRODUCCIÓN DE INSUMOS</h4>
             </div>
         </div>
     </div>

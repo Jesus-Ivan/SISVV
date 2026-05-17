@@ -33,7 +33,7 @@ class Editar extends Component
     //Hook de inicio de vida del componente.
     public function mount($folio)
     {
-        $entrada = EntradaNew::with('detalles')->find($folio);
+        $entrada = EntradaNew::with('detalles.insumo', 'detalles.proveedor')->find($folio);
         //Guardar propiedades en el componente
         $this->observaciones = $entrada->observaciones;
         $fecha_existencias = Carbon::parse($entrada->fecha_existencias);
@@ -49,6 +49,7 @@ class Editar extends Component
                 'clave' => $detalle->clave_presentacion ?: $detalle->clave_insumo,
                 'clave_presentacion' => $detalle->clave_presentacion,
                 'clave_insumo' => $detalle->clave_insumo,
+                'insumo' => $detalle->insumo,
                 'descripcion' => $detalle->descripcion,
                 'cuenta' => $detalle->cuenta_contable,
                 'cantidad' =>  $detalle->cantidad,
@@ -196,7 +197,11 @@ class Editar extends Component
         $service = new InventarioService();
         //Para cada fila de los detalles de la entrada
         foreach ($this->articulos_table as $key => $row) {
-            //
+            //Validar si la presentacion no tiene insumo
+            if (!$row['insumo']['clave']) {
+                continue;   //Omitir iteracion
+            }
+
             if ($suma_clave_presentacion) {
                 //Actualizar el costo de la presentacion
                 $service->actualizarCostoPresen($row, $this->fecha);

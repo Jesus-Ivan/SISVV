@@ -1,6 +1,6 @@
-<div>
+<div class="ms-3 mx-3">
     {{-- Buscar por fecha --}}
-    <div class="flex gap-4 items-end ms-3 w-40">
+    <div class="flex gap-4 items-end my-2 w-40">
         <div>
             <label for="name" class="block mb-1 text-base font-medium text-gray-900 dark:text-white">
                 Buscar por mes:</label>
@@ -33,6 +33,9 @@
                         FOLIO
                     </th>
                     <th scope="col" class="px-3 py-2">
+                        RESPONSABLE
+                    </th>
+                    <th scope="col" class="px-3 py-2">
                         FECHA EXISTENCIAS
                     </th>
                     <th scope="col" class="px-3 py-2">
@@ -57,6 +60,9 @@
                             class="w-24 px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                             {{ $produccion->folio }}
                         </th>
+                        <td class="px-3 py-2">
+                            {{ $produccion->user_name }}
+                        </td>
                         <td class="px-3 py-2">
                             {{ $produccion->fecha_existencias }}
                         </td>

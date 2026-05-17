@@ -35,7 +35,7 @@ class Principal extends Component
             $query->whereYear('fecha_existencias', $year)
                 ->whereMonth('fecha_existencias', $month);
         }
-        return $query->orderBy('folio', "DESC")->paginate(10);
+        return $query->orderBy('fecha_existencias', "DESC")->paginate(10);
     }
 
     /**

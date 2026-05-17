@@ -846,6 +846,7 @@ class ReportesController extends Controller
     }
 
     /**
+     * LEGACY
      * Genera un reporte en Excel de los productos registrados en las entradas de almacen. Dado un rango de fechas y un proveedor
      */
     public function repEntradas(Request $request)
@@ -1224,13 +1225,18 @@ class ReportesController extends Controller
         $convertir_insumos = $req->input('convertir_insumos');
 
         //Definir array de relaciones
-        $relations = ['proveedor', 'entrada'];
+        $relations = ['proveedor', 'entrada', "insumo.unidad"];
         //Si esta activada la casilla de conversion de insumos
         if ($convertir_insumos)
             array_push($relations, 'insumo.presentaciones');
 
         //Consulta
-        $result = DetalleEntradaNew::with($relations)
+        $result = DetalleEntradaNew::with([
+            ...$relations,
+            'insumo' => function ($query) {
+                $query->withTrashed();
+            }
+        ])
             ->whereHas('entrada', function ($query) use ($f_inicio, $f_fin) {
                 $query->whereDate('fecha_existencias', '>=', $f_inicio)
                     ->whereDate('fecha_existencias', '<=', $f_fin);
@@ -1317,11 +1323,12 @@ class ReportesController extends Controller
         $clave_bodega = $request->input('clave_bodega');
         $fecha = $request->input('fecha');
         $fecha_fin = $request->input('fecha_fin');
+        $eliminados = $request->input('insumos_eliminados');
 
         $grupos = $request->input('selected_grupos');   //Array de los id de grupos seleccionados
 
         return Excel::download(
-            new CruceInventarioExport($clave_bodega, $fecha, $fecha_fin, $grupos),
+            new CruceInventarioExport($clave_bodega, $fecha, $fecha_fin, $grupos, $eliminados),
             'Cruce inventario ' . $fecha . '.xlsx',
         );
     }

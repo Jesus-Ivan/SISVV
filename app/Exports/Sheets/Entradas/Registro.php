@@ -28,6 +28,7 @@ class Registro implements FromArray, WithTitle
         foreach ($this->data as $key => $item) {
             //Agreagar cada item
             $insumos[] = [
+                'deleted_at' => $item['deleted_at'],
                 'folio_entrada' => $item['folio_entrada'],
                 'fecha_existencias' => $item['fecha_existencias'],
                 'bodega' =>  $item['bodega'],
@@ -39,6 +40,7 @@ class Registro implements FromArray, WithTitle
                 'factura' => $item['factura'],
                 'cuenta_contable' => $item['cuenta_contable'],
                 'cantidad' => $item['cantidad'],
+                'unidad' => $item['unidad'],
                 'costo_unitario' => $item['costo_unitario'],
                 'iva' => $item['iva'],
                 'costo_con_impuesto' => $item['costo_con_impuesto'],

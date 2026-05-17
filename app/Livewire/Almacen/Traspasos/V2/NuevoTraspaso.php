@@ -281,6 +281,8 @@ class NuevoTraspaso extends Component
         $inventario = new InventarioService();
         //Obtener fecha y hora actuales
         $hoy = now();
+        //Definir array con presentaciones no validas de la requisicion (presentacion sin insumo)
+        $presentacion_invalida = [];
 
         //Si hay detalles en la BD
         if (count($detalles)) {
@@ -290,6 +292,11 @@ class NuevoTraspaso extends Component
 
             //Agregar todos los elementos a la tabla
             foreach ($detalles as $detalle) {
+                //Verificar si la presentacion de la requisicion no tiene insumo asignado
+                if (!$detalle->presentacion->insumo) {
+                    array_push($presentacion_invalida, $detalle);
+                    continue;   //Omitir iteracion
+                }
                 //Se anexa el producto al array de la tabla
                 $this->lista_articulos[] = [
                     'clave' => $detalle->presentacion->insumo->clave,
@@ -301,6 +308,16 @@ class NuevoTraspaso extends Component
                     'cantidad_insumo' => null,
                 ];
             }
+        }
+
+        //Si hay al menos 1 presentacion no valida
+        if (count($presentacion_invalida)) {
+            $data = [
+                'tittle' => '¡Advertencia!',
+                'message' => 'No se encontraron insumos para: '
+                    . implode(', ', array_column($presentacion_invalida, 'descripcion'))
+            ];
+            $this->dispatch('error-presentaciones', $data);
         }
         //Emitimos evento para cerrar el componente del modal
         $this->dispatch('close-modal');

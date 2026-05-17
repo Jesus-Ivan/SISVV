@@ -7,6 +7,11 @@
     {{-- Titulo --}}
     <div class="container py-2">
         <h4 class="ms-3 text-2xl font-bold dark:text-white">CRUZAR EXISTENCIAS</h4>
+        <div class="mx-3">
+            <p>Para cruzar existencias y movimientos de almacen. Se requiere seleccionar la Bodega, fechas y almenos un
+                grupo de insumo.
+            </p>
+        </div>
     </div>
     <div class="flex justify-center" x-data="{
         selectAll: false,
@@ -64,6 +69,14 @@
                         class="h-11 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Generar</button>
                 </div>
             </div>
+            {{-- CHECKBOX --}}
+            <div class="flex items-center ">
+                <input id="insumos_eliminados" name="insumos_eliminados" type="checkbox"
+                    class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                <label for="insumos_eliminados"
+                    class="ms-2 p-1 text-sm font-medium text-gray-900 dark:text-gray-300">Incluir insumos
+                    eliminados</label>
+            </div>
             {{-- Tabla grupos insumos --}}
             <div class="p-3 overflow-y-auto h-96">
                 <table class=" w-full  text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -73,7 +86,7 @@
                                 #
                             </th>
                             <th scope="col" class=" px-6 py-3">
-                                DESCRIPCION
+                                GRUPO INSUMO
                             </th>
                             <th scope="col" class="px-6 py-3">
                                 <input type="checkbox" x-model="selectAll" value="!selectAll" x-on:click="toggleAll"

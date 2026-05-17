@@ -7,6 +7,12 @@
     {{-- Titulo --}}
     <div class="container py-2">
         <h4 class="ms-3 text-2xl font-bold dark:text-white">CONSULTAR EXISTENCIAS</h4>
+        <div class="mx-3">
+            <p>Para consultar las existencias de los insumos. Se requiere seleccionar la Bodega, fecha/hora y almenos 1
+                grupo de insumo. Ó ingresar un folio de requisicion.
+            </p>
+            <p class="font-semibold">No se muestran insumos eliminados previamente.</p>
+        </div>
     </div>
     <div class="flex justify-center" x-data="{
         selectAll: false,
@@ -72,7 +78,7 @@
                                 #
                             </th>
                             <th scope="col" class=" px-6 py-3">
-                                DESCRIPCION
+                                GRUPO INSUMO
                             </th>
                             <th scope="col" class="px-6 py-3">
                                 <input type="checkbox" x-model="selectAll" value="!selectAll" x-on:click="toggleAll"

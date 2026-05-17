@@ -24,6 +24,7 @@ return new class extends Migration
             $table->boolean('elaborado')->default(0);
             $table->decimal('rendimiento_elaborado', 10, 2)->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

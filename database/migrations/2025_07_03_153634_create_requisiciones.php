@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('requisiciones', function (Blueprint $table) {
             $table->integer('folio')->autoIncrement()->unsigned();
             $table->integer('id_user');
+            $table->string('user_name', 255);
             $table->string('tipo_orden', 50);
             $table->string('observaciones', 255)->nullable();
             $table->integer('movimientos');

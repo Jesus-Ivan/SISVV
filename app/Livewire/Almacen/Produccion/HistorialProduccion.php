@@ -66,6 +66,8 @@ class HistorialProduccion extends Component
     }
     public function render()
     {
-        return view('livewire.almacen.produccion.historial-produccion');
+        return view('livewire.almacen.produccion.historial-produccion', [
+            'var' => null
+        ]);
     }
 }

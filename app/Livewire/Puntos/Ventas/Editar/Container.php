@@ -153,7 +153,8 @@ class Container extends Component
             return TipoPago::whereNot(function (Builder $query) {
                 $query->where('descripcion', 'like', 'DEPOSITO')
                     ->orWhere('descripcion', 'like', 'CHEQUE')
-                    ->orWhere('descripcion', 'like', '%SALDO%');
+                    ->orWhere('descripcion', 'like', '%SALDO%')
+                    ->orWhere('descripcion', 'like', '%CORTESIA%');
             })->get();
         } else {
             //Retirar firma
@@ -161,7 +162,8 @@ class Container extends Component
                 $query->where('descripcion', 'like', 'DEPOSITO')
                     ->orWhere('descripcion', 'like', 'CHEQUE')
                     ->orWhere('descripcion', 'like', '%SALDO%')
-                    ->orWhere('descripcion', 'like', 'FIRMA');
+                    ->orWhere('descripcion', 'like', 'FIRMA')
+                    ->orWhere('descripcion', 'like', '%CORTESIA%');
             })->get();
         }
     }

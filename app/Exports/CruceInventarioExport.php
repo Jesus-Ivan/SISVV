@@ -17,8 +17,9 @@ class CruceInventarioExport implements WithMultipleSheets
     use Exportable;
     public $clave_bodega, $fecha, $fecha_fin, $grupos, $service;
     public $conceptos;
+    public $band_eliminados;
 
-    public function __construct($clave_bodega = null, $fecha, $fecha_fin, $grupos)
+    public function __construct($clave_bodega = null, $fecha, $fecha_fin, $grupos, $band_eliminados = null)
     {
         $this->service = new InventarioService(); //Objeto para consultar existencias
         $this->clave_bodega = $clave_bodega;
@@ -26,6 +27,7 @@ class CruceInventarioExport implements WithMultipleSheets
         $this->fecha_fin = $fecha_fin;
         $this->grupos = Grupos::whereIn('id', $grupos)->get();
         $this->conceptos = ConceptoAlmacen::all();
+        $this->band_eliminados = $band_eliminados;
     }
 
     public function sheets(): array
@@ -75,7 +77,7 @@ class CruceInventarioExport implements WithMultipleSheets
 
         foreach ($this->grupos as $grupo) {
             //Consultar las existencias de un grupo de insumos
-            $insumos = $this->service->consultarInsumos($grupo, $fecha_existencias, "23:59", $bodega->clave);
+            $insumos = $this->service->consultarInsumos($grupo, $fecha_existencias, "23:59", $bodega->clave, $this->band_eliminados);
 
             //Obtener los movimientos por concepto
             foreach ($this->conceptos as $key => $concepto) {

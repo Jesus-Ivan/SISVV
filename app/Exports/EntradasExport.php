@@ -39,6 +39,7 @@ class EntradasExport implements WithMultipleSheets
     {
         //Encabezados
         $encabezados = [
+            'deleted_at' => 'INSU/PRES ELIMINADO',
             'folio_entrada' => '#ENTRADA',
             'fecha_existencias' => 'FECHA EXISTENCIAS',
             'bodega' => 'BODEGA',
@@ -50,6 +51,7 @@ class EntradasExport implements WithMultipleSheets
             'factura' => 'FACTURA',
             'cuenta_contable' => 'M.PAGO',
             'cantidad' => 'CANTIDAD',
+            'unidad' => 'UNIDAD',
             'costo_unitario' => 'COSTO UNITARIO',
             'iva' => 'IVA',
             'costo_con_impuesto' => 'COSTO C.IMPUESTO',
@@ -82,6 +84,7 @@ class EntradasExport implements WithMultipleSheets
     {
         if (!$is_converted) {
             $aux = [
+                'deleted_at' => $item['insumo']['deleted_at'] ? 'SI' : '',
                 'folio_entrada' => $item['folio_entrada'],
                 'fecha_existencias' => $item['entrada']['fecha_existencias'],
                 'bodega' =>  $this->getBodega($item['entrada']['clave_bodega']),
@@ -93,6 +96,7 @@ class EntradasExport implements WithMultipleSheets
                 'factura' => $item['factura'],
                 'cuenta_contable' => $item['cuenta_contable'],
                 'cantidad' => $item['cantidad'],
+                'unidad' => $item['insumo']['unidad']['descripcion'],
                 'costo_unitario' => $item['costo_unitario'],
                 'iva' => $item['iva'],
                 'costo_con_impuesto' => $item['costo_con_impuesto'],
@@ -102,6 +106,7 @@ class EntradasExport implements WithMultipleSheets
             ];
         } else {
             $aux = [
+                'deleted_at' => $item['insumo']['deleted_at'] ? 'SI' : '',
                 'folio_entrada' => $item['folio_entrada'],
                 'fecha_existencias' => $item['entrada']['fecha_existencias'],
                 'bodega' =>  $this->getBodega($item['entrada']['clave_bodega']),
@@ -113,6 +118,7 @@ class EntradasExport implements WithMultipleSheets
                 'factura' => $item['factura'],
                 'cuenta_contable' => $item['cuenta_contable'],
                 'cantidad' => $this->getCantidadPresentacion($item),
+                'unidad' => $item['insumo']['unidad']['descripcion'],
                 'costo_unitario' => $this->getCostoUnitario($item),
                 'iva' => $item['iva'],
                 'costo_con_impuesto' => $this->getCostoImpuesto($item),

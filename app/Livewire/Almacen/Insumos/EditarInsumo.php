@@ -77,6 +77,24 @@ class EditarInsumo extends Component
         }
     }
 
+    public function removerInsumo()
+    {
+        //Abrir modal de cajas
+        $this->dispatch('open-modal', name: 'modal-eliminacion');
+    }
+
+    public function confirmarEliminacionSuave()
+    {
+        try {
+            $this->form->eliminacionSuave();
+            $this->redirectRoute('almacen.insumos');
+        } catch (\Throwable $th) {
+            session()->flash('fail', $th->getMessage());
+            //Evento para abrir el alert
+            $this->dispatch('open-action-message');
+        }
+    }
+
 
     public function changedCosto()
     {
@@ -100,6 +118,8 @@ class EditarInsumo extends Component
 
     public function render()
     {
-        return view('livewire.almacen.insumos.editar-insumo');
+        return view('livewire.almacen.insumos.editar-insumo', [
+            'mode_editable' => true
+        ]);
     }
 }

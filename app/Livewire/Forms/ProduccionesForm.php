@@ -72,6 +72,7 @@ class ProduccionesForm extends Form
         //Crea la produccion
         $trans = Transformacion::create([
             'id_user' => auth()->user()->id,
+            'user_name' => auth()->user()->name,
             'clave_origen' => $validated['clave_origen'],
             'clave_destino' => $validated['clave_destino'],
             'observaciones' => $validated['observaciones'],

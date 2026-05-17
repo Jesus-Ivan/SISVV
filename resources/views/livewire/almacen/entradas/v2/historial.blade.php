@@ -20,10 +20,10 @@
             {{-- Componente de busqueda de presentacion o insumos --}}
             @if ($is_presentacion)
                 <livewire:search-bar tittle="Buscar presentacion" table="presentaciones" :columns="['clave', 'descripcion']"
-                    primary="clave" event="selected-articulo" />
+                    primary="clave" event="selected-articulo" :conditions="[['estado', '=', $var]]" />
             @else
                 <livewire:search-bar tittle="Buscar insumo" table="insumos" :columns="['clave', 'descripcion']" primary="clave"
-                    event="selected-articulo" />
+                    event="selected-articulo" :conditions="[['deleted_at', '=', $var]]" />
             @endif
         </div>
         {{-- BOTON DE BUSQUEDA --}}

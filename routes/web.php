@@ -50,6 +50,14 @@ Route::prefix('administracion')->middleware(['auth', 'administracion'])->group(f
         Route::get('imprimir-periodo/{ref}', [ReportesController::class, 'imprimirNomina'])->name('administracion.imprimir-p');
         Route::delete('eliminar-periodo/{ref}', [AdministracionController::class, 'eliminarNomina'])->name('administracion.eliminar-p');
     });
+    Route::prefix('comprobaciones')->group(function () {
+        Route::view('cargar-periodo', 'administracion.Comprobaciones.cargar-periodo')->name('administracion.cargar-comp');
+        Route::post('cargar-periodo', [AdministracionController::class, 'subirComporbaciones'])->name('administracion.cargar-comp');
+        Route::view('ver-periodo', 'administracion.Comprobaciones.ver-listas')->name('administracion.ver-comp');
+        Route::get('/detalles/{folio}', function ($folio) {
+            return view('administracion.Comprobaciones.detalle-comprobaciones', ['folio' => $folio]);
+        })->name('administracion.detalles-comp');
+    });
 });
 
 Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
@@ -251,11 +259,12 @@ Route::prefix('pv/{codigopv}')->middleware(['auth', 'puntos'])->group(function (
         Route::get('reporte', [PuntosController::class, 'reporteVentas'])->name('pv.ventas.reporte');
     });
 
-
     Route::get('inventario', [PuntosController::class, 'verInventario'])->name('pv.inventario');
     Route::get('prod-vendidos', [PuntosController::class, 'prodVendidos'])->name('pv.prod-vendidos');
     Route::get('salidas', [PuntosController::class, 'salidas'])->name('pv.salidas');
-
+    Route::get('solicitar-mercancia', [PuntosController::class, 'solicitarMercancia'])->name('pv.solicitud-mercancia');
+    Route::get('nueva-solicitud', [PuntosController::class, 'nuevaSolicitud'])->name('puntos.inventario.nueva-solicitud');
+    //Route::view('nuevo-solicitud', 'puntos.Inventario.nueva-solicitud-mercancia')->name('puntos.inventario.nueva-solicitud');
 
     Route::get('socios', [PuntosController::class, 'verSocios'])->name('pv.socios');
     Route::get('caja', [PuntosController::class, 'caja'])->name('pv.caja');

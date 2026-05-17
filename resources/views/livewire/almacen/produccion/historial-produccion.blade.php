@@ -13,7 +13,7 @@
         {{-- Barra de busqueda --}}
         <div class="w-64">
             <livewire:search-bar tittle="Buscar insumo" table="insumos" :columns="['clave', 'descripcion']" primary="clave"
-                event="selected-insumo" :conditions="[['elaborado', '=', 1]]" />
+                event="selected-insumo" :conditions="[['elaborado', '=', 1], ['deleted_at', '=', $var]]" />
         </div>
         {{-- boton de busqueda --}}
         <div>

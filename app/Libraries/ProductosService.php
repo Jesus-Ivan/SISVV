@@ -84,18 +84,28 @@ class ProductosService
             }
             //Fechas auxiliares
             $f_apertura = Carbon::parse($caja->fecha_apertura);
-            $f_existencias = Carbon::parse($caja->fecha_cierre);
-            //Si la fecha de apertura es diferente a la de existencias
-            if (!$f_apertura->isSameDay($f_existencias)) {
+            $f_cierre = Carbon::parse($caja->fecha_cierre);
+            //Si la fecha de apertura es diferente a la de cierre
+            if (!$f_apertura->isSameDay($f_cierre)) {
                 //Modificar la fecha, para que coincida con la fecha de existencias ('movimientos_almacen')
-                $f_existencias->hours(23)->minutes(30)->seconds(00);
+                $f_apertura->hours(23)->minutes(30)->seconds(00);
+                
+                $f_existencias = $f_apertura->clone();
+            } else {
+                $f_existencias = $f_cierre->clone();
             }
             foreach ($prod['receta'] as $key => $insumo) {
+                //Obtener el insumo de la receta (desde la BD)
+                $insumo_aux = $insumos->find($insumo['clave_insumo']);
+                //Si no hay insumo registrado
+                if (!$insumo_aux)
+                    continue;   //Omitir interacion
+
                 MovimientosAlmacen::create([
                     'corte_caja' => $caja->corte,
                     'clave_concepto' => AlmacenConstants::SAL_VENTA_KEY,
                     'clave_insumo' => $insumo['clave_insumo'],
-                    'descripcion' => $insumos->find($insumo['clave_insumo'])->descripcion,
+                    'descripcion' => $insumo_aux->descripcion,
                     'clave_bodega' => reset($bodega)['clave_bodega'],
                     'cantidad_insumo' => -1 * ($insumo['cantidad'] * $prod['total_vendido']),
                     'costo' => 0,

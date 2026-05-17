@@ -173,6 +173,7 @@ class RequisicionesForm extends Form
         //creamos la orden
         $result_orden = Requisicion::create([
             'id_user' => auth()->user()->id,
+            'user_name' => auth()->user()->name,
             'tipo_orden' => $validated['tipo_orden'],
             'observaciones' => $this->observaciones,
             'movimientos' => count($validated['presentaciones']),

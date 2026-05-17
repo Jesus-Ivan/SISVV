@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('transformaciones', function (Blueprint $table) {
             $table->integer('folio')->autoIncrement()->unsigned();
             $table->integer('id_user');
+            $table->varchar('user_name', 255);
             $table->string('clave_origen', 50);
             $table->string('clave_destino', 50);
             $table->string('observaciones', 255)->nullable();

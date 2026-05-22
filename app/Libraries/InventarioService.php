@@ -286,9 +286,9 @@ class InventarioService
     public function getView($tipo_bodega)
     {
         if ($tipo_bodega == AlmacenConstants::INSUMOS_KEY) {
-            $view_path = 'reportes.existencias.existencias-insumos';    //vista del reporte para los insumos
+            $view_path = 'reportes.Existencias.existencias-insumos';    //vista del reporte para los insumos
         } elseif ($tipo_bodega == AlmacenConstants::PRESENTACION_KEY) {
-            $view_path = 'reportes.existencias.existencias-presentaciones';    //vista del reporte para las presentaciones
+            $view_path = 'reportes.Existencias.existencias-presentaciones';    //vista del reporte para las presentaciones
         }
 
         return $view_path;

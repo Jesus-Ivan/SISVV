@@ -20,7 +20,7 @@ return new class extends Migration
             $table->dateTime('fecha_cierre')->nullable();
             $table->smallInteger('descuento')->nullable();
             $table->decimal('total', 10, 2);
-            $table->integer('corte_caja')->nullable();
+            $table->integer('corte_caja')->unsigned()->nullable();
             $table->string('clave_punto_venta', 20)->nullable();
             $table->string('observaciones', 200)->nullable();
 

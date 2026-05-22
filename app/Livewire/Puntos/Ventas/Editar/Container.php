@@ -394,6 +394,7 @@ class Container extends Component
         foreach ($this->modificadores as $index => $modif) {
             $result = Producto::find($modif['clave_modificador']);
             $this->modificadores[$index]['descripcion'] = $result->descripcion;
+            $this->modificadores[$index]['print_default'] = $result->print_default;
         }
         //Agregar descripcion del grupo de modificadores
         foreach ($this->gruposModif as $index => $grupo) {

@@ -22,9 +22,29 @@ class Socio extends Model
     //Clave primaria
     protected $primaryKey = 'id';
 
+    // Se conserva para compatibilidad con el codigo existente que usa esta relacion
     public function socioMembresia(): HasOne
     {
         return $this->hasOne(SocioMembresia::class, 'id_socio');
+    }
+
+    // Todas las membresias registradas del socio (RF 1)
+    public function socioMembresias(): HasMany
+    {
+        return $this->hasMany(SocioMembresia::class, 'id_socio');
+    }
+
+    // Todas las cuotas asignadas al socio en socios_cuotas
+    public function socioCuotas(): HasMany
+    {
+        return $this->hasMany(SocioCuota::class, 'id_socio');
+    }
+
+    // Solo las cuotas de tipo membresia (MEN) para listar membresias contratadas (RF 1 / RF 6)
+    public function cuotasMembresia(): HasMany
+    {
+        return $this->hasMany(SocioCuota::class, 'id_socio')
+            ->whereHas('cuota', fn($q) => $q->where('tipo', 'MEN'));
     }
 
     public function integrantesSocio(): HasMany

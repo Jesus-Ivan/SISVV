@@ -75,11 +75,14 @@ class InventarioService
         $fechaLimite = Carbon::parse($fecha_inv . $hora_inv);
         //Array auxiliar
         $result = [];
+
+        /*
         //Array de condiciones 
         $condiciones = [
             ['fecha_existencias', '<=', $fechaLimite->toDateTimeString()],
             ['clave_bodega', '=', $clave_bodega]
         ];
+        */
         //Obtenemos las presentaciones activas con las existencias
         $q = Insumo::query()->with('unidad')
             ->where([
@@ -87,7 +90,10 @@ class InventarioService
                 ['id_grupo', '=', $grupoInsumo->id]
             ])
             ->withSum([
-                'movimientosAlmacen' => fn($query) => $query->where($condiciones)
+                'movimientosAlmacen' => function ($query) use ($fechaLimite, $clave_bodega) {
+                    $query->where('clave_bodega', $clave_bodega)
+                        ->where('fecha_existencias', '<=', $fechaLimite->toDateTimeString());
+                }
             ], 'cantidad_insumo');
 
         if ($eliminados)
@@ -286,9 +292,9 @@ class InventarioService
     public function getView($tipo_bodega)
     {
         if ($tipo_bodega == AlmacenConstants::INSUMOS_KEY) {
-            $view_path = 'reportes.existencias.existencias-insumos';    //vista del reporte para los insumos
+            $view_path = 'reportes.Existencias.existencias-insumos';    //vista del reporte para los insumos
         } elseif ($tipo_bodega == AlmacenConstants::PRESENTACION_KEY) {
-            $view_path = 'reportes.existencias.existencias-presentaciones';    //vista del reporte para las presentaciones
+            $view_path = 'reportes.Existencias.existencias-presentaciones';    //vista del reporte para las presentaciones
         }
 
         return $view_path;

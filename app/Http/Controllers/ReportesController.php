@@ -609,7 +609,9 @@ class ReportesController extends Controller
         //Buscamos los metodos de pago, permitidos para el reporte de cobranza
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
             $query->where('descripcion', 'like', 'FIRMA')
-                ->orWhere('descripcion', 'like', '%SALDO%');
+                ->orWhere('descripcion', 'like', '%SALDO%')
+                ->orWhere('descripcion', 'like', '%PENDIENTE%')
+                ->orWhere('descripcion', 'like', '%CORTESIA%');
         })->get();
 
         //Si se paso un id de usuario
@@ -1062,7 +1064,7 @@ class ReportesController extends Controller
         //Si no selecciono bodega
         if (is_null($bodega)) {
             //Cambiar la ruta de la vista
-            $view_path = 'reportes.existencias.existencias-todos';
+            $view_path = 'reportes.Existencias.existencias-todos';
             //Obtener el array inicial con los insumos y las columnas de las bodegas
             $result = $service->obtenerTodosInsumos($grupos, $bodegas, $folio);
 

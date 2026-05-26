@@ -31,7 +31,8 @@
     p {
         margin: 0;
     }
-    a{
+
+    a {
         text-decoration: none;
         color: black;
         font-weight: bold;
@@ -74,7 +75,7 @@
                 @foreach ($cat as $detalle_cat)
                     <tr style="{{ $detalle_cat['facturado'] ? 'background-color: gray' : '' }}">
                         <td>
-                            <a href="http://localhost:8000/recepcion/cobros/recibo/{{ $detalle_cat['folio'] }}">
+                            <a href="{{ route('recepcion.cobros.recibo', ['folio' => $detalle_cat['folio']]) }}">
                                 {{ $detalle_cat['folio'] }}
                             </a>
                         </td>

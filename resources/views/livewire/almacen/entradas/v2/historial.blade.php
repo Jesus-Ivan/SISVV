@@ -88,7 +88,7 @@
                             <p>{{ $detalle->entrada->nombre }}</p>
                         </td>
                         <td class="px-3 py-2">
-                            {{ $detalle->clave_presentacion ?: $detalle->clave_insumo }}
+                            {{ $detalle->clave_insumo }}
                         </td>
                         <td class="px-3 py-2">
                             {{ $detalle->descripcion }}

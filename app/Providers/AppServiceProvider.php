@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\SocioCuota;
+use App\Observers\SocioCuotaObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Mantiene sincronizada la fila legacy de socios_membresias cuando se modifica socios_cuotas
+        SocioCuota::observe(SocioCuotaObserver::class);
     }
 }

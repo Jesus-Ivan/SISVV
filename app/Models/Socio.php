@@ -51,4 +51,49 @@ class Socio extends Model
     {
         return $this->hasMany(IntegrantesSocio::class, 'id_socio');
     }
+
+    // Determina cual de las membresias del socio debe quedar como principal en la fila legacy
+    // Regla: la mas antigua entre las no canceladas. Si todas estan canceladas, la mas antigua a secas.
+    public function calcularPrincipalPorAntiguedad(): ?SocioCuota
+    {
+        $cuotasMembresia = $this->cuotasMembresia()
+            ->with('cuota')
+            ->orderBy('created_at', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        if ($cuotasMembresia->isEmpty()) {
+            return null;
+        }
+
+        // Prioridad: mas antigua no cancelada
+        $activa = $cuotasMembresia->first(fn($sc) => $sc->estado !== 'CAN');
+        if ($activa) {
+            return $activa;
+        }
+
+        // Fallback: si todas estan canceladas, la mas antigua
+        return $cuotasMembresia->first();
+    }
+
+    // Mantiene sincronizada la fila legacy de socios_membresias con el estado actual de socios_cuotas
+    // Se invoca automaticamente via SocioCuotaObserver tras cada save/delete
+    public function sincronizarMembresiaLegacy(): void
+    {
+        $principal = $this->calcularPrincipalPorAntiguedad();
+
+        if (!$principal) {
+            // El socio quedo sin membresias: eliminar la fila legacy si existia
+            SocioMembresia::where('id_socio', $this->id)->delete();
+            return;
+        }
+
+        SocioMembresia::updateOrCreate(
+            ['id_socio' => $this->id],
+            [
+                'clave_membresia' => $principal->cuota->clave_membresia,
+                'estado' => $principal->estado,
+            ]
+        );
+    }
 }

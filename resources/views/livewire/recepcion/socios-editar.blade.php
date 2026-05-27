@@ -238,7 +238,7 @@
                                 <option value="{{ $membresia->clave }}">{{ $membresia->descripcion }}</option>
                             @endforeach
                         </select>
-                        @error('formSocio.clave_membresia')
+                        @error('form.clave_membresia')
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>

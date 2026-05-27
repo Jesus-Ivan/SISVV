@@ -94,6 +94,13 @@ class SociosEditar extends Component
     //Se ejecuta desde el front, para guardar cambios del socio
     public function saveSocio()
     {
+        //Si no hay membresia seleccionada, delegamos a actualizarSocio para que
+        //la validacion del formulario muestre el error correspondiente
+        if (empty($this->form->clave_membresia)) {
+            $this->actualizarSocio();
+            return;
+        }
+
         if ($this->revisarCambioMembresia()) {
             //ABRIMOS EL MODAL PARA PODER confirmar, el cambio a INDIVIDUAL
             $this->dispatch('open-modal',  name: 'modalAdvertencia');

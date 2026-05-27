@@ -71,6 +71,10 @@ class SocioForm extends Form
     //Propiedad axiliar para definir el bloqueo de registro de integrantes
     public $registro_permitido = false;
 
+    protected $messages = [
+        'clave_membresia.required' => 'Selecciona al menos una membresía.',
+    ];
+
     protected $socio_rules = [
         'nombre' => 'required|min:3|max:255',
         'apellido_p' => 'required|min:3|max:100',
@@ -90,7 +94,7 @@ class SocioForm extends Form
         'correo2' => 'max:50',
         'curp' => 'max:18',
         'rfc' => 'max:13',
-        'clave_membresia' => 'max:10',
+        'clave_membresia' => 'required|max:10',
     ];
 
     //Setear los valores a editar

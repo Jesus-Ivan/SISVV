@@ -17,6 +17,7 @@ class SocioCuota extends Model
         'id_socio',
         'id_cuota',
         'monto_personalizado',
+        'estado',
         'auto_delete',
     ];
 

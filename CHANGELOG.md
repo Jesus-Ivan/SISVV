@@ -23,7 +23,7 @@ Migración existente que estaba incompleta. Se completó con los siguientes camb
 - Corregido bug en `down()`: referenciaba `cuotas_club` en lugar de `cuotas`
 
 ### Estado
-- [ ] Migración pendiente de ejecutar (`php artisan migrate`)
+- [x] Migración ejecutada en local — verificada en BD
 
 ---
 
@@ -42,3 +42,75 @@ Migración existente que estaba incompleta. Se completó con los siguientes camb
 - Agregada relación `socioMembresias()` (HasMany → `socios_membresias`): todas las membresías del socio
 - Agregada relación `socioCuotas()` (HasMany → `socios_cuotas`): todas las cuotas asignadas al socio
 - Agregada relación `cuotasMembresia()` (HasMany → `socios_cuotas` filtrado por `tipo = 'MEN'`): solo las cuotas de tipo membresía
+
+---
+
+## Fase 3.1.a — Validación de membresía obligatoria en formulario de socios
+**Fecha:** 2026-05-26
+
+### Archivos modificados
+
+#### `app/Livewire/Forms/SocioForm.php`
+- Agregada regla `required` a `clave_membresia` en `$socio_rules`, aplicando la validación tanto en `store()` como en `update()`
+
+#### `resources/views/livewire/recepcion/socios-editar.blade.php`
+- Corregido `@error('formSocio.clave_membresia')` → `@error('form.clave_membresia')`: necesario para que el mensaje de validación de membresía obligatoria sea visible en la vista de edición
+
+#### `app/Livewire/Recepcion/SociosEditar.php`
+- Agregada guarda en `saveSocio()`: si `clave_membresia` está vacío, delega directo a `actualizarSocio()` para que la validación del formulario muestre el error. Necesario para evitar el crash en `revisarCambioMembresia()` cuando `Membresias::find(null)` retorna null y se intenta leer `->descripcion`
+
+### Mensaje de error personalizado
+- En `SocioForm` se agregó `$messages` con el texto: `"Selecciona al menos una membresía."` para `clave_membresia.required`
+
+---
+
+## Fase 1.3 — Migración: columna `estado` en `socios_cuotas`
+**Fecha:** 2026-05-26
+
+### Archivos creados
+
+#### `database/migrations/2026_05_26_191442_alter_socios_cuotas_add_estado.php`
+- Agrega columna `estado VARCHAR(3) DEFAULT 'MEN'` a `socios_cuotas`, posicionada después de `monto_personalizado`
+- Backfill: copia el estado actual desde `socios_membresias` hacia las cuotas de tipo `MEN` para preservar el estado de los socios existentes
+- Las cuotas de cargos fijos (locker, resguardo, etc.) quedan con el default `MEN`
+- `down()` simple: elimina la columna
+
+### Archivos modificados
+
+#### `app/Models/SocioCuota.php`
+- Agregado `estado` al array `$fillable`
+
+### Estado
+- [x] Migración ejecutada en local — verificada en BD
+- Permite estados independientes por membresía del socio (ej: FAMILIAR `CAN` + INDIVIDUAL `MEN`)
+
+---
+
+## Fase 4.8 — Sincronización automática de la fila legacy `socios_membresias`
+**Fecha:** 2026-05-26
+
+### Archivos creados
+
+#### `app/Observers/SocioCuotaObserver.php`
+- Observer Eloquent que escucha eventos `saved` y `deleted` sobre `SocioCuota`
+- En ambos eventos invoca `Socio::sincronizarMembresiaLegacy()` para mantener actualizada la fila de `socios_membresias`
+- Centraliza la lógica → ningún controlador o componente Livewire necesita recordar la sincronización
+
+### Archivos modificados
+
+#### `app/Models/Socio.php`
+- Agregado método `calcularPrincipalPorAntiguedad(): ?SocioCuota`
+  - Devuelve la cuota MEN más antigua entre las no canceladas
+  - Fallback: si todas están canceladas, la más antigua a secas
+  - Desempate por `created_at` ascendente y luego `id` ascendente
+- Agregado método `sincronizarMembresiaLegacy(): void`
+  - Calcula la principal por antigüedad y hace `updateOrCreate` en `socios_membresias`
+  - Si el socio queda sin membresías, elimina la fila legacy
+
+#### `app/Providers/AppServiceProvider.php`
+- Registrado `SocioCuotaObserver` sobre `SocioCuota` en el método `boot()`
+
+### Pruebas realizadas en local
+- Cambio de estado en `socios_cuotas` (MEN → INA) → fila legacy se actualizó automáticamente a INA
+- Restauración (INA → MEN) → fila legacy regresó a MEN
+- Sin necesidad de invocar manualmente la sincronización en ningún punto del código

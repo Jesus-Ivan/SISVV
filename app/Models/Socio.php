@@ -40,11 +40,12 @@ class Socio extends Model
         return $this->hasMany(SocioCuota::class, 'id_socio');
     }
 
-    // Solo las cuotas de tipo membresia (MEN) para listar membresias contratadas (RF 1 / RF 6)
+    // Solo las cuotas asociadas a una membresia (tipo MEN/INA/ANU), excluyendo cargos fijos como locker (RF 1 / RF 6)
+    // Una cuota es de membresia cuando tiene clave_membresia, independiente de su tipo
     public function cuotasMembresia(): HasMany
     {
         return $this->hasMany(SocioCuota::class, 'id_socio')
-            ->whereHas('cuota', fn($q) => $q->where('tipo', 'MEN'));
+            ->whereHas('cuota', fn($q) => $q->whereNotNull('clave_membresia'));
     }
 
     public function integrantesSocio(): HasMany

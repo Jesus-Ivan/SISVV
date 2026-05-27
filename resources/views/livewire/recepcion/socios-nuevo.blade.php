@@ -115,10 +115,6 @@
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                     </div>
                 </div>
-            </div>
-
-            <!-- columna 3 -->
-            <div class="w-full">
                 <!-- ESTADO CIVIL -->
                 <div>
                     <label for="estado-civil"
@@ -179,19 +175,29 @@
                             placeholder="" />
                     </div>
                 </div>
+            </div>
+
+            <!-- columna 3 -->
+            <div class="w-full">
                 <div>
                     <div>
-                        <label for="membresias"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia</label>
-                        <select id="membresias" wire:model="formSocio.clave_membresia"
-                            wire:change="comprobarMembresia($event.target.value)"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            <option selected value="{{ null }}">Seleccione</option>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresías</label>
+                        <div class="flex flex-col gap-2 max-h-60 overflow-y-auto p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
                             @foreach ($this->membresias as $membresia)
-                                <option value="{{ $membresia->clave }}">{{ $membresia->descripcion }}</option>
+                                <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-900 dark:text-white">
+                                    <input type="checkbox"
+                                        wire:model="formSocio.claves_membresia"
+                                        wire:change="comprobarMembresias"
+                                        value="{{ $membresia->clave }}"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                    {{ $membresia->descripcion }}
+                                </label>
                             @endforeach
-                        </select>
-                        @error('formSocio.clave_membresia')
+                        </div>
+                        @error('formSocio.claves_membresia')
+                            <x-input-error messages="{{ $message }}" />
+                        @enderror
+                        @error('formSocio.claves_membresia.*')
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>

@@ -21,10 +21,10 @@ class SociosNuevo extends Component
         return Membresias::all();
     }
 
-    //Se comprueba el tipo de membresia, para restringir el registro de integrantes
-    public function comprobarMembresia($value)
+    //Se ejecuta cada vez que cambian las membresias seleccionadas, para restringir el registro de integrantes
+    public function comprobarMembresias(): void
     {
-        $this->formSocio->comprobar($value);
+        $this->formSocio->comprobarMultiples();
     }
 
     public function register()

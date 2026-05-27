@@ -30,12 +30,10 @@ class SociosEditar extends Component
         $this->form->setIntegrantes($socio);
     }
 
-    /*Se comprueba el tipo de membresia, para restringir el registro de integrantes,
-      gracias al evento change, desde el front
-    */
-    public function comprobarMembresia($value)
+    //Se ejecuta cada vez que cambian las membresias seleccionadas, para restringir el registro de integrantes
+    public function comprobarMembresias(): void
     {
-        $this->form->comprobar($value);
+        $this->form->comprobarMultiples();
     }
 
     //Creamos un miembro de la membresia de forma temporal
@@ -94,18 +92,18 @@ class SociosEditar extends Component
     //Se ejecuta desde el front, para guardar cambios del socio
     public function saveSocio()
     {
-        //Si no hay membresia seleccionada, delegamos a actualizarSocio para que
+        //Si no hay membresias seleccionadas, delegamos a actualizarSocio para que
         //la validacion del formulario muestre el error correspondiente
-        if (empty($this->form->clave_membresia)) {
+        if (empty($this->form->claves_membresia)) {
             $this->actualizarSocio();
             return;
         }
 
-        if ($this->revisarCambioMembresia()) {
-            //ABRIMOS EL MODAL PARA PODER confirmar, el cambio a INDIVIDUAL
+        //Si la nueva seleccion deja al socio solo con membresias INDIVIDUAL y existen integrantes,
+        //pedimos confirmacion porque la actualizacion eliminara a los integrantes
+        if ($this->revisarPerdidaIntegrantes()) {
             $this->dispatch('open-modal',  name: 'modalAdvertencia');
         } else {
-            //continuar la actualizacion de forma normal
             $this->actualizarSocio();
         }
     }
@@ -146,20 +144,25 @@ class SociosEditar extends Component
         //emitir evento para mostrar el action-message
         $this->dispatch('open-action-message');
     }
-    //Determina el cambio de membresia, antes de confimar el guardado.
-    private function revisarCambioMembresia()
+    //Determina si al guardar se perderan los integrantes (todas las membresias quedarian INDIVIDUAL)
+    private function revisarPerdidaIntegrantes(): bool
     {
-        //Buscamos de la tabla 'socios_membresias', la clave de membresia, asociada al id, del socio
-        $socioMembresia = SocioMembresia::where('id_socio', $this->form->socio->id)->get()[0];
-        //Buscamos de la tabla 'membresias', los detalles de la membresia registrada en la BD
-        $membresiaOriginal = Membresias::find($socioMembresia->clave_membresia);
-        //Buscamos de la tabla 'membresias', los detalles de la membresia modificada en el form
-        $membresiaModificada = Membresias::find($this->form->clave_membresia);
-
-        if (!strpos($membresiaOriginal->descripcion, "INDIVIDUAL") && strpos($membresiaModificada->descripcion, "INDIVIDUAL")) {
-            return true;
+        //Si no hay integrantes registrados, no hay nada que perder
+        $totalIntegrantes = \App\Models\IntegrantesSocio::where('id_socio', $this->form->socio->id)->count();
+        if ($totalIntegrantes === 0) {
+            return false;
         }
-        return false;
+
+        //Si alguna de las membresias seleccionadas no es INDIVIDUAL, los integrantes se conservan
+        foreach ($this->form->claves_membresia as $clave) {
+            $membresia = Membresias::find($clave);
+            if ($membresia && strpos($membresia->descripcion, "INDIVIDUAL") === false) {
+                return false;
+            }
+        }
+
+        //Todas son INDIVIDUAL y hay integrantes registrados: se perderian al guardar
+        return true;
     }
 
     public function registrarIntegrante()

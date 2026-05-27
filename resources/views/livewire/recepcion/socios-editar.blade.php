@@ -138,28 +138,6 @@
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                     </div>
                 </div>
-                <!-- ESTADO MEMBRESIA -->
-                <div>
-                    <label for="estado-membresia"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Estado de
-                        membresia</label>
-                    <select id="estado-membresia" wire:model='form.estado_membresia'
-                        class="{{ $form->estado_membresia == 'ANU' ? 'pointer-events-none opacity-70' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="MEN">Activa</option>
-                        <option value="INA">Inactiva</option>
-                        @if ($form->estado_membresia == 'ANU')
-                            <option value="ANU">Anual</option>
-                        @endif
-                        <option value="CAN">Cancelada</option>
-                    </select>
-                    @error('form.estado_membresia')
-                        <x-input-error messages="{{ $message }}" />
-                    @enderror
-                </div>
-            </div>
-
-            <!-- columna 3 -->
-            <div class="w-full">
                 <!-- ESTADO CIVIL -->
                 <div>
                     <label for="estado-civil"
@@ -225,20 +203,58 @@
                             placeholder="" />
                     </div>
                 </div>
+            </div>
+
+            <!-- columna 3 -->
+            <div class="w-full">
                 <div>
-                    <!-- MEMBRESIA -->
+                    {{-- MEMBRESIAS: lista de checkboxes con estado por fila (Fase 3.1.c) --}}
                     <div>
-                        <label for="membresias"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia</label>
-                        <select id="membresias" wire:model="form.clave_membresia"
-                            wire:change="comprobarMembresia($event.target.value)"
-                            class="{{ $form->estado_membresia == 'ANU' ? 'pointer-events-none opacity-70' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            <option selected value="{{ null }}">Seleccione</option>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresías</label>
+                        <div class="border border-gray-300 rounded-lg bg-white divide-y divide-gray-200 max-h-80 overflow-y-auto dark:bg-gray-800 dark:border-gray-600 dark:divide-gray-700">
                             @foreach ($this->membresias as $membresia)
-                                <option value="{{ $membresia->clave }}">{{ $membresia->descripcion }}</option>
+                                @php
+                                    $marcada = in_array($membresia->clave, $form->claves_membresia ?? []);
+                                    $esAnual = ($form->estados_membresia[$membresia->clave] ?? null) === 'ANU';
+                                @endphp
+                                <div class="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors" wire:key="memb-{{ $membresia->clave }}">
+                                    {{-- Checkbox + descripcion --}}
+                                    <label class="flex items-center gap-3 cursor-pointer flex-grow text-sm font-medium text-gray-900 dark:text-white">
+                                        <input type="checkbox"
+                                            wire:model.live="form.claves_membresia"
+                                            wire:change="comprobarMembresias"
+                                            value="{{ $membresia->clave }}"
+                                            @disabled($esAnual)
+                                            class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <span>{{ $membresia->descripcion }}</span>
+                                        @if ($esAnual)
+                                            <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">ANUAL</span>
+                                        @endif
+                                    </label>
+
+                                    {{-- Estado individual --}}
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Estado</span>
+                                        <select wire:model="form.estados_membresia.{{ $membresia->clave }}"
+                                            @disabled(!$marcada || $esAnual)
+                                            class="text-sm py-1.5 px-3 rounded-md border border-gray-300 bg-white text-gray-900 min-w-[7rem] disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                            <option value="MEN">Activa</option>
+                                            <option value="INA">Inactiva</option>
+                                            @if ($esAnual)
+                                                <option value="ANU">Anual</option>
+                                            @endif
+                                        </select>
+                                    </div>
+                                </div>
                             @endforeach
-                        </select>
-                        @error('form.clave_membresia')
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            Desmarca una membresía para cancelarla. 
+                        </p>
+                        @error('form.claves_membresia')
+                            <x-input-error messages="{{ $message }}" />
+                        @enderror
+                        @error('form.claves_membresia.*')
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>
@@ -685,13 +701,13 @@
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
-                <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¡¡ Cambio de membresia !!
+                <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¡¡ Pérdida de integrantes !!
                 </h3>
                 <p class="text-gray-500 dark:text-gray-400">
-                    Has modificado tu membresia, esta accion eliminara todos
-                    los integrantes registrados en tu membresia actual.
+                    Todas las membresías seleccionadas son de tipo INDIVIDUAL.
+                    Al guardar se eliminarán los integrantes registrados actualmente.
                 </p>
-                <p class="text-gray-500 dark:text-gray-400">Deseas continuar?</p>
+                <p class="text-gray-500 dark:text-gray-400">¿Deseas continuar?</p>
             </div>
         </x-slot>
         <x-slot name='footer'>

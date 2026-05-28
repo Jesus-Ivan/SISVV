@@ -417,11 +417,11 @@ class SocioForm extends Form
                 }
             }
 
-            //Membresias presentes en BD pero ya no marcadas: cancelar (preservar historial)
+            //Membresias presentes en BD pero ya no marcadas: eliminar la fila
             $clavesMarcadas = array_values($this->claves_membresia);
             foreach ($cuotasActuales as $clave => $socioCuota) {
-                if (!in_array($clave, $clavesMarcadas, true) && $socioCuota->estado !== 'CAN') {
-                    $socioCuota->update(['estado' => 'CAN']);
+                if (!in_array($clave, $clavesMarcadas, true)) {
+                    $socioCuota->delete();
                 }
             }
 

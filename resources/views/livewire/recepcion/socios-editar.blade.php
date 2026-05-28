@@ -40,6 +40,32 @@
                     </svg>
                     Actualizar Información
                 </button>
+
+                <!-- SUBIR FOTO SOCIO -->
+                <div class="flex gap-3 items-end mt-2">
+                    <div class="w-full">
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                            for="file_input">Subir
+                            foto</label>
+                        <input wire:model="form.img_path"
+                            class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+                            id="file_input" type="file">
+                        @error('form.img_path')
+                            <x-input-error messages="{{ $message }}" />
+                        @enderror
+                    </div>
+                    <button type="button"
+                        class="max-h-11 rounded-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium text-sm p-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
+                        <svg class="w-6 h-6 dark:text-gray-800 text-white" aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path fill-rule="evenodd"
+                                d="M7.5 4.586A2 2 0 0 1 8.914 4h6.172a2 2 0 0 1 1.414.586L17.914 6H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h1.086L7.5 4.586ZM10 12a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm2-4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <span class="sr-only">Tomar foto</span>
+                    </button>
+                </div>
             </div>
 
             <!-- columna 2 -->
@@ -138,6 +164,10 @@
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                     </div>
                 </div>
+            </div>
+
+            <!-- columna 3 -->
+            <div class="w-full">
                 <!-- ESTADO CIVIL -->
                 <div>
                     <label for="estado-civil"
@@ -203,53 +233,46 @@
                             placeholder="" />
                     </div>
                 </div>
-            </div>
-
-            <!-- columna 3 -->
-            <div class="w-full">
                 <div>
                     {{-- MEMBRESIAS: lista de checkboxes con estado por fila (Fase 3.1.c) --}}
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresías</label>
-                        <div class="border border-gray-300 rounded-lg bg-white divide-y divide-gray-200 max-h-80 overflow-y-auto dark:bg-gray-800 dark:border-gray-600 dark:divide-gray-700">
+                        <div class="border border-gray-300 rounded-lg bg-white divide-y divide-gray-200 max-h-64 overflow-y-auto dark:bg-gray-800 dark:border-gray-600 dark:divide-gray-700">
                             @foreach ($this->membresias as $membresia)
                                 @php
                                     $marcada = in_array($membresia->clave, $form->claves_membresia ?? []);
                                     $esAnual = ($form->estados_membresia[$membresia->clave] ?? null) === 'ANU';
                                 @endphp
-                                <div class="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors" wire:key="memb-{{ $membresia->clave }}">
+                                <div class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700" wire:key="memb-{{ $membresia->clave }}">
                                     {{-- Checkbox + descripcion --}}
-                                    <label class="flex items-center gap-3 cursor-pointer flex-grow text-sm font-medium text-gray-900 dark:text-white">
+                                    <label class="flex items-center gap-2 cursor-pointer flex-grow text-sm font-medium text-gray-900 dark:text-white">
                                         <input type="checkbox"
                                             wire:model.live="form.claves_membresia"
                                             wire:change="comprobarMembresias"
                                             value="{{ $membresia->clave }}"
                                             @disabled($esAnual)
-                                            class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-25">
                                         <span>{{ $membresia->descripcion }}</span>
                                         @if ($esAnual)
-                                            <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">ANUAL</span>
+                                            <span class="px-2 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">ANUAL</span>
                                         @endif
                                     </label>
 
                                     {{-- Estado individual --}}
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">Estado</span>
-                                        <select wire:model="form.estados_membresia.{{ $membresia->clave }}"
-                                            @disabled(!$marcada || $esAnual)
-                                            class="text-sm py-1.5 px-3 rounded-md border border-gray-300 bg-white text-gray-900 min-w-[7rem] disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                            <option value="MEN">Activa</option>
-                                            <option value="INA">Inactiva</option>
-                                            @if ($esAnual)
-                                                <option value="ANU">Anual</option>
-                                            @endif
-                                        </select>
-                                    </div>
+                                    <select wire:model="form.estados_membresia.{{ $membresia->clave }}"
+                                        @disabled(!$marcada || $esAnual)
+                                        class="text-xs py-1 px-2 rounded-md border border-gray-300 bg-white text-gray-900 w-28 shrink-0 disabled:opacity-25 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <option value="MEN">Activa</option>
+                                        <option value="INA">Inactiva</option>
+                                        @if ($esAnual)
+                                            <option value="ANU">Anual</option>
+                                        @endif
+                                    </select>
                                 </div>
                             @endforeach
                         </div>
                         <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                            Desmarca una membresía para cancelarla. 
+                            Desmarca una membresía para eliminarla.
                         </p>
                         @error('form.claves_membresia')
                             <x-input-error messages="{{ $message }}" />
@@ -258,31 +281,6 @@
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>
-                </div>
-                <div class="flex gap-3 items-end">
-                    <!-- SUBIR FOTO SOCIO -->
-                    <div class="w-full">
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            for="file_input">Subir
-                            foto</label>
-                        <input wire:model="form.img_path"
-                            class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                            id="file_input" type="file">
-                        @error('form.img_path')
-                            <x-input-error messages="{{ $message }}" />
-                        @enderror
-                    </div>
-                    <button type="button"
-                        class="max-h-11 rounded-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium text-sm p-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
-                        <svg class="w-6 h-6 dark:text-gray-800 text-white" aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
-                            viewBox="0 0 24 24">
-                            <path fill-rule="evenodd"
-                                d="M7.5 4.586A2 2 0 0 1 8.914 4h6.172a2 2 0 0 1 1.414.586L17.914 6H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h1.086L7.5 4.586ZM10 12a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm2-4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"
-                                clip-rule="evenodd" />
-                        </svg>
-                        <span class="sr-only">Tomar foto</span>
-                    </button>
                 </div>
             </div>
         </div>

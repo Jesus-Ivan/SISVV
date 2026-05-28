@@ -78,13 +78,13 @@ La tabla `socios_membresias` mantiene una sola fila por socio. El sistema determ
 Esta decisión es **interna y no expuesta al usuario** — no existe UI para designar una principal manualmente. Su único propósito es servir de referencia para el código legacy que consulta `socio->socioMembresia`.
 
 ### Estado individual por membresía
-Para soportar que un socio tenga una membresía cancelada y otra activa simultáneamente, se agrega la columna `estado` en `socios_cuotas` (valores `MEN`, `INA`, `ANU`, `CAN`). El estado deja de ser global del socio y pasa a ser por cuota individual.
+Para soportar que un socio tenga distintos estados por membresía, se agrega la columna `estado` en `socios_cuotas` (valores `MEN`, `INA`, `ANU`). El estado deja de ser global del socio y pasa a ser por cuota individual.
 
 ### Regla de cancelación
-Cancelar una membresía específica del socio **no elimina** la fila de `socios_cuotas` — solo cambia su `estado` a `CAN`. Esto preserva el histórico y permite reportar membresías pasadas.
+Cancelar una membresía específica del socio **elimina la fila** de `socios_cuotas`. No existe estado `CAN` en `socios_cuotas` — quitar una membresía borra el registro. El observer `SocioCuotaObserver` (evento `deleted`) sincroniza automáticamente la fila legacy de `socios_membresias` tras cada eliminación.
 
 ### Regla de anualidad
-La anualidad se gestiona **por membresía individual**. Si un socio paga anualidad sobre una de sus membresías, solo esa cuota pasa a estado `ANU`; las demás conservan su estado original. Esto permite combinaciones como FAMILIAR anualizada + INDIVIDUAL mensual.
+La anualidad se gestiona **por membresía individual**. Si un socio paga anualidad sobre una de sus membresías, solo esa cuota pasa a estado `ANU`; las demás conservan su estado original. Un socio con dos membresías no obtiene ambas anualizadas por pagar una sola anualidad — cada membresía requiere su propio proceso de anualidad. Esto permite combinaciones como FAMILIAR anualizada + INDIVIDUAL mensual.
 
 ### Regla de consumo mínimo con múltiples membresías
 Cuando un socio tiene varias membresías activas (estado distinto de `CAN`), el **consumo mínimo aplicable** es el **mayor** entre los `consumo_minimo` de cada una. Ejemplo: si tiene `CG-FAM` ($5,000) y `CC-FAM` ($3,000), su consumo mínimo es de $5,000, no la suma ni el promedio.
@@ -226,10 +226,11 @@ Implementado nativamente por el diseño. Al modificar el precio en la tabla `cuo
 - Cada membresía se anualiza por separado. El estado `ANU` solo se asigna a la cuota seleccionada.
 - Al expirar la anualidad, se restaura el estado anterior (`estado_mem_f`) solo en esa cuota.
 
-#### 4.7 Cancelación de membresía individual (sin pérdida de histórico)
-- Al desmarcar una cuota desde la UI de Recepción (o vía edición de Sistemas), no se elimina la fila de `socios_cuotas` — se cambia su `estado` a `CAN`.
-- Esto preserva el histórico para reportes y permite reactivar la membresía en el futuro si el socio decide volver.
-- Solo cuando un socio se elimina por completo (acción explícita), se eliminan sus filas en cascada vía la FK `id_socio → socios.id`.
+#### 4.7 Cancelación de membresía individual ✅ COMPLETADA
+- Al desmarcar una cuota desde la UI de Recepción, **se elimina la fila** de `socios_cuotas` directamente.
+- No existe estado `CAN` — quitar una membresía la borra del registro. No se conserva histórico de membresías canceladas.
+- El observer `SocioCuotaObserver` (evento `deleted`) sincroniza automáticamente la fila legacy de `socios_membresias`.
+- Cuando un socio se elimina por completo, sus filas en `socios_cuotas` se eliminan en cascada vía la FK `id_socio → socios.id`.
 
 #### 4.8 Sincronización automática de la fila legacy `socios_membresias`
 - Crear método `Socio::sincronizarMembresiaLegacy()` que recalcula la fila de `socios_membresias` siguiendo la regla "más antigua activa" (con fallback a la más antigua a secas si todas están canceladas).
@@ -303,7 +304,7 @@ En caso de detectarse una falla crítica en producción:
 | Fase 4.3 — Aplicación de `monto_a_cobrar` | ❌ Pendiente |
 | Fase 4.5 — Consumo mínimo agregado (mayor) | ❌ Pendiente |
 | Fase 4.6 — Anualidad por membresía individual | ❌ Pendiente |
-| Fase 4.7 — Cancelación individual sin pérdida de histórico | ❌ Pendiente |
+| Fase 4.7 — Cancelación individual (eliminación directa) | ✅ Completada |
 | Fase 4.8 — Sincronización automática de fila legacy (observer) | ❌ Pendiente |
 
 

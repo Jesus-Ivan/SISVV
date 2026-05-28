@@ -7,31 +7,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\SocioMembresia;
+use App\Models\SocioCuota;
 
 class Socio extends Model
 {
     use HasFactory;
     use SoftDeletes;
-    
-    //Nombre de tabla
+
     protected $table = 'socios';
-    //Desactivar los timestamps para este modelo
     public $timestamps = false;
-    //Propiedades restringidas para asignacion masiva
     protected $guarded = [];
-    //Clave primaria
     protected $primaryKey = 'id';
 
-    // Se conserva para compatibilidad con el codigo existente que usa esta relacion
+    // Membresía principal del socio (fuente de verdad: socios_membresias)
     public function socioMembresia(): HasOne
     {
         return $this->hasOne(SocioMembresia::class, 'id_socio');
-    }
-
-    // Todas las membresias registradas del socio (RF 1)
-    public function socioMembresias(): HasMany
-    {
-        return $this->hasMany(SocioMembresia::class, 'id_socio');
     }
 
     // Todas las cuotas asignadas al socio en socios_cuotas
@@ -40,8 +32,8 @@ class Socio extends Model
         return $this->hasMany(SocioCuota::class, 'id_socio');
     }
 
-    // Solo las cuotas asociadas a una membresia (tipo MEN/INA/ANU), excluyendo cargos fijos como locker (RF 1 / RF 6)
-    // Una cuota es de membresia cuando tiene clave_membresia, independiente de su tipo
+    // Membresías adicionales (no-principal) del socio en socios_cuotas
+    // Excluye cargos fijos (locker, resguardo, etc.) que no tienen clave_membresia
     public function cuotasMembresia(): HasMany
     {
         return $this->hasMany(SocioCuota::class, 'id_socio')
@@ -53,48 +45,49 @@ class Socio extends Model
         return $this->hasMany(IntegrantesSocio::class, 'id_socio');
     }
 
-    // Determina cual de las membresias del socio debe quedar como principal en la fila legacy
-    // Regla: la mas antigua entre las no canceladas. Si todas estan canceladas, la mas antigua a secas.
-    public function calcularPrincipalPorAntiguedad(): ?SocioCuota
+    // Devuelve la membresía adicional con mayor monto base (usada al rotar la principal)
+    public function calcularPrincipalPorValor(): ?SocioCuota
     {
-        $cuotasMembresia = $this->cuotasMembresia()
+        return $this->cuotasMembresia()
             ->with('cuota')
-            ->orderBy('created_at', 'asc')
-            ->orderBy('id', 'asc')
-            ->get();
-
-        if ($cuotasMembresia->isEmpty()) {
-            return null;
-        }
-
-        // Prioridad: mas antigua no cancelada
-        $activa = $cuotasMembresia->first(fn($sc) => $sc->estado !== 'CAN');
-        if ($activa) {
-            return $activa;
-        }
-
-        // Fallback: si todas estan canceladas, la mas antigua
-        return $cuotasMembresia->first();
+            ->get()
+            ->sortByDesc(fn($sc) => $sc->cuota->monto)
+            ->first();
     }
 
-    // Mantiene sincronizada la fila legacy de socios_membresias con el estado actual de socios_cuotas
-    // Se invoca automaticamente via SocioCuotaObserver tras cada save/delete
+    // Bandera para evitar re-entrada del observer al hacer delete interno
+    private static bool $sincronizando = false;
+
+    // Red de seguridad: garantiza que socios_membresias tenga principal cuando el observer detecta
+    // un cambio en socios_cuotas fuera del flujo de SocioForm (ej. cargos fijos, eliminaciones externas).
+    // SocioForm gestiona rotaciones completas; este método solo cubre el caso "sin principal".
     public function sincronizarMembresiaLegacy(): void
     {
-        $principal = $this->calcularPrincipalPorAntiguedad();
+        if (self::$sincronizando) return;
+        self::$sincronizando = true;
 
-        if (!$principal) {
-            // El socio quedo sin membresias: eliminar la fila legacy si existia
-            SocioMembresia::where('id_socio', $this->id)->delete();
-            return;
+        try {
+            // Si ya existe una fila en socios_membresias, SocioForm la gestiona
+            if ($this->socioMembresia()->exists()) return;
+
+            // Sin principal: promover el adicional de mayor monto
+            $mayor = $this->cuotasMembresia()->with('cuota')->get()
+                ->sortByDesc(fn($sc) => $sc->cuota?->monto ?? 0)
+                ->first();
+
+            if (!$mayor?->cuota?->clave_membresia) return;
+
+            SocioMembresia::create([
+                'id_socio'         => $this->id,
+                'clave_membresia'  => $mayor->cuota->clave_membresia,
+                'estado'           => 'MEN',
+            ]);
+
+            // Quitarlo de socios_cuotas (ya queda registrado como principal)
+            $mayor->delete();
+
+        } finally {
+            self::$sincronizando = false;
         }
-
-        SocioMembresia::updateOrCreate(
-            ['id_socio' => $this->id],
-            [
-                'clave_membresia' => $principal->cuota->clave_membresia,
-                'estado' => $principal->estado,
-            ]
-        );
     }
 }

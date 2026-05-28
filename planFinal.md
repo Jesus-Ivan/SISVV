@@ -292,11 +292,11 @@ En caso de detectarse una falla crítica en producción:
 
 | Fase | Estado |
 |---|---|
-| Fase 1.1/1.2 — Migración inicial (`monto_personalizado`, FK, unique, `cuotas.down()`) | ✅ Código listo, pendiente ejecutar `php artisan migrate` |
-| Fase 1.3 — Nueva migración: columna `estado` en `socios_cuotas` | ❌ Pendiente |
-| Fase 2 — Modelos | ✅ Completada (pendiente correción menor: `cuota()` a `belongsTo`) |
-| Fase 3.1 — Checkboxes multi-membresía en Recepción | 🟡 Sólo validación `required` implementada; falta UI checkboxes |
-| Fase 3.2 — Pórtico | ❌ Pendiente |
+| Fase 1.1/1.2 — Migración inicial (`monto_personalizado`, FK, unique, `cuotas.down()`) | ✅ Completada |
+| Fase 1.3 — Nueva migración: columna `estado` en `socios_cuotas` | ✅ Completada |
+| Fase 2 — Modelos | ✅ Completada |
+| Fase 3.1 — Checkboxes multi-membresía en Recepción | ✅ Completada |
+| Fase 3.2 — Pórtico | ✅ Completada |
 | Fase 3.3 — Estados de Cuenta UI | ❌ Pendiente |
 | Fase 3.4 — Exports | ❌ Pendiente |
 | Fase 4.1 — Modal "Editar Cuotas" en Sistemas | ❌ Pendiente |
@@ -305,6 +305,6 @@ En caso de detectarse una falla crítica en producción:
 | Fase 4.5 — Consumo mínimo agregado (mayor) | ❌ Pendiente |
 | Fase 4.6 — Anualidad por membresía individual | ❌ Pendiente |
 | Fase 4.7 — Cancelación individual (eliminación directa) | ✅ Completada |
-| Fase 4.8 — Sincronización automática de fila legacy (observer) | ❌ Pendiente |
+| Fase 4.8 — Sincronización automática de fila legacy (observer) | ✅ Completada |
 
 

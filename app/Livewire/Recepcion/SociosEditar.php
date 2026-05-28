@@ -20,7 +20,10 @@ class SociosEditar extends Component
     #[Computed()]
     public function membresias()
     {
-        return Membresias::all();
+        // Disponibles + las que el socio ya tiene asignadas (aunque disponible=false)
+        return Membresias::where('disponible', true)
+            ->orWhereIn('clave', $this->form->claves_membresia)
+            ->get();
     }
 
     //Inicializar el componente con los valores, obtenidos desde el controlador
@@ -144,24 +147,27 @@ class SociosEditar extends Component
         //emitir evento para mostrar el action-message
         $this->dispatch('open-action-message');
     }
-    //Determina si al guardar se perderan los integrantes (todas las membresias quedarian INDIVIDUAL)
+    //Determina si al guardar se perderan los integrantes (todas las membresias activas quedarian INDIVIDUAL)
     private function revisarPerdidaIntegrantes(): bool
     {
-        //Si no hay integrantes registrados, no hay nada que perder
         $totalIntegrantes = \App\Models\IntegrantesSocio::where('id_socio', $this->form->socio->id)->count();
         if ($totalIntegrantes === 0) {
             return false;
         }
 
-        //Si alguna de las membresias seleccionadas no es INDIVIDUAL, los integrantes se conservan
+        //Las membresías canceladas se eliminarán, no cuentan para decidir si quedan integrantes
         foreach ($this->form->claves_membresia as $clave) {
+            $estado = $this->form->estados_membresia[$clave] ?? 'MEN';
+            if ($estado === 'CAN') {
+                continue;
+            }
             $membresia = Membresias::find($clave);
-            if ($membresia && strpos($membresia->descripcion, "INDIVIDUAL") === false) {
+            if ($membresia && strpos($membresia->descripcion, 'INDIVIDUAL') === false) {
                 return false;
             }
         }
 
-        //Todas son INDIVIDUAL y hay integrantes registrados: se perderian al guardar
+        //Todas las activas son INDIVIDUAL (o no quedan activas): se perderian los integrantes
         return true;
     }
 

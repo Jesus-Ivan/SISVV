@@ -16,22 +16,41 @@
                     <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                         {{ $socio ? $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m : '' }}
                     </h5>
-                    <p class="font-normal text-gray-700 dark:text-gray-400">
-                        ESTADO MEMBRESIA: {{ $socio ? $socio->socioMembresia->estado : '' }}
-                    </p>
-                    <p class="font-normal text-gray-700 dark:text-gray-400">
-                        TIPO DE MEMBRESIA: {{ $socio ? $socio->socioMembresia->membresia->descripcion : '' }}
-                    </p>
+                    {{-- Membresías del socio: principal desde socios_membresias, adicionales desde socios_cuotas (RF 6) --}}
+                    <div class="font-normal text-gray-700 dark:text-gray-400 mb-1">
+                        <p class="font-semibold">MEMBRESIAS:</p>
+                        @if ($socio && ($socio->socioMembresia || $socio->cuotasMembresia->count()))
+                            <ul class="list-disc ms-5">
+                                @if ($socio->socioMembresia)
+                                    <li>
+                                        {{ $socio->socioMembresia->membresia?->descripcion ?? $socio->socioMembresia->clave_membresia }}
+                                        — {{ $socio->socioMembresia->estado }} (principal)
+                                    </li>
+                                @endif
+                                @foreach ($socio->cuotasMembresia as $sc)
+                                    <li wire:key="adic-{{ $sc->id }}">
+                                        {{ $sc->cuota->descripcion }} — {{ $sc->cuota->tipo }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <p>Sin membresías registradas</p>
+                        @endif
+                    </div>
                     <p class="font-normal text-gray-700 dark:text-gray-400">
                         NO. SOCIO: {{ $socio ? $socio->id : '' }}
                     </p>
 
                     @if ($socio)
                         <div>
-                            @if ($socio->socioMembresia->estado == 'CAN')
-                                <p class="text-xl font-bold text-red-600">ACCESO DENEGADO</p>
-                            @else
+                            {{-- Acceso permitido si la principal no está cancelada, o existe al menos una adicional activa (RF 6) --}}
+                            @if (
+                                ($socio->socioMembresia && $socio->socioMembresia->estado !== 'CAN') ||
+                                $socio->cuotasMembresia->count() > 0
+                            )
                                 <p class="text-xl font-bold text-green-500">ACCESO PERMITIDO</p>
+                            @else
+                                <p class="text-xl font-bold text-red-600">ACCESO DENEGADO</p>
                             @endif
                         </div>
                     @endif

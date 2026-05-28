@@ -234,36 +234,37 @@
                     </div>
                 </div>
                 <div>
-                    {{-- MEMBRESIAS: lista de checkboxes con estado por fila (Fase 3.1.c) --}}
+                    {{-- MEMBRESIAS: dropdown de estado para todas las membresías del catálogo --}}
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresías</label>
                         <div class="border border-gray-300 rounded-lg bg-white divide-y divide-gray-200 max-h-64 overflow-y-auto dark:bg-gray-800 dark:border-gray-600 dark:divide-gray-700">
                             @foreach ($this->membresias as $membresia)
                                 @php
-                                    $marcada = in_array($membresia->clave, $form->claves_membresia ?? []);
-                                    $esAnual = ($form->estados_membresia[$membresia->clave] ?? null) === 'ANU';
+                                    $clave = $membresia->clave;
+                                    $esPrincipal = ($clave === $form->clave_membresia);
+                                    $estadoActual = $form->estados_membresia[$clave] ?? '';
+                                    $esAnual = $estadoActual === 'ANU';
+                                    $estaSeleccionada = !empty($estadoActual);
                                 @endphp
-                                <div class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700" wire:key="memb-{{ $membresia->clave }}">
-                                    {{-- Checkbox + descripcion --}}
-                                    <label class="flex items-center gap-2 cursor-pointer flex-grow text-sm font-medium text-gray-900 dark:text-white">
-                                        <input type="checkbox"
-                                            wire:model.live="form.claves_membresia"
-                                            wire:change="comprobarMembresias"
-                                            value="{{ $membresia->clave }}"
-                                            @disabled($esAnual)
-                                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-25">
-                                        <span>{{ $membresia->descripcion }}</span>
+                                <div class="flex items-center justify-between gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700" wire:key="memb-{{ $clave }}">
+                                    <div class="flex items-center gap-2 flex-grow">
+                                        <span class="text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ $membresia->descripcion }}
+                                        </span>
+                                        @if ($estaSeleccionada && $esPrincipal)
+                                            <span class="px-2 text-xs font-semibold rounded bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">Principal</span>
+                                        @endif
                                         @if ($esAnual)
                                             <span class="px-2 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">ANUAL</span>
                                         @endif
-                                    </label>
-
-                                    {{-- Estado individual --}}
-                                    <select wire:model="form.estados_membresia.{{ $membresia->clave }}"
-                                        @disabled(!$marcada || $esAnual)
-                                        class="text-xs py-1 px-2 rounded-md border border-gray-300 bg-white text-gray-900 w-28 shrink-0 disabled:opacity-25 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+                                    <select wire:model.live="form.estados_membresia.{{ $clave }}"
+                                        wire:change="comprobarMembresias"
+                                        class="text-xs py-1 px-2 rounded-md border border-gray-300 bg-white text-gray-900 w-32 shrink-0 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <option value="">Seleccionar</option>
                                         <option value="MEN">Activa</option>
                                         <option value="INA">Inactiva</option>
+                                        <option value="CAN">Cancelada</option>
                                         @if ($esAnual)
                                             <option value="ANU">Anual</option>
                                         @endif
@@ -272,12 +273,12 @@
                             @endforeach
                         </div>
                         <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                            Desmarca una membresía para eliminarla.
+                            Selecciona "Seleccionar" para deseleccionar una membresía o "Cancelada" para eliminarla.
                         </p>
                         @error('form.claves_membresia')
                             <x-input-error messages="{{ $message }}" />
                         @enderror
-                        @error('form.claves_membresia.*')
+                        @error('form.estados_membresia.*')
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>

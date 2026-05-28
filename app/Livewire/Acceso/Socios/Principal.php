@@ -15,7 +15,7 @@ class Principal extends Component
 
     public function buscar()
     {
-        $this->result = Socio::with('integrantesSocio', 'socioMembresia')
+        $this->result = Socio::with(['integrantesSocio', 'socioMembresia.membresia', 'cuotasMembresia.cuota'])
             ->where('id', $this->search)->get();
         $this->search = '';
     }

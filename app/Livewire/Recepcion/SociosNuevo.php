@@ -18,7 +18,7 @@ class SociosNuevo extends Component
     #[Computed()]
     public function membresias()
     {
-        return Membresias::all();
+        return Membresias::where('disponible', true)->get();
     }
 
     //Se ejecuta cada vez que cambian las membresias seleccionadas, para restringir el registro de integrantes

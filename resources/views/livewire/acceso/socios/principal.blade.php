@@ -16,25 +16,22 @@
                     <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                         {{ $socio ? $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m : '' }}
                     </h5>
-                    {{-- Membresías del socio: principal desde socios_membresias, adicionales desde socios_cuotas (RF 6) --}}
                     <div class="font-normal text-gray-700 dark:text-gray-400 mb-1">
-                        <p class="font-semibold">MEMBRESIAS:</p>
-                        @if ($socio && ($socio->socioMembresia || $socio->cuotasMembresia->count()))
-                            <ul class="list-disc ms-5">
-                                @if ($socio->socioMembresia)
-                                    <li>
-                                        {{ $socio->socioMembresia->membresia?->descripcion ?? $socio->socioMembresia->clave_membresia }}
-                                        — {{ $socio->socioMembresia->estado }} (principal)
-                                    </li>
-                                @endif
-                                @foreach ($socio->cuotasMembresia as $sc)
-                                    <li wire:key="adic-{{ $sc->id }}">
-                                        {{ $sc->cuota->descripcion }} — {{ $sc->cuota->tipo }}
-                                    </li>
-                                @endforeach
-                            </ul>
+                        <p class="font-semibold">MEMBRESIA:</p>
+                        @php $totalMembresias = $socio->cuotasMembresia->count(); @endphp
+                        @if ($totalMembresias > 1)
+                            <p>Membresías múltiples</p>
+                        @elseif ($totalMembresias === 1)
+                            @php $sc = $socio->cuotasMembresia->first(); @endphp
+                            <p>{{ $sc->cuota->clave_membresia }}</p>
                         @else
-                            <p>Sin membresías registradas</p>
+                            <p>{{ $socio->socioMembresia?->clave_membresia ?? 'Sin membresías' }}</p>
+                        @endif
+                        <p class="font-semibold mt-1">Estado membresía:</p>
+                        @if ($totalMembresias === 1)
+                            <p>{{ $socio->cuotasMembresia->first()->cuota->tipo }}</p>
+                        @else
+                            <p>{{ $socio->socioMembresia?->estado ?? 'N/R' }}</p>
                         @endif
                     </div>
                     <p class="font-normal text-gray-700 dark:text-gray-400">

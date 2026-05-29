@@ -303,7 +303,7 @@ class SocioForm extends Form
                 ->filter()
                 ->sortByDesc('monto');
 
-            //Principal = la de mayor monto → va a socios_membresias
+            //Principal = la de mayor monto → socios_membresias + socios_cuotas
             $cuotaPrincipal = $cuotasPorClave->first();
             if ($cuotaPrincipal) {
                 SocioMembresia::create([
@@ -311,9 +311,14 @@ class SocioForm extends Form
                     'clave_membresia' => $cuotaPrincipal->clave_membresia,
                     'estado' => 'MEN',
                 ]);
+                SocioCuota::create([
+                    'id_socio' => $socio->id,
+                    'id_cuota' => $cuotaPrincipal->id,
+                    'auto_delete' => true,
+                ]);
             }
 
-            //Adicionales → van a socios_cuotas (sin campo estado)
+            //Adicionales → socios_cuotas
             foreach ($cuotasPorClave->skip(1) as $cuota) {
                 SocioCuota::create([
                     'id_socio' => $socio->id,
@@ -427,11 +432,9 @@ class SocioForm extends Form
             }
 
             //--- Caso normal: al menos una activa; las CAN se tratan como borradas ---
-            $nuevaPrincipal    = $candidatosActivos->first();
-            $nuevosAdicionales = $candidatosActivos->skip(1);
+            $nuevaPrincipal      = $candidatosActivos->first();
             $claveNuevaPrincipal = $nuevaPrincipal['clave'] ?? null;
-            //Solo las claves activas cuentan como "seleccionadas" para el diff
-            $clavesMarcadas = $candidatosActivos->pluck('clave')->toArray();
+            $clavesMarcadas      = $candidatosActivos->pluck('clave')->toArray();
 
             //--- 1. Actualizar socios_membresias con la nueva principal ---
             if ($nuevaPrincipal) {
@@ -448,35 +451,9 @@ class SocioForm extends Form
                 SocioMembresia::where('id_socio', $idSocio)->delete();
             }
 
-            //--- 2. Si la principal rotó: la anterior pasa a socios_cuotas (si aún está activa) ---
-            //Se guarda la clave movida para evitar que el paso 4 intente insertarla de nuevo (duplicado)
-            $claveMovidaAdicional = null;
-            if ($claveAnteriorPrincipal && $claveAnteriorPrincipal !== $claveNuevaPrincipal
-                && in_array($claveAnteriorPrincipal, $clavesMarcadas, true)
-                && !isset($adicionalesActuales[$claveAnteriorPrincipal])
-            ) {
-                $estadoDeseado = $this->estados_membresia[$claveAnteriorPrincipal] ?? 'MEN';
-                $cuotaDeseada  = Cuota::where('clave_membresia', $claveAnteriorPrincipal)
-                    ->where('tipo', $estadoDeseado)->first()
-                    ?? Cuota::where('clave_membresia', $claveAnteriorPrincipal)->where('tipo', 'MEN')->first();
-                if ($cuotaDeseada) {
-                    SocioCuota::create(['id_socio' => $idSocio, 'id_cuota' => $cuotaDeseada->id, 'auto_delete' => true]);
-                    $claveMovidaAdicional = $claveAnteriorPrincipal;
-                }
-            }
-
-            //--- 3. Si la nueva principal estaba en socios_cuotas, eliminarla de ahí ---
-            if ($claveNuevaPrincipal && isset($adicionalesActuales[$claveNuevaPrincipal])) {
-                $adicionalesActuales[$claveNuevaPrincipal]->delete();
-                unset($adicionalesActuales[$claveNuevaPrincipal]);
-            }
-
-            //--- 4. Actualizar o crear cada membresía adicional activa en socios_cuotas ---
-            foreach ($nuevosAdicionales as $item) {
-                $clave = $item['clave'];
-                //Evitar duplicado: esta clave ya fue insertada en el paso 2 al rotar la principal
-                if ($clave === $claveMovidaAdicional) continue;
-
+            //--- 2. Sincronizar socios_cuotas para TODAS las membresías activas (principal + adicionales) ---
+            foreach ($candidatosActivos as $item) {
+                $clave         = $item['clave'];
                 $estadoDeseado = $item['estado'];
                 $cuotaDeseada  = Cuota::where('clave_membresia', $clave)->where('tipo', $estadoDeseado)->first()
                     ?? Cuota::where('clave_membresia', $clave)->where('tipo', 'MEN')->first();
@@ -489,7 +466,7 @@ class SocioForm extends Form
                 }
             }
 
-            //--- 5. Eliminar adicionales no activas (incluye las marcadas como CAN) ---
+            //--- 3. Eliminar de socios_cuotas las claves que ya no están activas ---
             foreach ($adicionalesActuales as $clave => $sc) {
                 if (!in_array($clave, $clavesMarcadas, true)) {
                     $sc->delete();
@@ -562,22 +539,24 @@ class SocioForm extends Form
     //Sincroniza claves_membresia basado en estados_membresia, y evalúa si se permite registrar integrantes
     public function comprobarMultiples(): void
     {
-        //Construir claves_membresia a partir de estados no vacíos (excepto las canceladas, que se eliminan)
-        $this->claves_membresia = array_keys(array_filter(
-            $this->estados_membresia,
-            fn($estado) => !empty($estado)
-        ));
+        // Flujo edición: claves_membresia se reconstruye desde estados_membresia.
+        // Flujo registro nuevo: estados_membresia está vacío, claves_membresia viene del checkbox directamente.
+        if (!empty($this->estados_membresia)) {
+            $this->claves_membresia = array_keys(array_filter(
+                $this->estados_membresia,
+                fn($estado) => !empty($estado)
+            ));
+        }
 
         if (empty($this->claves_membresia)) {
             $this->registro_permitido = false;
             return;
         }
 
-        //Solo las claves activas (no CAN) se consideran para bloquear integrantes
-        $clavesActivas = array_keys(array_filter(
-            $this->estados_membresia,
-            fn($estado) => !empty($estado) && $estado !== 'CAN'
-        ));
+        // Claves activas: en edición = las que no son CAN; en registro nuevo = todas las seleccionadas
+        $clavesActivas = !empty($this->estados_membresia)
+            ? array_keys(array_filter($this->estados_membresia, fn($e) => !empty($e) && $e !== 'CAN'))
+            : $this->claves_membresia;
 
         if (empty($clavesActivas)) {
             $this->registro_permitido = false;

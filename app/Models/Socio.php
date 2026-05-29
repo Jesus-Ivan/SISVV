@@ -83,9 +83,6 @@ class Socio extends Model
                 'estado'           => 'MEN',
             ]);
 
-            // Quitarlo de socios_cuotas (ya queda registrado como principal)
-            $mayor->delete();
-
         } finally {
             self::$sincronizando = false;
         }

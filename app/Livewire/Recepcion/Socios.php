@@ -22,7 +22,7 @@ class Socios extends Component
     public function render()
     {
         $result = Socio::query()
-            ->with('socioMembresia.membresia')
+            ->with(['socioMembresia.membresia', 'cuotasMembresia.cuota'])
             ->where(function ($q) {
                 $q->where('nombre', 'like', '%' . $this->search . '%')
                     ->orwhere('apellido_p', 'like', '%' . $this->search . '%')

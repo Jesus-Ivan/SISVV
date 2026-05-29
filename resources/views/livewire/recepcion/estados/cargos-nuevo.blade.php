@@ -5,16 +5,27 @@
             <p>No.Socio:{{ $socio->id }} </p>
         </div>
         <div class="w-full">
-            <p>Membresia: {{ $socioMembresia->membresia->descripcion }}</p>
-            <p>
-                @if ($socioMembresia->estado == 'ANU')
-                    <span
-                        class=" inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
-                        <span class="w-2 h-2 me-1 bg-green-500 rounded-full"></span>
-                        Anualidad activa
-                    </span>
-                @endif
-            </p>
+            @php
+                $membresiasActivas = collect($listaCargosFijos)->filter(
+                    fn($f) => !empty($f['cuota']['clave_membresia']) && $f['cuota']['clave_membresia'] !== 'N/A'
+                );
+            @endphp
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-400">Membresías:</p>
+            @forelse($membresiasActivas as $m)
+                <p class="text-sm">
+                    <span class="font-medium text-gray-900 dark:text-white">{{ $m['cuota']['clave_membresia'] }}</span>
+                    <span class="text-gray-500 ml-1">{{ $m['cuota']['tipo'] }}</span>
+                </p>
+            @empty
+                <p>Membresía: {{ $socioMembresia->membresia->descripcion }}</p>
+            @endforelse
+            @if ($socioMembresia->estado == 'ANU')
+                <span
+                    class="inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                    <span class="w-2 h-2 me-1 bg-green-500 rounded-full"></span>
+                    Anualidad activa
+                </span>
+            @endif
         </div>
     </div>
     {{-- FECHA Y BOTON DE CARGOS --}}

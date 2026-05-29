@@ -15,7 +15,10 @@
             @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
         </div>
         <button wire:click="toggleTarifaEspecial"
-            class="{{ $soloTarifaEspecial ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700' : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600' }} border text-sm font-medium rounded-lg px-4 py-2.5 whitespace-nowrap transition">
+            class="border text-sm font-medium rounded-lg px-4 py-2.5 whitespace-nowrap transition"
+            style="{{ $soloTarifaEspecial
+                ? 'background-color:#2563eb; color:#ffffff; border-color:#2563eb;'
+                : 'background-color:#ffffff; color:#1d4ed8; border-color:#3b82f6;' }}">
             Tarifa especial
         </button>
     </div>
@@ -100,11 +103,16 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 ">
-                            <div>
-                                {{ $socio->socioMembresia ? $socio->socioMembresia->membresia->descripcion : 'N/R' }}
-                            </div>
-                            {{ $socio->socioMembresia ? $socio->socioMembresia->estado : 'N/R' }}
+                        <td class="px-6 py-4">
+                            @forelse($socio->cuotasMembresia as $sc)
+                                <div class="text-sm leading-5">
+                                    <span class="text-gray-700 dark:text-gray-300">{{ $sc->cuota->clave_membresia }}</span>
+                                    <span class="text-xs text-gray-400 ml-1">{{ $sc->cuota->tipo }}</span>
+                                </div>
+                            @empty
+                                <div>{{ $socio->socioMembresia ? $socio->socioMembresia->clave_membresia : 'N/R' }}</div>
+                                <span class="text-xs text-gray-400">{{ $socio->socioMembresia ? $socio->socioMembresia->estado : '' }}</span>
+                            @endforelse
                         </td>
                         <td class="px-6 py-4">
                             <a href="{{ route('recepcion.estado.nuevo', ['socio' => $socio->id]) }}"

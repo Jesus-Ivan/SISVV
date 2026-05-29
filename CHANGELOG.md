@@ -222,3 +222,146 @@ La relación `Socio::cuotasMembresia()` filtraba por `cuota.tipo = 'MEN'`, lo qu
 
 #### `app/Models/Socio.php`
 - Cambiado el filtro de `cuotasMembresia()` de `where('tipo', 'MEN')` a `whereNotNull('clave_membresia')`. Ahora la relación devuelve cualquier `SocioCuota` cuya cuota represente una membresía (sin importar si está en estado MEN, INA o ANU), excluyendo solo los cargos fijos (locker, resguardo, etc.) que no tienen `clave_membresia`
+
+---
+
+## Pivote arquitectónico — `socios_cuotas` sin columna `estado`
+**Fecha:** 2026-05-28
+
+### Contexto
+Se replanteó la arquitectura de estados. La columna `estado` agregada en la Fase 1.3 se **revierte**: las membresías adicionales ya no guardan estado propio, sino que lo **derivan del `cuota->tipo`** (MEN/INA/ANU) según a qué cuota del catálogo apunta `id_cuota`. El único estado oficial vive en `socios_membresias.estado`.
+
+### Archivos creados
+
+#### `database/migrations/2026_05_28_152646_drop_estado_from_socios_cuotas.php`
+- `up()`: elimina la columna `estado` de `socios_cuotas`
+- `down()`: restaura `estado VARCHAR(3) DEFAULT 'MEN'`
+
+### Archivos modificados
+
+#### `app/Models/SocioCuota.php`
+- Eliminado `estado` del array `$fillable`
+
+#### `app/Models/Socio.php`
+- **Renombrado** `calcularPrincipalPorAntiguedad()` → `calcularPrincipalPorValor()`: la membresía principal ahora se determina por **mayor `monto` base** (no por antigüedad). Devuelve la membresía adicional de mayor monto, usada al rotar la principal
+
+### Nueva definición de "principal"
+- **Principal = membresía de mayor `monto` base** del catálogo (cuota tipo MEN). Desempate: `created_at` asc, luego `id` asc
+- Sigue siendo automática e interna — sin UI para designarla
+
+---
+
+## Corrección crítica — Observer desconectado y método fantasma
+**Fecha:** 2026-05-28
+
+### Problema detectado
+- `AppServiceProvider::boot()` estaba **vacío**: el `SocioCuotaObserver` nunca se registraba, por lo que la sincronización automática de `socios_membresias` no ocurría
+- El observer invocaba `$socio->sincronizarMembresiaLegacy()`, método que **no existía** en `Socio` — habría lanzado `BadMethodCallException` si el observer hubiera estado activo
+
+### Archivos modificados
+
+#### `app/Providers/AppServiceProvider.php`
+- Registrado `SocioCuota::observe(SocioCuotaObserver::class)` en `boot()`
+
+#### `app/Models/Socio.php`
+- Implementado `sincronizarMembresiaLegacy()` como **red de seguridad**: solo actúa cuando el socio no tiene fila en `socios_membresias` (promueve la membresía adicional de mayor monto a principal). Las rotaciones completas las gestiona `SocioForm`
+- Agregada bandera estática `$sincronizando` para evitar reentrada del observer durante el `delete()` interno
+
+---
+
+## Fase 3.1 (rediseño) — Dropdowns de estado y soporte de cancelación (CAN)
+**Fecha:** 2026-05-28
+
+### Contexto
+Se reemplazan los checkboxes por **dropdowns de estado por membresía**. El mapa `estados_membresia` (clave → estado) pasa a ser la **fuente de verdad**; `claves_membresia` se deriva de él.
+
+### Archivos modificados
+
+#### `app/Livewire/Forms/SocioForm.php`
+- `comprobarMultiples()` reescrito: deriva `claves_membresia` filtrando `estados_membresia` por valores no vacíos. Solo las claves activas (no CAN) cuentan para bloquear el registro de integrantes
+- `update()` reescrito con soporte completo de estado **CAN**:
+  - Validación: `estados_membresia.*` ahora acepta `MEN,INA,ANU,CAN`
+  - Ordena candidatos por monto descendente; separa activos (no CAN) de cancelados
+  - **Cancelación total**: si todas las membresías quedan CAN, conserva la de mayor monto como CAN en `socios_membresias` y elimina todas de `socios_cuotas`
+  - **Rotación de principal**: la antigua principal baja a `socios_cuotas` y la nueva sube a `socios_membresias`
+  - **Fix duplicados**: variable `$claveMovidaAdicional` evita reinsertar en `socios_cuotas` la principal recién rotada (corregía SQLSTATE 23000 duplicate key `(id_socio, id_cuota)`)
+
+#### `app/Livewire/Recepcion/SociosEditar.php`
+- `revisarPerdidaIntegrantes()`: las membresías marcadas CAN se ignoran (se eliminarán) al decidir si se perderían los integrantes
+
+#### `resources/views/livewire/recepcion/socios-editar.blade.php`
+- Lista de todas las membresías del catálogo con **dropdown de estado** por fila (Seleccionar / Activa / Inactiva / Cancelada). Badge "Principal" y badge "ANUAL" según corresponda
+
+---
+
+## Columna `disponible` en el catálogo de membresías
+**Fecha:** 2026-05-28
+
+### Archivos creados
+
+#### `database/migrations/2026_05_28_172345_add_disponible_to_membresias.php`
+- Agrega `disponible` (boolean, default `true`) a `membresias`
+- Marca como `false`: `CC-V-C`, `CC-V-S`, `CG-V-C`, `CG-V-S`, `COR`, `CUR`, `EST`, `EVE`, `INT`
+
+### Archivos modificados
+
+#### `app/Livewire/Recepcion/SociosNuevo.php`
+- `membresias()` filtra por `disponible = true`
+
+#### `app/Livewire/Recepcion/SociosEditar.php`
+- `membresias()` muestra las disponibles **más** las que el socio ya tiene asignadas (`orWhereIn('clave', $this->form->claves_membresia)`), para no ocultar membresías legacy (INT, viudas, etc.) en edición
+
+### Propósito
+- `disponible` controla qué membresías aparecen en los formularios de registro/edición. No afecta facturación, acceso ni reportes (operan sobre datos ya persistidos)
+
+---
+
+## Fase 3.2 — Pórtico de Acceso por estado real
+**Fecha:** 2026-05-28
+
+### Archivos modificados
+
+#### `resources/views/livewire/acceso/socios/principal.blade.php`
+- La condición de acceso ya no se basa solo en la **existencia** de membresía. Ahora:
+  - **ACCESO PERMITIDO** si la principal existe y `estado !== 'CAN'`, o si hay al menos una membresía adicional
+  - **ACCESO DENEGADO** si la única membresía es CAN, o si no hay membresías
+
+---
+
+## Fase 3.3 — Estados de Cuenta: badge de tarifa especial y filtro
+**Fecha:** 2026-05-28
+
+### Archivos modificados
+
+#### `app/Livewire/Recepcion/Estados/Principal.php`
+- Nueva propiedad `soloTarifaEspecial` (bool)
+- `resultSocios()` usa `withExists` para exponer `tiene_tarifa_especial` (socio con alguna `socios_cuotas.monto_personalizado IS NOT NULL`) y aplica `whereHas` cuando el filtro está activo
+- Métodos `toggleTarifaEspecial()` y `setConceptos()` que llaman `resetPage()`; `updated()` también resetea la paginación al cambiar cualquier filtro
+- Eliminado `limit(30)` muerto que `paginate()` ignoraba
+
+#### `resources/views/livewire/recepcion/estados/principal.blade.php`
+- Badge morado "Tarifa especial" junto al nombre del socio cuando `tiene_tarifa_especial`
+- Botón toggle "Tarifa especial" en la barra de búsqueda
+- **Rediseño de la sección de filtros**: dos filas limpias (búsqueda + toggle arriba; fechas, pills de Conceptos y select de Vista abajo). Los radio buttons se reemplazan por pills compactos
+
+---
+
+## Fase 3.4 — Reportes y exportaciones
+**Fecha:** 2026-05-28
+
+### Archivos modificados
+
+#### `app/Exports/SociosExport.php`
+- `sumar_cuotas()` usa `monto_a_cobrar` en lugar de `cuota->monto` (refleja tarifas personalizadas)
+- Nueva columna **"MEMBRESIAS CONTRATADAS"**: lista principal + adicionales separadas por comas (helper `listarMembresias()`, deduplicado con `unique()`)
+- Nueva columna **"TARIFA PERSONALIZADA"** (SÍ/NO)
+
+#### `app/Exports/CarteraVencidaExport.php`
+- Carga `cuotasMembresia.cuota` además de `socioMembresia`
+- **Bug corregido**: ya no crashea cuando el socio no tiene fila en `socios_membresias` (acceso a índice null)
+- Filtro de cancelados reescrito (helper `todasCanceladas()`): excluye un socio solo si la principal es CAN **y** no tiene membresías adicionales activas
+- Nueva columna **"MEMBRESIAS"** con todas las membresías del socio
+
+### Verificación en local
+- `SociosExport`: 275 filas, nuevas columnas pobladas correctamente
+- `CarteraVencidaExport`: ejecutado con/sin cancelados sin errores; el filtro excluye exactamente los socios con todas sus membresías canceladas

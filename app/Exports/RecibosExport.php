@@ -3,7 +3,6 @@
 namespace App\Exports;
 
 use App\Models\Cuota;
-use App\Models\ReciboMembresia;
 use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
 use App\Models\TipoPago;
@@ -178,29 +177,26 @@ class RecibosExport implements FromArray
             ->get();
     }
 
-    /** 
-     * Obtenemos el tipo de cuota para el reporte, apartir de la tabla 'socios_membresia'
+    /**
+     * Obtenemos todas las membresías del socio desde socios_cuotas.
+     * Fallback a socios_membresias si no hay entradas (ej. socios INT).
      */
     private function tipoCuota($id_socio, $folio_recibo)
     {
-        /**
-         * Buscamos el registro en la tabla 'recibo_membresia'
-         * Es la relacion de la 'clave' de membresia del socio con el 'recibo'.
-         * En el momento de descargar el reporte.
-         */
-        $recibo_membresia = ReciboMembresia::find($folio_recibo);
-        if (! $recibo_membresia) {
+        $claves = SocioCuota::with('cuota')
+            ->where('id_socio', $id_socio)
+            ->get()
+            ->filter(fn($sc) => !empty($sc->cuota->clave_membresia) && $sc->cuota->clave_membresia !== 'N/A')
+            ->pluck('cuota.clave_membresia')
+            ->unique()
+            ->values();
 
-            //Buscamos la clave de membresia correspondiente al socio
-            $socio_membresia = SocioMembresia::where('id_socio', $id_socio)
-                ->first();
-            //Creamos el registro en la tabla 'recibo_membresia'
-            $recibo_membresia = ReciboMembresia::create([
-                'folio_recibo' => $folio_recibo,
-                'clave_membresia' => $socio_membresia->clave_membresia
-            ]);
+        if ($claves->isEmpty()) {
+            $sm = SocioMembresia::where('id_socio', $id_socio)->first();
+            return $sm ? $sm->clave_membresia : 'N/R';
         }
-        return substr($recibo_membresia->clave_membresia, 0, 2);
+
+        return $claves->implode(', ');
     }
 
     /**

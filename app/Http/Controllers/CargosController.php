@@ -32,14 +32,8 @@ class CargosController extends Controller
 
         //Iniciamos transaccion
         DB::transaction(function () use ($fecha, $fecha_previa, $socios_membresias) {
-            //Agregamos los id's de las cuotas que corresponden
-            $ids_cuotas = [
-                'membresias' => [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 18, 19, 21, 22, 23, 24, 25, 26, 27, 28, 29, 43, 44, 45, 46, 51],
-                'lockers' => [1],
-                'resguardo' => [15],
-            ];
             //Para cada registro de la tabla 'socios_membresias'
-            foreach ($socios_membresias as $key => $socio) {
+            foreach ($socios_membresias as $socio) {
                 //Desactivamos anualidad si tenia una activa previamente
                 $anualidad_fin = $this->desactivarAnualidad($fecha_previa, $socio->id_socio);
                 //Activamos anualidad si esta disponible
@@ -47,7 +41,7 @@ class CargosController extends Controller
                 //Verificar cargos fijos
                 $this->verificarCargosFijos($socio->id_socio, $anualidad_inicio, $anualidad_fin);
 
-                //buscamos registros del estado de cuenta del socio, correspondiente al mes dado por la fecha.
+                //Registros ya cobrados este mes para este socio
                 $estado_cuenta = EstadoCuenta::where('id_socio', $socio->id_socio)
                     ->whereYear('fecha', $fecha->year)
                     ->whereMonth('fecha', $fecha->month)
@@ -55,29 +49,28 @@ class CargosController extends Controller
                     ->get()
                     ->toArray();
 
-                //Obtenemos todas las cuotas fijas (que se cargan mensualmente) del socio.
+                //Todas las cuotas fijas del socio, agrupadas por id_cuota para detectar multiples
                 $socio_cuotas = SocioCuota::with('cuota')
                     ->where('id_socio', $socio->id_socio)
                     ->get()
-                    ->toArray();
-                //Para cada tipo de cuota
-                foreach ($ids_cuotas as $name => $ids) {
-                    //Contamos los cargos fijos que tiene el socio que coincidan con la espresion
-                    $cuotas_fijas = $this->contarCargos($ids, $socio_cuotas);
-                    //contamos los cargos que estan en el estado de cuenta, que coinciden con la expresion
-                    $cuotas_estado = $this->contarCargos($ids, $estado_cuenta);
+                    ->groupBy('id_cuota');
 
-                    for ($i = 0; $i < (count($cuotas_fijas) - count($cuotas_estado)); $i++) {
-                        //Obtenemos el primer elemento del array asociativo (y reincia el punterto interno)
-                        $cuota = reset($cuotas_fijas);
+                $estadoGrouped = collect($estado_cuenta)->groupBy('id_cuota');
+
+                foreach ($socio_cuotas as $idCuota => $rows) {
+                    $enEstado = $estadoGrouped->get($idCuota, collect())->count();
+                    $enCuotas = $rows->count();
+
+                    for ($i = 0; $i < ($enCuotas - $enEstado); $i++) {
+                        $sc = $rows->first();
                         EstadoCuenta::create([
-                            'id_cuota' => $cuota['id_cuota'],
-                            'id_socio' => $socio->id_socio,
-                            'concepto' => $cuota['cuota']['descripcion'] . ' ' . $this->getMes($fecha->month) . '-' . $fecha->year,
-                            'fecha' => $fecha->toDateString(),
-                            'cargo' => $cuota['cuota']['monto'],
-                            'abono' => 0,
-                            'saldo' => $cuota['cuota']['monto'],
+                            'id_cuota' => $sc->id_cuota,
+                            'id_socio'  => $socio->id_socio,
+                            'concepto'  => $sc->cuota->descripcion . ' ' . $this->getMes($fecha->month) . '-' . $fecha->year,
+                            'fecha'     => $fecha->toDateString(),
+                            'cargo'     => $sc->monto_a_cobrar,
+                            'abono'     => 0,
+                            'saldo'     => $sc->monto_a_cobrar,
                         ]);
                     }
                 }
@@ -353,11 +346,4 @@ class CargosController extends Controller
         }
     }
 
-    private function contarCargos($ids, $socio_cuotas)
-    {
-        $estado_filtrado = array_filter($socio_cuotas, function ($cuota) use ($ids) {
-            return in_array($cuota['id_cuota'], $ids);
-        });
-        return $estado_filtrado;
-    }
 }

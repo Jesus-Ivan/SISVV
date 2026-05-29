@@ -32,7 +32,6 @@ class SociosExport implements FromArray
         $final[] = [
             'id' => 'ID',
             'nombre' =>  'NOMBRE',
-            'clave' => 'CLAVE MEMBRESIA',
             'estado' => 'ESTADO',
             'membresias' => 'MEMBRESIAS CONTRATADAS',
             'tarifa_especial' => 'TARIFA PERSONALIZADA',
@@ -56,7 +55,6 @@ class SociosExport implements FromArray
                 $final[] = [
                     'id' => $socio->id,
                     'nombre' =>  $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m,
-                    'clave' => $socio->clave_membresia,
                     'estado' => $socio->estado,
                     'membresias' => $this->listarMembresias($socio->clave_membresia, $cuotas),
                     'tarifa_especial' => $cuotas->whereNotNull('monto_personalizado')->isNotEmpty() ? 'SÍ' : 'NO',

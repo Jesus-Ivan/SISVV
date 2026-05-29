@@ -251,10 +251,7 @@
                                         <span class="text-sm font-medium text-gray-900 dark:text-white">
                                             {{ $membresia->descripcion }}
                                         </span>
-                                        @if ($estaSeleccionada && $esPrincipal)
-                                            <span class="px-2 text-xs font-semibold rounded bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">Principal</span>
-                                        @endif
-                                        @if ($esAnual)
+                                                        @if ($esAnual)
                                             <span class="px-2 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">ANUAL</span>
                                         @endif
                                     </div>

@@ -2,9 +2,9 @@
 
 **Proyecto:** Sistema de Cuotas Personalizadas para el Registro de Socios en Vista Verde Country Club.
 
-**Fecha:** 2026-05-26
+**Fecha:** 2026-05-28
 
-**Versión:** consolidada a partir de `implementation_plan.md` y `planDeImplementacion.md`, alineada con `requisitos.md`.
+**Versión:** consolidada y actualizada con cambios de arquitectura aplicados.
 
 ---
 
@@ -24,287 +24,244 @@ Permitir que el sistema SISVV soporte la asignación de precios personalizados (
 | Configurar `monto_personalizado` por socio | **Sistemas (exclusivo)** |
 | Editar el catálogo base de cuotas (afecta a todos) | Sistemas |
 
-> **Nota:** Aunque RF 3 del documento `requisitos.md` menciona a Recepción, la regla de negocio acordada con el cliente es que la configuración de precios personalizados queda restringida a Sistemas, para garantizar control y trazabilidad sobre los descuentos otorgados.
+---
+
+## ARQUITECTURA DE TABLAS
+
+| Tabla | Contenido | Rol |
+|---|---|---|
+| `socios_membresias` | 1 fila por socio: referencia a la membresía principal y su estado | Solo estado y referencia — **no es fuente de cobros** |
+| `socios_cuotas` | **Todas** las membresías del socio (principal + adicionales) + cargos fijos | Fuente única de cobros y precios personalizados |
+| `membresias` | Catálogo de membresías | `disponible` (boolean) — controla visibilidad en formularios |
+
+> **Arquitectura objetivo (Fase 4.2):** `socios_cuotas` será la fuente única de verdad para todos los cobros. Actualmente la membresía principal solo existe en `socios_membresias`; al implementar la Fase 4.2 se duplicará también en `socios_cuotas`, permitiendo asignarle `monto_personalizado` como cualquier otra cuota.
+
+**Principal = la membresía con el mayor `monto` base** (cuota tipo `MEN`) entre todas las del socio. Desempate: `created_at` asc, luego `id` asc.
+
+La determinación de la principal es **automática e interna** — no existe UI para designarla manualmente.
 
 ---
 
 ## 1. ALINEACIÓN CON LOS REQUERIMIENTOS FUNCIONALES
 
 ### RF 1 — Múltiples membresías simultáneas
-- Cada membresía contratada del socio se registra como una fila en la tabla `socios_cuotas`, vinculando al socio con la cuota correspondiente de tipo membresía (`MEN`).
-- Un socio puede tener membresías de **distinto tipo** simultáneamente (ej. Campo de Golf Familiar `CG-FAM` + Casa Club Familiar `CC-FAM`). **No** puede tener dos veces exactamente la misma cuota (esto es lo que protege RF 2.6).
-- La tabla `socios_membresias` se conserva como fuente histórica y de control de estado (`CAN`, `ANU`, `MEN`); mantiene **una sola fila por socio**, cuyo `clave_membresia` corresponde a la **membresía de mayor antigüedad** del socio (la más antigua según `created_at` en `socios_cuotas`). No hay UI para que el usuario seleccione una "principal" — el sistema la determina automáticamente.
-- En el modelo `Socio` se mantiene la relación legacy `socioMembresia()` (HasOne) y se añaden:
-  - `socioMembresias()` HasMany → `socios_membresias`
-  - `socioCuotas()` HasMany → `socios_cuotas`
-  - `cuotasMembresia()` HasMany filtrada por `cuota.tipo = 'MEN'`
+- La membresía de mayor monto va a `socios_membresias` (principal, con estado explícito).
+- Las membresías adicionales van a `socios_cuotas`, vinculadas a la cuota del tipo deseado (MEN/INA/ANU). Su estado se deriva de `cuota->tipo`.
+- Cargos fijos (locker, resguardo) también viven en `socios_cuotas` (cuotas sin `clave_membresia`).
+- Un socio no puede tener dos veces exactamente la misma cuota (índice único `id_socio, id_cuota`).
 
 ### RF 2.1 — Mínimo una membresía obligatoria
-Validación en `SocioForm` (regla `required` sobre el listado de membresías seleccionadas) que impida guardar un socio sin al menos una membresía.
+Validación en `SocioForm` (`claves_membresia` required, min:1).
 
 ### RF 2.2 — Cuotas base definidas
-Las membresías y cargos fijos mantienen su precio base en la tabla `cuotas` (columna `monto`). Este precio aplica por defecto.
+Precio base en `cuotas.monto`. Aplica por defecto para socios sin `monto_personalizado`.
 
-### RF 2.3 — Cuotas personalizadas ilimitadas
-Se agrega la columna `monto_personalizado` (decimal, nullable) en `socios_cuotas`. Un socio puede tener precios especiales en cualquier cantidad de cuotas contratadas.
+### RF 2.3 — Cuotas personalizadas
+Columna `monto_personalizado` (decimal, nullable) en `socios_cuotas`.
+
+> **Limitación actual (hasta Fase 4.2):** socios con una sola membresía la tienen únicamente en `socios_membresias`, que no tiene `monto_personalizado`. Al implementar la Opción B en Fase 4.2, la principal se duplicará en `socios_cuotas` y esta limitación desaparecerá.
 
 ### RF 2.4 — Independencia entre socios
-El precio personalizado se almacena únicamente en la fila individual de `socios_cuotas`. Modificarlo no altera el precio de ningún otro socio ni el catálogo base.
+`monto_personalizado` vive en la fila individual de `socios_cuotas`. No afecta a otros socios ni al catálogo.
 
-### RF 2.5 — Prevención de cobros duplicados por periodo
-El proceso de facturación mensual itera de manera estricta por cada `SocioCuota` activa del socio. Para cada una, consulta si ya existe un registro en `EstadoCuenta` para el **mes y año** del proceso, **filtrando por `id_cuota` específico**:
+### RF 2.5 — Prevención de cobros duplicados
+La facturación iterará directamente por cada `SocioCuota` activa del socio:
 
 ```php
 EstadoCuenta::where('id_socio', $socio->id)
-    ->where('id_cuota', $cuota->id_cuota)
+    ->where('id_cuota', $socioCuota->id_cuota)
     ->whereYear('fecha', $fecha->year)
     ->whereMonth('fecha', $fecha->month)
     ->exists();
 ```
 
-Si existe, el cargo se omite; si no, se factura. Esto resuelve el bug actual del `reset($cuotas_fijas)` y el conteo `count(fijas)-count(estado)` en `CargosController::cargarMensualidades`, que provocaba que al haber dos cuotas del mismo tipo (ej. dos lockers) ambas se facturaran con la misma fila reutilizada.
+Si existe → omitir; si no → facturar con `$socioCuota->monto_a_cobrar`.
 
 ### RF 2.6 — Impedir membresías idénticas
-- Se prohíbe contratar **dos veces exactamente la misma cuota** para un mismo socio (mismo `id_cuota`). Sí se permiten múltiples membresías de distinto tipo (ej. `CG-FAM` + `CC-FAM`).
-- Índice único compuesto en `(id_socio, id_cuota)` de la tabla `socios_cuotas` (restricción a nivel de base de datos).
-- Validación amigable en el modal de Sistemas que alerta al usuario antes de provocar una excepción SQL.
+Índice único compuesto `(id_socio, id_cuota)` en `socios_cuotas`.
 
-### Regla de membresía principal (uso interno legacy)
-La tabla `socios_membresias` mantiene una sola fila por socio. El sistema determina automáticamente la **membresía principal** como aquella **de mayor antigüedad entre las que están activas** (estado distinto de `CAN`):
+### Estado de membresías
+- **Principal** (`socios_membresias.estado`): MEN, INA, ANU, CAN.
+- **Adicionales** (implícito en `cuota->tipo`): MEN, INA, ANU. No existe CAN en socios_cuotas — cancelar una membresía adicional elimina la fila.
+- **Cancelación total**: si todas las membresías del socio se cancelan, se conserva la de mayor monto como CAN en `socios_membresias`.
 
-- Si el socio tiene al menos una membresía no cancelada → se elige la más antigua entre esas (por `created_at`, con desempate por `id` ascendente).
-- Si todas sus membresías están canceladas → se elige la más antigua a secas (por `created_at`).
+### Membresías disponibles (`membresias.disponible`)
+Columna boolean (default `true`). Las membresías `disponible=false` no aparecen en formularios de registro/edición de nuevos socios.
 
-Esta decisión es **interna y no expuesta al usuario** — no existe UI para designar una principal manualmente. Su único propósito es servir de referencia para el código legacy que consulta `socio->socioMembresia`.
+Marcadas como `false`: `CC-V-C`, `CC-V-S`, `CG-V-C`, `CG-V-S`, `COR`, `CUR`, `EST`, `EVE`, `INT`.
 
-### Estado individual por membresía
-Para soportar que un socio tenga distintos estados por membresía, se agrega la columna `estado` en `socios_cuotas` (valores `MEN`, `INA`, `ANU`). El estado deja de ser global del socio y pasa a ser por cuota individual.
+**Excepción en edición:** si un socio ya tiene asignada una membresía `disponible=false`, ésta sigue mostrándose en su formulario de edición para permitir su gestión.
 
-### Regla de cancelación
-Cancelar una membresía específica del socio **elimina la fila** de `socios_cuotas`. No existe estado `CAN` en `socios_cuotas` — quitar una membresía borra el registro. El observer `SocioCuotaObserver` (evento `deleted`) sincroniza automáticamente la fila legacy de `socios_membresias` tras cada eliminación.
+### RF 3 — Configuración de membresías en Recepción
+- **`SociosNuevo` y `SociosEditar`:** lista con scroll de todas las membresías disponibles. Cada membresía tiene un **dropdown de estado** (Seleccionar / Activa / Inactiva / Cancelada). La opción "Seleccionar" (vacío) significa no asignada. Anual solo aparece si la membresía ya está en estado ANU.
+- `estados_membresia` (mapa clave→estado) es la fuente de verdad; `claves_membresia` se deriva de él.
+- **No existe UI** para seleccionar membresía principal — el sistema la determina por mayor monto.
 
-### Regla de anualidad
-La anualidad se gestiona **por membresía individual**. Si un socio paga anualidad sobre una de sus membresías, solo esa cuota pasa a estado `ANU`; las demás conservan su estado original. Un socio con dos membresías no obtiene ambas anualizadas por pagar una sola anualidad — cada membresía requiere su propio proceso de anualidad. Esto permite combinaciones como FAMILIAR anualizada + INDIVIDUAL mensual.
-
-### Regla de consumo mínimo con múltiples membresías
-Cuando un socio tiene varias membresías activas (estado distinto de `CAN`), el **consumo mínimo aplicable** es el **mayor** entre los `consumo_minimo` de cada una. Ejemplo: si tiene `CG-FAM` ($5,000) y `CC-FAM` ($3,000), su consumo mínimo es de $5,000, no la suma ni el promedio.
-
-### RF 3 — Configuración de Cuotas y Membresías
-- **Recepción (`SociosNuevo`, `SociosEditar`):** se reemplaza el dropdown único de membresía por una lista de **checkboxes** que permite asignar/quitar múltiples membresías simultáneas. Se pueden activar/desactivar cargos fijos (lockers, resguardo) a tarifa base. **No se renderiza** el campo `monto_personalizado` en esta vista. **No** existe selector de "membresía principal" — el sistema la determina automáticamente por antigüedad.
-- **Sistemas (`livewire/sistemas/recepcion/socios/lista-socios.blade.php`):** se agrega un botón "Editar Cuotas" por fila que abre un modal exclusivo donde se configuran:
-  - Activar/desactivar membresías y cargos fijos del socio.
-  - Capturar `monto_personalizado` por cada cuota (placeholder con el monto base del catálogo).
-  - Validación amigable contra duplicados (RF 2.6).
-- Este modal opera bajo el middleware `sistemas` para garantizar que sólo personal autorizado pueda asignar precios especiales.
-
-### RF 4 — Registro en estado de cuenta
-El proceso de facturación utilizará la propiedad `monto_a_cobrar` del modelo `SocioCuota`, que devuelve `monto_personalizado` si existe, o el `monto` base del catálogo si es `null`. Los cargos generados reflejarán esta lógica en el estado de cuenta.
+### RF 4 — Precios personalizados en facturación
+`SocioCuota->monto_a_cobrar` devuelve `monto_personalizado ?? cuota->monto`. Toda facturación usa este accessor.
 
 ### RF 5 — Reportes actualizados
-- `SociosExport`: lista todas las membresías contratadas por cada socio. La función `sumar_cuotas` utilizará `monto_a_cobrar` en lugar de `cuota->monto`. Se añade columna **"TARIFA PERSONALIZADA"** con valor `SÍ` o `NO`.
-- `CarteraVencidaExport`: lista todas las membresías contratadas separadas por comas. Se ajusta el filtro de cancelados para validar que el socio no tenga **todas** sus membresías canceladas antes de excluirlo.
+- `SociosExport`: usa `monto_a_cobrar`. Columna "TARIFA PERSONALIZADA" (SÍ/NO).
+- `CarteraVencidaExport`: lista todas las membresías separadas por comas. Filtra cancelados verificando que **todas** las membresías del socio estén CAN.
 
-### RF 6 — Visualización clara en Búsqueda y Escaneo (Pórtico)
-- Pórtico de Acceso (`livewire/acceso/socios/principal.blade.php`): iterar y mostrar en lista todas las membresías del socio con su estado.
-- El acceso al club se otorga si **al menos una** de las membresías del socio no está en estado `CAN`.
+### RF 6 — Pórtico de Acceso
+- Lista principal (desde `socios_membresias`) + adicionales (desde `cuotasMembresia`).
+- **Acceso permitido** si la principal existe y `estado !== 'CAN'`, o si existe al menos una membresía adicional.
+- **Acceso denegado** si la única membresía es CAN, o no hay membresías.
 
-### RF 7 — Actualización masiva de cuotas base desde Sistemas
-Implementado nativamente por el diseño. Al modificar el precio en la tabla `cuotas` desde `App/Livewire/Sistemas/Recepcion/Cuotas.php`, el cambio aplica automáticamente en el siguiente ciclo de facturación para los socios sin `monto_personalizado`. Los socios con precio personalizado conservan su tarifa especial intacta.
+### RF 7 — Actualización masiva de cuotas base
+Al modificar `cuotas.monto` desde Sistemas, el cambio aplica automáticamente en el siguiente ciclo de facturación para socios sin `monto_personalizado`.
 
-### RF 8 — Diferenciación visual de socios con tarifa especial
-- **Estados de Cuenta (`livewire/recepcion/estados/principal.blade.php`):** badge junto al nombre del socio si tiene al menos una cuota con `monto_personalizado IS NOT NULL`. Filtro en la barra de búsqueda para listar solo socios con tarifa especial.
-- **Reportes:** columna "TARIFA PERSONALIZADA" en `SociosExport`.
+### RF 8 — Diferenciación visual de tarifa especial
+- Badge en Estados de Cuenta si el socio tiene al menos una `monto_personalizado IS NOT NULL` en `socios_cuotas`.
+- Filtro toggle para listar solo socios con tarifa especial.
+
+> **Limitación actual:** el badge solo aparece para socios con membresías adicionales en `socios_cuotas`. Socios con una sola membresía (principal en `socios_membresias`) no mostrarán el badge hasta que se implemente la Fase 4.2 (Opción B).
 
 ---
 
 ## 2. PLAN DE IMPLEMENTACIÓN POR FASES
 
-### FASE 1 — Migración Estructural de Base de Datos ✅ COMPLETADA
+### FASE 1 — Migración Estructural ✅ COMPLETADA
 
-#### 1.1 Alteración de `socios_cuotas`
-- `id_socio` e `id_cuota` cambiados a `unsignedInteger` para homologar con `socios.id` y `cuotas.id`.
-- Columna `monto_personalizado` decimal(10,2) nullable, posicionada después de `id_cuota`.
-- Índice único compuesto `(id_socio, id_cuota)` (RF 2.6).
-- Llaves foráneas: `id_socio → socios.id` (cascadeOnDelete), `id_cuota → cuotas.id` (nullOnDelete).
-- `DELETE` previo de duplicados antes de aplicar el índice único.
-
-#### 1.2 Corrección en migración de `cuotas`
-- Ajustar el `down()` para que referencie `cuotas` en lugar de `cuotas_club`.
-
-#### 1.3 Nueva migración: columna `estado` en `socios_cuotas` (pendiente)
-- Agregar columna `estado VARCHAR(3) DEFAULT 'MEN'` en `socios_cuotas` (valores: `MEN`, `INA`, `ANU`, `CAN`).
-- Backfill de datos legacy: copiar el estado actual desde `socios_membresias` a `socios_cuotas` para cada socio en el `up()` de la migración:
-  ```sql
-  UPDATE socios_cuotas sc
-  INNER JOIN socios_membresias sm ON sc.id_socio = sm.id_socio
-  INNER JOIN cuotas c ON sc.id_cuota = c.id
-  SET sc.estado = sm.estado
-  WHERE c.tipo = 'MEN';
-  ```
-- Las filas de `socios_cuotas` que correspondan a cargos fijos (locker, resguardo, etc.) quedan con el default `MEN`.
-
-**Pendiente:** ejecutar `php artisan migrate` en entornos de prueba y producción tras respaldo.
+- `socios_cuotas`: `id_socio` e `id_cuota` a `unsignedInteger`, columna `monto_personalizado`, índice único `(id_socio, id_cuota)`, FK con cascadeOnDelete/nullOnDelete.
+- Columna `estado` en `socios_cuotas`: **agregada y luego eliminada** — el estado de adicionales queda implícito en `cuota->tipo`.
+- Columna `disponible` (boolean, default `true`) en `membresias`. Nueve membresías marcadas `false`.
 
 ---
 
-### FASE 2 — Actualización de la Lógica Interna (Modelos) ✅ COMPLETADA
+### FASE 2 — Modelos ✅ COMPLETADA
 
-#### 2.1 Modelo `SocioCuota`
-- `monto_personalizado` añadido a `$fillable`.
-- Accessor `montoACobrar` (expuesto como `monto_a_cobrar`): devuelve `monto_personalizado ?? cuota->monto`.
-- **Pendiente:** corregir la relación `cuota()` para que sea `belongsTo(Cuota::class, 'id_cuota')` en lugar de `hasOne` invertido.
-
-#### 2.2 Modelo `Socio`
-- Conservar `socioMembresia()` (HasOne) para compatibilidad.
-- Agregar `socioMembresias()` HasMany, `socioCuotas()` HasMany, `cuotasMembresia()` HasMany filtrada por tipo `MEN`.
+- **`SocioCuota`**: `monto_personalizado` en `$fillable`. Accessor `monto_a_cobrar`. Relación `cuota()`.
+- **`Socio`**: relaciones `socioMembresia()`, `socioCuotas()`, `cuotasMembresia()`. Métodos `calcularPrincipalPorValor()` y `sincronizarMembresiaLegacy()`.
+- **`SocioCuotaObserver`**: registrado en `AppServiceProvider`. Eventos `saved`/`deleted` invocan `sincronizarMembresiaLegacy()` como red de seguridad (solo actúa si no existe principal).
 
 ---
 
 ### FASE 3 — Módulo de Recepción, Acceso y Reportes
 
-#### 3.1 Formulario de registro y edición de socios (Recepción)
-- Reemplazar el dropdown único de membresía en `SociosNuevo` y `SociosEditar` por una **lista de checkboxes** de membresías disponibles.
-- **No incluir UI** para seleccionar una "membresía principal" — la determinación es automática (la de mayor antigüedad).
-- Implementar validación en `SocioForm`:
-  - Al menos una membresía seleccionada (RF 2.1).
-  - No permitir seleccionar dos veces exactamente la misma cuota (RF 2.6).
-- Ajustar el método `comprobar()` para deshabilitar el registro de integrantes únicamente si **todas** las membresías seleccionadas son tipo "INDIVIDUAL".
-- Sincronización con `socios_membresias` legacy:
-  - Todas las membresías se registran en `socios_cuotas`.
-  - La fila en `socios_membresias` se mantiene única por socio y refleja la **membresía de mayor antigüedad** (la más antigua según `created_at` en `socios_cuotas`).
-  - Centralizar esta sincronización en un método único (`sincronizarMembresiaLegacy`) idealmente disparado por un Eloquent observer sobre `SocioCuota` (saved/deleted) para evitar inconsistencias.
+#### 3.1 Formulario de registro y edición ✅ COMPLETADA
+- Dropdowns de estado por membresía en `SociosNuevo` y `SociosEditar`.
+- Filtro `disponible=true` con excepción para membresías ya asignadas al socio.
+- Validación: mínimo una membresía, sin duplicados.
+- `comprobarMultiples()` deriva `claves_membresia` desde `estados_membresia`.
+- Lógica de rotación de principal en `update()` con soporte para estado CAN.
 
-#### 3.2 Pórtico de Acceso (RF 6)
-- Modificar `livewire/acceso/socios/principal.blade.php` y su controlador para listar todas las membresías del socio (vía relación `cuotasMembresia` o `socioMembresias`).
-- Permitir acceso si **al menos una** membresía no está en estado `CAN`.
+#### 3.2 Pórtico de Acceso ✅ COMPLETADA
+- Lista principal + adicionales con sus estados.
+- Acceso denegado si `socioMembresia.estado === 'CAN'` y no hay adicionales.
 
-#### 3.3 Interfaz de Estados de Cuenta (RF 8)
-- Modificar `livewire/recepcion/estados/principal.blade.php` y `Estados/Principal.php`.
-- Mostrar badge junto al nombre del socio si tiene al menos una `SocioCuota` con `monto_personalizado IS NOT NULL`.
-- Integrar filtro toggle/select en la barra de búsqueda para listar solo socios con tarifa especial.
+#### 3.3 Interfaz de Estados de Cuenta ✅ COMPLETADA
+- Badge "Tarifa especial" (morado) en `livewire/recepcion/estados/principal.blade.php` si el socio tiene `monto_personalizado` en `socios_cuotas`.
+- Botón toggle "Tarifa especial" en barra de búsqueda para filtrar solo esos socios.
+- **Limitación temporal:** badge no aparece para socios con una sola membresía hasta Fase 4.2.
 
-#### 3.4 Reportes y exportaciones
-- `SociosExport`: usar `monto_a_cobrar` en `sumar_cuotas`. Añadir columna "TARIFA PERSONALIZADA" (SÍ/NO).
-- `CarteraVencidaExport`: listar todas las membresías por socio separadas por comas. Filtrar cancelados validando que **todas** las membresías del socio estén canceladas.
+#### 3.4 Reportes y exportaciones ❌ Pendiente
+- `SociosExport`: usar `monto_a_cobrar`. Columna "TARIFA PERSONALIZADA".
+- `CarteraVencidaExport`: listar todas las membresías. Filtro de cancelados por todas-CAN.
 
 ---
 
 ### FASE 4 — Módulo de Sistemas y Facturación Masiva
 
-#### 4.1 Modal "Editar Cuotas" en Sistemas (RF 3 — Sistemas exclusivo)
-- En `livewire/sistemas/recepcion/socios/lista-socios.blade.php`, agregar botón "Editar Cuotas" por fila bajo middleware `sistemas`.
-- Crear modal Livewire dedicado con:
-  - Listado de todas las cuotas disponibles (membresías + cargos fijos).
-  - Checkbox por cuota para activarla/desactivarla en `socios_cuotas`.
-  - Campo numérico contiguo para `monto_personalizado` (placeholder = monto base del catálogo).
-- Validación amigable que impida seleccionar dos veces la misma membresía o cuota antes de tocar la BD.
+#### 4.1 Modal "Editar Cuotas" en Sistemas ❌ Pendiente
+- Botón "Editar Cuotas" por socio en `livewire/sistemas/recepcion/socios/lista-socios.blade.php`.
+- Modal con listado de cuotas (membresías + cargos fijos), checkbox de activación, campo `monto_personalizado`.
+- Validación contra duplicados antes de tocar la BD.
 
-#### 4.2 Refactor de `CargosController::cargarMensualidades` (RF 2.5)
-- Eliminar la lógica actual de conteos agrupados (`count(fijas)-count(estado)`) y la reutilización del primer elemento con `reset()`.
-- Nueva lógica:
-  ```
-  Para cada socio activo (al menos una membresía no cancelada):
-      Para cada SocioCuota del socio:
-          Si NO existe EstadoCuenta para (id_socio, id_cuota, mes, año):
-              Crear EstadoCuenta usando $socioCuota->monto_a_cobrar
-  ```
-- Esto resuelve el bug de cobros duplicados al haber múltiples cuotas del mismo tipo y garantiza que cada cuota individual se verifique de forma independiente.
+#### 4.2 Refactor de `CargosController::cargarMensualidades` + Opción B ❌ Pendiente
 
-#### 4.3 Aplicación de precios personalizados
-- Toda la facturación masiva (mensualidades, cargos fijos, anualidades) debe usar `$socioCuota->monto_a_cobrar` en lugar de leer directamente `cuota->monto`.
+Este bloque agrupa tres cambios que deben implementarse juntos:
 
-#### 4.4 Actualización masiva de cuotas base (RF 7)
-- No requiere cambios: `App/Livewire/Sistemas/Recepcion/Cuotas.php` ya modifica la tabla `cuotas`. El cambio se aplica automáticamente a socios sin precio personalizado en el siguiente ciclo de facturación.
+**A) Migración Opción B — principal en `socios_cuotas`**
+- Nueva migración: para cada socio, insertar su membresía principal en `socios_cuotas` (backfill desde `socios_membresias`).
+- `socios_membresias` queda como tabla de estado/referencia únicamente.
+- `SocioForm.store()` y `update()`: además de escribir en `socios_membresias`, escribir la principal también en `socios_cuotas`.
+- El badge de Fase 3.3 y `monto_personalizado` quedan disponibles para **todos** los socios.
 
-#### 4.5 Cálculo de consumo mínimo con múltiples membresías
-- Refactorizar la lógica de anualidades / consumo mínimo en `App/Livewire/Sistemas/Recepcion/Anualidad/Nueva.php` (y donde se calcule el consumo mínimo) para que tome el **mayor `consumo_minimo`** entre todas las membresías activas del socio (estado distinto de `CAN`).
-- Si el socio tiene una única membresía, el comportamiento queda idéntico al actual.
-- Si tiene varias, se ignoran las canceladas y se aplica el `consumo_minimo` más alto.
+**B) Refactor de `cargarMensualidades`**
+- Eliminar la lógica de conteos agrupados y `reset()`.
+- Nueva lógica: iterar únicamente `socios_cuotas` (ya incluye la principal):
 
-#### 4.6 Refactor de anualidad por membresía individual
-- Hoy `CargosController:259` y `:283` modifican `socios_membresias.estado` para marcar/restaurar anualidad. Refactorizar para que opere sobre `socios_cuotas.estado` de la cuota específica que se está anualizando.
-- Cada membresía se anualiza por separado. El estado `ANU` solo se asigna a la cuota seleccionada.
-- Al expirar la anualidad, se restaura el estado anterior (`estado_mem_f`) solo en esa cuota.
+```
+Para cada socio activo (al menos una membresía no-CAN en socios_membresias):
+    Para cada SocioCuota del socio:
+        Si NO existe EstadoCuenta para (id_socio, id_cuota, mes, año):
+            Crear EstadoCuenta con monto_a_cobrar
+```
 
-#### 4.7 Cancelación de membresía individual ✅ COMPLETADA
-- Al desmarcar una cuota desde la UI de Recepción, **se elimina la fila** de `socios_cuotas` directamente.
-- No existe estado `CAN` — quitar una membresía la borra del registro. No se conserva histórico de membresías canceladas.
-- El observer `SocioCuotaObserver` (evento `deleted`) sincroniza automáticamente la fila legacy de `socios_membresias`.
-- Cuando un socio se elimina por completo, sus filas en `socios_cuotas` se eliminan en cascada vía la FK `id_socio → socios.id`.
+**C) Aplicación de `monto_a_cobrar` (Fase 4.3)**
+- Al iterar `SocioCuota` directamente, se usa `$sc->monto_a_cobrar` — el accessor ya existe.
+- No requiere trabajo adicional.
 
-#### 4.8 Sincronización automática de la fila legacy `socios_membresias`
-- Crear método `Socio::sincronizarMembresiaLegacy()` que recalcula la fila de `socios_membresias` siguiendo la regla "más antigua activa" (con fallback a la más antigua a secas si todas están canceladas).
-- Disparar este método mediante un Eloquent observer en `SocioCuota` (eventos `saved` y `deleted`) para evitar que el código tenga que recordarlo manualmente.
+#### 4.3 Aplicación de `monto_a_cobrar` ❌ Pendiente
+Se resuelve junto con Fase 4.2 al usar instancias `SocioCuota` con el accessor.
+
+#### 4.4 Actualización masiva de cuotas base ✅ Sin cambios requeridos
+`App/Livewire/Sistemas/Recepcion/Cuotas.php` ya modifica `cuotas.monto`. El cambio aplica automáticamente.
+
+#### 4.5 Consumo mínimo con múltiples membresías ❌ Pendiente
+- En `Anualidad/Nueva.php`: cambiar `Membresias::all()` a `Membresias::where('disponible', true)->get()`.
+- Calcular el consumo mínimo como el **mayor** entre los `consumo_minimo` de todas las membresías activas del socio (estado distinto de CAN).
+
+#### 4.6 Anualidad por membresía individual ❌ Pendiente
+El código actual modifica `socios_membresias.estado = 'ANU'` globalmente. Refactorizar para distinguir:
+
+- **Membresía principal** (`socios_membresias`): actualizar `estado = 'ANU'` — sin cambio de lógica.
+- **Membresía adicional** (`socios_cuotas`): cambiar `id_cuota` a la cuota de tipo ANU de esa membresía. El estado queda implícito en `cuota->tipo`.
+
+Requiere que el selector de membresía en el formulario de anualidad permita elegir entre principal y adicionales del socio.
 
 ---
 
 ## 3. VERIFICACIÓN Y PRUEBAS
 
-### Prueba 1 — Asignación de múltiples membresías en Recepción
-Crear o editar un socio desde Recepción marcando múltiples casillas de membresía. Verificar que todas se guarden en `socios_cuotas` sin errores y que `socios_membresias` mantenga la fila de referencia.
+### Prueba 1 — Múltiples membresías en Recepción
+Registrar o editar socio con varias membresías. Verificar que `socios_membresias` apunta a la de mayor monto y las demás están en `socios_cuotas`.
 
-### Prueba 2 — Configuración de cuotas personalizadas desde Sistemas
-- Ingresar a Sistemas → Recepción → Lista de Socios → botón "Editar Cuotas".
-- Asignar un precio especial a una membresía y activar la cuota de Locker con su precio base.
-- Verificar que la BD se actualice correctamente.
-- Intentar asignar la misma cuota dos veces y verificar que aparezca un error de validación amigable (no excepción SQL).
+### Prueba 2 — Cuotas personalizadas desde Sistemas (pendiente Fase 4.1)
+Asignar precio especial a una membresía. Verificar en BD. Intentar duplicado → error amigable.
 
-### Prueba 3 — Actualización masiva de tarifa base y cobro mixto (RF 7)
-- Modificar el precio de una cuota base desde el catálogo de Sistemas.
-- Ejecutar la facturación mensual para el socio con precio personalizado de la Prueba 2.
-- Verificar que los socios con tarifa base reciben el nuevo precio, mientras que el socio con `monto_personalizado` conserva su tarifa especial.
+### Prueba 3 — Facturación con tarifa mixta (pendiente Fases 4.2/4.3)
+Socio con `monto_personalizado` en una cuota. Ejecutar facturación y verificar que usa tarifa personalizada solo en esa cuota.
 
-### Prueba 4 — Prevención de cobros duplicados con múltiples cuotas del mismo tipo
-- Asignar al socio dos cuotas del mismo tipo (ej. dos lockers, ambos activos).
-- Generar manualmente un cargo en `EstadoCuenta` para uno de los lockers en el mes corriente.
-- Ejecutar la facturación masiva.
-- Validar:
-  - La cuota que ya tenía cargo no se factura nuevamente (cero duplicados).
-  - La segunda cuota sí se factura.
-  - Los saldos pendientes del mes anterior permanecen intactos.
+### Prueba 4 — Prevención de cobros duplicados (pendiente Fase 4.2)
+Ejecutar `cargarMensualidades` dos veces en el mismo mes. Verificar cero duplicados en `estado_cuenta`.
 
-### Prueba 5 — Restricción de membresías idénticas (RF 2.6)
-Intentar asignar la misma membresía dos veces al mismo socio (desde Recepción y desde el modal de Sistemas). Verificar que ambos contextos muestren un error de validación amigable y que la BD rechace la operación por el índice único.
+### Prueba 5 — Pórtico con distintos estados
+- Socio MEN/ANU → ACCESO PERMITIDO
+- Socio INA → ACCESO PERMITIDO
+- Socio CAN con adicionales → ACCESO PERMITIDO
+- Socio CAN sin adicionales → ACCESO DENEGADO
+- Socio sin membresía → ACCESO DENEGADO
 
-### Prueba 6 — Visualización en Pórtico (RF 6)
-Escanear el número de socio en el Pórtico. Confirmar que se listan **todas** las membresías contratadas con su respectivo estado. Verificar que el acceso se otorgue mientras al menos una membresía esté activa.
-
-### Prueba 7 — Identificación visual en Estados de Cuenta (RF 8)
-- Acceder al listado de Estados de Cuenta en Recepción y activar el filtro "Solo con Tarifa Especial".
-- Verificar que solo se listen socios con `monto_personalizado` y que aparezca el badge.
-- Exportar a Excel y validar que la columna "TARIFA PERSONALIZADA" registre `SÍ`/`NO` correctamente y que la suma de cuotas refleje los precios personalizados.
+### Prueba 6 — Anualidad individual (pendiente Fase 4.6)
+Socio con dos membresías. Anualizar solo una. Verificar que la otra conserva su estado original.
 
 ---
 
-## 4. PLAN DE EMERGENCIA (ROLLBACK)
-
-En caso de detectarse una falla crítica en producción:
-
-**Paso 1:** Revertir el código del sistema a la versión anterior estable mediante Git.
-
-**Paso 2:** La columna `monto_personalizado` y el índice único en `socios_cuotas` permanecerán en la base de datos pero serán ignorados por el código de la versión anterior. El club continúa operando con las tarifas base normales sin interrupción.
-
-**Paso 3:** Si el problema es estructural (FK o índice rompiendo inserts), ejecutar el `down()` de la migración `2026_05_22_142722_alter_socios_cuotas_add_monto_personalizado.php` para revertir a la estructura original.
-
----
-
-## 5. ESTADO ACTUAL DE AVANCE
+## 4. ESTADO ACTUAL DE AVANCE
 
 | Fase | Estado |
 |---|---|
-| Fase 1.1/1.2 — Migración inicial (`monto_personalizado`, FK, unique, `cuotas.down()`) | ✅ Completada |
-| Fase 1.3 — Nueva migración: columna `estado` en `socios_cuotas` | ✅ Completada |
-| Fase 2 — Modelos | ✅ Completada |
-| Fase 3.1 — Checkboxes multi-membresía en Recepción | ✅ Completada |
-| Fase 3.2 — Pórtico | ✅ Completada |
-| Fase 3.3 — Estados de Cuenta UI | ❌ Pendiente |
-| Fase 3.4 — Exports | ❌ Pendiente |
+| Fase 1 — Migración estructural (monto_personalizado, FK, unique, disponible) | ✅ Completada |
+| Fase 2 — Modelos (SocioCuota, Socio, Observer registrado) | ✅ Completada |
+| Fase 3.1 — Dropdowns multi-membresía en Recepción | ✅ Completada |
+| Fase 3.2 — Pórtico (acceso por estado, no solo existencia) | ✅ Completada |
+| Fase 3.3 — Estados de Cuenta UI (badge + filtro tarifa especial) | ✅ Completada (limitación hasta Fase 4.2) |
+| Fase 3.4 — Exportaciones (SociosExport, CarteraVencidaExport) | ❌ Pendiente |
 | Fase 4.1 — Modal "Editar Cuotas" en Sistemas | ❌ Pendiente |
-| Fase 4.2 — Refactor `cargarMensualidades` | ❌ Pendiente |
-| Fase 4.3 — Aplicación de `monto_a_cobrar` | ❌ Pendiente |
-| Fase 4.5 — Consumo mínimo agregado (mayor) | ❌ Pendiente |
+| Fase 4.2 — Refactor cargarMensualidades (reset bug + adicionales) | ❌ Pendiente |
+| Fase 4.3 — Aplicación monto_a_cobrar (se resuelve con 4.2) | ❌ Pendiente |
+| Fase 4.5 — Consumo mínimo agregado (mayor entre activas) | ❌ Pendiente |
 | Fase 4.6 — Anualidad por membresía individual | ❌ Pendiente |
-| Fase 4.7 — Cancelación individual (eliminación directa) | ✅ Completada |
-| Fase 4.8 — Sincronización automática de fila legacy (observer) | ✅ Completada |
 
+---
 
+## 5. PLAN DE EMERGENCIA (ROLLBACK)
+
+**Paso 1:** Revertir código a versión anterior estable mediante Git.
+
+**Paso 2:** Las columnas `monto_personalizado` y `disponible` permanecen en BD pero son ignoradas por el código anterior. El club opera con tarifas base normales.
+
+**Paso 3:** Si hay problema estructural, ejecutar `down()` de las migraciones correspondientes.

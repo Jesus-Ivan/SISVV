@@ -1,80 +1,59 @@
 <div>
-    <!-- BARRA DE BUSQUEDA -->
-    <div class=" m-2 flex items-end gap-4">
-        <div class="flex items-end gap-4 grow">
-            {{-- Fecha Inicio --}}
-            <div class="w-72">
-                <label for="inicio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Inicio</label>
-                <input type="date" id="inicio" wire:model.live.debounce.800ms="fechaInicio"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+    {{-- FILA 1: búsqueda + toggle tarifa especial --}}
+    <div class="m-2 flex items-center gap-3">
+        <div class="relative flex-grow">
+            <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                <svg class="w-4 h-4 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                </svg>
             </div>
-            {{-- Fecha fin --}}
-            <div class="w-72">
-                <label for="fin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fin</label>
-                <input type="date" id="fin" wire:model.live.debounce.800ms="fechaFin"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
-            </div>
-            <!-- INPUT -->
-            <div>
-                <div class="relative w-72 max-h-12">
-                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-                        </svg>
-                    </div>
-                    <input type="search" id="default-search" wire:model.live.debounce.500ms='search'
-                        class=" max-h-10 block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                        placeholder="Nombre o numero de socio" />
-                </div>
-            </div>
-            <!--Loading indicator-->
-            <div wire:loading>
-                @include('livewire.utils.loading', ['w' => 6, 'h' => 6])
-            </div>
+            <input type="search" wire:model.live.debounce.500ms='search'
+                class="block w-full p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                placeholder="Nombre o número de socio" />
         </div>
+        <div wire:loading>
+            @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
+        </div>
+        <button wire:click="toggleTarifaEspecial"
+            class="{{ $soloTarifaEspecial ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700' : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600' }} border text-sm font-medium rounded-lg px-4 py-2.5 whitespace-nowrap transition">
+            Tarifa especial
+        </button>
     </div>
-    {{-- RADIO BUTONS AND SELECT --}}
-    <div class="flex gap-3 m-2 items-center">
-        <!--SELECT -->
-        <div>
-            <select id="vista" wire:model.live.debounce.600ms ='vista'
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                <option selected value="COM">Completa</option>
-                <option value="ORD">Ordinaria</option>
-                <option value="ESP">Especial</option>
-            </select>
-        </div>
-        <!--RADIO BUTTONS-->
-        <div>
-            <label for="radio-buttons" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Conceptos
-            </label>
-            <div class="flex gap-8 m-2" id="radio-buttons">
-                <div class="flex items-center">
-                    <input id="T-radio" type="radio" value="T" name="todos"
-                        wire:model.live.debounce.500ms='radioButon'
-                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="T-radio" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Mostrar
-                        todos</label>
-                </div>
-                <div class="flex items-center-2">
-                    <input id="P-radio" type="radio" value="P" name="pendientes"
-                        wire:model.live.debounce.500ms='radioButon'
-                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="P-radio" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Mostrar
-                        pendientes</label>
-                </div>
-                <div class="flex items-center">
-                    <input id="C-radio" type="radio" value="C" name="consumos"
-                        wire:model.live.debounce.500ms='radioButon'
-                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="C-radio" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Mostrar
-                        consumos</label>
-                </div>
-            </div>
-        </div>
 
+    {{-- FILA 2: fechas + conceptos (pills) + vista --}}
+    <div class="mx-2 mb-3 flex items-center gap-3 flex-wrap">
+        {{-- Rango de fechas --}}
+        <div class="flex items-center gap-2">
+            <input type="date" wire:model.live.debounce.800ms="fechaInicio"
+                class="text-sm border border-gray-300 rounded-lg p-2 bg-gray-50 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+            <span class="text-gray-400 text-sm">→</span>
+            <input type="date" wire:model.live.debounce.800ms="fechaFin"
+                class="text-sm border border-gray-300 rounded-lg p-2 bg-gray-50 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+        </div>
+        <div class="h-5 w-px bg-gray-300 dark:bg-gray-600"></div>
+        {{-- Conceptos como pills --}}
+        <div class="flex gap-1">
+            <button wire:click="setConceptos('T')"
+                class="{{ $radioButon === 'T' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600' }} text-xs font-medium px-3 py-1.5 rounded-full transition">
+                Todos
+            </button>
+            <button wire:click="setConceptos('P')"
+                class="{{ $radioButon === 'P' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600' }} text-xs font-medium px-3 py-1.5 rounded-full transition">
+                Pendientes
+            </button>
+            <button wire:click="setConceptos('C')"
+                class="{{ $radioButon === 'C' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600' }} text-xs font-medium px-3 py-1.5 rounded-full transition">
+                Consumos
+            </button>
+        </div>
+        <div class="h-5 w-px bg-gray-300 dark:bg-gray-600"></div>
+        {{-- Vista --}}
+        <select wire:model.live.debounce.600ms='vista'
+            class="text-sm border border-gray-300 rounded-lg p-2 bg-gray-50 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            <option value="COM">Completa</option>
+            <option value="ORD">Ordinaria</option>
+            <option value="ESP">Especial</option>
+        </select>
     </div>
     {{-- TABLA DE SOCIOS --}}
     <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -105,8 +84,12 @@
                                 </div>
                                 <!-- INFO -->
                                 <div class="dark:text-white">
-                                    <div class="font-medium">
-                                        {{ $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m }}</div>
+                                    <div class="flex items-center gap-2 font-medium">
+                                        {{ $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m }}
+                                        @if ($socio->tiene_tarifa_especial)
+                                            <span class="px-2 py-0.5 text-xs font-semibold rounded bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100">Tarifa especial</span>
+                                        @endif
+                                    </div>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">No.Socio:
                                         {{ $socio->id }}
                                     </p>

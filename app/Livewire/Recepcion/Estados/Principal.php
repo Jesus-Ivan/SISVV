@@ -13,6 +13,7 @@ class Principal extends Component
     public $search;
     public $radioButon;
     public $vista;
+    public bool $soloTarifaEspecial = false;
 
     public $fechaInicio, $fechaFin;
 
@@ -24,38 +25,50 @@ class Principal extends Component
         $this->fechaFin = now()->day(now()->daysInMonth)->toDateString();
         $this->search = '';                     //Nombre por default
         $this->radioButon = 'T';                //Radio button 'Mostrar Todos'
-        $this->vista = 'COM';                     //Select 'Mostrar Todos'
+        $this->vista = 'COM';                   //Select 'Mostrar Todos'
     }
 
     #[Computed()]
     public function resultSocios()
     {
-        return Socio::with('socioMembresia')->whereAny([
-            'nombre',
-            'apellido_p',
-            'apellido_m',
-        ], 'LIKE', '%' . $this->search . '%')
-            ->orWhere('id', $this->search)
-            ->limit(30)
-            ->paginate(5);
+        $query = Socio::with('socioMembresia')
+            ->withExists(['socioCuotas as tiene_tarifa_especial' => fn($q) => $q->whereNotNull('monto_personalizado')])
+            ->where(function ($q) {
+                $q->whereAny(['nombre', 'apellido_p', 'apellido_m'], 'LIKE', '%' . $this->search . '%')
+                    ->orWhere('id', $this->search);
+            });
+
+        if ($this->soloTarifaEspecial) {
+            $query->whereHas('socioCuotas', fn($q) => $q->whereNotNull('monto_personalizado'));
+        }
+
+        return $query->paginate(5);
     }
 
     //hook que se ejecuta cuando una propiedad se actualizo
     public function updated($property, $value)
     {
-        if ($property == 'fechaInicio') {
-            //Si es cadena vacia, reseteamos
-            if ($value =="") {
-                //dump($property,$value);
-                $this->fechaInicio = now()->day(1)->toDateString();
-            }
+        // Resetear paginacion al cambiar cualquier filtro
+        $this->resetPage();
+
+        if ($property == 'fechaInicio' && $value === '') {
+            $this->fechaInicio = now()->day(1)->toDateString();
         }
-        if ($property == 'fechaFin') {
-            //Si la fecha de fin es cadena vacia, reseteamos
-            if ($value === "") {
-                $this->fechaFin = now()->day(now()->daysInMonth)->toDateString();
-            }
+        if ($property == 'fechaFin' && $value === '') {
+            $this->fechaFin = now()->day(now()->daysInMonth)->toDateString();
         }
+    }
+
+    public function toggleTarifaEspecial()
+    {
+        $this->soloTarifaEspecial = !$this->soloTarifaEspecial;
+        $this->resetPage();
+    }
+
+    public function setConceptos($valor)
+    {
+        $this->radioButon = $valor;
+        $this->resetPage();
     }
 
     public function search()

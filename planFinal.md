@@ -156,9 +156,10 @@ Al modificar `cuotas.monto` desde Sistemas, el cambio aplica automáticamente en
 - Botón toggle "Tarifa especial" en barra de búsqueda para filtrar solo esos socios.
 - **Limitación temporal:** badge no aparece para socios con una sola membresía hasta Fase 4.2.
 
-#### 3.4 Reportes y exportaciones ❌ Pendiente
-- `SociosExport`: usar `monto_a_cobrar`. Columna "TARIFA PERSONALIZADA".
-- `CarteraVencidaExport`: listar todas las membresías. Filtro de cancelados por todas-CAN.
+#### 3.4 Reportes y exportaciones ✅ COMPLETADA
+- `SociosExport`: `sumar_cuotas()` usa `monto_a_cobrar`. Nuevas columnas "MEMBRESIAS CONTRATADAS" (lista principal + adicionales) y "TARIFA PERSONALIZADA" (SÍ/NO).
+- `CarteraVencidaExport`: nueva columna "MEMBRESIAS". Corregido crash por principal null. Filtro de cancelados ahora excluye solo si **todas** las membresías están canceladas (principal CAN y sin adicionales), vía helper `todasCanceladas()`.
+- **Nota Option B:** tras Fase 4.2, la columna monetaria "MEMBRESIA" de `SociosExport` empezará a incluir la principal (al estar también en `socios_cuotas`); `listarMembresias()` ya deduplica con `unique()`.
 
 ---
 
@@ -249,7 +250,7 @@ Socio con dos membresías. Anualizar solo una. Verificar que la otra conserva su
 | Fase 3.1 — Dropdowns multi-membresía en Recepción | ✅ Completada |
 | Fase 3.2 — Pórtico (acceso por estado, no solo existencia) | ✅ Completada |
 | Fase 3.3 — Estados de Cuenta UI (badge + filtro tarifa especial) | ✅ Completada (limitación hasta Fase 4.2) |
-| Fase 3.4 — Exportaciones (SociosExport, CarteraVencidaExport) | ❌ Pendiente |
+| Fase 3.4 — Exportaciones (SociosExport, CarteraVencidaExport) | ✅ Completada |
 | Fase 4.1 — Modal "Editar Cuotas" en Sistemas | ❌ Pendiente |
 | Fase 4.2 — Refactor cargarMensualidades (reset bug + adicionales) | ❌ Pendiente |
 | Fase 4.3 — Aplicación monto_a_cobrar (se resuelve con 4.2) | ❌ Pendiente |

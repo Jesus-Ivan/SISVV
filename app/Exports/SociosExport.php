@@ -34,6 +34,8 @@ class SociosExport implements FromArray
             'nombre' =>  'NOMBRE',
             'clave' => 'CLAVE MEMBRESIA',
             'estado' => 'ESTADO',
+            'membresias' => 'MEMBRESIAS CONTRATADAS',
+            'tarifa_especial' => 'TARIFA PERSONALIZADA',
             'locker' => 'LOCKERS',
             'resguardo' => 'RESGUARDO CARRITO',
             'membresia' => 'MEMBRESIA',
@@ -56,6 +58,8 @@ class SociosExport implements FromArray
                     'nombre' =>  $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m,
                     'clave' => $socio->clave_membresia,
                     'estado' => $socio->estado,
+                    'membresias' => $this->listarMembresias($socio->clave_membresia, $cuotas),
+                    'tarifa_especial' => $cuotas->whereNotNull('monto_personalizado')->isNotEmpty() ? 'SÍ' : 'NO',
                     'locker' => $this->sumar_cuotas(array_column($cuotas_locker, 'id'), $cuotas),
                     'resguardo' => $this->sumar_cuotas(array_column($cuotas_resg_carr, 'id'), $cuotas),
                     'membresia' => $this->sumar_cuotas(array_column($cuotas_membresias, 'id'), $cuotas),
@@ -73,8 +77,27 @@ class SociosExport implements FromArray
         $cuotas_filtradas = $cuotas->whereIn('id_cuota', $id_cuotas_permitidas);
 
         foreach ($cuotas_filtradas as $filtrada) {
-            $suma += $filtrada->cuota->monto;
+            //Usar monto_a_cobrar para reflejar tarifas personalizadas (RF 4 / RF 5)
+            $suma += $filtrada->monto_a_cobrar;
         }
         return $suma;
+    }
+
+    //Lista todas las membresias del socio (principal + adicionales) separadas por comas (RF 5)
+    private function listarMembresias($clavePrincipal, $cuotas): string
+    {
+        $claves = collect();
+        //Membresia principal desde socios_membresias
+        if (!empty($clavePrincipal)) {
+            $claves->push($clavePrincipal);
+        }
+        //Membresias adicionales desde socios_cuotas (cuotas con clave_membresia)
+        foreach ($cuotas as $sc) {
+            $clave = $sc->cuota->clave_membresia ?? null;
+            if (!empty($clave) && $clave !== 'N/A') {
+                $claves->push($clave);
+            }
+        }
+        return $claves->unique()->implode(', ');
     }
 }

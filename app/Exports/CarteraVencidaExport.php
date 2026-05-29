@@ -20,18 +20,32 @@ class CarteraVencidaExport implements FromArray
         $this->cuotas = Cuota::all();
         $this->consumosMesFin = $consumosMesFin;
         $this->fecha_limite = $fecha_limite;
-        $sociosTemp = Socio::with('socioMembresia')->get()->toArray();
+        $sociosTemp = Socio::with(['socioMembresia', 'cuotasMembresia.cuota'])->get()->toArray();
 
 
         //Si queremos la cartera con los socios cancelados
         if ($cancelados) {
             $this->socios = $sociosTemp;
         } else {
-            //de lo contrario, filtrar los socios cancelados
+            //de lo contrario, excluir solo a los socios con TODAS sus membresias canceladas
             $this->socios = array_filter($sociosTemp, function ($socio) {
-                return $socio['socio_membresia']['estado'] != 'CAN';
+                return !$this->todasCanceladas($socio);
             });
         }
+    }
+
+    //Determina si el socio tiene todas sus membresias canceladas (principal CAN y sin adicionales activas)
+    private function todasCanceladas($socio): bool
+    {
+        $principal = $socio['socio_membresia'] ?? null;
+        $tieneAdicionales = !empty($socio['cuotas_membresia']);
+
+        //Sin membresia principal: no esta cancelado por una membresia CAN
+        if (is_null($principal)) {
+            return false;
+        }
+        //Cancelado solo si la principal es CAN y no quedan membresias adicionales activas
+        return $principal['estado'] === 'CAN' && !$tieneAdicionales;
     }
 
 
@@ -41,6 +55,7 @@ class CarteraVencidaExport implements FromArray
         $encabezados = [
             'NO.SOCIO' => 'NO.SOCIO',
             'NOMBRE' => 'NOMBRE',
+            'MEMBRESIAS' => 'MEMBRESIAS',
             'NOTAS VENTAS' => 'NOTAS VENTAS',
         ];
         //REFERENNCIA A LA VARIABLE ENCABEZADOS
@@ -69,6 +84,7 @@ class CarteraVencidaExport implements FromArray
                 $row_aux = [
                     'NO.SOCIO' => $socio['id'],
                     'NOMBRE' => $socio['nombre'] . ' ' . $socio['apellido_p'] . ' ' . $socio['apellido_m'],
+                    'MEMBRESIAS' => $this->listarMembresias($socio),
                     'NOTAS VENTAS' => $total_deuda,
                 ];
                 foreach ($this->cuotas as $cuota) {
@@ -118,5 +134,22 @@ class CarteraVencidaExport implements FromArray
             }
         }
         return $acu;
+    }
+
+    //Lista todas las membresias del socio (principal + adicionales) separadas por comas (RF 5)
+    private function listarMembresias($socio): string
+    {
+        $claves = collect();
+        //Membresia principal desde socios_membresias
+        if (!empty($socio['socio_membresia']['clave_membresia'])) {
+            $claves->push($socio['socio_membresia']['clave_membresia']);
+        }
+        //Membresias adicionales desde socios_cuotas
+        foreach ($socio['cuotas_membresia'] ?? [] as $sc) {
+            if (!empty($sc['cuota']['clave_membresia']) && $sc['cuota']['clave_membresia'] !== 'N/A') {
+                $claves->push($sc['cuota']['clave_membresia']);
+            }
+        }
+        return $claves->unique()->implode(', ');
     }
 }

@@ -365,3 +365,131 @@ Se reemplazan los checkboxes por **dropdowns de estado por membresía**. El mapa
 ### Verificación en local
 - `SociosExport`: 275 filas, nuevas columnas pobladas correctamente
 - `CarteraVencidaExport`: ejecutado con/sin cancelados sin errores; el filtro excluye exactamente los socios con todas sus membresías canceladas
+
+---
+
+## Fase 4.2 — Option B: principal en ambas tablas + refactor de facturación
+**Fecha:** 2026-05-29
+
+### Contexto
+Implementación completa de la "Opción B": la membresía principal ahora vive en `socios_membresias` (estado/referencia) **y** en `socios_cuotas` (cobros y tarifa personalizada). `socios_cuotas` pasa a ser la fuente única de cobros para todas las membresías.
+
+### Archivos creados
+
+#### `database/migrations/2026_05_29_152713_backfill_principal_into_socios_cuotas.php`
+- Inserta en `socios_cuotas` la fila de membresía principal para socios que solo la tenían en `socios_membresias`
+- Filtros: `sm.estado != 'CAN'`, `JOIN socios` para excluir huérfanos, `NOT EXISTS` para no duplicar
+- `down()` revierte las filas insertadas
+
+### Archivos modificados
+
+#### `app/Livewire/Forms/SocioForm.php`
+- `store()`: tras crear la fila en `socios_membresias`, crea también la fila en `socios_cuotas` con `auto_delete=true`
+- `update()`: eliminados pasos 2 y 3 (mover principal entre tablas). Ahora itera `$candidatosActivos` (principal + adicionales) en lugar de solo `$nuevosAdicionales` — corrige bug donde el estado de la principal no se actualizaba en `socios_cuotas`
+- `update()`: eliminada variable `$claveMovidaAdicional` que causaba `Undefined variable` en PHP 8
+- `comprobarMultiples()`: corregido bug donde el flujo de nuevo socio sobreescribía `claves_membresia` con array vacío al reconstruir desde `estados_membresia` (que siempre está vacío en registro nuevo)
+
+#### `app/Http/Controllers/CargosController.php`
+- `cargarMensualidades()`: eliminada lógica de IDs hardcodeados. Ahora lee dinámicamente `socios_cuotas` de cada socio y usa `monto_a_cobrar` (respeta `monto_personalizado`)
+- Idempotencia por `groupBy + count`: si el cargo ya fue emitido este mes no se duplica
+- Eliminado método privado `contarCargos()`
+
+#### `app/Models/Socio.php`
+- `sincronizarMembresiaLegacy()`: eliminado `$mayor->delete()` — con Option B la fila promovida debe permanecer en `socios_cuotas`
+
+---
+
+## Mejoras de UI — Visualización de membresías en múltiples pantallas
+**Fecha:** 2026-05-29
+
+### Archivos modificados
+
+#### `app/Exports/SociosExport.php`
+- Eliminada columna **"CLAVE MEMBRESIA"** (redundante con "MEMBRESIAS CONTRATADAS")
+
+#### `app/Exports/RecibosExport.php`
+- `tipoCuota()` reescrito: ahora consulta `socios_cuotas` y devuelve **todas** las claves de membresía del socio separadas por coma (ej. `CG-I, CC-F`). Antes devolvía solo los primeros 2 caracteres de la principal
+- Eliminado uso de `ReciboMembresia` (caché histórico de una sola clave)
+
+#### `app/Livewire/Recepcion/Socios.php`
+- Agrega `cuotasMembresia.cuota` al eager loading
+
+#### `app/Livewire/Recepcion/Estados/Principal.php`
+- Agrega `cuotasMembresia.cuota` al eager loading
+
+#### `resources/views/livewire/recepcion/socios.blade.php`
+- Columna MEMBRESÍA ahora lista todas las membresías del socio desde `cuotasMembresia` (una por línea). Fallback a `socioMembresia` para socios sin entradas en `socios_cuotas` (ej. INT)
+
+#### `resources/views/livewire/recepcion/estados/principal.blade.php`
+- Columna MEMBRESÍA ahora muestra todas las membresías con su estado (clave + tipo). Fallback igual al anterior
+
+#### `resources/views/livewire/recepcion/estados/cargos-nuevo.blade.php`
+- Sección de membresía en el header ahora muestra todas las membresías del socio filtradas desde `$listaCargosFijos` (cuotas con `clave_membresia`). Etiqueta "Membresías:" añadida
+
+#### `resources/views/livewire/recepcion/socios-editar.blade.php`
+- Eliminado badge **"Principal"** del dropdown de membresías
+
+#### `resources/views/livewire/acceso/socios/principal.blade.php`
+- Si el socio tiene más de 1 membresía muestra **"Membresías múltiples"**; si tiene 1 muestra la clave
+- Sección **"Estado membresía:"** separada mostrando el estado de `socios_membresias`
+
+---
+
+## Fase 4.1 — Página "Editar Cuotas" en Sistemas
+**Fecha:** 2026-05-29
+
+### Contexto
+Página exclusiva del módulo Sistemas que permite configurar `monto_personalizado` por cuota de cada socio. Cubre membresías y cargos fijos (lockers, resguardo).
+
+### Archivos creados
+
+#### `app/Livewire/Sistemas/Recepcion/EditarCuotas.php`
+- Carga todas las `socios_cuotas` del socio con `cuotasMembresia.cuota`
+- Método `guardar()`: valida `nullable|numeric|min:0|max:99999999.99`, guarda en transacción con `try/catch`
+- Método `limpiar($index)`: pone `monto_personalizado = null` para la fila indicada (revierte al precio base)
+- Mensaje de éxito (`session flash`) y mensaje de error visible si el guardado falla
+
+#### `resources/views/livewire/sistemas/recepcion/editar-cuotas.blade.php`
+- Tabla con columnas: Concepto, Tipo, Precio base, Precio personalizado (editable), Precio efectivo
+- Input resaltado en morado si la cuota ya tiene precio personalizado
+- Botón "Limpiar" por fila (aparece solo si hay precio personalizado)
+- Alertas de éxito (verde) y error (rojo)
+- Descripción explicativa del funcionamiento de la página
+
+#### `resources/views/sistemas/Recepcion/editar-cuotas.blade.php`
+- Layout con nav de Sistemas y título "EDITAR CUOTAS"
+
+### Archivos modificados
+
+#### `app/Http/Controllers/SistemasController.php`
+- Método `editarCuotas(Socio $socio)`: devuelve la vista pasando el socio con model binding
+
+#### `routes/web.php`
+- Nueva ruta `GET /sistemas/recepcion/editar-cuotas/{socio}` → `sistemas.editar-cuotas`
+
+#### `resources/views/livewire/sistemas/recepcion/socios/lista-socios.blade.php`
+- Botón de edición (ícono lápiz) por socio activo que navega a la página de editar cuotas
+- Corregido crash `Attempt to read property "membresia" on null` usando `?->` en la columna MEMBRESÍA
+
+---
+
+## Fix — Índice único eliminado de `socios_cuotas`
+**Fecha:** 2026-05-29
+
+### Problema
+El índice único `(id_socio, id_cuota)` agregado en Fase 1 impedía que un socio tuviera múltiples lockers o resguardos de carrito, funcionalidad que el sistema sí permitía antes de este proyecto.
+
+### Archivos modificados
+
+#### `database/migrations/2026_05_22_142722_alter_socios_cuotas_add_monto_personalizado.php`
+- Eliminado el `DELETE` que borraba duplicados antes de crear el índice único
+- Eliminada la creación del índice único `socios_cuotas_socio_cuota_unique`
+- Eliminada del `down()` la instrucción de eliminar dicho índice
+
+#### `database/migrations/2026_05_29_175555_drop_unique_index_from_socios_cuotas.php` *(nuevo)*
+- `up()`: crea índice simple en `id_socio` para soporte de FK, luego elimina el índice único
+- `down()`: restaura el índice único y elimina el índice simple
+
+### Impacto
+- Socios con múltiples lockers o resguardos en producción ya no perderán registros al migrar
+- La unicidad de membresías sigue garantizada por lógica de aplicación en `SocioForm`

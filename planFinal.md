@@ -167,7 +167,7 @@ Al modificar `cuotas.monto` desde Sistemas, el cambio aplica automáticamente en
 
 #### 4.1 Modal "Editar Cuotas" en Sistemas ❌ Pendiente
 - Botón "Editar Cuotas" por socio en `livewire/sistemas/recepcion/socios/lista-socios.blade.php`.
-- Modal con listado de cuotas (membresías + cargos fijos), checkbox de activación, campo `monto_personalizado`.
+- Modal con listado de cuotas (membresías + cargos fijos) campo `monto_personalizado`.
 - Validación contra duplicados antes de tocar la BD.
 
 #### 4.2 Refactor de `CargosController::cargarMensualidades` + Opción B ❌ Pendiente

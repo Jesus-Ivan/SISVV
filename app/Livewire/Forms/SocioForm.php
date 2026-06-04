@@ -127,33 +127,21 @@ class SocioForm extends Form
         $this->curp = $socio->curp;
         $this->rfc = $socio->rfc;
 
-        //Membresía principal desde socios_membresias
+        //Todas las membresías desde socios_membresias (fuente de verdad del estado)
+        $todasMembresias = $socio->socioMembresias()->get();
+
+        //Legacy: clave_membresia y estado_membresia apuntan al primer no-CAN (compatibilidad)
         $principal = $socio->socioMembresia;
         $this->clave_membresia = $principal?->clave_membresia;
         $this->estado_membresia = $principal?->estado;
 
-        //Membresías adicionales desde socios_cuotas (estado derivado de cuota->tipo)
-        $adicionales = $socio->cuotasMembresia()->with('cuota')->get();
+        //Claves para los checkboxes
+        $this->claves_membresia = $todasMembresias->pluck('clave_membresia')->unique()->values()->toArray();
 
-        //Unimos principal + adicionales para los checkboxes
-        $this->claves_membresia = collect()
-            ->when($principal, fn($c) => $c->push($principal->clave_membresia))
-            ->merge($adicionales->pluck('cuota.clave_membresia')->filter())
-            ->unique()
-            ->values()
-            ->toArray();
-
-        //Mapa clave => estado: principal usa socios_membresias.estado, adicionales usan cuota->tipo
-        $this->estados_membresia = [];
-        if ($principal) {
-            $this->estados_membresia[$principal->clave_membresia] = $principal->estado;
-        }
-        foreach ($adicionales as $sc) {
-            $clave = $sc->cuota->clave_membresia;
-            if ($clave) {
-                $this->estados_membresia[$clave] = $sc->cuota->tipo;
-            }
-        }
+        //Mapa clave => estado: fuente de verdad socios_membresias.estado
+        $this->estados_membresia = $todasMembresias->mapWithKeys(
+            fn($sm) => [$sm->clave_membresia => $sm->estado]
+        )->toArray();
 
         $this->comprobarMultiples();
     }
@@ -303,26 +291,16 @@ class SocioForm extends Form
                 ->filter()
                 ->sortByDesc('monto');
 
-            //Principal = la de mayor monto → socios_membresias + socios_cuotas
-            $cuotaPrincipal = $cuotasPorClave->first();
-            if ($cuotaPrincipal) {
+            //Cada membresía → socios_membresias (estado MEN) + socios_cuotas
+            foreach ($cuotasPorClave as $cuota) {
                 SocioMembresia::create([
-                    'id_socio' => $socio->id,
-                    'clave_membresia' => $cuotaPrincipal->clave_membresia,
-                    'estado' => 'MEN',
+                    'id_socio'        => $socio->id,
+                    'clave_membresia' => $cuota->clave_membresia,
+                    'estado'          => 'MEN',
                 ]);
                 SocioCuota::create([
-                    'id_socio' => $socio->id,
-                    'id_cuota' => $cuotaPrincipal->id,
-                    'auto_delete' => true,
-                ]);
-            }
-
-            //Adicionales → socios_cuotas
-            foreach ($cuotasPorClave->skip(1) as $cuota) {
-                SocioCuota::create([
-                    'id_socio' => $socio->id,
-                    'id_cuota' => $cuota->id,
+                    'id_socio'    => $socio->id,
+                    'id_cuota'    => $cuota->id,
                     'auto_delete' => true,
                 ]);
             }
@@ -390,16 +368,13 @@ class SocioForm extends Form
         DB::transaction(function () use ($validated) {
             $idSocio = $this->socio->id;
 
-            $principalActual = SocioMembresia::where('id_socio', $idSocio)->first();
-            $claveAnteriorPrincipal = $principalActual?->clave_membresia;
-
             $adicionalesActuales = SocioCuota::where('id_socio', $idSocio)
                 ->whereIn('id_cuota', Cuota::whereNotNull('clave_membresia')->pluck('id'))
                 ->with('cuota')
                 ->get()
                 ->keyBy(fn($sc) => $sc->cuota->clave_membresia);
 
-            //Todos los candidatos ordenados por monto (para determinar la principal por valor)
+            //Todos los candidatos ordenados por monto (para decidir cuál queda en cancelación total)
             $todosLosCandidatos = collect($this->claves_membresia)
                 ->filter()
                 ->map(fn($clave) => [
@@ -416,13 +391,15 @@ class SocioForm extends Form
 
             //--- Caso cancelación total: todos en CAN ---
             if ($candidatosActivos->isEmpty() && $todosLosCandidatos->isNotEmpty()) {
-                //La de mayor monto queda como CAN en socios_membresias para dejar rastro
-                $mayorValor = $todosLosCandidatos->first();
+                $mayor = $todosLosCandidatos->first();
+                //Dejar solo una fila CAN (la de mayor monto), borrar el resto de socios_membresias
+                SocioMembresia::where('id_socio', $idSocio)
+                    ->where('clave_membresia', '!=', $mayor['clave'])->delete();
                 SocioMembresia::updateOrCreate(
-                    ['id_socio' => $idSocio],
-                    ['clave_membresia' => $mayorValor['clave'], 'estado' => 'CAN']
+                    ['id_socio' => $idSocio, 'clave_membresia' => $mayor['clave']],
+                    ['estado' => 'CAN']
                 );
-                //Eliminar todas las adicionales de socios_cuotas
+                //Borrar todas las cuotas de membresía de socios_cuotas
                 SocioCuota::where('id_socio', $idSocio)
                     ->whereIn('id_cuota', Cuota::whereNotNull('clave_membresia')->pluck('id'))
                     ->delete();
@@ -431,27 +408,21 @@ class SocioForm extends Form
                 return;
             }
 
-            //--- Caso normal: al menos una activa; las CAN se tratan como borradas ---
-            $nuevaPrincipal      = $candidatosActivos->first();
-            $claveNuevaPrincipal = $nuevaPrincipal['clave'] ?? null;
-            $clavesMarcadas      = $candidatosActivos->pluck('clave')->toArray();
+            //--- Caso normal: al menos una activa ---
+            $clavesActivas = $candidatosActivos->pluck('clave')->toArray();
 
-            //--- 1. Actualizar socios_membresias con la nueva principal ---
-            if ($nuevaPrincipal) {
-                $estadoPrincipal = $nuevaPrincipal['estado'];
-                $cuotaDeseada = Cuota::where('clave_membresia', $claveNuevaPrincipal)
-                    ->where('tipo', $estadoPrincipal)
-                    ->first() ?? $nuevaPrincipal['cuotaMEN'];
-
+            //--- 1. Sincronizar socios_membresias: upsert por (id_socio, clave_membresia) ---
+            foreach ($candidatosActivos as $item) {
                 SocioMembresia::updateOrCreate(
-                    ['id_socio' => $idSocio],
-                    ['clave_membresia' => $claveNuevaPrincipal, 'estado' => $cuotaDeseada->tipo]
+                    ['id_socio' => $idSocio, 'clave_membresia' => $item['clave']],
+                    ['estado' => $item['estado']]
                 );
-            } else {
-                SocioMembresia::where('id_socio', $idSocio)->delete();
             }
+            //Borrar de socios_membresias las que ya no están activas (parcial: sin rastro individual)
+            SocioMembresia::where('id_socio', $idSocio)
+                ->whereNotIn('clave_membresia', $clavesActivas)->delete();
 
-            //--- 2. Sincronizar socios_cuotas para TODAS las membresías activas (principal + adicionales) ---
+            //--- 2. Sincronizar socios_cuotas para las membresías activas ---
             foreach ($candidatosActivos as $item) {
                 $clave         = $item['clave'];
                 $estadoDeseado = $item['estado'];
@@ -468,7 +439,7 @@ class SocioForm extends Form
 
             //--- 3. Eliminar de socios_cuotas las claves que ya no están activas ---
             foreach ($adicionalesActuales as $clave => $sc) {
-                if (!in_array($clave, $clavesMarcadas, true)) {
+                if (!in_array($clave, $clavesActivas, true)) {
                     $sc->delete();
                 }
             }

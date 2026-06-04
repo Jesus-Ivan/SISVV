@@ -34,13 +34,17 @@ class CargosNuevo extends Component
     public function mount($socio)
     {
         $this->socio = $socio;
+        //Primer no-CAN (o CAN si todas lo son) — misma lógica que el accessor del modelo
         $this->socioMembresia = SocioMembresia::with('membresia')
             ->where('id_socio', $socio->id)
-            ->get()[0];
+            ->orderByRaw("FIELD(estado, 'CAN') ASC")
+            ->orderBy('id')
+            ->first();
         //Buscamos los cargos fijos del socio
         $this->listaCargosFijos = $this->obtenerCargosFijos($socio);
-        //Si el estado de la anualidad es anual
-        if ($this->socioMembresia['estado'] == 'ANU') {
+        //Si alguna membresía está en anualidad, cargar los detalles
+        $tieneAnu = SocioMembresia::where('id_socio', $socio->id)->where('estado', 'ANU')->exists();
+        if ($tieneAnu) {
             /*
              *Buscar los cargos incluidos en la anualidad
              */
@@ -59,6 +63,24 @@ class CargosNuevo extends Component
                 ->where('id_anualidad', $anualidad->id)
                 ->get();
         }
+    }
+
+    // true si TODAS las membresías son CAN (deshabilita el formulario)
+    #[Computed()]
+    public function todasCanceladas(): bool
+    {
+        return SocioMembresia::where('id_socio', $this->socio->id)
+            ->where('estado', '!=', 'CAN')
+            ->doesntExist();
+    }
+
+    // true si ALGUNA membresía está en ANU
+    #[Computed()]
+    public function tieneAnualidad(): bool
+    {
+        return SocioMembresia::where('id_socio', $this->socio->id)
+            ->where('estado', 'ANU')
+            ->exists();
     }
 
     //Propiedad computarizada que pobla los resultados de busqueda
@@ -112,8 +134,12 @@ class CargosNuevo extends Component
                 return;
             }
 
-            //Verificamos si la cuota corresponde a la membresia
-            if (!($cuota['tipo'] == $this->socioMembresia->estado && $cuota['clave_membresia'] == $this->socioMembresia->clave_membresia)) {
+            //Verificamos que la cuota corresponde a alguna membresía activa del socio
+            $membresiaValida = SocioMembresia::where('id_socio', $this->socio->id)
+                ->where('estado', $cuota['tipo'])
+                ->where('clave_membresia', $cuota['clave_membresia'])
+                ->exists();
+            if (!$membresiaValida) {
                 session()->flash('fail', 'La cuota no corresponde a la membresia');
                 return;
             } else {

@@ -19,7 +19,7 @@
             @empty
                 <p>Membresía: {{ $socioMembresia->membresia->descripcion }}</p>
             @endforelse
-            @if ($socioMembresia->estado == 'ANU')
+            @if ($this->tieneAnualidad)
                 <span
                     class="inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
                     <span class="w-2 h-2 me-1 bg-green-500 rounded-full"></span>
@@ -29,7 +29,7 @@
         </div>
     </div>
     {{-- FECHA Y BOTON DE CARGOS --}}
-    <div class="{{ $socioMembresia->estado == 'CAN' ? 'flex opacity-50 pointer-events-none' : 'flex' }}">
+    <div class="{{ $this->todasCanceladas ? 'flex opacity-50 pointer-events-none' : 'flex' }}">
         {{-- Fecha --}}
         <div class="w-full">
             <input type="date" id="inicio" wire:model="fechaDestino"
@@ -117,7 +117,7 @@
     <!--Linea -->
     <hr class="h-px my-4 bg-gray-300 border-0 dark:bg-gray-700">
     {{-- Seccion de cargos fijos --}}
-    <div class="{{ $socioMembresia->estado == 'CAN' ? ' opacity-50 pointer-events-none' : '' }}">
+    <div class="{{ $this->todasCanceladas ? ' opacity-50 pointer-events-none' : '' }}">
         <div class="grid grid-cols-2 gap-4">
             {{-- La tabla que contiene los cargos mensuales --}}
             <div>

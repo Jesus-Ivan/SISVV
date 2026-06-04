@@ -18,20 +18,19 @@
                     </h5>
                     <div class="font-normal text-gray-700 dark:text-gray-400 mb-1">
                         <p class="font-semibold">MEMBRESIA:</p>
-                        @php $totalMembresias = $socio->cuotasMembresia->count(); @endphp
-                        @if ($totalMembresias > 1)
-                            <p>Membresías múltiples</p>
-                        @elseif ($totalMembresias === 1)
-                            @php $sc = $socio->cuotasMembresia->first(); @endphp
-                            <p>{{ $sc->cuota->clave_membresia }}</p>
+                        @php $membresias = $socio->socioMembresias; $activas = $membresias->where('estado', '!=', 'CAN'); @endphp
+                        @if ($membresias->count() > 1)
+                            <p>Membresías múltiples ({{ $membresias->count() }})</p>
+                        @elseif ($membresias->count() === 1)
+                            <p>{{ $membresias->first()->clave_membresia }}</p>
                         @else
-                            <p>{{ $socio->socioMembresia?->clave_membresia ?? 'Sin membresías' }}</p>
+                            <p>Sin membresías</p>
                         @endif
                         <p class="font-semibold mt-1">Estado membresía:</p>
-                        @if ($totalMembresias === 1)
-                            <p>{{ $socio->cuotasMembresia->first()->cuota->tipo }}</p>
+                        @if ($activas->count() > 0)
+                            <p>{{ $activas->first()->estado }}</p>
                         @else
-                            <p>{{ $socio->socioMembresia?->estado ?? 'N/R' }}</p>
+                            <p>CAN</p>
                         @endif
                     </div>
                     <p class="font-normal text-gray-700 dark:text-gray-400">
@@ -40,11 +39,8 @@
 
                     @if ($socio)
                         <div>
-                            {{-- Acceso permitido si la principal no está cancelada, o existe al menos una adicional activa (RF 6) --}}
-                            @if (
-                                ($socio->socioMembresia && $socio->socioMembresia->estado !== 'CAN') ||
-                                $socio->cuotasMembresia->count() > 0
-                            )
+                            {{-- Acceso permitido si existe al menos una membresía activa (RF 6) --}}
+                            @if ($socio->socioMembresias->where('estado', '!=', 'CAN')->count() > 0)
                                 <p class="text-xl font-bold text-green-500">ACCESO PERMITIDO</p>
                             @else
                                 <p class="text-xl font-bold text-red-600">ACCESO DENEGADO</p>

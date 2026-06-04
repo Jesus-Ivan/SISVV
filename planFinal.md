@@ -34,7 +34,7 @@ Permitir que el sistema SISVV soporte la asignación de precios personalizados (
 | `socios_cuotas` | **Todas** las membresías del socio (principal + adicionales) + cargos fijos | Fuente única de cobros y precios personalizados |
 | `membresias` | Catálogo de membresías | `disponible` (boolean) — controla visibilidad en formularios |
 
-> **Arquitectura objetivo (Fase 4.2):** `socios_cuotas` será la fuente única de verdad para todos los cobros. Actualmente la membresía principal solo existe en `socios_membresias`; al implementar la Fase 4.2 se duplicará también en `socios_cuotas`, permitiendo asignarle `monto_personalizado` como cualquier otra cuota.
+> **Arquitectura actual (Fase 4.2 completada):** `socios_cuotas` es la fuente única de verdad para todos los cobros. La membresía principal existe en `socios_membresias` (estado/referencia) **y** en `socios_cuotas` (cobros y tarifa personalizada).
 
 **Principal = la membresía con el mayor `monto` base** (cuota tipo `MEN`) entre todas las del socio. Desempate: `created_at` asc, luego `id` asc.
 
@@ -59,7 +59,7 @@ Precio base en `cuotas.monto`. Aplica por defecto para socios sin `monto_persona
 ### RF 2.3 — Cuotas personalizadas
 Columna `monto_personalizado` (decimal, nullable) en `socios_cuotas`.
 
-> **Limitación actual (hasta Fase 4.2):** socios con una sola membresía la tienen únicamente en `socios_membresias`, que no tiene `monto_personalizado`. Al implementar la Opción B en Fase 4.2, la principal se duplicará en `socios_cuotas` y esta limitación desaparecerá.
+> **Limitación resuelta (Fase 4.2):** la principal ahora también vive en `socios_cuotas`, por lo que `monto_personalizado` está disponible para todos los socios sin excepción.
 
 ### RF 2.4 — Independencia entre socios
 `monto_personalizado` vive en la fila individual de `socios_cuotas`. No afecta a otros socios ni al catálogo.
@@ -78,7 +78,7 @@ EstadoCuenta::where('id_socio', $socio->id)
 Si existe → omitir; si no → facturar con `$socioCuota->monto_a_cobrar`.
 
 ### RF 2.6 — Impedir membresías idénticas
-Índice único compuesto `(id_socio, id_cuota)` en `socios_cuotas`.
+La unicidad de membresías se garantiza por lógica de aplicación en `SocioForm`. El índice único `(id_socio, id_cuota)` fue eliminado de la BD para permitir múltiples cargos fijos del mismo tipo (ej. varios lockers por socio).
 
 ### Estado de membresías
 - **Principal** (`socios_membresias.estado`): MEN, INA, ANU, CAN.
@@ -154,49 +154,39 @@ Al modificar `cuotas.monto` desde Sistemas, el cambio aplica automáticamente en
 #### 3.3 Interfaz de Estados de Cuenta ✅ COMPLETADA
 - Badge "Tarifa especial" (morado) en `livewire/recepcion/estados/principal.blade.php` si el socio tiene `monto_personalizado` en `socios_cuotas`.
 - Botón toggle "Tarifa especial" en barra de búsqueda para filtrar solo esos socios.
-- **Limitación temporal:** badge no aparece para socios con una sola membresía hasta Fase 4.2.
+- ~~Limitación temporal~~ resuelta con Fase 4.2: el badge aplica para todos los socios.
 
 #### 3.4 Reportes y exportaciones ✅ COMPLETADA
-- `SociosExport`: `sumar_cuotas()` usa `monto_a_cobrar`. Nuevas columnas "MEMBRESIAS CONTRATADAS" (lista principal + adicionales) y "TARIFA PERSONALIZADA" (SÍ/NO).
-- `CarteraVencidaExport`: nueva columna "MEMBRESIAS". Corregido crash por principal null. Filtro de cancelados ahora excluye solo si **todas** las membresías están canceladas (principal CAN y sin adicionales), vía helper `todasCanceladas()`.
-- **Nota Option B:** tras Fase 4.2, la columna monetaria "MEMBRESIA" de `SociosExport` empezará a incluir la principal (al estar también en `socios_cuotas`); `listarMembresias()` ya deduplica con `unique()`.
+- `SociosExport`: `sumar_cuotas()` usa `monto_a_cobrar`. Columnas "MEMBRESIAS CONTRATADAS" y "TARIFA PERSONALIZADA". Eliminada columna "CLAVE MEMBRESIA" (redundante).
+- `CarteraVencidaExport`: nueva columna "MEMBRESIAS". Corregido crash por principal null. Filtro de cancelados vía `todasCanceladas()`.
+- `RecibosExport`: columna "TIPO CUOTA" muestra todas las membresías del socio separadas por coma.
 
 ---
 
 ### FASE 4 — Módulo de Sistemas y Facturación Masiva
 
-#### 4.1 Modal "Editar Cuotas" en Sistemas ❌ Pendiente
-- Botón "Editar Cuotas" por socio en `livewire/sistemas/recepcion/socios/lista-socios.blade.php`.
-- Modal con listado de cuotas (membresías + cargos fijos) campo `monto_personalizado`.
-- Validación contra duplicados antes de tocar la BD.
+#### 4.1 Página "Editar Cuotas" en Sistemas ✅ COMPLETADA
+- Botón de editar por socio activo en `livewire/sistemas/recepcion/socios/lista-socios.blade.php`.
+- Página nueva (`sistemas/recepcion/editar-cuotas/{socio}`) con tabla de todas las cuotas del socio.
+- Campo editable de `monto_personalizado` por cuota, botón "Limpiar" por fila, botón "Guardar cambios".
+- Validación `nullable|numeric|min:0|max:99999999.99` con mensajes de error visibles.
+- Muestra todas las membresías activas del socio como chips en el encabezado.
 
-#### 4.2 Refactor de `CargosController::cargarMensualidades` + Opción B ❌ Pendiente
+#### 4.2 Refactor de `CargosController::cargarMensualidades` + Opción B ✅ COMPLETADA
 
-Este bloque agrupa tres cambios que deben implementarse juntos:
+**A) Migración Opción B — principal en `socios_cuotas`** ✅
+- Migración `2026_05_29_152713_backfill_principal_into_socios_cuotas.php`: inserta la membresía principal en `socios_cuotas` para socios que solo la tenían en `socios_membresias`.
+- `SocioForm.store()` y `update()` actualizados para escribir la principal en ambas tablas.
 
-**A) Migración Opción B — principal en `socios_cuotas`**
-- Nueva migración: para cada socio, insertar su membresía principal en `socios_cuotas` (backfill desde `socios_membresias`).
-- `socios_membresias` queda como tabla de estado/referencia únicamente.
-- `SocioForm.store()` y `update()`: además de escribir en `socios_membresias`, escribir la principal también en `socios_cuotas`.
-- El badge de Fase 3.3 y `monto_personalizado` quedan disponibles para **todos** los socios.
+**B) Refactor de `cargarMensualidades`** ✅
+- Eliminada lógica de IDs hardcodeados.
+- Lee dinámicamente `socios_cuotas` de cada socio, usa `monto_a_cobrar`, idempotente por `groupBy+count`.
 
-**B) Refactor de `cargarMensualidades`**
-- Eliminar la lógica de conteos agrupados y `reset()`.
-- Nueva lógica: iterar únicamente `socios_cuotas` (ya incluye la principal):
+**C) Aplicación de `monto_a_cobrar`** ✅
+- Resuelto junto con B. `cargarMensualidades` usa `$sc->monto_a_cobrar` directamente.
 
-```
-Para cada socio activo (al menos una membresía no-CAN en socios_membresias):
-    Para cada SocioCuota del socio:
-        Si NO existe EstadoCuenta para (id_socio, id_cuota, mes, año):
-            Crear EstadoCuenta con monto_a_cobrar
-```
-
-**C) Aplicación de `monto_a_cobrar` (Fase 4.3)**
-- Al iterar `SocioCuota` directamente, se usa `$sc->monto_a_cobrar` — el accessor ya existe.
-- No requiere trabajo adicional.
-
-#### 4.3 Aplicación de `monto_a_cobrar` ❌ Pendiente
-Se resuelve junto con Fase 4.2 al usar instancias `SocioCuota` con el accessor.
+#### 4.3 Aplicación de `monto_a_cobrar` ✅ COMPLETADA
+Resuelta junto con Fase 4.2.
 
 #### 4.4 Actualización masiva de cuotas base ✅ Sin cambios requeridos
 `App/Livewire/Sistemas/Recepcion/Cuotas.php` ya modifica `cuotas.monto`. El cambio aplica automáticamente.
@@ -251,9 +241,9 @@ Socio con dos membresías. Anualizar solo una. Verificar que la otra conserva su
 | Fase 3.2 — Pórtico (acceso por estado, no solo existencia) | ✅ Completada |
 | Fase 3.3 — Estados de Cuenta UI (badge + filtro tarifa especial) | ✅ Completada (limitación hasta Fase 4.2) |
 | Fase 3.4 — Exportaciones (SociosExport, CarteraVencidaExport) | ✅ Completada |
-| Fase 4.1 — Modal "Editar Cuotas" en Sistemas | ❌ Pendiente |
-| Fase 4.2 — Refactor cargarMensualidades (reset bug + adicionales) | ❌ Pendiente |
-| Fase 4.3 — Aplicación monto_a_cobrar (se resuelve con 4.2) | ❌ Pendiente |
+| Fase 4.1 — Página "Editar Cuotas" en Sistemas | ✅ Completada |
+| Fase 4.2 — Option B + Refactor cargarMensualidades | ✅ Completada |
+| Fase 4.3 — Aplicación monto_a_cobrar (resuelta con 4.2) | ✅ Completada |
 | Fase 4.5 — Consumo mínimo agregado (mayor entre activas) | ❌ Pendiente |
 | Fase 4.6 — Anualidad por membresía individual | ❌ Pendiente |
 

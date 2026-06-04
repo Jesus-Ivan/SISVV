@@ -20,10 +20,20 @@ class Socio extends Model
     protected $guarded = [];
     protected $primaryKey = 'id';
 
-    // Membresía principal del socio (fuente de verdad: socios_membresias)
+    // Todas las membresías del socio (nueva relación principal)
+    public function socioMembresias(): HasMany
+    {
+        return $this->hasMany(SocioMembresia::class, 'id_socio');
+    }
+
+    // Accessor de compatibilidad — devuelve siempre una fila (nunca null).
+    // Prioriza membresías activas sobre CAN para no romper consumidores que
+    // acceden a ->estado sin operador null-safe (POS, ReportesController).
     public function socioMembresia(): HasOne
     {
-        return $this->hasOne(SocioMembresia::class, 'id_socio');
+        return $this->hasOne(SocioMembresia::class, 'id_socio')
+            ->orderByRaw("FIELD(estado, 'CAN') ASC")
+            ->orderBy('id');
     }
 
     // Todas las cuotas asignadas al socio en socios_cuotas
@@ -45,46 +55,4 @@ class Socio extends Model
         return $this->hasMany(IntegrantesSocio::class, 'id_socio');
     }
 
-    // Devuelve la membresía adicional con mayor monto base (usada al rotar la principal)
-    public function calcularPrincipalPorValor(): ?SocioCuota
-    {
-        return $this->cuotasMembresia()
-            ->with('cuota')
-            ->get()
-            ->sortByDesc(fn($sc) => $sc->cuota->monto)
-            ->first();
-    }
-
-    // Bandera para evitar re-entrada del observer al hacer delete interno
-    private static bool $sincronizando = false;
-
-    // Red de seguridad: garantiza que socios_membresias tenga principal cuando el observer detecta
-    // un cambio en socios_cuotas fuera del flujo de SocioForm (ej. cargos fijos, eliminaciones externas).
-    // SocioForm gestiona rotaciones completas; este método solo cubre el caso "sin principal".
-    public function sincronizarMembresiaLegacy(): void
-    {
-        if (self::$sincronizando) return;
-        self::$sincronizando = true;
-
-        try {
-            // Si ya existe una fila en socios_membresias, SocioForm la gestiona
-            if ($this->socioMembresia()->exists()) return;
-
-            // Sin principal: promover el adicional de mayor monto
-            $mayor = $this->cuotasMembresia()->with('cuota')->get()
-                ->sortByDesc(fn($sc) => $sc->cuota?->monto ?? 0)
-                ->first();
-
-            if (!$mayor?->cuota?->clave_membresia) return;
-
-            SocioMembresia::create([
-                'id_socio'         => $this->id,
-                'clave_membresia'  => $mayor->cuota->clave_membresia,
-                'estado'           => 'MEN',
-            ]);
-
-        } finally {
-            self::$sincronizando = false;
-        }
-    }
 }

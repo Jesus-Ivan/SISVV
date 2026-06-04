@@ -9,7 +9,7 @@ Requisitos Funcionales:
 2.4.	Las cuotas personalizadas de un socio no deben interferir con otros socios.
 2.5.	El sistema debe evitar cargar las cuotas en el mes X, en caso de ya existir los registros en el mismo periodo.
 2.6.	El sistema debe impedir la asignación de dos membresías idénticas para evitar errores de cobro duplicado.
-3.	El sistema, mediante el departamento de “Recepción”, debe permitir la configuración de cuotas personalizadas (membresía o cargo fijos) por cada socio. 
+3.	El sistema, mediante el departamento de “Sistemas”, debe permitir la configuración de cuotas personalizadas (membresía o cargo fijos) por cada socio. 
 4.	El sistema debe registrar en el estado de cuenta las cuotas personalizadas correspondientes a cada membresía activa del socio.
 5.	El sistema debe generar los reportes de SOCIOS con la información de las membresías y las cuotas relacionadas.
 6.	El sistema mostrara de forma clara todas las membresías del socio al momento de escanear su número o realizar la búsqueda.

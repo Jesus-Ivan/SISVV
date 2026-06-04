@@ -9,11 +9,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table("socios_cuotas", function (Blueprint $table) {
-            // Homologar tipos con las tablas referenciadas (socios e cuotas usan integer unsigned)
-            $table->unsignedInteger("id_socio")->change();
-            $table->unsignedInteger("id_cuota")->nullable()->change();
+        // Homologar tipos con las tablas referenciadas (socios y cuotas usan int unsigned).
+        // Se usa SQL crudo en lugar de ->change() para no depender de doctrine/dbal (no instalado).
+        DB::statement("ALTER TABLE socios_cuotas MODIFY id_socio INT UNSIGNED NOT NULL");
+        DB::statement("ALTER TABLE socios_cuotas MODIFY id_cuota INT UNSIGNED NULL");
 
+        Schema::table("socios_cuotas", function (Blueprint $table) {
             // Columna para precio especial por socio; null = usa tarifa base del catalogo (RF 2.3)
             $table->decimal("monto_personalizado", 10, 2)->nullable()->after("id_cuota");
 
@@ -29,8 +30,10 @@ return new class extends Migration
             $table->dropForeign(["id_socio"]);
             $table->dropForeign(["id_cuota"]);
             $table->dropColumn("monto_personalizado");
-            $table->integer("id_socio")->change();
-            $table->integer("id_cuota")->nullable()->change();
         });
+
+        // Revertir tipos a su definición original (signed) sin depender de doctrine/dbal
+        DB::statement("ALTER TABLE socios_cuotas MODIFY id_socio INT NOT NULL");
+        DB::statement("ALTER TABLE socios_cuotas MODIFY id_cuota INT NULL");
     }
 };

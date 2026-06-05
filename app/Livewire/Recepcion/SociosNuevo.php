@@ -47,7 +47,14 @@ class SociosNuevo extends Component
 
     public function agregarMiembro()
     {
-        $this->formSocio->crearMiembro();
+        try {
+            $this->formSocio->crearMiembro();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $th) {
+            session()->flash('fail', $th->getMessage());
+            $this->dispatch('open-action-message');
+        }
     }
     public function borrarMiembro($temp)
     {

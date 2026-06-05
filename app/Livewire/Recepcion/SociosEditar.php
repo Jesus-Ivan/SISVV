@@ -16,6 +16,7 @@ class SociosEditar extends Component
 {
     use WithFileUploads;
     public SocioForm $form;
+    public bool $reducirIntegrantes = false;
 
     #[Computed()]
     public function membresias()
@@ -102,31 +103,46 @@ class SociosEditar extends Component
             return;
         }
 
-        //Si la nueva seleccion deja al socio solo con membresias INDIVIDUAL y existen integrantes,
-        //pedimos confirmacion porque la actualizacion eliminara a los integrantes
+        $totalIntegrantes = IntegrantesSocio::where('id_socio', $this->form->socio->id)->count();
+
         if ($this->revisarPerdidaIntegrantes()) {
-            $this->dispatch('open-modal',  name: 'modalAdvertencia');
+            // Todas individuales y < 2: se perderán TODOS los integrantes
+            $this->reducirIntegrantes = false;
+            $this->dispatch('open-modal', name: 'modalAdvertencia');
+        } elseif ($this->form->esDobleIndividual() && $totalIntegrantes > 1) {
+            // Doble individual con más de 1 integrante: se reducirá a 1
+            $this->reducirIntegrantes = true;
+            $this->dispatch('open-modal', name: 'modalAdvertencia');
         } else {
             $this->actualizarSocio();
         }
     }
 
-    public function confirmarActualizacion(){
-        //Intentamos guardar cambios al socio con el objeto del form
+    public function confirmarActualizacion()
+    {
         try {
-            $this->form->confirmUpdate();
-            //Enviamos flash message, al action-message
+            if ($this->reducirIntegrantes) {
+                // Conservar solo el integrante más antiguo, eliminar el resto
+                $integrantes = IntegrantesSocio::where('id_socio', $this->form->socio->id)
+                    ->orderBy('id')->get();
+                foreach ($integrantes->skip(1) as $extra) {
+                    if ($extra->img_path_integrante) {
+                        \Illuminate\Support\Facades\Storage::disk('public')->delete($extra->img_path_integrante);
+                    }
+                    $extra->delete();
+                }
+                $this->form->update();
+            } else {
+                $this->form->confirmUpdate();
+            }
             session()->flash('success', "Socio actualizado con exito");
         } catch (ValidationException $e) {
-            //Si es una excepcion de validacion, volverla a lanzar a la vista
             throw $e;
         } catch (\Throwable $th) {
-            //Enviamos flash message, al action-message (En cualquier otro caso de excepcion)
             session()->flash('fail', $th->getMessage());
         }
-        //Emitir evento para cerrar el modal
+        $this->reducirIntegrantes = false;
         $this->dispatch('close-modal');
-        //emitir evento para mostrar el action-message
         $this->dispatch('open-action-message');
     }
 
@@ -147,7 +163,7 @@ class SociosEditar extends Component
         //emitir evento para mostrar el action-message
         $this->dispatch('open-action-message');
     }
-    //Determina si al guardar se perderan los integrantes (todas las membresias activas quedarian INDIVIDUAL)
+    //Determina si al guardar se perderan los integrantes (todas las membresias activas quedarian INDIVIDUAL y menos de 2)
     private function revisarPerdidaIntegrantes(): bool
     {
         $totalIntegrantes = \App\Models\IntegrantesSocio::where('id_socio', $this->form->socio->id)->count();
@@ -155,7 +171,7 @@ class SociosEditar extends Component
             return false;
         }
 
-        //Las membresías canceladas se eliminarán, no cuentan para decidir si quedan integrantes
+        $individualesCount = 0;
         foreach ($this->form->claves_membresia as $clave) {
             $estado = $this->form->estados_membresia[$clave] ?? 'MEN';
             if ($estado === 'CAN') {
@@ -163,12 +179,13 @@ class SociosEditar extends Component
             }
             $membresia = Membresias::find($clave);
             if ($membresia && strpos($membresia->descripcion, 'INDIVIDUAL') === false) {
-                return false;
+                return false; // tiene al menos una no-individual → no se pierden integrantes
             }
+            $individualesCount++;
         }
 
-        //Todas las activas son INDIVIDUAL (o no quedan activas): se perderian los integrantes
-        return true;
+        // Solo se perderían los integrantes si todas son individuales Y hay menos de 2
+        return $individualesCount < 2;
     }
 
     public function registrarIntegrante()

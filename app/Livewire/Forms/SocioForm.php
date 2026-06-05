@@ -321,6 +321,10 @@ class SocioForm extends Form
     //Crea un miembro de forma temporal(utilizado en la vista socios-nuevo.blade.php)
     public function crearMiembro()
     {
+        if ($this->esDobleIndividual() && count($this->integrantes) >= 1) {
+            throw new \Exception('Con dos membresías individuales solo se permite registrar un familiar.');
+        }
+
         //Validamos las entradas
         $validated = $this->validate([
             'nombre_integrante' => "required|max:30",
@@ -456,6 +460,13 @@ class SocioForm extends Form
     //Este metodo sirve para registrar un integrante, hacia un socio existente
     public function registerIntegrante()
     {
+        if ($this->esDobleIndividual()) {
+            $existentes = IntegrantesSocio::where('id_socio', $this->socio->id)->count();
+            if ($existentes >= 1) {
+                throw new \Exception('Con dos membresías individuales solo se permite registrar un familiar.');
+            }
+        }
+
         //Validamos las entradas
         $validated = $this->validate([
             'nombre_integrante' => "required|max:50",
@@ -511,6 +522,24 @@ class SocioForm extends Form
         }
     }
 
+    // Devuelve true si el socio solo tiene membresías INDIVIDUAL activas y son exactamente 2 (regla: 1 familiar permitido)
+    public function esDobleIndividual(): bool
+    {
+        $clavesActivas = !empty($this->estados_membresia)
+            ? array_keys(array_filter($this->estados_membresia, fn($e) => !empty($e) && $e !== 'CAN'))
+            : $this->claves_membresia;
+
+        if (count($clavesActivas) < 2) return false;
+
+        $individualesCount = 0;
+        foreach ($clavesActivas as $clave) {
+            $membresia = Membresias::find($clave);
+            if (!$membresia || strpos($membresia->descripcion, 'INDIVIDUAL') === false) return false;
+            $individualesCount++;
+        }
+        return $individualesCount >= 2;
+    }
+
     //Sincroniza claves_membresia basado en estados_membresia, y evalúa si se permite registrar integrantes
     public function comprobarMultiples(): void
     {
@@ -538,16 +567,19 @@ class SocioForm extends Form
             return;
         }
 
+        $individualesCount = 0;
         $todasIndividuales = true;
         foreach ($clavesActivas as $clave) {
             $membresia = Membresias::find($clave);
-            if ($membresia && strpos($membresia->descripcion, "INDIVIDUAL") === false) {
+            if ($membresia && strpos($membresia->descripcion, "INDIVIDUAL") !== false) {
+                $individualesCount++;
+            } else {
                 $todasIndividuales = false;
-                break;
             }
         }
 
-        if ($todasIndividuales) {
+        // Bloquear solo si TODAS son individuales Y hay menos de 2
+        if ($todasIndividuales && $individualesCount < 2) {
             $this->reset('nombre_integrante', 'apellido_p_integrante', 'apellido_m_integrante', 'img_path_integrante', 'fecha_nac', 'parentesco', 'integrantes');
             $this->registro_permitido = false;
         } else {

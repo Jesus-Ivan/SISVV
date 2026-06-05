@@ -699,10 +699,17 @@
                 </svg>
                 <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¡¡ Pérdida de integrantes !!
                 </h3>
-                <p class="text-gray-500 dark:text-gray-400">
-                    Todas las membresías seleccionadas son de tipo INDIVIDUAL.
-                    Al guardar se eliminarán los integrantes registrados actualmente.
-                </p>
+                @if ($reducirIntegrantes)
+                    <p class="text-gray-500 dark:text-gray-400">
+                        Con dos membresías individuales solo se permite un familiar.
+                        Al guardar se eliminarán los integrantes adicionales, conservando únicamente el primero registrado.
+                    </p>
+                @else
+                    <p class="text-gray-500 dark:text-gray-400">
+                        Todas las membresías seleccionadas son de tipo INDIVIDUAL.
+                        Al guardar se eliminarán los integrantes registrados actualmente.
+                    </p>
+                @endif
                 <p class="text-gray-500 dark:text-gray-400">¿Deseas continuar?</p>
             </div>
         </x-slot>

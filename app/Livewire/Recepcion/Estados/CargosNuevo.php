@@ -155,14 +155,6 @@ class CargosNuevo extends Component
                 }
             }
         }
-        // Usar monto_personalizado si el socio tiene uno asignado para esta cuota
-        $socioCuota = SocioCuota::where('id_socio', $this->socio->id)
-            ->where('id_cuota', $cuota['id'])
-            ->first();
-        if ($socioCuota && !is_null($socioCuota->monto_personalizado)) {
-            $cuota['monto'] = $socioCuota->monto_personalizado;
-        }
-
         //Transformamos la fecha, en instancia de carbon
         $mensualidad = Carbon::parse($cuota['fecha']);
         //Concatenamos el nombre del mes y año a la descripcion de la cuota.

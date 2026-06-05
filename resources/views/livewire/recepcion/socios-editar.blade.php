@@ -258,7 +258,7 @@
                                     <select wire:model.live="form.estados_membresia.{{ $clave }}"
                                         wire:change="comprobarMembresias"
                                         class="text-xs py-1 px-2 rounded-md border border-gray-300 bg-white text-gray-900 w-32 shrink-0 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                        <option value="">Seleccionar</option>
+                                        <option value="" @disabled(in_array($clave, $form->claves_originales))>Seleccionar</option>
                                         <option value="MEN">Activa</option>
                                         <option value="INA">Inactiva</option>
                                         <option value="CAN">Cancelada</option>
@@ -270,7 +270,7 @@
                             @endforeach
                         </div>
                         <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                            Selecciona "Seleccionar" para deseleccionar una membresía o "Cancelada" para eliminarla.
+                            Selecciona "Cancelada" para dar de baja una membresía guardada.
                         </p>
                         @error('form.claves_membresia')
                             <x-input-error messages="{{ $message }}" />

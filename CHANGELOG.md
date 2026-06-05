@@ -493,3 +493,186 @@ El índice único `(id_socio, id_cuota)` agregado en Fase 1 impedía que un soci
 ### Impacto
 - Socios con múltiples lockers o resguardos en producción ya no perderán registros al migrar
 - La unicidad de membresías sigue garantizada por lógica de aplicación en `SocioForm`
+
+---
+
+## Fix — Compatibilidad de migraciones con producción
+**Fecha:** 2026-06-04
+
+### Problema
+Dos migraciones fallaban al ejecutarse en producción por diferencias entre el entorno local y el de producción.
+
+### Archivos modificados
+
+#### `database/migrations/2026_05_29_175555_drop_unique_index_from_socios_cuotas.php`
+- Reemplazado `Schema::getIndexes()` (no existe en Laravel 10) por `DB::select("SHOW INDEX FROM socios_cuotas WHERE Key_name = '...'")`
+- El índice solo se elimina si existe, evitando error en producción donde nunca fue creado
+
+#### `database/migrations/2026_05_22_142722_alter_socios_cuotas_add_monto_personalizado.php`
+- Reemplazado `->change()` (requiere `doctrine/dbal`, no instalado) por `DB::statement("ALTER TABLE socios_cuotas MODIFY ...")`
+- `down()` corregido de la misma forma
+
+---
+
+## Fase A — Backfill adicionales en `socios_membresias`
+**Fecha:** 2026-06-04
+
+### Contexto
+Con la nueva arquitectura todas las membresías del socio (no solo la principal) deben tener fila en `socios_membresias`. Esta migración sincroniza los datos históricos existentes.
+
+### Archivos creados
+
+#### `database/migrations/2026_06_04_000000_backfill_adicionales_into_socios_membresias.php`
+- Inserta en `socios_membresias` las membresías adicionales que existen en `socios_cuotas` pero no tienen fila correspondiente
+- Filtros: `clave_membresia IS NOT NULL`, `clave_membresia != 'N/A'`, `tipo IN ('MEN','INA','ANU')` (evita estados inválidos como `EST`)
+- Guardia `NOT EXISTS` para evitar duplicados
+- Resultado: 12 filas insertadas — todos los socios con membresías adicionales quedaron sincronizados
+- `down()`: no reversible automáticamente (sin marca distintiva); restaurar desde respaldo
+
+---
+
+## Fase B — Modelo `Socio`: arquitectura de múltiples membresías
+**Fecha:** 2026-06-04
+
+### Archivos modificados
+
+#### `app/Models/Socio.php`
+- **Agregada** relación `socioMembresias()` HasMany: devuelve todas las membresías del socio desde `socios_membresias`
+- **Modificada** `socioMembresia()` HasOne → accessor de compatibilidad con orden `FIELD(estado,'CAN') ASC, id ASC`: prioriza membresías activas sobre canceladas, nunca devuelve `null` (evita crash en POS y ReportesController que acceden a `->estado` sin `?->`)
+- **Eliminado** `calcularPrincipalPorValor()`: concepto de "membresía principal" desaparece con la nueva arquitectura
+- **Eliminado** `sincronizarMembresiaLegacy()` y la bandera `$sincronizando`: ya no se necesita sincronización legacy
+
+---
+
+## Fase D — Observer desactivado
+**Fecha:** 2026-06-04
+
+### Contexto
+`SocioCuotaObserver` invocaba `sincronizarMembresiaLegacy()`, método eliminado en Fase B. Se desregistra para evitar errores.
+
+### Archivos modificados
+
+#### `app/Providers/AppServiceProvider.php`
+- Eliminada la línea `SocioCuota::observe(SocioCuotaObserver::class)` y sus imports
+
+#### `app/Observers/SocioCuotaObserver.php`
+- Vaciado de lógica — ya no invoca métodos eliminados del modelo
+
+---
+
+## Fase C — Refactor de `SocioForm`: múltiples membresías en ambas tablas
+**Fecha:** 2026-06-04
+
+### Contexto
+`SocioForm` pasa a escribir cada membresía en `socios_membresias` (estado) **y** `socios_cuotas` (cobro) simultáneamente. Se elimina la lógica de rotación de principal (~60 líneas).
+
+### Archivos modificados
+
+#### `app/Livewire/Forms/SocioForm.php`
+- **`setSocio()`**: lee membresías directamente de `socioMembresias` (fuente de verdad del estado) en lugar de combinar principal + adicionales de dos tablas. Agrega propiedad `$claves_originales` con las claves al momento de abrir el formulario
+- **`store()`**: crea una fila en `socios_membresias` (estado `MEN`) **y** en `socios_cuotas` por **cada** membresía seleccionada. Eliminada la distinción principal vs adicionales
+- **`update()` — cancelación total**: borra todas las filas de `socios_membresias` excepto la de mayor monto (queda como `CAN`); borra todas las de `socios_cuotas`. Usa `(id_socio, clave_membresia)` como clave de upsert
+- **`update()` — caso normal**: upsert por `(id_socio, clave_membresia)` en `socios_membresias` para cada activa; borra de ambas tablas las que ya no son activas (cancelación parcial sin rastro individual)
+- Agregada propiedad `$claves_originales = []`
+
+#### `resources/views/livewire/recepcion/socios-editar.blade.php`
+- Opción "Seleccionar" deshabilitada para membresías ya guardadas (`@disabled(in_array($clave, $form->claves_originales))`)
+- Texto de ayuda actualizado: indica que "Cancelada" es la única vía para dar de baja una membresía guardada
+
+---
+
+## Fase E — `CargosController`: soporte de múltiples membresías
+**Fecha:** 2026-06-04
+
+### Archivos modificados
+
+#### `app/Http/Controllers/CargosController.php`
+
+**`cargarMensualidades()`**
+- Reemplazado `SocioMembresia::...->get()` por `->distinct()->pluck('id_socio')`: evita procesar el mismo socio N veces cuando tiene múltiples membresías
+- Eliminado import `Builder` (ya no usado)
+
+**`calcularRecargos()`**
+- Mismo fix DISTINCT que `cargarMensualidades()`
+- Corregida la query mal estructurada con `orWhere` al inicio (se reemplazó por `whereNot` directo)
+
+**`cargarDiferencias()`**
+- Reescrita la query: `GROUP BY id_socio + MAX(consumo_minimo)` por socio entre sus membresías MEN/ANU activas. Antes solo tomaba la membresía principal
+- Decisión de negocio aplicada: socios ANU también reciben cargo por consumo mínimo (igual que MEN); socios INA quedan excluidos
+- Agregada idempotencia obligatoria: verifica existencia del cargo antes de crearlo, evita duplicados al ejecutar dos veces en el mismo mes (bug preexistente)
+
+**`activarAnualidad()`**
+- Busca la fila exacta por `(id_socio, clave_mem_f)` en lugar de `->first()` arbitrario
+
+**`desactivarAnualidad()`**
+- Mismo fix que `activarAnualidad()`
+- Eliminada la línea redundante `$socio_membresia->clave_membresia = $anualidad->clave_mem_f`
+
+---
+
+## Fase F — UI, acceso y validación de ventas
+**Fecha:** 2026-06-04
+
+### Archivos modificados
+
+#### `app/Livewire/Acceso/Socios/Principal.php`
+- Eager load cambiado a `socioMembresias.membresia` (plural)
+
+#### `resources/views/livewire/acceso/socios/principal.blade.php`
+- Display de membresía usa `socioMembresias` (muestra todas con sus estados)
+- Lógica de acceso: **ACCESO PERMITIDO** si `socioMembresias->where('estado','!=','CAN')->count() > 0`
+
+#### `app/Livewire/Recepcion/Estados/CargosNuevo.php`
+- `mount()`: usa orden `FIELD(estado,'CAN') ASC` para obtener la membresía de compatibilidad
+- `mount()`: check ANU usa `SocioMembresia::where(...)->where('estado','ANU')->exists()` (cualquier membresía ANU, no solo la primera)
+- Agregadas computed properties `todasCanceladas()` y `tieneAnualidad()`
+- `addCuota()`: valida que la cuota corresponda a **cualquier** membresía activa del socio, no solo a la primera
+
+#### `resources/views/livewire/recepcion/estados/cargos-nuevo.blade.php`
+- Badge "Anualidad activa" usa `$this->tieneAnualidad`
+- Deshabilitar formulario usa `$this->todasCanceladas`
+
+#### Validación de ventas — 4 archivos (bug crítico corregido)
+Bug: `SocioMembresia::where('id_socio',...)->first()` devolvía fila arbitraria; un socio con CAN+MEN podía ser bloqueado de comprar. Corregido en:
+- `app/Livewire/Recepcion/Ventas/Nueva/SearchBar.php`
+- `app/Livewire/Recepcion/Ventas/Nueva/PagosModalBody.php`
+- `app/Livewire/Forms/VentaForm.php` (`setSocioPago`)
+- `app/Livewire/Puntos/Ventas/Nueva/Container.php` (POS)
+
+Nueva lógica en los 4 archivos: `whereNot('estado','CAN')->exists()` — acceso si existe al menos una membresía activa
+
+---
+
+## Fase G — Exports actualizados para múltiples membresías
+**Fecha:** 2026-06-04
+
+### Archivos modificados
+
+#### `app/Exports/SociosExport.php`
+- Eliminado `JOIN socios_membresias` que duplicaba socios con múltiples membresías
+- Reemplazado por `Socio::with('socioMembresias')->whereHas('socioMembresia')->get()`
+- Columna **ESTADO**: lista todos los estados del socio separados por coma (ej. `INA, MEN`)
+- Columna **MEMBRESIAS CONTRATADAS**: usa `socioMembresias->pluck('clave_membresia')->unique()->implode(', ')`
+- Método `listarMembresias()` actualizado para recibir el modelo `Socio` directamente
+
+#### `app/Exports/RecibosExport.php`
+- Fallback `SocioMembresia::where('id_socio',...)->first()` en `tipoCuota()` reemplazado por query con orden `FIELD(estado,'CAN') ASC, id ASC` — devuelve la membresía más relevante
+
+#### `app/Exports/CarteraVencidaExport.php`
+- Sin cambios de código — lógica ya compatible con la nueva arquitectura. Verificado sin regresiones
+
+---
+
+## Fase H — Pantalla de anualidades: visualización de membresías
+**Fecha:** 2026-06-04
+
+### Contexto
+Sin tocar la lógica del módulo de anualidades, se agrega solo la visualización de las membresías activas del socio. Las Fases 4.5A y 4.6 (dropdown filtrado y vinculación por membresía individual) quedan pendientes por restricción del equipo.
+
+### Archivos modificados
+
+#### `app/Livewire/Sistemas/Recepcion/Anualidad/Nueva.php`
+- Agregada computed property `membresiasActivas()`: devuelve las membresías no canceladas del socio desde `socios_membresias`
+
+#### `resources/views/livewire/sistemas/recepcion/anualidad/nueva.blade.php`
+- Reemplazado el display estático "Membresía / Estado" por una lista con todas las membresías activas del socio (una por línea con su estado)

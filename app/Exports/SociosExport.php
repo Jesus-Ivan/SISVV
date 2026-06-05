@@ -16,18 +16,8 @@ class SociosExport implements FromArray
 
     public function array(): array
     {
-        //Array auxiliar de los socios
-        $socios = Socio::query()
-            ->join('socios_membresias', 'socios.id', '=', 'socios_membresias.id_socio')
-            ->select(
-                'socios.id',
-                'socios.nombre',
-                'socios.apellido_p',
-                'socios.apellido_m',
-                'socios_membresias.clave_membresia',
-                'socios_membresias.estado',
-            )
-            ->get();
+        //Un socio por fila — sin JOIN para evitar duplicados con múltiples membresías
+        $socios = Socio::with('socioMembresias')->whereHas('socioMembresia')->get();
         //Agregamos el encabezado
         $final[] = [
             'id' => 'ID',
@@ -55,8 +45,8 @@ class SociosExport implements FromArray
                 $final[] = [
                     'id' => $socio->id,
                     'nombre' =>  $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m,
-                    'estado' => $socio->estado,
-                    'membresias' => $this->listarMembresias($socio->clave_membresia, $cuotas),
+                    'estado' => $socio->socioMembresias->pluck('estado')->implode(', '),
+                    'membresias' => $this->listarMembresias($socio),
                     'tarifa_especial' => $cuotas->whereNotNull('monto_personalizado')->isNotEmpty() ? 'SÍ' : 'NO',
                     'locker' => $this->sumar_cuotas(array_column($cuotas_locker, 'id'), $cuotas),
                     'resguardo' => $this->sumar_cuotas(array_column($cuotas_resg_carr, 'id'), $cuotas),
@@ -81,21 +71,12 @@ class SociosExport implements FromArray
         return $suma;
     }
 
-    //Lista todas las membresias del socio (principal + adicionales) separadas por comas (RF 5)
-    private function listarMembresias($clavePrincipal, $cuotas): string
+    //Lista todas las membresías del socio desde socios_membresias separadas por comas (RF 5)
+    private function listarMembresias(Socio $socio): string
     {
-        $claves = collect();
-        //Membresia principal desde socios_membresias
-        if (!empty($clavePrincipal)) {
-            $claves->push($clavePrincipal);
-        }
-        //Membresias adicionales desde socios_cuotas (cuotas con clave_membresia)
-        foreach ($cuotas as $sc) {
-            $clave = $sc->cuota->clave_membresia ?? null;
-            if (!empty($clave) && $clave !== 'N/A') {
-                $claves->push($clave);
-            }
-        }
-        return $claves->unique()->implode(', ');
+        return $socio->socioMembresias
+            ->pluck('clave_membresia')
+            ->unique()
+            ->implode(', ');
     }
 }

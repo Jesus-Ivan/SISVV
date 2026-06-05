@@ -54,6 +54,16 @@ class Nueva extends Component
     }
 
     #[Computed()]
+    public function membresiasActivas()
+    {
+        if (!$this->socio) return collect();
+        return SocioMembresia::with('membresia')
+            ->where('id_socio', $this->socio['id'])
+            ->whereNot('estado', 'CAN')
+            ->get();
+    }
+
+    #[Computed()]
     public function cuotas()
     {
         return Cuota::where('descripcion', 'like', '%' . $this->search . '%')

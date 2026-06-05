@@ -192,8 +192,11 @@ class RecibosExport implements FromArray
             ->values();
 
         if ($claves->isEmpty()) {
-            $sm = SocioMembresia::where('id_socio', $id_socio)->first();
-            return $sm ? $sm->clave_membresia : 'N/R';
+            $sm = SocioMembresia::where('id_socio', $id_socio)
+                ->orderByRaw("FIELD(estado, 'CAN') ASC")
+                ->orderBy('id')
+                ->first();
+            return $sm?->clave_membresia ?? 'N/R';
         }
 
         return $claves->implode(', ');

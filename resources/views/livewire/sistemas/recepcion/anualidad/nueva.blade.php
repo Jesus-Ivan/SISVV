@@ -16,13 +16,16 @@
                     {{ $socio ? $socio['nombre'] . ' ' . $socio['apellido_p'] . ' ' . $socio['apellido_m'] : '' }}
                 </p>
             </div>
-            <div class="grid grid-cols-2">
-                <p>
-                    Membresia: {{ $this->socio_membresia ? $this->socio_membresia->membresia->descripcion : '' }}
-                </p>
-                <p>
-                    Estado: {{ $this->socio_membresia ? $this->socio_membresia->estado : '' }}
-                </p>
+            <div class="mt-1">
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-400">Membresías:</p>
+                @forelse ($this->membresiasActivas as $sm)
+                    <p class="text-sm text-gray-900 dark:text-white">
+                        • {{ $sm->membresia->descripcion }}
+                        <span class="text-xs text-gray-500">({{ $sm->estado }})</span>
+                    </p>
+                @empty
+                    <p class="text-sm text-gray-400">Sin membresías activas</p>
+                @endforelse
             </div>
             @error('socio')
                 <x-input-error messages="{{ $message }}" />

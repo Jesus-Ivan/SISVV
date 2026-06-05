@@ -249,10 +249,8 @@ class CargosController extends Controller
             $socio_membresia = SocioMembresia::where('id_socio', $idSocio)
                 ->where('clave_membresia', $anualidad->clave_mem_f)
                 ->first();
-            //Si no hay registro
             if (!$socio_membresia)
                 throw new Exception("No se encontro registro en la tabla socios_membresias para el socio: " . $idSocio);
-            //Actualizamos el estado de la membresia a anual
             $socio_membresia->estado = 'ANU';
             $socio_membresia->save();
         }
@@ -274,7 +272,6 @@ class CargosController extends Controller
             $socio_membresia = SocioMembresia::where('id_socio', $idSocio)
                 ->where('clave_membresia', $anualidad->clave_mem_f)
                 ->first();
-            //Si no hay registro
             if (!$socio_membresia)
                 throw new Exception("No hay registro en la tabla socios_membresias para el socio: " . $idSocio);
             //Actualizamos el estado de la membresia al estado previo registrado en la anualidad

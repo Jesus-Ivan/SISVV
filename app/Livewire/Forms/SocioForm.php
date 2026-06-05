@@ -41,6 +41,7 @@ class SocioForm extends Form
     public $clave_membresia;            //Se conserva para el flujo legacy (no se usa en la nueva UI)
     public $claves_membresia = [];      //Array de claves para registro/edicion multi-membresia (checkboxes)
     public $estados_membresia = [];     //Mapa clave_membresia => estado (MEN, INA, ANU) — usado en edicion
+    public $claves_originales = [];     //Claves que el socio tenía al abrir el formulario (deshabilita "Seleccionar")
     public $estado_membresia;           //Se conserva para compatibilidad con codigo legacy
 
     // -- Informacion de los nuevos integrantes -- //
@@ -137,6 +138,9 @@ class SocioForm extends Form
 
         //Claves para los checkboxes
         $this->claves_membresia = $todasMembresias->pluck('clave_membresia')->unique()->values()->toArray();
+
+        //Guardar las claves originales para deshabilitar "Seleccionar" en membresías ya guardadas
+        $this->claves_originales = $this->claves_membresia;
 
         //Mapa clave => estado: fuente de verdad socios_membresias.estado
         $this->estados_membresia = $todasMembresias->mapWithKeys(

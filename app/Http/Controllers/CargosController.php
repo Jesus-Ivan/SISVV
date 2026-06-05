@@ -56,10 +56,10 @@ class CargosController extends Controller
 
                 foreach ($socio_cuotas as $idCuota => $rows) {
                     $enEstado = $estadoGrouped->get($idCuota, collect())->count();
-                    $enCuotas = $rows->count();
 
-                    for ($i = 0; $i < ($enCuotas - $enEstado); $i++) {
-                        $sc = $rows->first();
+                    // Saltar las primeras $enEstado filas (ya cobradas) e iterar las restantes
+                    // Cada fila usa su propio monto_a_cobrar para respetar monto_personalizado distinto
+                    foreach ($rows->values()->slice($enEstado) as $sc) {
                         EstadoCuenta::create([
                             'id_cuota' => $sc->id_cuota,
                             'id_socio'  => $id_socio,

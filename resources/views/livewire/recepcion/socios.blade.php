@@ -63,14 +63,12 @@
                             </td>
                             {{-- TIPO MEMBRESIA --}}
                             <td class="min-w-60 px-6 py-4">
-                                @forelse($socio->cuotasMembresia as $sc)
+                                @forelse($socio->socioMembresias as $sm)
                                     <div class="text-sm text-gray-700 dark:text-gray-300">
-                                        {{ $sc->cuota->clave_membresia }}
+                                        {{ $sm->membresia->descripcion }}
                                     </div>
                                 @empty
-                                    <span class="text-gray-400">
-                                        {{ $socio->socioMembresia?->membresia?->descripcion ?? 'N/R' }}
-                                    </span>
+                                    <span class="text-gray-400">N/R</span>
                                 @endforelse
                             </td>
                             <td class="px-6 py-4 text-center">

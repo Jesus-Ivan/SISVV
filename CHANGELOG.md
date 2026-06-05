@@ -676,3 +676,80 @@ Sin tocar la lógica del módulo de anualidades, se agrega solo la visualizació
 
 #### `resources/views/livewire/sistemas/recepcion/anualidad/nueva.blade.php`
 - Reemplazado el display estático "Membresía / Estado" por una lista con todas las membresías activas del socio (una por línea con su estado)
+
+---
+
+## Mejoras de UI y correcciones de precios personalizados
+**Fecha:** 2026-06-05
+
+### Contexto
+Correcciones al flujo de cobros manuales y automáticos para que respeten `monto_personalizado` en todos los puntos del sistema. Mejoras de visualización en varias pantallas.
+
+---
+
+### Visualización de membresías en pantallas de socios
+
+#### `resources/views/livewire/puntos/socios/container.blade.php`
+- Reemplazado display de membresía única (con badges de color) por lista de todas las membresías del socio con nombre completo y estado en texto plano: `• Descripción (ESTADO)`
+- Lógica de acceso actualizada a `socioMembresias->where('estado','!=','CAN')->count() > 0`
+
+#### `app/Livewire/Recepcion/Socios.php`
+- Eager load cambiado de `cuotasMembresia.cuota` a `socioMembresias.membresia`
+
+#### `resources/views/livewire/recepcion/socios.blade.php`
+- Columna MEMBRESÍA ahora lista todas las membresías desde `socioMembresias` mostrando `membresia->descripcion` (nombre completo) en lugar de `clave_membresia` abreviada
+
+---
+
+### Nombre completo de membresía en nuevo cargo
+
+#### `app/Models/Cuota.php`
+- Agregada relación `membresia()` BelongsTo a `Membresias` via `clave_membresia → clave`
+
+#### `app/Livewire/Recepcion/Estados/CargosNuevo.php`
+- `obtenerCargosFijos()`: eager load cambiado de `cuota` a `cuota.membresia`
+
+#### `resources/views/livewire/recepcion/estados/cargos-nuevo.blade.php`
+- Sección de membresías del header muestra `membresia->descripcion` (nombre completo) en lugar de `clave_membresia`. Fallback al código si no hay relación
+
+---
+
+### Ajustes en tabla "Editar Cuotas" (Sistemas)
+
+#### `resources/views/livewire/sistemas/recepcion/editar-cuotas.blade.php`
+- Columna "Concepto" renombrada a "Cuota"
+- Columna "Precio efectivo" eliminada (redundante con "Precio personalizado")
+- `colspan` del estado vacío corregido de 6 a 5
+
+---
+
+### Precio personalizado en Cargos fijos
+
+#### `resources/views/livewire/recepcion/estados/include/cargos-fijos.blade.php`
+- Columna CARGOS ahora muestra `monto_personalizado ?? monto_base` con `number_format`. Antes siempre mostraba el precio base del catálogo
+
+---
+
+### Corrección de precios en cobros manuales (`addCuota`)
+
+#### `app/Livewire/Recepcion/Estados/CargosNuevo.php`
+- `addCuota()`: antes de agregar el cargo al array, consulta `socios_cuotas` por `(id_socio, id_cuota)` y sobreescribe `monto` con `monto_personalizado` si existe. Corrige que el cargo manual siempre usara el precio base
+
+---
+
+### Botón "Cargar" por fila en Cargos fijos
+
+#### `app/Livewire/Recepcion/Estados/CargosNuevo.php`
+- Agregado método `cargarDesdeCargoFijo(int $indexFijo)`: agrega al array de cargos usando exactamente la fila de `socios_cuotas` indicada con su `monto_personalizado`
+- Validaciones: fecha requerida, no duplicar membresía en el mes (con `dispatch('action-message-cargos')` para que el error sea visible), no duplicar la misma fila de `socios_cuotas` en el mes (identificada por `socios_cuota_id` en lugar de `id_cuota`, lo que permite cargar dos lockers con distinto precio de forma independiente)
+
+#### `resources/views/livewire/recepcion/estados/include/cargos-fijos.blade.php`
+- Botón **Cargar** agregado a cada fila de la tabla. Llama a `cargarDesdeCargoFijo($indexFijo)` para cargar el precio correcto de cada fila sin ambigüedad
+
+---
+
+### Fix: `cargarMensualidades()` duplicaba precio en cuotas repetidas
+
+#### `app/Http/Controllers/CargosController.php`
+- **Bug corregido**: el loop usaba `$rows->first()` en cada iteración, haciendo que socios con dos lockers (o resguardos) de distinto `monto_personalizado` recibieran ambos cargos con el precio del primero
+- **Fix**: reemplazado el `for` + `$rows->first()` por `foreach ($rows->values()->slice($enEstado) as $sc)`: itera cada fila individualmente, saltando las ya cobradas, y usa su propio `monto_a_cobrar`

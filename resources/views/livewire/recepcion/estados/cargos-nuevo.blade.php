@@ -13,7 +13,7 @@
             <p class="text-sm font-medium text-gray-700 dark:text-gray-400">Membresías:</p>
             @forelse($membresiasActivas as $m)
                 <p class="text-sm">
-                    <span class="font-medium text-gray-900 dark:text-white">{{ $m['cuota']['clave_membresia'] }}</span>
+                    <span class="font-medium text-gray-900 dark:text-white">{{ $m['cuota']['membresia']['descripcion'] ?? $m['cuota']['clave_membresia'] }}</span>
                     <span class="text-gray-500 ml-1">{{ $m['cuota']['tipo'] }}</span>
                 </p>
             @empty

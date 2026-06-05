@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Cuota extends Model
 {
@@ -16,4 +17,9 @@ class Cuota extends Model
     protected $guarded = ['id'];
     //Clave primaria
     protected $primaryKey = 'id';
+
+    public function membresia(): BelongsTo
+    {
+        return $this->belongsTo(Membresias::class, 'clave_membresia', 'clave');
+    }
 }

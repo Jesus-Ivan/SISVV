@@ -25,7 +25,7 @@
                     <th scope="col" class="px-6 py-3 ">
                         CARGOS
                     </th>
-                    <th scope="col" class="px-6 py-3 w-32">ACCIONES</th>
+                    <th scope="col" class="px-6 py-3 w-40">ACCIONES</th>
                 </tr>
             </thead>
             <tbody>
@@ -39,12 +39,18 @@
                             {{ $fijo['cuota']['descripcion'] }}
                         </td>
                         <td class="px-6 py-2 {{ $fijo['auto_delete'] ? 'text-orange-600 font-semibold' : '' }}">
-                            ${{ $fijo['cuota']['monto'] }}
+                            ${{ number_format($fijo['monto_personalizado'] ?? $fijo['cuota']['monto'], 2) }}
                         </td>
-                        <td class="px-6 py-2 h-14">
+                        <td class="px-6 py-2 h-14 flex items-center gap-1">
+                            {{-- Botón Cargar: usa monto_personalizado si existe --}}
+                            <button type="button" wire:click="cargarDesdeCargoFijo({{ $indexFijo }})"
+                                title="Cargar para el mes seleccionado"
+                                class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-2 py-1.5 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
+                                Cargar
+                            </button>
                             @if (!$fijo['cuota']['clave_membresia'])
-                                <button type="button" wire:click ="removerCargoFijo({{ $indexFijo }})"
-                                    class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                <button type="button" wire:click="removerCargoFijo({{ $indexFijo }})"
+                                    class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                         class="w-5 h-5">
                                         <path fill-rule="evenodd"

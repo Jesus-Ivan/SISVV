@@ -44,11 +44,10 @@
         <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                    <th class="px-6 py-3">Concepto</th>
+                    <th class="px-6 py-3">Cuota</th>
                     <th class="px-6 py-3">Tipo</th>
                     <th class="px-6 py-3 text-right">Precio base</th>
                     <th class="px-6 py-3 text-center w-56">Precio personalizado</th>
-                    <th class="px-6 py-3 text-right">Precio efectivo</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
@@ -74,9 +73,6 @@
                                 <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                             @enderror
                         </td>
-                        <td class="px-6 py-3 text-right font-semibold text-gray-900 dark:text-white">
-                            ${{ number_format($cuota['monto_personalizado'] ?? $cuota['monto_base'], 2) }}
-                        </td>
                         <td class="px-6 py-3 text-center">
                             @if (!is_null($cuota['monto_personalizado']))
                                 <button type="button" wire:click="limpiar({{ $index }})"
@@ -89,7 +85,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-8 text-center text-gray-400">
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-400">
                             Este socio no tiene cuotas asignadas.
                         </td>
                     </tr>

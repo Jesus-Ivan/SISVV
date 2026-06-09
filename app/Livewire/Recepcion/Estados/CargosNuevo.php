@@ -89,6 +89,7 @@ class CargosNuevo extends Component
     {
         return Cuota::where('descripcion', 'like', '%' . $this->search . '%')
             ->whereNot('tipo', 'LIKE', '%ANU%')
+            ->whereNull('clave_membresia')
             ->limit(10)
             ->get();
     }
@@ -205,6 +206,32 @@ class CargosNuevo extends Component
                 $this->dispatch('action-message-cargos');
                 return;
             }
+        } else {
+            // Para cargos fijos sin membresía: comparar cuántos ya están en BD vs cuántos tiene el socio
+            $cargadosEnBd = DB::table('estados_cuenta')
+                ->where('id_socio', $this->socio->id)
+                ->where('id_cuota', $cuotaId)
+                ->whereYear('fecha', $fechaCuota->year)
+                ->whereMonth('fecha', $fechaCuota->month)
+                ->count();
+
+            $pendientesEnLista = collect($this->listaCargos)->filter(function ($c) use ($cuotaId, $fechaCuota) {
+                $f = Carbon::parse($c['fecha']);
+                return $c['id'] == $cuotaId
+                    && isset($c['socios_cuota_id'])
+                    && $f->year == $fechaCuota->year
+                    && $f->month == $fechaCuota->month;
+            })->count();
+
+            $totalInstancias = collect($this->listaCargosFijos)
+                ->filter(fn($f) => $f['cuota']['id'] == $cuotaId)
+                ->count();
+
+            if ($cargadosEnBd + $pendientesEnLista >= $totalInstancias) {
+                session()->flash('fail', 'Este cargo ya fue registrado en el estado de cuenta de este mes');
+                $this->dispatch('action-message-cargos');
+                return;
+            }
         }
 
         // Evitar que se cargue la misma fila de socios_cuotas dos veces en el mismo mes
@@ -221,10 +248,20 @@ class CargosNuevo extends Component
             return;
         }
 
+        $baseDesc = $fijo['cuota']['descripcion'] . ' ' . $this->getMes($fechaCuota->month) . '-' . $fechaCuota->year;
+        $textoConcepto = $fijo['texto_concepto'] ?? null;
+        if ($textoConcepto) {
+            $descripcion = ($fijo['posicion_texto'] ?? 'izquierda') === 'derecha'
+                ? $baseDesc . ' ' . $textoConcepto
+                : $textoConcepto . ' ' . $baseDesc;
+        } else {
+            $descripcion = $baseDesc;
+        }
+
         $this->listaCargos[] = [
             'id'              => $cuotaId,
             'socios_cuota_id' => $socioCuotaId,
-            'descripcion'     => $fijo['cuota']['descripcion'] . ' ' . $this->getMes($fechaCuota->month) . '-' . $fechaCuota->year,
+            'descripcion'     => $descripcion,
             'monto'           => $monto,
             'tipo'            => $fijo['cuota']['tipo'],
             'clave_membresia' => $claveMem,

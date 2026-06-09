@@ -44,23 +44,24 @@
         <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                    <th class="px-6 py-3">Cuota</th>
-                    <th class="px-6 py-3">Tipo</th>
-                    <th class="px-6 py-3 text-right">Precio base</th>
-                    <th class="px-6 py-3 text-center w-56">Precio personalizado</th>
-                    <th class="px-6 py-3"></th>
+                    <th class="px-3 py-3 w-48">Cuota</th>
+                    <th class="px-3 py-3 w-24">Tipo</th>
+                    <th class="px-3 py-3 w-32 text-right">Precio base</th>
+                    <th class="px-3 py-3 w-44 text-center">Precio personalizado</th>
+                    <th class="px-3 py-3 w-64">Concatenar texto</th>
+                    <th class="px-3 py-3 w-20"></th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($cuotas as $index => $cuota)
                     <tr wire:key="cuota-{{ $cuota['id'] }}"
                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">
+                        <td class="px-3 py-3 font-medium text-gray-900 dark:text-white">
                             {{ $cuota['descripcion'] }}
                         </td>
-                        <td class="px-6 py-3">{{ $cuota['tipo'] }}</td>
-                        <td class="px-6 py-3 text-right">${{ number_format($cuota['monto_base'], 2) }}</td>
-                        <td class="px-6 py-3">
+                        <td class="px-3 py-3">{{ $cuota['tipo'] }}</td>
+                        <td class="px-3 py-3 text-right">${{ number_format($cuota['monto_base'], 2) }}</td>
+                        <td class="px-3 py-3">
                             <div class="flex items-center gap-1">
                                 <span class="text-gray-500">$</span>
                                 <input type="number" min="0" step="0.01"
@@ -73,14 +74,57 @@
                                 <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                             @enderror
                         </td>
-                        <td class="px-6 py-3 text-center">
-                            @if (!is_null($cuota['monto_personalizado']))
-                                <button type="button" wire:click="limpiar({{ $index }})"
-                                    title="Quitar precio personalizado"
-                                    class="text-xs text-gray-500 border border-gray-400 hover:bg-gray-100 hover:text-gray-700 font-medium rounded-lg px-2 py-1 dark:border-gray-500 dark:text-gray-400 dark:hover:bg-gray-700">
-                                    Limpiar
-                                </button>
-                            @endif
+                        {{-- Texto en concepto --}}
+                        <td class="px-3 py-3">
+                            <div class="flex flex-col gap-1.5">
+                                <input type="text" maxlength="100"
+                                    wire:model.live.debounce.300ms="cuotas.{{ $index }}.texto_concepto"
+                                    placeholder="Texto opcional..."
+                                    class="w-full text-sm border border-gray-300 rounded-lg p-2 bg-gray-50 text-gray-900 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white {{ !empty($cuota['texto_concepto']) ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20' : '' }}" />
+                                @if (!empty($cuota['texto_concepto']))
+                                    <div class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 w-fit text-xs font-medium">
+                                        <button type="button"
+                                            wire:click="$set('cuotas.{{ $index }}.posicion_texto', 'izquierda')"
+                                            class="{{ ($cuota['posicion_texto'] ?? 'izquierda') === 'izquierda' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600' }} px-3 py-1 transition-colors">
+                                            ← Izq
+                                        </button>
+                                        <button type="button"
+                                            wire:click="$set('cuotas.{{ $index }}.posicion_texto', 'derecha')"
+                                            class="{{ ($cuota['posicion_texto'] ?? 'izquierda') === 'derecha' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600' }} px-3 py-1 transition-colors">
+                                            Der →
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 italic truncate">
+                                        @if (($cuota['posicion_texto'] ?? 'izquierda') === 'izquierda')
+                                            {{ $cuota['texto_concepto'] }} {{ $cuota['descripcion'] }} MES-YYYY
+                                        @else
+                                            {{ $cuota['descripcion'] }} MES-YYYY {{ $cuota['texto_concepto'] }}
+                                        @endif
+                                    </p>
+                                @endif
+                                @error("cuotas.{$index}.texto_concepto")
+                                    <p class="text-xs text-red-500">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </td>
+                        {{-- Acciones --}}
+                        <td class="px-3 py-3 text-center">
+                            <div class="flex flex-col gap-1 items-center">
+                                @if (!is_null($cuota['monto_personalizado']))
+                                    <button type="button" wire:click="limpiar({{ $index }})"
+                                        title="Quitar precio personalizado"
+                                        class="text-xs text-gray-500 border border-gray-400 hover:bg-gray-100 hover:text-gray-700 font-medium rounded-lg px-2 py-1 dark:border-gray-500 dark:text-gray-400 dark:hover:bg-gray-700">
+                                        Limpiar $
+                                    </button>
+                                @endif
+                                @if (!empty($cuota['texto_concepto']))
+                                    <button type="button" wire:click="limpiarTexto({{ $index }})"
+                                        title="Quitar texto del concepto"
+                                        class="text-xs text-gray-500 border border-gray-400 hover:bg-gray-100 hover:text-gray-700 font-medium rounded-lg px-2 py-1 dark:border-gray-500 dark:text-gray-400 dark:hover:bg-gray-700">
+                                        Limpiar T
+                                    </button>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                 @empty

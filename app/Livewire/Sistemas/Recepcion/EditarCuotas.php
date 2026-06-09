@@ -26,21 +26,33 @@ class EditarCuotas extends Component
         $this->cuotas[$index]['monto_personalizado'] = null;
     }
 
+    public function limpiarTexto(int $index): void
+    {
+        $this->cuotas[$index]['texto_concepto'] = null;
+        $this->cuotas[$index]['posicion_texto'] = 'izquierda';
+    }
+
     public function guardar(): void
     {
         $this->validate([
             'cuotas.*.monto_personalizado' => 'nullable|numeric|min:0|max:99999999.99',
+            'cuotas.*.texto_concepto'      => 'nullable|string|max:100',
+            'cuotas.*.posicion_texto'      => 'nullable|in:izquierda,derecha',
         ], [
             'cuotas.*.monto_personalizado.numeric' => 'El precio personalizado debe ser un número.',
             'cuotas.*.monto_personalizado.min'     => 'El precio personalizado no puede ser negativo.',
             'cuotas.*.monto_personalizado.max'     => 'El precio personalizado no puede exceder $99,999,999.99.',
+            'cuotas.*.texto_concepto.max'          => 'El texto no puede superar 100 caracteres.',
         ]);
 
         try {
             DB::transaction(function () {
                 foreach ($this->cuotas as $cuota) {
+                    $texto = ($cuota['texto_concepto'] ?? '') !== '' ? $cuota['texto_concepto'] : null;
                     SocioCuota::where('id', $cuota['id'])->update([
-                        'monto_personalizado' => $cuota['monto_personalizado'] !== '' ? $cuota['monto_personalizado'] : null,
+                        'monto_personalizado' => ($cuota['monto_personalizado'] ?? '') !== '' ? $cuota['monto_personalizado'] : null,
+                        'texto_concepto'      => $texto,
+                        'posicion_texto'      => $texto ? ($cuota['posicion_texto'] ?? 'izquierda') : null,
                     ]);
                 }
             });
@@ -65,6 +77,8 @@ class EditarCuotas extends Component
                 'clave_membresia'     => $sc->cuota->clave_membresia,
                 'monto_base'          => $sc->cuota->monto,
                 'monto_personalizado' => $sc->monto_personalizado,
+                'texto_concepto'      => $sc->texto_concepto,
+                'posicion_texto'      => $sc->posicion_texto ?? 'izquierda',
             ])
             ->toArray();
     }

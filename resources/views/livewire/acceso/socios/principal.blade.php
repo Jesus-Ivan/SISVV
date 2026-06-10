@@ -20,7 +20,7 @@
                         <p class="font-semibold">MEMBRESIA:</p>
                         @php $membresias = $socio->socioMembresias; $activas = $membresias->where('estado', '!=', 'CAN'); @endphp
                         @if ($membresias->count() > 1)
-                            <p>Membresías múltiples ({{ $membresias->count() }})</p>
+                            <p>MEMBRESÍAS MÚLTIPLES ({{ $membresias->count() }})</p>
                         @elseif ($membresias->count() === 1)
                             <p>{{ $membresias->first()->clave_membresia }}</p>
                         @else

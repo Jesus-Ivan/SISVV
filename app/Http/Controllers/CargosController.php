@@ -286,23 +286,28 @@ class CargosController extends Controller
         if ($anualidad_fin && is_null($anualidad_inicio)) {
             $this->crearCargosNuevos($anualidad_fin, $id_socio);
         } elseif (is_null($anualidad_fin) && $anualidad_inicio) {
-            $this->eliminarCargosAnteriores($id_socio);
+            $this->eliminarCargosAnteriores($id_socio, $anualidad_inicio->clave_mem_f);
         } elseif ($anualidad_fin && $anualidad_inicio) {
-            $this->eliminarCargosAnteriores($id_socio);
+            $this->eliminarCargosAnteriores($id_socio, $anualidad_inicio->clave_mem_f);
             $this->crearCargosNuevos($anualidad_fin, $id_socio, false);
         }
     }
 
     /**
-     * Elimina de la tabla 'socios_cuotas', las cuotas previas de una anualidad
+     * Elimina de la tabla 'socios_cuotas', las cuotas previas (auto_delete) que correspondan
+     * a la membresia que entra en anualidad. Evita borrar cargos auto_delete de otras
+     * membresias del mismo socio (caso de socios con multiples membresias).
      */
-    private function eliminarCargosAnteriores($id_socio)
+    private function eliminarCargosAnteriores($id_socio, $clave_membresia)
     {
-        //Eliminar los cargos indicados como 'auto_delete'
         SocioCuota::where([
             ['id_socio', '=', $id_socio],
             ['auto_delete', '=', true]
-        ])->delete();
+        ])
+            ->whereHas('cuota', function ($q) use ($clave_membresia) {
+                $q->where('clave_membresia', $clave_membresia);
+            })
+            ->delete();
     }
 
     /**

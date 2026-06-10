@@ -19,7 +19,7 @@
                 </p>
                 @if ($socio)
                     <div class="mt-1 mb-2">
-                        <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Membresías:</p>
+                        <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">MEMBRESÍAS:</p>
                         @foreach ($socio->socioMembresias as $sm)
                             <div class="text-sm text-gray-700 dark:text-gray-400">
                                 <span>• {{ $sm->membresia->descripcion }} ({{ $sm->estado }})</span>

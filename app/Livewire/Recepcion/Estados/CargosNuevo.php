@@ -50,18 +50,20 @@ class CargosNuevo extends Component
              */
 
             //Crear la fecha de hoy
-            $hoy = now()->day(1);
-            //Buscamos la anualidad
+            $hoy = now();
+            //Buscamos la anualidad vigente para hoy
             $anualidad = Anualidad::where([
                 ['id_socio', '=', $socio->id],
                 ['fecha_inicio', '<=', $hoy->toDateString()],
                 ['fecha_fin', '>=', $hoy->toDateString()],
             ])
                 ->first();
-            //Buscar los detalles de la anualidad
-            $this->cargos_anualidad = DB::table('detalles_anualidades')
-                ->where('id_anualidad', $anualidad->id)
-                ->get();
+            //Buscar los detalles de la anualidad (si existe una vigente para hoy)
+            if ($anualidad) {
+                $this->cargos_anualidad = DB::table('detalles_anualidades')
+                    ->where('id_anualidad', $anualidad->id)
+                    ->get();
+            }
         }
     }
 
@@ -235,7 +237,8 @@ class CargosNuevo extends Component
         }
 
         // Evitar que se cargue la misma fila de socios_cuotas dos veces en el mismo mes
-        $socioCuotaId = $fijo['id'];
+        // Si el cargo fijo aun no se ha guardado (sin 'id'), usamos un identificador temporal unico por indice
+        $socioCuotaId = $fijo['id'] ?? 'nuevo_' . $indexFijo;
         $duplicado = collect($this->listaCargos)->contains(function ($c) use ($socioCuotaId, $fechaCuota) {
             $f = Carbon::parse($c['fecha']);
             return ($c['socios_cuota_id'] ?? null) == $socioCuotaId

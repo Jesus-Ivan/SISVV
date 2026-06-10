@@ -27,52 +27,62 @@ class CargosController extends Controller
             ->distinct()
             ->pluck('id_socio');
 
-        //Iniciamos transaccion
-        DB::transaction(function () use ($fecha, $fecha_previa, $socios_ids) {
-            //Para cada socio único
-            foreach ($socios_ids as $id_socio) {
-                //Desactivamos anualidad si tenia una activa previamente
-                $anualidad_fin = $this->desactivarAnualidad($fecha_previa, $id_socio);
-                //Activamos anualidad si esta disponible
-                $anualidad_inicio = $this->activarAnualidad($fecha, $id_socio);
-                //Verificar cargos fijos
-                $this->verificarCargosFijos($id_socio, $anualidad_inicio, $anualidad_fin);
+        //Procesamos cada socio en su propia transaccion, para que un error en uno
+        //no revierta el cobro ya aplicado a los demas socios
+        $errores = [];
+        foreach ($socios_ids as $id_socio) {
+            try {
+                DB::transaction(function () use ($fecha, $fecha_previa, $id_socio) {
+                    //Desactivamos anualidad si tenia una activa previamente
+                    $anualidad_fin = $this->desactivarAnualidad($fecha_previa, $id_socio);
+                    //Activamos anualidad si esta disponible
+                    $anualidad_inicio = $this->activarAnualidad($fecha, $id_socio);
+                    //Verificar cargos fijos
+                    $this->verificarCargosFijos($id_socio, $anualidad_inicio, $anualidad_fin);
 
-                //Registros ya cobrados este mes para este socio
-                $estado_cuenta = EstadoCuenta::where('id_socio', $id_socio)
-                    ->whereYear('fecha', $fecha->year)
-                    ->whereMonth('fecha', $fecha->month)
-                    ->whereNotNull('id_cuota')
-                    ->get()
-                    ->toArray();
+                    //Registros ya cobrados este mes para este socio
+                    $estado_cuenta = EstadoCuenta::where('id_socio', $id_socio)
+                        ->whereYear('fecha', $fecha->year)
+                        ->whereMonth('fecha', $fecha->month)
+                        ->whereNotNull('id_cuota')
+                        ->get()
+                        ->toArray();
 
-                //Todas las cuotas fijas del socio, agrupadas por id_cuota para detectar multiples
-                $socio_cuotas = SocioCuota::with('cuota')
-                    ->where('id_socio', $id_socio)
-                    ->get()
-                    ->groupBy('id_cuota');
+                    //Todas las cuotas fijas del socio, agrupadas por id_cuota para detectar multiples
+                    $socio_cuotas = SocioCuota::with('cuota')
+                        ->where('id_socio', $id_socio)
+                        ->get()
+                        ->groupBy('id_cuota');
 
-                $estadoGrouped = collect($estado_cuenta)->groupBy('id_cuota');
+                    $estadoGrouped = collect($estado_cuenta)->groupBy('id_cuota');
 
-                foreach ($socio_cuotas as $idCuota => $rows) {
-                    $enEstado = $estadoGrouped->get($idCuota, collect())->count();
+                    foreach ($socio_cuotas as $idCuota => $rows) {
+                        $enEstado = $estadoGrouped->get($idCuota, collect())->count();
 
-                    // Saltar las primeras $enEstado filas (ya cobradas) e iterar las restantes
-                    // Cada fila usa su propio monto_a_cobrar para respetar monto_personalizado distinto
-                    foreach ($rows->values()->slice($enEstado) as $sc) {
-                        EstadoCuenta::create([
-                            'id_cuota' => $sc->id_cuota,
-                            'id_socio'  => $id_socio,
-                            'concepto'  => $sc->cuota->descripcion . ' ' . $this->getMes($fecha->month) . '-' . $fecha->year,
-                            'fecha'     => $fecha->toDateString(),
-                            'cargo'     => $sc->monto_a_cobrar,
-                            'abono'     => 0,
-                            'saldo'     => $sc->monto_a_cobrar,
-                        ]);
+                        // Saltar las primeras $enEstado filas (ya cobradas) e iterar las restantes
+                        // Cada fila usa su propio monto_a_cobrar para respetar monto_personalizado distinto
+                        foreach ($rows->values()->slice($enEstado) as $sc) {
+                            EstadoCuenta::create([
+                                'id_cuota' => $sc->id_cuota,
+                                'id_socio'  => $id_socio,
+                                'concepto'  => $sc->cuota->descripcion . ' ' . $this->getMes($fecha->month) . '-' . $fecha->year,
+                                'fecha'     => $fecha->toDateString(),
+                                'cargo'     => $sc->monto_a_cobrar,
+                                'abono'     => 0,
+                                'saldo'     => $sc->monto_a_cobrar,
+                            ]);
+                        }
                     }
-                }
+                }, 2);
+            } catch (\Throwable $e) {
+                \Log::error("cargarMensualidades: error procesando socio {$id_socio}: " . $e->getMessage());
+                $errores[] = "Socio {$id_socio}: " . $e->getMessage();
             }
-        }, 2);
+        }
+
+        if (!empty($errores)) {
+            return "Proceso completado con " . count($errores) . " error(es), revisar storage/logs:\n" . implode("\n", $errores);
+        }
         return  'todo bien, vuelve atras ;D';
     }
 
@@ -295,8 +305,9 @@ class CargosController extends Controller
 
     /**
      * Elimina de la tabla 'socios_cuotas', las cuotas previas (auto_delete) que correspondan
-     * a la membresia que entra en anualidad. Evita borrar cargos auto_delete de otras
-     * membresias del mismo socio (caso de socios con multiples membresias).
+     * a la membresia que entra en anualidad, asi como los cargos de LOCKER/RESGUARDO
+     * (cuotas sin clave_membresia) generados para esa anualidad. Evita borrar cargos
+     * auto_delete de otras membresias del mismo socio (caso de socios con multiples membresias).
      */
     private function eliminarCargosAnteriores($id_socio, $clave_membresia)
     {
@@ -305,7 +316,15 @@ class CargosController extends Controller
             ['auto_delete', '=', true]
         ])
             ->whereHas('cuota', function ($q) use ($clave_membresia) {
-                $q->where('clave_membresia', $clave_membresia);
+                $q->where('clave_membresia', $clave_membresia)
+                    ->orWhere(function ($q2) {
+                        $q2->whereNull('clave_membresia')
+                            ->where('tipo', 'like', '%MEN%')
+                            ->where(function ($q3) {
+                                $q3->where('tipo', 'like', '%LOC%')
+                                    ->orWhere('tipo', 'like', '%RES%');
+                            });
+                    });
             })
             ->delete();
     }

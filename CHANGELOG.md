@@ -753,3 +753,39 @@ Correcciones al flujo de cobros manuales y automáticos para que respeten `monto
 #### `app/Http/Controllers/CargosController.php`
 - **Bug corregido**: el loop usaba `$rows->first()` en cada iteración, haciendo que socios con dos lockers (o resguardos) de distinto `monto_personalizado` recibieran ambos cargos con el precio del primero
 - **Fix**: reemplazado el `for` + `$rows->first()` por `foreach ($rows->values()->slice($enEstado) as $sc)`: itera cada fila individualmente, saltando las ya cobradas, y usa su propio `monto_a_cobrar`
+
+---
+
+## Fix — Aislamiento por socio en `cargarMensualidades()`
+**Fecha:** 2026-06-10
+
+### Problema detectado
+`cargarMensualidades()` envolvía el procesamiento de **todos** los socios en una sola transacción. Si `activarAnualidad()`/`desactivarAnualidad()` lanzaban una excepción para un solo socio (p. ej. un `clave_mem_f` en `anualidades` que ya no coincide con ninguna fila de `socios_membresias` del socio), se revertía el cobro de **todos** los socios del mes y la petición terminaba en un HTTP 500 sin información de cuál socio falló.
+
+### Archivos modificados
+
+#### `app/Http/Controllers/CargosController.php`
+- `cargarMensualidades()`: cada socio ahora se procesa en su propia `DB::transaction(..., 2)` dentro de un `try/catch`
+- Si un socio falla, su transacción se revierte de forma aislada (no afecta a los demás), el error se registra con `Log::error()` y se acumula
+- La respuesta final incluye un resumen de los socios que fallaron (en vez de un 500 genérico) cuando hubo errores
+
+### Pruebas realizadas en local
+- Simulación de `cargarMensualidades` para enero 2027 (mes en el que 5 anualidades con `clave_mem_f` desincronizado provocan la excepción), dentro de una transacción revertida al final
+- Resultado: los 5 socios afectados quedaron sin cambios y reportados en el mensaje de respuesta; los otros ~263 socios generaron sus 481 cargos de `EstadoCuenta` con normalidad
+
+---
+
+## Fix — Crash en "Nuevo cargo" al crear una anualidad a mitad de mes
+**Fecha:** 2026-06-10
+
+### Problema detectado
+`CargosNuevo::mount()` forzaba "hoy" al día 1 del mes (`now()->day(1)`) para localizar la anualidad vigente del socio. Si la anualidad recién creada tenía `fecha_inicio` después del día 1 del mes actual (el caso normal al crearla a mitad de mes), la búsqueda no la encontraba aunque hoy sí estuviera dentro de su rango, y `$anualidad->id` lanzaba `Attempt to read property "id" on null`.
+
+### Archivos modificados
+
+#### `app/Livewire/Recepcion/Estados/CargosNuevo.php`
+- `mount()`: usa `now()` (fecha real de hoy) en vez de `now()->day(1)` para localizar la anualidad vigente
+- Agregado chequeo defensivo: si no se encuentra una anualidad vigente, `cargos_anualidad` queda vacío en lugar de crashear
+
+### Verificación en local
+- Reproducido y corregido con el socio 7856 (anualidad #123, `fecha_inicio = 2026-06-10`): `mount()` ahora encuentra la anualidad y carga su detalle correctamente

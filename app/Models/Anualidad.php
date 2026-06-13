@@ -14,4 +14,8 @@ class Anualidad extends Model
     protected $guarded = ['id'];
     //Clave primaria
     protected $primaryKey = 'id';
+    //Conversion de tipos
+    protected $casts = [
+        'cuotas_fijas_eliminar' => 'array',
+    ];
 }

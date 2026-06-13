@@ -31,7 +31,7 @@ class Principal extends Component
     #[Computed()]
     public function resultSocios()
     {
-        $query = Socio::with(['socioMembresia', 'cuotasMembresia.cuota'])
+        $query = Socio::with(['socioMembresia', 'socioMembresias', 'cuotasMembresia.cuota'])
             ->withExists(['socioCuotas as tiene_tarifa_especial' => fn($q) => $q->whereNotNull('monto_personalizado')])
             ->where(function ($q) {
                 $q->whereAny(['nombre', 'apellido_p', 'apellido_m'], 'LIKE', '%' . $this->search . '%')

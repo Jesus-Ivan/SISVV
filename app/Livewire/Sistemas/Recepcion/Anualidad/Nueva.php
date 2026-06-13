@@ -7,6 +7,7 @@ use App\Models\Cuota;
 use App\Models\EstadoCuenta;
 use App\Models\Membresias;
 use App\Models\Socio;
+use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,11 @@ class Nueva extends Component
 
     public $listaCuotas = [];
 
+    #[Locked]
+    public $listaCargosFijos = [];              //Cargos fijos del socio (socios_cuotas)
+    #[Locked]
+    public $listaCargosFijosEliminados = [];    //Ids de cargos fijos marcados para borrarse cuando inicie la anualidad
+
     public $total = 0;
     //Almacena el estado de la membresia que se seteara en la BD. al finalizar la anualidad
     public $estado_finalizar = 'MEN';
@@ -51,6 +57,42 @@ class Nueva extends Component
         $this->socio_membresia = SocioMembresia::with('membresia')
             ->where('id_socio', $socio->id)
             ->first();
+        //Cargamos los cargos fijos del socio y limpiamos los marcados del socio anterior
+        $this->cargarCargosFijos();
+    }
+
+    //Marca un cargo fijo para eliminarse al aplicar la anualidad
+    public function removerCargoFijo($index)
+    {
+        if (isset($this->listaCargosFijos[$index])) {
+            $this->listaCargosFijosEliminados[] = $this->listaCargosFijos[$index]['id'];
+            unset($this->listaCargosFijos[$index]);
+        }
+    }
+
+    //Marca todos los cargos fijos para eliminarse al aplicar la anualidad
+    public function removerTodosCargosFijos()
+    {
+        foreach ($this->listaCargosFijos as $fijo) {
+            $this->listaCargosFijosEliminados[] = $fijo['id'];
+        }
+        $this->listaCargosFijos = [];
+    }
+
+    //Deshace los borrados marcados, recargando los cargos fijos desde la BD
+    public function restaurarCargosFijos()
+    {
+        $this->cargarCargosFijos();
+    }
+
+    private function cargarCargosFijos()
+    {
+        $this->listaCargosFijos = SocioCuota::with('cuota')
+            ->where('id_socio', $this->socio['id'])
+            ->orderBy('id_cuota')
+            ->get()
+            ->toArray();
+        $this->listaCargosFijosEliminados = [];
     }
 
     #[Computed()]
@@ -175,12 +217,17 @@ class Nueva extends Component
                     'descuento_extra' => $this->descuento_extra,
                     'iva' => $this->iva,
                     'observaciones' => $this->observaciones,
+                    //Los cargos fijos marcados se eliminan hasta que el proceso mensual active la anualidad
+                    'cuotas_fijas_eliminar' => count($this->listaCargosFijosEliminados) > 0
+                        ? array_values($this->listaCargosFijosEliminados)
+                        : null,
                     'clave_mem_f' => $validatedInfo['membresia_finalizar'],
                     'estado_mem_f' => $validatedInfo['estado_finalizar'],
                     'fecha_inicio' => $validatedInfo['fInicio'],
                     'fecha_fin' => $validatedInfo['fFin'],
                     'total' => $this->total,
                 ]);
+
                 //Creamos los registros en las otras tablas
                 foreach ($validatedInfo['listaCuotas'] as $key => $cargo) {
                     //Insertamos registro en los detalles de anualidades

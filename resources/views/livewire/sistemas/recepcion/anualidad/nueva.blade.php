@@ -253,6 +253,88 @@
     </div>
     {{-- line --}}
     <hr class="h-1 my-4 bg-gray-200 border-0 dark:bg-gray-700">
+    {{-- Cargos fijos del socio (izquierda) / espacio reservado para uso futuro (derecha) --}}
+    @if ($socio)
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-lg font-bold text-gray-900 dark:text-white">Cargos fijos del socio</p>
+                    @if (count($listaCargosFijos) > 0)
+                        <button type="button" wire:click="removerTodosCargosFijos"
+                            wire:confirm="¿Marcar todos los cargos fijos para borrarse cuando inicie la anualidad?"
+                            class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3 py-2 text-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                            Borrar todos
+                        </button>
+                    @endif
+                </div>
+                @if (count($listaCargosFijosEliminados) > 0)
+                    <div class="flex items-center justify-between p-3 mb-2 text-sm text-yellow-800 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 dark:border-yellow-800"
+                        role="alert">
+                        <span>
+                            {{ count($listaCargosFijosEliminados) }} cargo(s) fijo(s) se eliminarán cuando inicie la anualidad (al cargarse las mensualidades del mes de inicio).
+                        </span>
+                        <button type="button" wire:click="restaurarCargosFijos"
+                            class="font-medium underline hover:no-underline">
+                            Deshacer
+                        </button>
+                    </div>
+                @endif
+                <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">CONCEPTO</th>
+                                <th scope="col" class="px-6 py-3 w-32">TIPO</th>
+                                <th scope="col" class="px-6 py-3 w-36 text-right">MONTO</th>
+                                <th scope="col" class="px-6 py-3 w-32">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($listaCargosFijos as $index => $fijo)
+                                <tr wire:key="cargo-fijo-{{ $fijo['id'] }}"
+                                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <td class="px-6 py-2 font-medium text-gray-900 dark:text-white">
+                                        {{ $fijo['cuota']['descripcion'] }}
+                                    </td>
+                                    <td class="px-6 py-2">
+                                        {{ $fijo['cuota']['tipo'] }}
+                                    </td>
+                                    <td class="px-6 py-2 text-right">
+                                        ${{ number_format($fijo['monto_personalizado'] ?? $fijo['cuota']['monto'], 2) }}
+                                        @if (!is_null($fijo['monto_personalizado']))
+                                            <span class="block text-xs text-purple-500">personalizado</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-2 h-14">
+                                        <button type="button" wire:click="removerCargoFijo({{ $index }})"
+                                            class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                fill="currentColor" class="w-5 h-5">
+                                                <path fill-rule="evenodd"
+                                                    d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            <span class="sr-only">Borrar</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr class="bg-white dark:bg-gray-800">
+                                    <td colspan="4" class="px-6 py-4 text-center text-gray-400">
+                                        Sin cargos fijos registrados
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {{-- Columna derecha reservada para uso futuro --}}
+            <div></div>
+        </div>
+        {{-- line --}}
+        <hr class="h-1 my-4 bg-gray-200 border-0 dark:bg-gray-700">
+    @endif
     {{-- Finalizar o cancelar --}}
     <div class="flex gap-4">
         <button type="button"

@@ -104,6 +104,11 @@
                             </div>
                         </td>
                         <td class="px-6 py-4">
+                            @php
+                                $clavesMostradas = $socio->cuotasMembresia->isNotEmpty()
+                                    ? $socio->cuotasMembresia->pluck('cuota.clave_membresia')->all()
+                                    : array_filter([$socio->socioMembresia?->clave_membresia]);
+                            @endphp
                             @forelse($socio->cuotasMembresia as $sc)
                                 <div class="text-sm leading-5">
                                     <span class="text-gray-700 dark:text-gray-300">{{ $sc->cuota->clave_membresia }}</span>
@@ -113,6 +118,13 @@
                                 <div>{{ $socio->socioMembresia ? $socio->socioMembresia->clave_membresia : 'N/R' }}</div>
                                 <span class="text-xs text-gray-400">{{ $socio->socioMembresia ? $socio->socioMembresia->estado : '' }}</span>
                             @endforelse
+                            {{-- Membresias en anualidad sin cargo fijo asociado (no aparecen en cuotasMembresia) --}}
+                            @foreach ($socio->socioMembresias->where('estado', 'ANU')->whereNotIn('clave_membresia', $clavesMostradas) as $sm)
+                                <div class="text-sm leading-5">
+                                    <span class="text-gray-700 dark:text-gray-300">{{ $sm->clave_membresia }}</span>
+                                    <span class="text-xs text-gray-400 ml-1">{{ $sm->estado }}</span>
+                                </div>
+                            @endforeach
                         </td>
                         <td class="px-6 py-4">
                             <a href="{{ route('recepcion.estado.nuevo', ['socio' => $socio->id]) }}"

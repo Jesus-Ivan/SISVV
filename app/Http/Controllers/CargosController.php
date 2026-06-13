@@ -263,6 +263,12 @@ class CargosController extends Controller
                 throw new Exception("No se encontro registro en la tabla socios_membresias para el socio: " . $idSocio);
             $socio_membresia->estado = 'ANU';
             $socio_membresia->save();
+            //Eliminamos los cargos fijos que se marcaron al registrar la anualidad
+            if ($anualidad->cuotas_fijas_eliminar) {
+                SocioCuota::where('id_socio', $idSocio)
+                    ->whereIn('id', $anualidad->cuotas_fijas_eliminar)
+                    ->delete();
+            }
         }
         return $anualidad;
     }

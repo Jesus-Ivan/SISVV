@@ -70,17 +70,23 @@ class Nueva extends Component
         return !empty($clave) && $clave !== 'N/A';
     }
 
-    //Marca un cargo fijo SIN membresia (locker/resguardo) para eliminarse cuando inicie la anualidad
+    //Marca un cargo fijo para borrar su cuota cuando inicie la anualidad.
+    //Permitido para cargos SIN membresia (locker/resguardo) y para la membresia que entra
+    //en la anualidad (pasa a ANU, por lo que su cuota mensual debe quitarse). Las demas
+    //membresias se gestionan con cancelarMembresia (CAN).
     public function removerCargoFijo($index)
     {
         if (!isset($this->listaCargosFijos[$index])) return;
-        //Las membresias se gestionan con cancelarMembresia, no con borrado de cuota
-        if ($this->esCargoDeMembresia($this->listaCargosFijos[$index])) {
-            session()->flash('fail', 'Las membresias se quitan con "Cancelar membresia", no borrando la cuota.');
-            $this->dispatch('action-message-venta');
-            return;
+        $fijo = $this->listaCargosFijos[$index];
+        if ($this->esCargoDeMembresia($fijo)) {
+            $clave = $fijo['cuota']['clave_membresia'];
+            if (!$this->membresia_finalizar || $clave !== $this->membresia_finalizar) {
+                session()->flash('fail', 'Esta membresia se quita con "Cancelar membresia". Sólo la membresia que entra en la anualidad se borra como cuota.');
+                $this->dispatch('action-message-venta');
+                return;
+            }
         }
-        $this->listaCargosFijosEliminados[] = $this->listaCargosFijos[$index]['id'];
+        $this->listaCargosFijosEliminados[] = $fijo['id'];
         unset($this->listaCargosFijos[$index]);
     }
 
@@ -111,27 +117,28 @@ class Nueva extends Component
         unset($this->listaCargosFijos[$index]);
     }
 
-    //Marca todos los cargos fijos visibles: las membresias se cancelan (CAN) y el resto se borra.
-    //Omite la membresia que entra en la anualidad (se queda visible).
+    //Marca todos los cargos fijos visibles:
+    // - membresia que entra en la anualidad -> se borra su cuota (pasa a ANU)
+    // - otras membresias -> se cancelan (CAN)
+    // - cargos sin membresia (locker/resguardo) -> se borran
     public function removerTodosCargosFijos()
     {
-        $restantes = [];
         foreach ($this->listaCargosFijos as $fijo) {
             if ($this->esCargoDeMembresia($fijo)) {
                 $clave = $fijo['cuota']['clave_membresia'];
                 if ($this->membresia_finalizar && $clave === $this->membresia_finalizar) {
-                    $restantes[] = $fijo;   //no se cancela la membresia de la anualidad
-                    continue;
+                    $this->listaCargosFijosEliminados[] = $fijo['id'];   //membresia de la anualidad: borrar cuota
+                } else {
+                    $this->listaMembresiasCancelar[] = [
+                        'clave'    => $clave,
+                        'concepto' => $fijo['cuota']['descripcion'],
+                    ];
                 }
-                $this->listaMembresiasCancelar[] = [
-                    'clave'    => $clave,
-                    'concepto' => $fijo['cuota']['descripcion'],
-                ];
             } else {
                 $this->listaCargosFijosEliminados[] = $fijo['id'];
             }
         }
-        $this->listaCargosFijos = array_values($restantes);
+        $this->listaCargosFijos = [];
     }
 
     //Deshace lo marcado, recargando los cargos fijos desde la BD
@@ -149,6 +156,28 @@ class Nueva extends Component
             ->toArray();
         $this->listaCargosFijosEliminados = [];
         $this->listaMembresiasCancelar = [];
+    }
+
+    //Deja solo los ids de cuotas validas para borrar: cargos sin membresia, o la cuota de la
+    //membresia que entra en la anualidad ($claveFinalizar). Evita borrar cuotas de membresias
+    //activas distintas (que SocioForm recrearia, dejando un borrado no durable).
+    private function filtrarCuotasEliminar($claveFinalizar): array
+    {
+        $ids = array_values(array_unique($this->listaCargosFijosEliminados));
+        if (count($ids) === 0) return [];
+
+        return SocioCuota::with('cuota')
+            ->where('id_socio', $this->socio['id'])
+            ->whereIn('id', $ids)
+            ->get()
+            ->filter(function ($sc) use ($claveFinalizar) {
+                $clave = $sc->cuota->clave_membresia;
+                return empty($clave) || $clave === 'N/A' || $clave === $claveFinalizar;
+            })
+            ->pluck('id')
+            ->map(fn($id) => (int) $id)
+            ->values()
+            ->all();
     }
 
     #[Computed()]
@@ -261,8 +290,17 @@ class Nueva extends Component
     {
         $validatedInfo = $this->verificar();     //Revisamos si los campos de inicio no estan vacios
 
+        //Cuotas a borrar: cargos sin membresia + la cuota de la membresia que entra en la anualidad.
+        //(filtra cuotas de membresias que ya no son la de la anualidad, p.ej. si se cambio el select)
+        $cuotasFijasEliminar = $this->filtrarCuotasEliminar($validatedInfo['membresia_finalizar']);
+        //Membresias a cancelar (CAN): nunca la que entra en la anualidad.
+        $membresiasCancelar = array_values(array_filter(
+            array_unique(array_column($this->listaMembresiasCancelar, 'clave')),
+            fn($c) => $c !== $validatedInfo['membresia_finalizar']
+        ));
+
         try {
-            DB::transaction(function () use ($validatedInfo) {
+            DB::transaction(function () use ($validatedInfo, $cuotasFijasEliminar, $membresiasCancelar) {
                 //Insertamos la informacion de la anualidad
                 $anualidad = Anualidad::create([
                     'id_socio' => $validatedInfo['socio']['id'],
@@ -274,13 +312,9 @@ class Nueva extends Component
                     'iva' => $this->iva,
                     'observaciones' => $this->observaciones,
                     //Los cargos fijos marcados se eliminan hasta que el proceso mensual active la anualidad
-                    'cuotas_fijas_eliminar' => count($this->listaCargosFijosEliminados) > 0
-                        ? array_values($this->listaCargosFijosEliminados)
-                        : null,
+                    'cuotas_fijas_eliminar' => count($cuotasFijasEliminar) > 0 ? $cuotasFijasEliminar : null,
                     //Las membresias marcadas se cancelan (CAN) cuando el proceso mensual active la anualidad
-                    'membresias_cancelar' => count($this->listaMembresiasCancelar) > 0
-                        ? array_values(array_unique(array_column($this->listaMembresiasCancelar, 'clave')))
-                        : null,
+                    'membresias_cancelar' => count($membresiasCancelar) > 0 ? $membresiasCancelar : null,
                     'clave_mem_f' => $validatedInfo['membresia_finalizar'],
                     'estado_mem_f' => $validatedInfo['estado_finalizar'],
                     'fecha_inicio' => $validatedInfo['fInicio'],

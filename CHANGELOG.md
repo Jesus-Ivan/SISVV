@@ -789,3 +789,72 @@ Correcciones al flujo de cobros manuales y automáticos para que respeten `monto
 
 ### Verificación en local
 - Reproducido y corregido con el socio 7856 (anualidad #123, `fecha_inicio = 2026-06-10`): `mount()` ahora encuentra la anualidad y carga su detalle correctamente
+
+---
+
+## Fix — `SocioForm` recreaba el cargo fijo de membresías en ANU (doble cobro / línea fantasma)
+**Fecha:** 2026-06-16
+
+### Problema detectado
+Al guardar la edición de un socio (`SocioForm::update()`), el paso de sincronización de `socios_cuotas` recreaba el cargo fijo de **cualquier** membresía activa que no lo tuviera, incluidas las que están en estado `ANU`. Como la activación de la anualidad elimina ese cargo a propósito (la mensualidad está prepagada en la anualidad), editar al socio durante la anualidad lo regeneraba. El proceso mensual volvía a generar un cargo de esa membresía cada mes — un doble cobro silencioso (o una línea fantasma de `$0.00` cuando la cuota tipo `ANU` vale 0).
+
+### Archivos modificados
+
+#### `app/Livewire/Forms/SocioForm.php`
+- En el paso 2 de la sincronización de `socios_cuotas` dentro de `update()`: si la membresía está en estado `ANU`, **no** se recrea su cargo fijo y, si quedó uno de una edición previa, se elimina (auto-reparador). Las membresías `MEN`/`INA` siguen procesándose igual que antes
+- Una membresía en anualidad no debe tener cargo fijo mensual: se elimina al activar la anualidad y se reconstruye desde `detalles_anualidades` al finalizarla
+
+### Verificación en local
+- Socio 7869 (CG-F en `ANU` con fila fantasma en `socios_cuotas`): tras el fix, guardar la edición del socio elimina la fila fantasma y ya no la recrea; las 4 membresías `MEN` quedan intactas. Probado con `Livewire::test` dentro de transacción revertida
+
+---
+
+## Panel de gestión de cargos fijos en "Cargar Anualidad" (Sistemas)
+**Fecha:** 2026-06-16
+
+### Contexto
+En `sistemas/recepcion/cargo-anualidades`, al seleccionar un socio se muestra un apartado con sus cargos fijos (`socios_cuotas`). Permite, como parte del alta de la anualidad, **borrar cuotas** (locker/resguardo y la cuota de la membresía que entra en anualidad) y **cancelar (CAN) otras membresías**. Todos los cambios marcados son **diferidos**: no tocan la BD hasta que el proceso mensual **activa** la anualidad (mes de `fecha_inicio`), consistente con el ciclo de vida de anualidades.
+
+### Archivos creados
+
+#### `database/migrations/2026_06_12_000000_add_cuotas_fijas_eliminar_to_anualidades_table.php`
+- Columna `cuotas_fijas_eliminar` (`json`, nullable) en `anualidades`: ids de `socios_cuotas` a eliminar al activar la anualidad
+
+#### `database/migrations/2026_06_12_000100_add_membresias_cancelar_to_anualidades_table.php`
+- Columna `membresias_cancelar` (`json`, nullable) en `anualidades`: claves de membresía a cancelar (CAN) al activar la anualidad
+
+### Archivos modificados
+
+#### `app/Models/Anualidad.php`
+- Agregado `$casts` con `cuotas_fijas_eliminar => array` y `membresias_cancelar => array`
+
+#### `app/Livewire/Sistemas/Recepcion/Anualidad/Nueva.php`
+- Propiedades `#[Locked]`: `listaCargosFijos`, `listaCargosFijosEliminados`, `listaMembresiasCancelar`
+- `selectedSocio()` carga los cargos fijos del socio; `cargarCargosFijos()` resetea las marcas del socio anterior
+- Ruteo por tipo de cargo:
+  - Membresía que entra en la anualidad (la elegida en "Membresía al finalizar") → `removerCargoFijo()` borra su cuota (la membresía pasa a `ANU`)
+  - Otras membresías → `cancelarMembresia()` las marca para `CAN`
+  - Cargos sin membresía (locker/resguardo) → `removerCargoFijo()` borra la cuota
+- `removerTodosCargosFijos()` rutea cada cargo a la acción correspondiente; `restaurarCargosFijos()` deshace lo marcado
+- Guardia: no se puede cancelar (ni borrar como cuota) la membresía que entra en la anualidad por el camino equivocado; bloqueo en el componente y red de seguridad en el controlador
+- `filtrarCuotasEliminar()`: al aplicar, descarta de `cuotas_fijas_eliminar` cuotas de membresías que ya no son la de la anualidad (p. ej. si se cambió el select), evitando borrados no durables que `SocioForm` recrearía
+- `aplicarAnualidad()` guarda `cuotas_fijas_eliminar` y `membresias_cancelar` en la anualidad
+
+#### `app/Http/Controllers/CargosController.php`
+- `activarAnualidad()`: al activar la anualidad, además de poner la membresía en `ANU`, elimina las cuotas marcadas (`cuotas_fijas_eliminar`, por id, idempotente con `eliminarCargosAnteriores`) y cancela las membresías marcadas (`membresias_cancelar`): pone su `socios_membresias.estado = 'CAN'` y borra sus `socios_cuotas`. Nunca cancela la membresía que entra en la anualidad (`clave_mem_f`)
+
+#### `resources/views/livewire/sistemas/recepcion/anualidad/nueva.blade.php`
+- Apartado "Cargos fijos del socio" reubicado abajo, en rejilla de 2 columnas (columna derecha reservada para uso futuro), visible sólo con socio seleccionado
+- Acción por fila con ícono de papelera: "Cancelar membresía" (otras membresías) o "Borrar cuota" (cargos sin membresía y la membresía de la anualidad, con título "Borrar cuota (entra en anualidad)")
+- Botón "Marcar todos" + aviso ámbar con resumen de lo marcado y botón "Deshacer"
+- Sin diálogos de confirmación en los botones (papeleras y "Marcar todos")
+- Select "Membresía al finalizar" cambiado a `wire:model.live` para que la fila correcta cambie a "Borrar cuota" al elegirla
+
+### Comportamiento (timing)
+- Borrado de cuotas y cancelación de membresías ocurren **cuando inicia la anualidad** (al correr el proceso del mes de `fecha_inicio`), no al pulsar "Aplicar anualidad". Hasta entonces los cargos se siguen cobrando normalmente
+- Junto con el fix de `SocioForm` (membresías `ANU` no se recrean), las eliminaciones quedan **durables**
+
+### Verificación en local (socio 7869, `Livewire::test` + activación simulada, todo en transacción revertida)
+- Borrar la cuota de la membresía de la anualidad (CC-F) + cancelar otra (CC-P): al activar, CC-F → `ANU` sin cuota y CC-P → `CAN` sin cuota; las demás intactas
+- Guardia: intentar borrar la cuota de una membresía que no es la de la anualidad no marca nada
+- Trampa: marcar la cuota de CC-F y luego cambiar la membresía de la anualidad a CC-I → `cuotas_fijas_eliminar` queda en `null` (CC-F descartada)

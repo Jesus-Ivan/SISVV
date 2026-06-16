@@ -75,7 +75,7 @@
                 <label for="membresias" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia
                     al
                     finalizar</label>
-                <select id="membresias" wire:model='membresia_finalizar'
+                <select id="membresias" wire:model.live='membresia_finalizar'
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                     <option value="{{ null }}" selected>Seleccione</option>
                     @foreach ($this->membresias as $membresia)
@@ -261,7 +261,6 @@
                     <p class="text-lg font-bold text-gray-900 dark:text-white">Cargos fijos del socio</p>
                     @if (count($listaCargosFijos) > 0)
                         <button type="button" wire:click="removerTodosCargosFijos"
-                            wire:confirm="¿Marcar todos? Las membresías se cancelarán (CAN) y los demás cargos se borrarán cuando inicie la anualidad."
                             class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3 py-2 text-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
                             Marcar todos
                         </button>
@@ -315,9 +314,10 @@
                                         @php
                                             $claveFijo = $fijo['cuota']['clave_membresia'] ?? null;
                                             $esMembresia = !empty($claveFijo) && $claveFijo !== 'N/A';
+                                            $esMembresiaAnualidad = $esMembresia && $membresia_finalizar && $claveFijo === $membresia_finalizar;
                                         @endphp
-                                        @if ($esMembresia)
-                                            {{-- Membresia: se cancela (CAN), no se borra la cuota --}}
+                                        @if ($esMembresia && !$esMembresiaAnualidad)
+                                            {{-- Otra membresia: se cancela (CAN), no se borra la cuota --}}
                                             <button type="button" wire:click="cancelarMembresia({{ $index }})"
                                                 title="Cancelar membresía {{ $claveFijo }}"
                                                 class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
@@ -330,8 +330,9 @@
                                                 <span class="sr-only">Cancelar membresía {{ $claveFijo }}</span>
                                             </button>
                                         @else
-                                            {{-- Cargo sin membresia (locker/resguardo): borrado normal --}}
+                                            {{-- Cargo sin membresia (locker/resguardo) o la membresia que entra en la anualidad: borrar cuota --}}
                                             <button type="button" wire:click="removerCargoFijo({{ $index }})"
+                                                title="{{ $esMembresiaAnualidad ? 'Borrar cuota (entra en anualidad)' : 'Borrar cuota' }}"
                                                 class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                                                     fill="currentColor" class="w-5 h-5">
@@ -339,7 +340,7 @@
                                                         d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
                                                         clip-rule="evenodd" />
                                                 </svg>
-                                                <span class="sr-only">Borrar</span>
+                                                <span class="sr-only">{{ $esMembresiaAnualidad ? 'Borrar cuota (entra en anualidad)' : 'Borrar cuota' }}</span>
                                             </button>
                                         @endif
                                     </td>

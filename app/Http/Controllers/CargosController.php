@@ -269,6 +269,19 @@ class CargosController extends Controller
                     ->whereIn('id', $anualidad->cuotas_fijas_eliminar)
                     ->delete();
             }
+            //Cancelamos (CAN) las membresias marcadas y eliminamos sus cuotas fijas
+            if ($anualidad->membresias_cancelar) {
+                foreach ($anualidad->membresias_cancelar as $claveCancelar) {
+                    //Nunca cancelar la membresia que entra en la anualidad
+                    if ($claveCancelar === $anualidad->clave_mem_f) continue;
+                    SocioMembresia::where('id_socio', $idSocio)
+                        ->where('clave_membresia', $claveCancelar)
+                        ->update(['estado' => 'CAN']);
+                    SocioCuota::where('id_socio', $idSocio)
+                        ->whereHas('cuota', fn($q) => $q->where('clave_membresia', $claveCancelar))
+                        ->delete();
+                }
+            }
         }
         return $anualidad;
     }

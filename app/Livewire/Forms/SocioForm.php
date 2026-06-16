@@ -434,6 +434,18 @@ class SocioForm extends Form
             foreach ($candidatosActivos as $item) {
                 $clave         = $item['clave'];
                 $estadoDeseado = $item['estado'];
+
+                // Una membresía en anualidad (ANU) no debe tener cargo fijo mensual: la activación
+                // de la anualidad lo elimina a proposito y el fin de la anualidad lo reconstruye
+                // desde sus detalles. No lo recreamos aqui, y si quedo uno de una edicion previa,
+                // lo eliminamos para no generar cargos durante la anualidad.
+                if ($estadoDeseado === 'ANU') {
+                    if (isset($adicionalesActuales[$clave])) {
+                        $adicionalesActuales[$clave]->delete();
+                    }
+                    continue;
+                }
+
                 $cuotaDeseada  = Cuota::where('clave_membresia', $clave)->where('tipo', $estadoDeseado)->first()
                     ?? Cuota::where('clave_membresia', $clave)->where('tipo', 'MEN')->first();
                 if (!$cuotaDeseada) continue;

@@ -17,5 +17,6 @@ class Anualidad extends Model
     //Conversion de tipos
     protected $casts = [
         'cuotas_fijas_eliminar' => 'array',
+        'membresias_cancelar' => 'array',
     ];
 }

@@ -28,6 +28,22 @@ class SocioCuota extends Model
         return Attribute::get(fn() => $this->monto_personalizado ?? $this->cuota->monto);
     }
 
+    /**
+     * Concatena el texto_concepto de la cuota a una descripción base, según posicion_texto.
+     * Usado al generar el concepto del estado de cuenta (carga manual y masiva) para que el
+     * texto personalizado se refleje en ambos flujos de forma idéntica.
+     */
+    public function aplicarTextoConcepto(string $descripcionBase): string
+    {
+        $texto = $this->texto_concepto;
+        if (($texto ?? '') === '') {
+            return $descripcionBase;
+        }
+        return ($this->posicion_texto ?? 'izquierda') === 'derecha'
+            ? $descripcionBase . ' ' . $texto
+            : $texto . ' ' . $descripcionBase;
+    }
+
     public function cuota(): HasOne
     {
         return $this->hasOne(Cuota::class, 'id', 'id_cuota')

@@ -342,6 +342,17 @@ class Nueva extends Component
                         'saldo' => $this->saldo_cero ? 0 : $cargo['monto'],
                     ]);
                 }
+
+                //Activación inmediata: si la anualidad ya está vigente para el mes actual
+                //(inicio retroactivo o del mes en curso), se aplica sin esperar la carga masiva
+                //de mensualidades. Se compara por mes, igual que el proceso mensual.
+                $mesHoy = now()->startOfMonth();
+                $iniMes = Carbon::parse($anualidad->fecha_inicio)->startOfMonth();
+                $finMes = Carbon::parse($anualidad->fecha_fin)->startOfMonth();
+                if ($iniMes->lessThanOrEqualTo($mesHoy) && $finMes->greaterThanOrEqualTo($mesHoy)) {
+                    $anualidad->activar();
+                }
+
                 //Mensage de sesion para el alert-message
                 session()->flash('success', 'Anualidad cargada correctamente');
                 //Emitimos evento para abrir el action message

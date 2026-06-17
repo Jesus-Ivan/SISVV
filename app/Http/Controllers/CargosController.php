@@ -62,10 +62,12 @@ class CargosController extends Controller
                         // Saltar las primeras $enEstado filas (ya cobradas) e iterar las restantes
                         // Cada fila usa su propio monto_a_cobrar para respetar monto_personalizado distinto
                         foreach ($rows->values()->slice($enEstado) as $sc) {
+                            //Descripción base + texto personalizado (si la cuota lo tiene), igual que la carga manual
+                            $descripcionBase = $sc->cuota->descripcion . ' ' . $this->getMes($fecha->month) . '-' . $fecha->year;
                             EstadoCuenta::create([
                                 'id_cuota' => $sc->id_cuota,
                                 'id_socio'  => $id_socio,
-                                'concepto'  => $sc->cuota->descripcion . ' ' . $this->getMes($fecha->month) . '-' . $fecha->year,
+                                'concepto'  => $sc->aplicarTextoConcepto($descripcionBase),
                                 'fecha'     => $fecha->toDateString(),
                                 'cargo'     => $sc->monto_a_cobrar,
                                 'abono'     => 0,
@@ -253,35 +255,9 @@ class CargosController extends Controller
             ->whereYear('fecha_inicio', $fecha_mensualidad->year)
             ->whereMonth('fecha_inicio', $fecha_mensualidad->month)
             ->first();
-        //Si existe la anualidad
+        //Si existe la anualidad, aplicamos su activación (estado ANU + borrado/cancelación marcados)
         if ($anualidad) {
-            //Buscamos la fila exacta por clave_membresia (evita tocar fila arbitraria con múltiples membresías)
-            $socio_membresia = SocioMembresia::where('id_socio', $idSocio)
-                ->where('clave_membresia', $anualidad->clave_mem_f)
-                ->first();
-            if (!$socio_membresia)
-                throw new Exception("No se encontro registro en la tabla socios_membresias para el socio: " . $idSocio);
-            $socio_membresia->estado = 'ANU';
-            $socio_membresia->save();
-            //Eliminamos los cargos fijos que se marcaron al registrar la anualidad
-            if ($anualidad->cuotas_fijas_eliminar) {
-                SocioCuota::where('id_socio', $idSocio)
-                    ->whereIn('id', $anualidad->cuotas_fijas_eliminar)
-                    ->delete();
-            }
-            //Cancelamos (CAN) las membresias marcadas y eliminamos sus cuotas fijas
-            if ($anualidad->membresias_cancelar) {
-                foreach ($anualidad->membresias_cancelar as $claveCancelar) {
-                    //Nunca cancelar la membresia que entra en la anualidad
-                    if ($claveCancelar === $anualidad->clave_mem_f) continue;
-                    SocioMembresia::where('id_socio', $idSocio)
-                        ->where('clave_membresia', $claveCancelar)
-                        ->update(['estado' => 'CAN']);
-                    SocioCuota::where('id_socio', $idSocio)
-                        ->whereHas('cuota', fn($q) => $q->where('clave_membresia', $claveCancelar))
-                        ->delete();
-                }
-            }
+            $anualidad->activar();
         }
         return $anualidad;
     }

@@ -858,3 +858,47 @@ En `sistemas/recepcion/cargo-anualidades`, al seleccionar un socio se muestra un
 - Borrar la cuota de la membresía de la anualidad (CC-F) + cancelar otra (CC-P): al activar, CC-F → `ANU` sin cuota y CC-P → `CAN` sin cuota; las demás intactas
 - Guardia: intentar borrar la cuota de una membresía que no es la de la anualidad no marca nada
 - Trampa: marcar la cuota de CC-F y luego cambiar la membresía de la anualidad a CC-I → `cuotas_fijas_eliminar` queda en `null` (CC-F descartada)
+
+---
+
+## Activación inmediata de anualidad ya vigente al registrarla
+**Fecha:** 2026-06-16
+
+### Contexto
+Al registrar una anualidad cuyo periodo **ya incluye el mes actual** (inicio retroactivo o del mes en curso), debe aplicarse al guardar, sin esperar a la carga masiva de mensualidades: poner la membresía en `ANU`, borrar las cuotas marcadas y cancelar las membresías marcadas. Caso clave: una anualidad con `fecha_inicio` en un mes ya pasado nunca sería activada por el proceso mensual (que sólo activa en el mes exacto de `fecha_inicio`).
+
+### Archivos modificados
+
+#### `app/Models/Anualidad.php`
+- Nuevo método `activar()`: aplica los efectos de iniciar la anualidad (membresía `clave_mem_f` → `ANU`, borrado de `cuotas_fijas_eliminar`, cancelación `CAN` de `membresias_cancelar` y borrado de sus cuotas). Lanza excepción si no existe la fila de `socios_membresias`. No genera mensualidades. Reutilizable por el proceso mensual y por la activación inmediata
+
+#### `app/Http/Controllers/CargosController.php`
+- `activarAnualidad()` refactorizado para delegar en `$anualidad->activar()` (misma lógica, sin duplicación)
+
+#### `app/Livewire/Sistemas/Recepcion/Anualidad/Nueva.php`
+- `aplicarAnualidad()`: tras crear la anualidad, si su periodo (comparado por mes, igual que el proceso mensual) incluye el mes actual, llama a `$anualidad->activar()` dentro de la misma transacción. Si el inicio es futuro, no se activa ahora — queda guardado (`cuotas_fijas_eliminar`/`membresias_cancelar`) para que el proceso mensual lo aplique en su mes
+
+### Verificación en local (socio 7869, `Livewire::test` + transacción revertida)
+- **Retroactivo** (inicio 2026-02-16, hoy 2026-06-16): al guardar, la membresía de la anualidad pasó a `ANU` sin cuota y la membresía marcada quedó en `CAN` sin cuota — sin correr la carga masiva
+- **Futuro** (inicio 2026-08-16): no se activó al guardar; las marcas quedaron almacenadas en la anualidad
+- **Proceso mensual** (refactor): correr `activarAnualidad` para agosto activó la anualidad futura correctamente — sin regresión
+
+---
+
+## Fix — La carga masiva de mensualidades no aplicaba el texto concatenado de la cuota
+**Fecha:** 2026-06-16
+
+### Problema detectado
+Una cuota fija con `texto_concepto`/`posicion_texto` (texto personalizado concatenado al concepto) sólo reflejaba ese texto al cargarse manualmente desde `recepcion/edo-cuenta/nuevo-cargo`. La carga masiva (`sistemas/recepcion/cargo-mensualidades` → `CargosController::cargarMensualidades`) construía el concepto como `descripcion mes-año` **sin** aplicar `texto_concepto`, por lo que el texto no aparecía en el estado de cuenta. El precio personalizado (`monto_personalizado`) sí se aplicaba en ambos flujos; sólo faltaba el texto en el masivo.
+
+### Archivos modificados
+
+#### `app/Models/SocioCuota.php`
+- Nuevo método `aplicarTextoConcepto(string $descripcionBase): string`: concatena `texto_concepto` a la izquierda o derecha de la descripción base según `posicion_texto` (default `izquierda`); si no hay texto, devuelve la base sin cambios. Centraliza el formato para que carga manual y masiva sean idénticas
+
+#### `app/Http/Controllers/CargosController.php`
+- `cargarMensualidades()`: el concepto del `EstadoCuenta` ahora se construye con `$sc->aplicarTextoConcepto($descripcionBase)` en lugar de sólo `descripcion mes-año`
+
+### Verificación en local
+- Unit del método: `izquierda` → `BECADO MENSUALIDAD CG-FAMILIAR JUNIO-2026`; `derecha` → `... JUNIO-2026 BECADO`; sin texto → base sin cambios
+- Integración (socio 1057, transacción revertida): la carga masiva generó `BECADO MEN.INACTIVA CG-FAMILIAR JUNIO-2026` con `cargo = 1234.50` (texto **y** precio personalizado aplicados)

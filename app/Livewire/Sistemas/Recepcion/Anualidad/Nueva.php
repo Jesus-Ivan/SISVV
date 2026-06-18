@@ -39,6 +39,8 @@ class Nueva extends Component
     public $listaCargosFijosEliminados = [];    //Ids de cargos fijos (no-membresia) marcados para borrarse cuando inicie la anualidad
     #[Locked]
     public $listaMembresiasCancelar = [];       //Membresias marcadas para cancelarse (CAN) cuando inicie la anualidad: [['clave','concepto']]
+    #[Locked]
+    public $estadoCuentaBorrados = [];          //Copias de los movimientos de estado de cuenta borrados, para poder deshacer
 
     public $total = 0;
     //Almacena el estado de la membresia que se seteara en la BD. al finalizar la anualidad
@@ -61,6 +63,8 @@ class Nueva extends Component
             ->first();
         //Cargamos los cargos fijos del socio y limpiamos los marcados del socio anterior
         $this->cargarCargosFijos();
+        //Limpiamos el historial de deshacer del socio anterior
+        $this->estadoCuentaBorrados = [];
     }
 
     //Verdadero si el cargo fijo corresponde a una membresia (tiene clave_membresia)
@@ -147,6 +151,34 @@ class Nueva extends Component
         $this->cargarCargosFijos();
     }
 
+    //Borra de inmediato un movimiento del estado de cuenta del socio (borrado real),
+    //guardando una copia para poder deshacer la accion.
+    public function borrarEstadoCuenta($id)
+    {
+        if (!$this->socio) return;
+        //Recuperamos el movimiento (acotado al socio) antes de borrarlo
+        $mov = EstadoCuenta::where('id', $id)
+            ->where('id_socio', $this->socio['id'])
+            ->first();
+        if (!$mov) return;
+        //Guardamos una copia completa para poder restaurarlo (deshacer)
+        $this->estadoCuentaBorrados[] = $mov->getAttributes();
+        $mov->delete();
+        //Limpiamos el cache de la propiedad computada para refrescar la tabla
+        unset($this->estadoCuentaSocio);
+    }
+
+    //Deshace los borrados: vuelve a insertar los movimientos eliminados en esta sesion
+    public function restaurarEstadoCuenta()
+    {
+        if (count($this->estadoCuentaBorrados) > 0) {
+            //Reinsertamos las copias guardadas conservando sus datos originales (incluido el id)
+            EstadoCuenta::insert($this->estadoCuentaBorrados);
+            $this->estadoCuentaBorrados = [];
+            unset($this->estadoCuentaSocio);
+        }
+    }
+
     private function cargarCargosFijos()
     {
         $this->listaCargosFijos = SocioCuota::with('cuota')
@@ -187,6 +219,20 @@ class Nueva extends Component
         return SocioMembresia::with('membresia')
             ->where('id_socio', $this->socio['id'])
             ->whereNot('estado', 'CAN')
+            ->get();
+    }
+
+    //Movimientos del estado de cuenta del socio (mas recientes primero).
+    //Solo cuotas: cargo mayor a 0 y ligadas a una cuota (id_cuota no null).
+    #[Computed()]
+    public function estadoCuentaSocio()
+    {
+        if (!$this->socio) return collect();
+        return EstadoCuenta::where('id_socio', $this->socio['id'])
+            ->where('cargo', '>', 0)
+            ->whereNotNull('id_cuota')
+            ->orderBy('fecha', 'desc')
+            ->orderBy('id', 'desc')
             ->get();
     }
 
@@ -343,13 +389,14 @@ class Nueva extends Component
                     ]);
                 }
 
-                //Activación inmediata: si la anualidad ya está vigente para el mes actual
-                //(inicio retroactivo o del mes en curso), se aplica sin esperar la carga masiva
-                //de mensualidades. Se compara por mes, igual que el proceso mensual.
-                $mesHoy = now()->startOfMonth();
-                $iniMes = Carbon::parse($anualidad->fecha_inicio)->startOfMonth();
-                $finMes = Carbon::parse($anualidad->fecha_fin)->startOfMonth();
-                if ($iniMes->lessThanOrEqualTo($mesHoy) && $finMes->greaterThanOrEqualTo($mesHoy)) {
+                //Activación inmediata: sólo si la anualidad ya está vigente HOY (inicio
+                //retroactivo o del día en curso), se aplica sin esperar la carga masiva. Se
+                //compara por FECHA EXACTA: una anualidad que empieza en el futuro NO se activa
+                //todavía (la membresía no debe mostrarse como ANU antes de su día de inicio).
+                $hoy = now()->startOfDay();
+                $inicio = Carbon::parse($anualidad->fecha_inicio)->startOfDay();
+                $fin = Carbon::parse($anualidad->fecha_fin)->startOfDay();
+                if ($inicio->lessThanOrEqualTo($hoy) && $fin->greaterThanOrEqualTo($hoy)) {
                     $anualidad->activar();
                 }
 

@@ -49,19 +49,19 @@ class CargosNuevo extends Component
              *Buscar los cargos incluidos en la anualidad
              */
 
-            //Crear la fecha de hoy
-            $hoy = now();
-            //Buscamos la anualidad vigente para hoy
-            $anualidad = Anualidad::where([
-                ['id_socio', '=', $socio->id],
-                ['fecha_inicio', '<=', $hoy->toDateString()],
-                ['fecha_fin', '>=', $hoy->toDateString()],
-            ])
-                ->first();
-            //Buscar los detalles de la anualidad (si existe una vigente para hoy)
-            if ($anualidad) {
+            //Fecha de hoy: la vigencia se evalúa por FECHA EXACTA (no por mes), para que el
+            //panel sólo muestre las anualidades cuyo día de inicio ya llegó y aún no terminan.
+            $hoy = now()->toDateString();
+            //Buscamos TODAS las anualidades vigentes hoy (un socio puede tener varias,
+            //una por cada membresia que entro en anualidad)
+            $anualidadesVigentes = Anualidad::where('id_socio', $socio->id)
+                ->where('fecha_inicio', '<=', $hoy)
+                ->where('fecha_fin', '>=', $hoy)
+                ->pluck('id');
+            //Buscar los detalles de todas las anualidades vigentes
+            if ($anualidadesVigentes->isNotEmpty()) {
                 $this->cargos_anualidad = DB::table('detalles_anualidades')
-                    ->where('id_anualidad', $anualidad->id)
+                    ->whereIn('id_anualidad', $anualidadesVigentes)
                     ->get();
             }
         }
@@ -74,6 +74,19 @@ class CargosNuevo extends Component
         return SocioMembresia::where('id_socio', $this->socio->id)
             ->where('estado', '!=', 'CAN')
             ->doesntExist();
+    }
+
+    // Membresías del socio (no canceladas) con su estado real desde socios_membresias.
+    // Se usa en la cabecera para reflejar TODAS las membresías (incluidas las ANU sin cuota)
+    // con su estado verdadero, no el tipo de la cuota fija.
+    #[Computed()]
+    public function membresiasSocio()
+    {
+        return SocioMembresia::with('membresia')
+            ->where('id_socio', $this->socio->id)
+            ->whereNot('estado', 'CAN')
+            ->orderBy('id')
+            ->get();
     }
 
     // true si ALGUNA membresía está en ANU

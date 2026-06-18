@@ -108,11 +108,14 @@
                                 $clavesMostradas = $socio->cuotasMembresia->isNotEmpty()
                                     ? $socio->cuotasMembresia->pluck('cuota.clave_membresia')->all()
                                     : array_filter([$socio->socioMembresia?->clave_membresia]);
+                                //Estado real desde socios_membresias (fuente de verdad): una membresia
+                                //en ANU que aun conserva su cuota mensual debe mostrarse como ANU, no MEN.
+                                $estadosPorClave = $socio->socioMembresias->pluck('estado', 'clave_membresia');
                             @endphp
                             @forelse($socio->cuotasMembresia as $sc)
                                 <div class="text-sm leading-5">
                                     <span class="text-gray-700 dark:text-gray-300">{{ $sc->cuota->clave_membresia }}</span>
-                                    <span class="text-xs text-gray-400 ml-1">{{ $sc->cuota->tipo }}</span>
+                                    <span class="text-xs text-gray-400 ml-1">{{ $estadosPorClave[$sc->cuota->clave_membresia] ?? $sc->cuota->tipo }}</span>
                                 </div>
                             @empty
                                 <div>{{ $socio->socioMembresia ? $socio->socioMembresia->clave_membresia : 'N/R' }}</div>

@@ -4,6 +4,96 @@ Registro de cambios del proyecto de mejora: **Sistema de Cuotas Personalizadas p
 
 ---
 
+## Tabla de estado de cuenta con borrado y deshacer en "Cargar Anualidad" (Sistemas)
+**Fecha:** 2026-06-17
+
+### Contexto
+En `sistemas/recepcion/cargo-anualidades`, al seleccionar un socio se muestra una tabla con los
+movimientos de su estado de cuenta, pensada para **borrar cuotas de membresía pendientes** (p. ej. un
+socio que debe varios meses) como parte del alta de la anualidad. El borrado es **real e inmediato**
+(no diferido como la tabla de cargos fijos), con un botón **"Deshacer"** que reinserta lo borrado.
+
+### Archivos modificados
+
+#### `app/Livewire/Sistemas/Recepcion/Anualidad/Nueva.php`
+- Computed `estadoCuentaSocio()`: movimientos de `estados_cuenta` del socio, más recientes primero,
+  filtrados a `cargo > 0` **y** `id_cuota` no null (solo cuotas reales como membresías/recargos;
+  excluye consumos de venta, notas y abonos que no tienen `id_cuota`)
+- Propiedad `#[Locked] estadoCuentaBorrados`: copias completas de las filas borradas para poder deshacer
+- `borrarEstadoCuenta($id)`: borrado real e inmediato acotado al socio (`id` + `id_socio`), guarda una
+  copia antes de borrar. **Sin** confirmación ni notificación
+- `restaurarEstadoCuenta()`: reinserta las copias con `EstadoCuenta::insert()` **conservando el `id`
+  original**, lo que mantiene íntegras las referencias (`detalles_recibo.id_estado_cuenta`,
+  `id_venta_pago`) si se deshace
+- `selectedSocio()`: limpia el historial de deshacer al cambiar de socio
+
+#### `resources/views/livewire/sistemas/recepcion/anualidad/nueva.blade.php`
+- Nueva tabla "Estado de cuenta del socio" en la columna derecha (antes reservada), con scroll y
+  encabezado `sticky`; columnas Fecha · Concepto · Cargo · Saldo · Acciones
+- Botón papelera por fila (borrado inmediato, sin diálogo de confirmación)
+- Banner ámbar "Se eliminaron N concepto(s) del estado de cuenta" con botón **"Deshacer"**
+
+### Consideración de impacto entre módulos
+- `estados_cuenta` **no tiene FK reales ni SoftDeletes** (las FK están comentadas en las migraciones).
+  Otras tablas referencian su `id` vía INNER JOIN: `detalles_recibo.id_estado_cuenta`
+  (`RecibosExport`, `ReportesController`) y los consumos por `id_venta_pago` (`VentaEditarForm`)
+- Borrar un concepto **pagado** (con `detalles_recibo`) deja líneas huérfanas: la línea de cobro
+  desaparece de la reimpresión del recibo y de los reportes de cobranza (el dinero sigue contado en
+  `recibos.total`/caja; se pierde la trazabilidad por concepto)
+- El filtro `id_cuota` no null **excluye los consumos de venta**, pero **no** excluye cuotas ya pagadas
+  (una cuota pagada conserva `cargo > 0` con `saldo = 0`). Por decisión del usuario no se agregó candado;
+  el uso queda restringido por criterio a cuotas de membresía pendientes. El "Deshacer" (conserva el
+  `id`) mitiga el error dentro de la sesión de edición
+
+---
+
+## Cambio — Activación de anualidad por fecha exacta (no por mes)
+**Fecha:** 2026-06-17
+
+La activación inmediata mostraba una membresía como `ANU` desde que entraba el **mes** de inicio,
+aunque su día de inicio fuera futuro (p. ej. inicio 18/06 ya aparecía como anual el 17/06). Se cambió
+a comparación **por fecha exacta** para evitar la confusión.
+
+#### `app/Livewire/Sistemas/Recepcion/Anualidad/Nueva.php`
+- Activación inmediata: ahora sólo activa la anualidad si `fecha_inicio <= hoy <= fecha_fin` (fecha
+  exacta). Una anualidad con inicio futuro **no** se activa al registrarse.
+
+#### `app/Livewire/Recepcion/Estados/CargosNuevo.php`
+- El panel "Cargos incluidos en la anualidad" vuelve a evaluar la vigencia por **fecha exacta**, en
+  línea con la activación.
+
+> Nota: con fecha exacta, una anualidad con inicio futuro dentro del mes en curso, registrada después
+> de que ya corrió la carga masiva de ese mes, no se auto-activará el día de inicio (no hay proceso
+> diario). Las de inicio en un mes futuro sí se activan con la carga masiva de ese mes.
+
+---
+
+## Fix — Las vistas de estado de cuenta sólo reflejaban una anualidad
+**Fecha:** 2026-06-17
+
+Un socio puede tener varias anualidades activas a la vez (una por cada membresía que entró en
+anualidad). Las vistas de recepción sólo mostraban una. Cambios **únicamente de vista** (la lógica
+de activación y los datos no se tocaron):
+
+#### `app/Livewire/Recepcion/Estados/CargosNuevo.php`
+- `mount()`: "Cargos incluidos en la anualidad" ahora carga los detalles de **todas** las anualidades
+  vigentes del socio (antes usaba `->first()`, mostraba sólo una). La vigencia se evalúa **por mes**,
+  igual que la activación (`CargosController::activarAnualidad` / `Anualidad::activar`), para que el
+  panel coincida con el estado `ANU` de las membresías.
+- Nuevo computed `membresiasSocio()`: devuelve las membresías no canceladas con su **estado real**
+  desde `socios_membresias` (fuente de verdad), no el tipo de la cuota fija.
+
+#### `resources/views/livewire/recepcion/estados/cargos-nuevo.blade.php`
+- La cabecera "Membresías:" ahora itera `membresiasSocio` y muestra el estado real, incluyendo las
+  membresías en `ANU` que ya no tienen cuota fija asociada (antes se derivaban de `socios_cuotas`, por
+  lo que las ANU sin cuota no aparecían y las ANU con cuota se mostraban como MEN).
+
+#### `resources/views/livewire/recepcion/estados/principal.blade.php`
+- La columna de membresías muestra el estado real desde `socios_membresias`: una membresía en `ANU`
+  que aún conserva su cuota mensual se muestra como `ANU` (antes mostraba el tipo de la cuota = `MEN`).
+
+---
+
 ## Fase 1 — Migración Estructural de Base de Datos
 **Fecha:** 2026-05-22
 

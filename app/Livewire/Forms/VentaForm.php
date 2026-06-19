@@ -36,6 +36,7 @@ class VentaForm extends Form
     public $nombre_empleado;        //Nombre del empleado
     public $socioSeleccionado;      //El socio seleccionado
     public $socio = [];             //Datos del socio
+    public $no_comensal;            //La cantidad de comensales en la mesa
 
     public $socioPago;              //El socio seleccionado para agregar en metodo de pago
     public $id_pago;                //id del tipo de pago seleccionado en el modal
@@ -71,7 +72,8 @@ class VentaForm extends Form
     public $socioVentaRules = [
         'socio' => 'min:1',
         'productosTable' => 'min:1',
-        'pagosTable' => 'min:1'
+        'pagosTable' => 'min:1',
+        'no_comensal' => 'required|min:1'
     ];
 
     //REGLAS PARA VENTA AL INVITADO
@@ -79,14 +81,16 @@ class VentaForm extends Form
         'socio' => 'min:1',
         'nombre_invitado' => 'required',
         'productosTable' => 'min:1',
-        'pagosTable' => 'min:1'
+        'pagosTable' => 'min:1',
+        'no_comensal' => 'required|min:1'
     ];
 
     //REGLAS PARA VENTA AL PUBLICO GENERAL
     public $generalVentaRules = [
         'nombre_p_general' => 'required',
         'productosTable' => 'min:1',
-        'pagosTable' => 'min:1'
+        'pagosTable' => 'min:1',
+        'no_comensal' => 'required|min:1'
     ];
 
     //REGLAS PARA VENTA AL EMPLEADO
@@ -354,17 +358,20 @@ class VentaForm extends Form
             case 'socio':
                 $venta = $this->validate([
                     'socio' => 'min:1',
+                    'no_comensal' => 'required|min:1'
                 ]);
                 break;
             case 'invitado':
                 $venta = $this->validate([
                     'socio' => 'min:1',
                     'nombre_invitado' => 'required',
+                    'no_comensal' => 'required|min:1'
                 ]);
                 break;
             case 'general':
                 $venta = $this->validate([
                     'nombre_p_general' => 'required',
+                    'no_comensal' => 'required|min:1'
                 ]);
                 break;
             case 'empleado':
@@ -655,7 +662,8 @@ class VentaForm extends Form
             'fecha_cierre' => $isClosed ? $fecha_cierre : null,
             'total' => $this->totalVenta,
             'corte_caja' => $resultCaja->corte,
-            'clave_punto_venta' => $codigopv
+            'clave_punto_venta' => $codigopv,
+            'num_comensales' => array_key_exists('no_comensal', $venta) ? $venta['no_comensal'] : null
         ]);
     }
 
@@ -848,7 +856,8 @@ class VentaForm extends Form
             'pagosTable',
             'totalVenta',
             'totalPago',
-            'totalPropina'
+            'totalPropina',
+            'no_comensal'
         );
     }
 

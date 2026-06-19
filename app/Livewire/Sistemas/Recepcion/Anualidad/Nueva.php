@@ -41,6 +41,7 @@ class Nueva extends Component
     public $listaMembresiasCancelar = [];       //Membresias marcadas para cancelarse (CAN) cuando inicie la anualidad: [['clave','concepto']]
     #[Locked]
     public $estadoCuentaBorrados = [];          //Copias de los movimientos de estado de cuenta borrados, para poder deshacer
+    public $estadoCuentaSeleccionados = [];     //Ids de movimientos marcados con el checkbox para borrado masivo
 
     public $total = 0;
     //Almacena el estado de la membresia que se seteara en la BD. al finalizar la anualidad
@@ -63,8 +64,9 @@ class Nueva extends Component
             ->first();
         //Cargamos los cargos fijos del socio y limpiamos los marcados del socio anterior
         $this->cargarCargosFijos();
-        //Limpiamos el historial de deshacer del socio anterior
+        //Limpiamos el historial de deshacer y la seleccion del socio anterior
         $this->estadoCuentaBorrados = [];
+        $this->estadoCuentaSeleccionados = [];
     }
 
     //Verdadero si el cargo fijo corresponde a una membresia (tiene clave_membresia)
@@ -155,6 +157,24 @@ class Nueva extends Component
     //guardando una copia para poder deshacer la accion.
     public function borrarEstadoCuenta($id)
     {
+        $this->eliminarMovimiento($id);
+        //Limpiamos el cache de la propiedad computada para refrescar la tabla
+        unset($this->estadoCuentaSocio);
+    }
+
+    //Borra los movimientos marcados con el checkbox (borrado masivo).
+    public function borrarSeleccionados()
+    {
+        foreach ($this->estadoCuentaSeleccionados as $id) {
+            $this->eliminarMovimiento($id);
+        }
+        $this->estadoCuentaSeleccionados = [];
+        unset($this->estadoCuentaSocio);
+    }
+
+    //Helper compartido: recupera el movimiento (acotado al socio), guarda copia y lo borra.
+    private function eliminarMovimiento($id): void
+    {
         if (!$this->socio) return;
         //Recuperamos el movimiento (acotado al socio) antes de borrarlo
         $mov = EstadoCuenta::where('id', $id)
@@ -164,8 +184,6 @@ class Nueva extends Component
         //Guardamos una copia completa para poder restaurarlo (deshacer)
         $this->estadoCuentaBorrados[] = $mov->getAttributes();
         $mov->delete();
-        //Limpiamos el cache de la propiedad computada para refrescar la tabla
-        unset($this->estadoCuentaSocio);
     }
 
     //Deshace los borrados: vuelve a insertar los movimientos eliminados en esta sesion
@@ -223,13 +241,15 @@ class Nueva extends Component
     }
 
     //Movimientos del estado de cuenta del socio (mas recientes primero).
-    //Solo cuotas: cargo mayor a 0 y ligadas a una cuota (id_cuota no null).
+    //Solo cuotas pendientes: cargo mayor a 0, ligadas a una cuota (id_cuota no null)
+    //y con saldo pendiente (saldo > 0, oculta las pagadas al 100%).
     #[Computed()]
     public function estadoCuentaSocio()
     {
         if (!$this->socio) return collect();
         return EstadoCuenta::where('id_socio', $this->socio['id'])
             ->where('cargo', '>', 0)
+            ->where('saldo', '>', 0)
             ->whereNotNull('id_cuota')
             ->orderBy('fecha', 'desc')
             ->orderBy('id', 'desc')

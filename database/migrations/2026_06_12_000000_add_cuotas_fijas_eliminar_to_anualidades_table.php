@@ -11,10 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('anualidades', function (Blueprint $table) {
-            //Ids de socios_cuotas marcados en pantalla, que se eliminaran al activarse la anualidad
-            $table->json('cuotas_fijas_eliminar')->nullable()->after('observaciones');
-        });
+        if (!Schema::hasTable('anualidades')) return;
+
+        //Solo se crea si la columna aun no existe (evita fallo si ya fue agregada en produccion)
+        if (!Schema::hasColumn('anualidades', 'cuotas_fijas_eliminar')) {
+            Schema::table('anualidades', function (Blueprint $table) {
+                //Ids de socios_cuotas marcados en pantalla, que se eliminaran al activarse la anualidad
+                $table->json('cuotas_fijas_eliminar')->nullable()->after('observaciones');
+            });
+        }
     }
 
     /**
@@ -22,8 +27,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('anualidades', function (Blueprint $table) {
-            $table->dropColumn('cuotas_fijas_eliminar');
-        });
+        if (!Schema::hasTable('anualidades')) return;
+
+        if (Schema::hasColumn('anualidades', 'cuotas_fijas_eliminar')) {
+            Schema::table('anualidades', function (Blueprint $table) {
+                $table->dropColumn('cuotas_fijas_eliminar');
+            });
+        }
     }
 };

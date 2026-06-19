@@ -9,8 +9,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('membresias')) return;
+
         Schema::table('membresias', function (Blueprint $table) {
-            $table->boolean('disponible')->default(true)->after('descripcion');
+            if (!Schema::hasColumn('membresias', 'disponible')) {
+                $table->boolean('disponible')->default(true)->after('descripcion');
+            }
         });
 
         // Membresías que no aparecen en formularios de registro/edición
@@ -23,6 +27,8 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (!Schema::hasTable('membresias')) return;
+
         Schema::table('membresias', function (Blueprint $table) {
             $table->dropColumn('disponible');
         });

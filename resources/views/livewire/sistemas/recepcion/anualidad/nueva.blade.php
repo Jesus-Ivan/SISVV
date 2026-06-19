@@ -389,17 +389,23 @@
                                     <td class="px-4 py-2 text-right">${{ number_format($mov->cargo, 2) }}</td>
                                     <td class="px-4 py-2 text-right">${{ number_format($mov->saldo, 2) }}</td>
                                     <td class="px-4 py-2 h-14">
-                                        <button type="button" wire:click="borrarEstadoCuenta({{ $mov->id }})"
-                                            wire:loading.attr="disabled" wire:target="borrarEstadoCuenta"
-                                            class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                                fill="currentColor" class="w-5 h-5">
-                                                <path fill-rule="evenodd"
-                                                    d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
-                                            <span class="sr-only">Borrar</span>
-                                        </button>
+                                        <div class="flex items-center gap-2">
+                                            <input type="checkbox" value="{{ $mov->id }}"
+                                                wire:model="estadoCuentaSeleccionados"
+                                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                                                title="Seleccionar para borrado masivo" />
+                                            <button type="button" wire:click="borrarEstadoCuenta({{ $mov->id }})"
+                                                wire:loading.attr="disabled" wire:target="borrarEstadoCuenta"
+                                                class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                    fill="currentColor" class="w-5 h-5">
+                                                    <path fill-rule="evenodd"
+                                                        d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                                <span class="sr-only">Borrar</span>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -411,6 +417,21 @@
                             @endforelse
                         </tbody>
                     </table>
+                </div>
+                {{-- Borrado masivo de los conceptos seleccionados --}}
+                <div class="mt-2">
+                    <button type="button" wire:click="borrarSeleccionados"
+                        wire:loading.attr="disabled" wire:target="borrarSeleccionados"
+                        @disabled(count($estadoCuentaSeleccionados) === 0)
+                        class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                            class="w-5 h-5 me-2">
+                            <path fill-rule="evenodd"
+                                d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        Borrar seleccionados ({{ count($estadoCuentaSeleccionados) }})
+                    </button>
                 </div>
             </div>
         </div>

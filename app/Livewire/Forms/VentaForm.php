@@ -205,11 +205,12 @@ class VentaForm extends Form
     //Recibe una instancia del modelo 'Socio' con el registro de la BD, para el registro del pago
     public function setSocioPago($socio)
     {
-        //Validamos si el socio no esta con una membresia cancelada
-        $resultMembresia = SocioMembresia::where('id_socio', $socio->id)->first();
-        if (!$resultMembresia) {
+        //Validamos si el socio tiene al menos una membresía activa
+        $tieneActiva = SocioMembresia::where('id_socio', $socio->id)->whereNot('estado', 'CAN')->exists();
+        $tieneAlguna = SocioMembresia::where('id_socio', $socio->id)->exists();
+        if (!$tieneAlguna) {
             throw new Exception('No se encontro membresia registrada', 2);
-        } else if ($resultMembresia->estado == 'CAN') {
+        } else if (!$tieneActiva) {
             throw new Exception('Membresia de socio cancelada', 2);
         }
         $this->socioPago = $socio;

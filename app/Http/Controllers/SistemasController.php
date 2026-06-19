@@ -6,6 +6,7 @@ use App\Constants\PuntosConstants;
 use App\Exports\ProductosVendExport;
 use App\Exports\ProdVendTotalExport;
 use App\Models\Caja;
+use App\Models\Socio;
 use App\Models\DetallesCaja;
 use App\Models\DetallesVentaProducto;
 use App\Models\Proveedor;
@@ -20,6 +21,11 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class SistemasController extends Controller
 {
+    public function editarCuotas(Socio $socio)
+    {
+        return view('sistemas.Recepcion.editar-cuotas', ['socio' => $socio]);
+    }
+
     public function prodVendidos()
     {
         return view('sistemas.Puntos.rep-prod-vendidos', ['puntos' => PuntoVenta::all()]);

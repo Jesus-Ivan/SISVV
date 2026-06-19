@@ -63,7 +63,13 @@
                             </td>
                             {{-- TIPO MEMBRESIA --}}
                             <td class="min-w-60 px-6 py-4">
-                                {{ $socio->socioMembresia->membresia->descripcion }}
+                                @forelse($socio->socioMembresias as $sm)
+                                    <div class="text-sm text-gray-700 dark:text-gray-300">
+                                        {{ $sm->membresia->descripcion }}
+                                    </div>
+                                @empty
+                                    <span class="text-gray-400">N/R</span>
+                                @endforelse
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <a href="{{ route('recepcion.socios.editar', $socio->id) }}">

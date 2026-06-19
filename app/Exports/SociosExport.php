@@ -16,24 +16,15 @@ class SociosExport implements FromArray
 
     public function array(): array
     {
-        //Array auxiliar de los socios
-        $socios = Socio::query()
-            ->join('socios_membresias', 'socios.id', '=', 'socios_membresias.id_socio')
-            ->select(
-                'socios.id',
-                'socios.nombre',
-                'socios.apellido_p',
-                'socios.apellido_m',
-                'socios_membresias.clave_membresia',
-                'socios_membresias.estado',
-            )
-            ->get();
+        //Un socio por fila — sin JOIN para evitar duplicados con múltiples membresías
+        $socios = Socio::with('socioMembresias')->whereHas('socioMembresia')->get();
         //Agregamos el encabezado
         $final[] = [
             'id' => 'ID',
             'nombre' =>  'NOMBRE',
-            'clave' => 'CLAVE MEMBRESIA',
             'estado' => 'ESTADO',
+            'membresias' => 'MEMBRESIAS CONTRATADAS',
+            'tarifa_especial' => 'TARIFA PERSONALIZADA',
             'locker' => 'LOCKERS',
             'resguardo' => 'RESGUARDO CARRITO',
             'membresia' => 'MEMBRESIA',
@@ -54,8 +45,9 @@ class SociosExport implements FromArray
                 $final[] = [
                     'id' => $socio->id,
                     'nombre' =>  $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m,
-                    'clave' => $socio->clave_membresia,
-                    'estado' => $socio->estado,
+                    'estado' => $socio->socioMembresias->pluck('estado')->implode(', '),
+                    'membresias' => $this->listarMembresias($socio),
+                    'tarifa_especial' => $cuotas->whereNotNull('monto_personalizado')->isNotEmpty() ? 'SÍ' : 'NO',
                     'locker' => $this->sumar_cuotas(array_column($cuotas_locker, 'id'), $cuotas),
                     'resguardo' => $this->sumar_cuotas(array_column($cuotas_resg_carr, 'id'), $cuotas),
                     'membresia' => $this->sumar_cuotas(array_column($cuotas_membresias, 'id'), $cuotas),
@@ -73,8 +65,18 @@ class SociosExport implements FromArray
         $cuotas_filtradas = $cuotas->whereIn('id_cuota', $id_cuotas_permitidas);
 
         foreach ($cuotas_filtradas as $filtrada) {
-            $suma += $filtrada->cuota->monto;
+            //Usar monto_a_cobrar para reflejar tarifas personalizadas (RF 4 / RF 5)
+            $suma += $filtrada->monto_a_cobrar;
         }
         return $suma;
+    }
+
+    //Lista todas las membresías del socio desde socios_membresias separadas por comas (RF 5)
+    private function listarMembresias(Socio $socio): string
+    {
+        return $socio->socioMembresias
+            ->pluck('clave_membresia')
+            ->unique()
+            ->implode(', ');
     }
 }

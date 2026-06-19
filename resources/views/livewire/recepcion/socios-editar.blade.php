@@ -40,6 +40,32 @@
                     </svg>
                     Actualizar Información
                 </button>
+
+                <!-- SUBIR FOTO SOCIO -->
+                <div class="flex gap-3 items-end mt-2">
+                    <div class="w-full">
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                            for="file_input">Subir
+                            foto</label>
+                        <input wire:model="form.img_path"
+                            class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+                            id="file_input" type="file">
+                        @error('form.img_path')
+                            <x-input-error messages="{{ $message }}" />
+                        @enderror
+                    </div>
+                    <button type="button"
+                        class="max-h-11 rounded-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium text-sm p-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
+                        <svg class="w-6 h-6 dark:text-gray-800 text-white" aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path fill-rule="evenodd"
+                                d="M7.5 4.586A2 2 0 0 1 8.914 4h6.172a2 2 0 0 1 1.414.586L17.914 6H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h1.086L7.5 4.586ZM10 12a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm2-4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <span class="sr-only">Tomar foto</span>
+                    </button>
+                </div>
             </div>
 
             <!-- columna 2 -->
@@ -138,24 +164,6 @@
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                     </div>
                 </div>
-                <!-- ESTADO MEMBRESIA -->
-                <div>
-                    <label for="estado-membresia"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Estado de
-                        membresia</label>
-                    <select id="estado-membresia" wire:model='form.estado_membresia'
-                        class="{{ $form->estado_membresia == 'ANU' ? 'pointer-events-none opacity-70' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="MEN">Activa</option>
-                        <option value="INA">Inactiva</option>
-                        @if ($form->estado_membresia == 'ANU')
-                            <option value="ANU">Anual</option>
-                        @endif
-                        <option value="CAN">Cancelada</option>
-                    </select>
-                    @error('form.estado_membresia')
-                        <x-input-error messages="{{ $message }}" />
-                    @enderror
-                </div>
             </div>
 
             <!-- columna 3 -->
@@ -226,47 +234,51 @@
                     </div>
                 </div>
                 <div>
-                    <!-- MEMBRESIA -->
+                    {{-- MEMBRESIAS: dropdown de estado para todas las membresías del catálogo --}}
                     <div>
-                        <label for="membresias"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia</label>
-                        <select id="membresias" wire:model="form.clave_membresia"
-                            wire:change="comprobarMembresia($event.target.value)"
-                            class="{{ $form->estado_membresia == 'ANU' ? 'pointer-events-none opacity-70' : '' }} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            <option selected value="{{ null }}">Seleccione</option>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresías</label>
+                        <div class="border border-gray-300 rounded-lg bg-white divide-y divide-gray-200 max-h-64 overflow-y-auto dark:bg-gray-800 dark:border-gray-600 dark:divide-gray-700">
                             @foreach ($this->membresias as $membresia)
-                                <option value="{{ $membresia->clave }}">{{ $membresia->descripcion }}</option>
+                                @php
+                                    $clave = $membresia->clave;
+                                    $esPrincipal = ($clave === $form->clave_membresia);
+                                    $estadoActual = $form->estados_membresia[$clave] ?? '';
+                                    $esAnual = $estadoActual === 'ANU';
+                                    $estaSeleccionada = !empty($estadoActual);
+                                @endphp
+                                <div class="flex items-center justify-between gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700" wire:key="memb-{{ $clave }}">
+                                    <div class="flex items-center gap-2 flex-grow">
+                                        <span class="text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ $membresia->descripcion }}
+                                        </span>
+                                                        @if ($esAnual)
+                                            <span class="px-2 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">ANUAL</span>
+                                        @endif
+                                    </div>
+                                    <select wire:model.live="form.estados_membresia.{{ $clave }}"
+                                        wire:change="comprobarMembresias"
+                                        class="text-xs py-1 px-2 rounded-md border border-gray-300 bg-white text-gray-900 w-32 shrink-0 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <option value="" @disabled(in_array($clave, $form->claves_originales))>Seleccionar</option>
+                                        <option value="MEN">Activa</option>
+                                        <option value="INA">Inactiva</option>
+                                        <option value="CAN">Cancelada</option>
+                                        @if ($esAnual)
+                                            <option value="ANU">Anual</option>
+                                        @endif
+                                    </select>
+                                </div>
                             @endforeach
-                        </select>
-                        @error('formSocio.clave_membresia')
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            Selecciona "Cancelada" para dar de baja una membresía guardada.
+                        </p>
+                        @error('form.claves_membresia')
+                            <x-input-error messages="{{ $message }}" />
+                        @enderror
+                        @error('form.estados_membresia.*')
                             <x-input-error messages="{{ $message }}" />
                         @enderror
                     </div>
-                </div>
-                <div class="flex gap-3 items-end">
-                    <!-- SUBIR FOTO SOCIO -->
-                    <div class="w-full">
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            for="file_input">Subir
-                            foto</label>
-                        <input wire:model="form.img_path"
-                            class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                            id="file_input" type="file">
-                        @error('form.img_path')
-                            <x-input-error messages="{{ $message }}" />
-                        @enderror
-                    </div>
-                    <button type="button"
-                        class="max-h-11 rounded-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium text-sm p-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
-                        <svg class="w-6 h-6 dark:text-gray-800 text-white" aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
-                            viewBox="0 0 24 24">
-                            <path fill-rule="evenodd"
-                                d="M7.5 4.586A2 2 0 0 1 8.914 4h6.172a2 2 0 0 1 1.414.586L17.914 6H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h1.086L7.5 4.586ZM10 12a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm2-4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"
-                                clip-rule="evenodd" />
-                        </svg>
-                        <span class="sr-only">Tomar foto</span>
-                    </button>
                 </div>
             </div>
         </div>
@@ -685,13 +697,20 @@
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
-                <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¡¡ Cambio de membresia !!
+                <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¡¡ Pérdida de integrantes !!
                 </h3>
-                <p class="text-gray-500 dark:text-gray-400">
-                    Has modificado tu membresia, esta accion eliminara todos
-                    los integrantes registrados en tu membresia actual.
-                </p>
-                <p class="text-gray-500 dark:text-gray-400">Deseas continuar?</p>
+                @if ($reducirIntegrantes)
+                    <p class="text-gray-500 dark:text-gray-400">
+                        Con dos membresías individuales solo se permite un familiar.
+                        Al guardar se eliminarán los integrantes adicionales, conservando únicamente el primero registrado.
+                    </p>
+                @else
+                    <p class="text-gray-500 dark:text-gray-400">
+                        Todas las membresías seleccionadas son de tipo INDIVIDUAL.
+                        Al guardar se eliminarán los integrantes registrados actualmente.
+                    </p>
+                @endif
+                <p class="text-gray-500 dark:text-gray-400">¿Deseas continuar?</p>
             </div>
         </x-slot>
         <x-slot name='footer'>

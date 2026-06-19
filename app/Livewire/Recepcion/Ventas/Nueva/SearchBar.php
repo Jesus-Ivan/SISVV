@@ -22,11 +22,12 @@ class SearchBar extends Component
     public function onSelectedInput(Socio $socioId)
     {
         try {
-            //Validamos si el socio no esta con una membresia cancelada
-            $resultMembresia = SocioMembresia::where('id_socio', $socioId->id)->first();
-            if (!$resultMembresia) {
+            //Validamos si el socio tiene al menos una membresía activa
+            $tieneActiva = SocioMembresia::where('id_socio', $socioId->id)->whereNot('estado', 'CAN')->exists();
+            $tieneAlguna = SocioMembresia::where('id_socio', $socioId->id)->exists();
+            if (!$tieneAlguna) {
                 throw new Exception("No se encontro membresia registrada");
-            } else if ($resultMembresia->estado == 'CAN') {
+            } else if (!$tieneActiva) {
                 throw new Exception("Membresia de socio $socioId->id cancelada");
             }
             $this->socioSeleccionado = $socioId->toArray();

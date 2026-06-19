@@ -13,7 +13,7 @@ class Container extends Component
     #[On('on-selected-socio')]
     public function selectedSocio($socio)
     {
-        $this->socio = Socio::with(['integrantesSocio', 'socioMembresia'])->find($socio);
+        $this->socio = Socio::with(['integrantesSocio', 'socioMembresia', 'socioMembresias.membresia'])->find($socio);
     }
     public function render()
     {

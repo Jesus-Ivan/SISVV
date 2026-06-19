@@ -18,13 +18,13 @@ class SociosNuevo extends Component
     #[Computed()]
     public function membresias()
     {
-        return Membresias::all();
+        return Membresias::where('disponible', true)->get();
     }
 
-    //Se comprueba el tipo de membresia, para restringir el registro de integrantes
-    public function comprobarMembresia($value)
+    //Se ejecuta cada vez que cambian las membresias seleccionadas, para restringir el registro de integrantes
+    public function comprobarMembresias(): void
     {
-        $this->formSocio->comprobar($value);
+        $this->formSocio->comprobarMultiples();
     }
 
     public function register()
@@ -47,7 +47,14 @@ class SociosNuevo extends Component
 
     public function agregarMiembro()
     {
-        $this->formSocio->crearMiembro();
+        try {
+            $this->formSocio->crearMiembro();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $th) {
+            session()->flash('fail', $th->getMessage());
+            $this->dispatch('open-action-message');
+        }
     }
     public function borrarMiembro($temp)
     {

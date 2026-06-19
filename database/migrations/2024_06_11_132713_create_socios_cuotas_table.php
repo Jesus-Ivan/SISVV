@@ -18,7 +18,7 @@ return new class extends Migration
             $table->boolean('auto_delete')->default(false);
             $table->timestamps();
         });
-    }
+    } 
 
     /**
      * Reverse the migrations.

@@ -18,3 +18,11 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# Documentación / planes del proyecto de cuotas (no es código funcional)
+/CHANGELOG.md
+/implementation_plan.md
+/planDeImplementacion.md
+/planFinal.md
+/plan_membresias_multiples.md
+/requisitos.md

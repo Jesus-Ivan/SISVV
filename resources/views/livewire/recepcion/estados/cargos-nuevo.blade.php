@@ -5,20 +5,26 @@
             <p>No.Socio:{{ $socio->id }} </p>
         </div>
         <div class="w-full">
-            <p>Membresia: {{ $socioMembresia->membresia->descripcion }}</p>
-            <p>
-                @if ($socioMembresia->estado == 'ANU')
-                    <span
-                        class=" inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
-                        <span class="w-2 h-2 me-1 bg-green-500 rounded-full"></span>
-                        Anualidad activa
-                    </span>
-                @endif
-            </p>
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-400">Membresías:</p>
+            @forelse($this->membresiasSocio as $m)
+                <p class="text-sm">
+                    <span class="font-medium text-gray-900 dark:text-white">{{ $m->membresia->descripcion ?? $m->clave_membresia }}</span>
+                    <span class="text-gray-500 ml-1">{{ $m->estado }}</span>
+                </p>
+            @empty
+                <p>Membresía: {{ $socioMembresia->membresia->descripcion }}</p>
+            @endforelse
+            @if ($this->tieneAnualidad)
+                <span
+                    class="inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                    <span class="w-2 h-2 me-1 bg-green-500 rounded-full"></span>
+                    Anualidad activa
+                </span>
+            @endif
         </div>
     </div>
     {{-- FECHA Y BOTON DE CARGOS --}}
-    <div class="{{ $socioMembresia->estado == 'CAN' ? 'flex opacity-50 pointer-events-none' : 'flex' }}">
+    <div class="{{ $this->todasCanceladas ? 'flex opacity-50 pointer-events-none' : 'flex' }}">
         {{-- Fecha --}}
         <div class="w-full">
             <input type="date" id="inicio" wire:model="fechaDestino"
@@ -30,13 +36,13 @@
         {{-- boton --}}
         <button type="button" x-data x-on:click="$dispatch('open-modal', {name:'cargosModal'})"
             wire:loading.attr="disabled"
-            class="h-10 text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
-            <svg class="w-5 h-5 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+            class="h-10 whitespace-nowrap text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
+            <svg class="w-5 h-5 me-2 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                 viewBox="0 0 24 24">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M5 12h14m-7 7V5" />
             </svg>
-            Cargos
+            Cuotas base
         </button>
     </div>
     <!--TABLA DE CARGOS-->
@@ -106,7 +112,7 @@
     <!--Linea -->
     <hr class="h-px my-4 bg-gray-300 border-0 dark:bg-gray-700">
     {{-- Seccion de cargos fijos --}}
-    <div class="{{ $socioMembresia->estado == 'CAN' ? ' opacity-50 pointer-events-none' : '' }}">
+    <div class="{{ $this->todasCanceladas ? ' opacity-50 pointer-events-none' : '' }}">
         <div class="grid grid-cols-2 gap-4">
             {{-- La tabla que contiene los cargos mensuales --}}
             <div>

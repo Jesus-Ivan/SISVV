@@ -315,6 +315,7 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     Route::prefix('recepcion')->group(function () {
         Route::view('/cuotas', 'sistemas.Recepcion.cuotas')->name('sistemas.cuotas');
         Route::view('/', 'sistemas.Recepcion.lista-socios')->name('sistemas.lista-socios');
+        Route::get('/editar-cuotas/{socio}', [SistemasController::class, 'editarCuotas'])->name('sistemas.editar-cuotas');
         Route::view('/cargo-mensualidades', 'sistemas.Recepcion.cargo-mensualidades')->name('sistemas.cargoMensualidades');
         Route::post('/cargo-mensualidades', [CargosController::class, 'cargarMensualidades'])->name('sistemas.cargoMensualidades');
         Route::view('/recargos', 'sistemas.Recepcion.recargos')->name('sistemas.recargos');

@@ -16,13 +16,16 @@
                     {{ $socio ? $socio['nombre'] . ' ' . $socio['apellido_p'] . ' ' . $socio['apellido_m'] : '' }}
                 </p>
             </div>
-            <div class="grid grid-cols-2">
-                <p>
-                    Membresia: {{ $this->socio_membresia ? $this->socio_membresia->membresia->descripcion : '' }}
-                </p>
-                <p>
-                    Estado: {{ $this->socio_membresia ? $this->socio_membresia->estado : '' }}
-                </p>
+            <div class="mt-1">
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-400">Membresías:</p>
+                @forelse ($this->membresiasActivas as $sm)
+                    <p class="text-sm text-gray-900 dark:text-white">
+                        • {{ $sm->membresia->descripcion }}
+                        <span class="text-xs text-gray-500">({{ $sm->estado }})</span>
+                    </p>
+                @empty
+                    <p class="text-sm text-gray-400">Sin membresías activas</p>
+                @endforelse
             </div>
             @error('socio')
                 <x-input-error messages="{{ $message }}" />
@@ -72,7 +75,7 @@
                 <label for="membresias" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia
                     al
                     finalizar</label>
-                <select id="membresias" wire:model='membresia_finalizar'
+                <select id="membresias" wire:model.live='membresia_finalizar'
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                     <option value="{{ null }}" selected>Seleccione</option>
                     @foreach ($this->membresias as $membresia)
@@ -250,6 +253,191 @@
     </div>
     {{-- line --}}
     <hr class="h-1 my-4 bg-gray-200 border-0 dark:bg-gray-700">
+    {{-- Cargos fijos del socio (izquierda) / espacio reservado para uso futuro (derecha) --}}
+    @if ($socio)
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-lg font-bold text-gray-900 dark:text-white">Cargos fijos del socio</p>
+                    @if (count($listaCargosFijos) > 0)
+                        <button type="button" wire:click="removerTodosCargosFijos"
+                            class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3 py-2 text-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                            Marcar todos
+                        </button>
+                    @endif
+                </div>
+                @if (count($listaCargosFijosEliminados) > 0 || count($listaMembresiasCancelar) > 0)
+                    <div class="flex items-center justify-between p-3 mb-2 text-sm text-yellow-800 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 dark:border-yellow-800"
+                        role="alert">
+                        <span>
+                            Al iniciar la anualidad (al cargarse las mensualidades del mes de inicio):
+                            @if (count($listaMembresiasCancelar) > 0)
+                                <span class="block">Se cancelarán {{ count($listaMembresiasCancelar) }} membresía(s): {{ implode(', ', array_column($listaMembresiasCancelar, 'clave')) }}.</span>
+                            @endif
+                            @if (count($listaCargosFijosEliminados) > 0)
+                                <span class="block">Se eliminarán {{ count($listaCargosFijosEliminados) }} cargo(s) fijo(s).</span>
+                            @endif
+                        </span>
+                        <button type="button" wire:click="restaurarCargosFijos"
+                            class="font-medium underline hover:no-underline whitespace-nowrap ms-2">
+                            Deshacer
+                        </button>
+                    </div>
+                @endif
+                <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">CONCEPTO</th>
+                                <th scope="col" class="px-6 py-3 w-32">TIPO</th>
+                                <th scope="col" class="px-6 py-3 w-36 text-right">MONTO</th>
+                                <th scope="col" class="px-6 py-3 w-32">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($listaCargosFijos as $index => $fijo)
+                                <tr wire:key="cargo-fijo-{{ $fijo['id'] }}"
+                                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <td class="px-6 py-2 font-medium text-gray-900 dark:text-white">
+                                        {{ $fijo['cuota']['descripcion'] }}
+                                    </td>
+                                    <td class="px-6 py-2">
+                                        {{ $fijo['cuota']['tipo'] }}
+                                    </td>
+                                    <td class="px-6 py-2 text-right">
+                                        ${{ number_format($fijo['monto_personalizado'] ?? $fijo['cuota']['monto'], 2) }}
+                                        @if (!is_null($fijo['monto_personalizado']))
+                                            <span class="block text-xs text-purple-500">personalizado</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-2 h-14">
+                                        @php
+                                            $claveFijo = $fijo['cuota']['clave_membresia'] ?? null;
+                                            $esMembresia = !empty($claveFijo) && $claveFijo !== 'N/A';
+                                            $esMembresiaAnualidad = $esMembresia && $membresia_finalizar && $claveFijo === $membresia_finalizar;
+                                        @endphp
+                                        @if ($esMembresia && !$esMembresiaAnualidad)
+                                            {{-- Otra membresia: se cancela (CAN), no se borra la cuota --}}
+                                            <button type="button" wire:click="cancelarMembresia({{ $index }})"
+                                                title="Cancelar membresía {{ $claveFijo }}"
+                                                class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                    fill="currentColor" class="w-5 h-5">
+                                                    <path fill-rule="evenodd"
+                                                        d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                                <span class="sr-only">Cancelar membresía {{ $claveFijo }}</span>
+                                            </button>
+                                        @else
+                                            {{-- Cargo sin membresia (locker/resguardo) o la membresia que entra en la anualidad: borrar cuota --}}
+                                            <button type="button" wire:click="removerCargoFijo({{ $index }})"
+                                                title="{{ $esMembresiaAnualidad ? 'Borrar cuota (entra en anualidad)' : 'Borrar cuota' }}"
+                                                class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                    fill="currentColor" class="w-5 h-5">
+                                                    <path fill-rule="evenodd"
+                                                        d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                                <span class="sr-only">{{ $esMembresiaAnualidad ? 'Borrar cuota (entra en anualidad)' : 'Borrar cuota' }}</span>
+                                            </button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr class="bg-white dark:bg-gray-800">
+                                    <td colspan="4" class="px-6 py-4 text-center text-gray-400">
+                                        Sin cargos fijos registrados
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {{-- Estado de cuenta del socio: borrado inmediato de movimientos --}}
+            <div>
+                <p class="text-lg font-bold text-gray-900 dark:text-white mb-2">Estado de cuenta del socio</p>
+                @if (count($estadoCuentaBorrados) > 0)
+                    <div class="flex items-center justify-between p-3 mb-2 text-sm text-yellow-800 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 dark:border-yellow-800"
+                        role="alert">
+                        <span>Se eliminaron {{ count($estadoCuentaBorrados) }} concepto(s) del estado de cuenta.</span>
+                        <button type="button" wire:click="restaurarEstadoCuenta"
+                            class="font-medium underline hover:no-underline whitespace-nowrap ms-2">
+                            Deshacer
+                        </button>
+                    </div>
+                @endif
+                <div class="relative overflow-x-auto shadow-md sm:rounded-lg max-h-96 overflow-y-auto">
+                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 sticky top-0">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 w-28">FECHA</th>
+                                <th scope="col" class="px-4 py-3">CONCEPTO</th>
+                                <th scope="col" class="px-4 py-3 w-28 text-right">CARGO</th>
+                                <th scope="col" class="px-4 py-3 w-28 text-right">SALDO</th>
+                                <th scope="col" class="px-4 py-3 w-20">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($this->estadoCuentaSocio as $mov)
+                                <tr wire:key="edo-cuenta-{{ $mov->id }}"
+                                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <td class="px-4 py-2 whitespace-nowrap">{{ $mov->fecha }}</td>
+                                    <td class="px-4 py-2 font-medium text-gray-900 dark:text-white">{{ $mov->concepto }}</td>
+                                    <td class="px-4 py-2 text-right">${{ number_format($mov->cargo, 2) }}</td>
+                                    <td class="px-4 py-2 text-right">${{ number_format($mov->saldo, 2) }}</td>
+                                    <td class="px-4 py-2 h-14">
+                                        <div class="flex items-center gap-2">
+                                            <input type="checkbox" value="{{ $mov->id }}"
+                                                wire:model="estadoCuentaSeleccionados"
+                                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                                                title="Seleccionar para borrado masivo" />
+                                            <button type="button" wire:click="borrarEstadoCuenta({{ $mov->id }})"
+                                                wire:loading.attr="disabled" wire:target="borrarEstadoCuenta"
+                                                class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                    fill="currentColor" class="w-5 h-5">
+                                                    <path fill-rule="evenodd"
+                                                        d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                                <span class="sr-only">Borrar</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr class="bg-white dark:bg-gray-800">
+                                    <td colspan="5" class="px-4 py-4 text-center text-gray-400">
+                                        Sin movimientos en el estado de cuenta
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                {{-- Borrado masivo de los conceptos seleccionados --}}
+                <div class="mt-2">
+                    <button type="button" wire:click="borrarSeleccionados"
+                        wire:loading.attr="disabled" wire:target="borrarSeleccionados"
+                        @disabled(count($estadoCuentaSeleccionados) === 0)
+                        class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                            class="w-5 h-5 me-2">
+                            <path fill-rule="evenodd"
+                                d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        Borrar seleccionados ({{ count($estadoCuentaSeleccionados) }})
+                    </button>
+                </div>
+            </div>
+        </div>
+        {{-- line --}}
+        <hr class="h-1 my-4 bg-gray-200 border-0 dark:bg-gray-700">
+    @endif
     {{-- Finalizar o cancelar --}}
     <div class="flex gap-4">
         <button type="button"

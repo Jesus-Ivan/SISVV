@@ -15,20 +15,22 @@
                     {{ $socio ? $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m : '' }}
                 </h5>
                 <p class="font-normal text-gray-700 dark:text-gray-400">
-                    Estado membresia: {{ $socio ? $socio->socioMembresia->estado : '' }}
-                </p>
-                <p class="font-normal text-gray-700 dark:text-gray-400">
-                    Tipo membresia: {{ $socio ? $socio->socioMembresia->membresia->descripcion : '' }}
-                </p>
-                <p class="font-normal text-gray-700 dark:text-gray-400">
                     No.Socio: {{ $socio ? $socio->id : '' }}
                 </p>
                 @if ($socio)
+                    <div class="mt-1 mb-2">
+                        <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">MEMBRESÍAS:</p>
+                        @foreach ($socio->socioMembresias as $sm)
+                            <div class="text-sm text-gray-700 dark:text-gray-400">
+                                <span>• {{ $sm->membresia->descripcion }} ({{ $sm->estado }})</span>
+                            </div>
+                        @endforeach
+                    </div>
                     <div>
-                        @if ($socio->socioMembresia->estado == 'CAN')
-                            <p class="font-bold text-red-600">ACCESO DENEGADO</p>
-                        @else
+                        @if ($socio->socioMembresias->where('estado', '!=', 'CAN')->count() > 0)
                             <p class="font-bold text-green-500">ACCESO PERMITIDO</p>
+                        @else
+                            <p class="font-bold text-red-600">ACCESO DENEGADO</p>
                         @endif
                     </div>
                 @endif

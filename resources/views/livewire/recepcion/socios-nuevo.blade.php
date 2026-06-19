@@ -17,6 +17,32 @@
                         <span>Cargando imagen...</span>
                     </div>
                 </div>
+
+                <!-- SUBIR FOTO SOCIO -->
+                <div class="flex gap-3 items-end mt-2">
+                    <div class="w-full">
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                            for="file_input">Subir
+                            foto</label>
+                        <input wire:model="formSocio.img_path"
+                            class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+                            id="file_input" type="file" accept=".jpg, .png">
+                        @error('formSocio.img_path')
+                            <x-input-error messages="{{ $message }}" />
+                        @enderror
+                    </div>
+                    <button type="button"
+                        class="max-h-11 rounded-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium text-sm p-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
+                        <svg class="w-6 h-6 dark:text-gray-800 text-white" aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path fill-rule="evenodd"
+                                d="M7.5 4.586A2 2 0 0 1 8.914 4h6.172a2 2 0 0 1 1.414.586L17.914 6H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h1.086L7.5 4.586ZM10 12a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm2-4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <span class="sr-only">Tomar foto</span>
+                    </button>
+                </div>
             </div>
 
             <!-- columna 2 -->
@@ -168,7 +194,6 @@
                         <input type="text" id="curp" wire:model="formSocio.curp"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             placeholder="" />
-
                     </div>
                     <!-- RFC -->
                     <div class="w-full">
@@ -179,46 +204,28 @@
                             placeholder="" />
                     </div>
                 </div>
+                {{-- MEMBRESIAS: lista de checkboxes (registro nuevo, todas se crean activas) --}}
                 <div>
-                    <div>
-                        <label for="membresias"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresia</label>
-                        <select id="membresias" wire:model="formSocio.clave_membresia"
-                            wire:change="comprobarMembresia($event.target.value)"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            <option selected value="{{ null }}">Seleccione</option>
-                            @foreach ($this->membresias as $membresia)
-                                <option value="{{ $membresia->clave }}">{{ $membresia->descripcion }}</option>
-                            @endforeach
-                        </select>
-                        @error('formSocio.clave_membresia')
-                            <x-input-error messages="{{ $message }}" />
-                        @enderror
+                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresías</label>
+                    <div class="border border-gray-300 rounded-lg bg-white divide-y divide-gray-200 max-h-64 overflow-y-auto dark:bg-gray-800 dark:border-gray-600 dark:divide-gray-700">
+                        @foreach ($this->membresias as $membresia)
+                            <label class="flex items-center gap-2 px-3 py-2 cursor-pointer text-sm font-medium text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-700"
+                                wire:key="memb-{{ $membresia->clave }}">
+                                <input type="checkbox"
+                                    wire:model="formSocio.claves_membresia"
+                                    wire:change="comprobarMembresias"
+                                    value="{{ $membresia->clave }}"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                <span>{{ $membresia->descripcion }}</span>
+                            </label>
+                        @endforeach
                     </div>
-                </div>
-                <div class="flex gap-3 items-end">
-                    <div class="w-full">
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                            for="file_input">Subir
-                            foto</label>
-                        <input wire:model="formSocio.img_path"
-                            class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                            id="file_input" type="file" accept=".jpg, .png">
-                        @error('formSocio.img_path')
-                            <x-input-error messages="{{ $message }}" />
-                        @enderror
-                    </div>
-                    <button type="button"
-                        class="max-h-11 rounded-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium text-sm p-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
-                        <svg class="w-6 h-6 dark:text-gray-800 text-white" aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
-                            viewBox="0 0 24 24">
-                            <path fill-rule="evenodd"
-                                d="M7.5 4.586A2 2 0 0 1 8.914 4h6.172a2 2 0 0 1 1.414.586L17.914 6H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h1.086L7.5 4.586ZM10 12a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm2-4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"
-                                clip-rule="evenodd" />
-                        </svg>
-                        <span class="sr-only">Tomar foto</span>
-                    </button>
+                    @error('formSocio.claves_membresia')
+                        <x-input-error messages="{{ $message }}" />
+                    @enderror
+                    @error('formSocio.claves_membresia.*')
+                        <x-input-error messages="{{ $message }}" />
+                    @enderror
                 </div>
             </div>
         </div>

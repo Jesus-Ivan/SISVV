@@ -7,6 +7,7 @@ use App\Models\Cuota;
 use App\Models\EstadoCuenta;
 use App\Models\Membresias;
 use App\Models\Socio;
+use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,16 @@ class Nueva extends Component
 
     public $listaCuotas = [];
 
+    #[Locked]
+    public $listaCargosFijos = [];              //Cargos fijos del socio (socios_cuotas)
+    #[Locked]
+    public $listaCargosFijosEliminados = [];    //Ids de cargos fijos (no-membresia) marcados para borrarse cuando inicie la anualidad
+    #[Locked]
+    public $listaMembresiasCancelar = [];       //Membresias marcadas para cancelarse (CAN) cuando inicie la anualidad: [['clave','concepto']]
+    #[Locked]
+    public $estadoCuentaBorrados = [];          //Copias de los movimientos de estado de cuenta borrados, para poder deshacer
+    public $estadoCuentaSeleccionados = [];     //Ids de movimientos marcados con el checkbox para borrado masivo
+
     public $total = 0;
     //Almacena el estado de la membresia que se seteara en la BD. al finalizar la anualidad
     public $estado_finalizar = 'MEN';
@@ -51,6 +62,198 @@ class Nueva extends Component
         $this->socio_membresia = SocioMembresia::with('membresia')
             ->where('id_socio', $socio->id)
             ->first();
+        //Cargamos los cargos fijos del socio y limpiamos los marcados del socio anterior
+        $this->cargarCargosFijos();
+        //Limpiamos el historial de deshacer y la seleccion del socio anterior
+        $this->estadoCuentaBorrados = [];
+        $this->estadoCuentaSeleccionados = [];
+    }
+
+    //Verdadero si el cargo fijo corresponde a una membresia (tiene clave_membresia)
+    private function esCargoDeMembresia($fijo): bool
+    {
+        $clave = $fijo['cuota']['clave_membresia'] ?? null;
+        return !empty($clave) && $clave !== 'N/A';
+    }
+
+    //Marca un cargo fijo para borrar su cuota cuando inicie la anualidad.
+    //Permitido para cargos SIN membresia (locker/resguardo) y para la membresia que entra
+    //en la anualidad (pasa a ANU, por lo que su cuota mensual debe quitarse). Las demas
+    //membresias se gestionan con cancelarMembresia (CAN).
+    public function removerCargoFijo($index)
+    {
+        if (!isset($this->listaCargosFijos[$index])) return;
+        $fijo = $this->listaCargosFijos[$index];
+        if ($this->esCargoDeMembresia($fijo)) {
+            $clave = $fijo['cuota']['clave_membresia'];
+            if (!$this->membresia_finalizar || $clave !== $this->membresia_finalizar) {
+                session()->flash('fail', 'Esta membresia se quita con "Cancelar membresia". Sólo la membresia que entra en la anualidad se borra como cuota.');
+                $this->dispatch('action-message-venta');
+                return;
+            }
+        }
+        $this->listaCargosFijosEliminados[] = $fijo['id'];
+        unset($this->listaCargosFijos[$index]);
+    }
+
+    //Marca una membresia para cancelarse (CAN) cuando inicie la anualidad
+    public function cancelarMembresia($index)
+    {
+        if (!isset($this->listaCargosFijos[$index])) return;
+        $fijo = $this->listaCargosFijos[$index];
+
+        if (!$this->esCargoDeMembresia($fijo)) {
+            session()->flash('fail', 'Este cargo no es una membresia.');
+            $this->dispatch('action-message-venta');
+            return;
+        }
+
+        $clave = $fijo['cuota']['clave_membresia'];
+        //No permitir cancelar la membresia que entra en la anualidad
+        if ($this->membresia_finalizar && $clave === $this->membresia_finalizar) {
+            session()->flash('fail', 'Esa membresia entra en la anualidad; no la canceles aqui.');
+            $this->dispatch('action-message-venta');
+            return;
+        }
+
+        $this->listaMembresiasCancelar[] = [
+            'clave'    => $clave,
+            'concepto' => $fijo['cuota']['descripcion'],
+        ];
+        unset($this->listaCargosFijos[$index]);
+    }
+
+    //Marca todos los cargos fijos visibles:
+    // - membresia que entra en la anualidad -> se borra su cuota (pasa a ANU)
+    // - otras membresias -> se cancelan (CAN)
+    // - cargos sin membresia (locker/resguardo) -> se borran
+    public function removerTodosCargosFijos()
+    {
+        foreach ($this->listaCargosFijos as $fijo) {
+            if ($this->esCargoDeMembresia($fijo)) {
+                $clave = $fijo['cuota']['clave_membresia'];
+                if ($this->membresia_finalizar && $clave === $this->membresia_finalizar) {
+                    $this->listaCargosFijosEliminados[] = $fijo['id'];   //membresia de la anualidad: borrar cuota
+                } else {
+                    $this->listaMembresiasCancelar[] = [
+                        'clave'    => $clave,
+                        'concepto' => $fijo['cuota']['descripcion'],
+                    ];
+                }
+            } else {
+                $this->listaCargosFijosEliminados[] = $fijo['id'];
+            }
+        }
+        $this->listaCargosFijos = [];
+    }
+
+    //Deshace lo marcado, recargando los cargos fijos desde la BD
+    public function restaurarCargosFijos()
+    {
+        $this->cargarCargosFijos();
+    }
+
+    //Borra de inmediato un movimiento del estado de cuenta del socio (borrado real),
+    //guardando una copia para poder deshacer la accion.
+    public function borrarEstadoCuenta($id)
+    {
+        $this->eliminarMovimiento($id);
+        //Limpiamos el cache de la propiedad computada para refrescar la tabla
+        unset($this->estadoCuentaSocio);
+    }
+
+    //Borra los movimientos marcados con el checkbox (borrado masivo).
+    public function borrarSeleccionados()
+    {
+        foreach ($this->estadoCuentaSeleccionados as $id) {
+            $this->eliminarMovimiento($id);
+        }
+        $this->estadoCuentaSeleccionados = [];
+        unset($this->estadoCuentaSocio);
+    }
+
+    //Helper compartido: recupera el movimiento (acotado al socio), guarda copia y lo borra.
+    private function eliminarMovimiento($id): void
+    {
+        if (!$this->socio) return;
+        //Recuperamos el movimiento (acotado al socio) antes de borrarlo
+        $mov = EstadoCuenta::where('id', $id)
+            ->where('id_socio', $this->socio['id'])
+            ->first();
+        if (!$mov) return;
+        //Guardamos una copia completa para poder restaurarlo (deshacer)
+        $this->estadoCuentaBorrados[] = $mov->getAttributes();
+        $mov->delete();
+    }
+
+    //Deshace los borrados: vuelve a insertar los movimientos eliminados en esta sesion
+    public function restaurarEstadoCuenta()
+    {
+        if (count($this->estadoCuentaBorrados) > 0) {
+            //Reinsertamos las copias guardadas conservando sus datos originales (incluido el id)
+            EstadoCuenta::insert($this->estadoCuentaBorrados);
+            $this->estadoCuentaBorrados = [];
+            unset($this->estadoCuentaSocio);
+        }
+    }
+
+    private function cargarCargosFijos()
+    {
+        $this->listaCargosFijos = SocioCuota::with('cuota')
+            ->where('id_socio', $this->socio['id'])
+            ->orderBy('id_cuota')
+            ->get()
+            ->toArray();
+        $this->listaCargosFijosEliminados = [];
+        $this->listaMembresiasCancelar = [];
+    }
+
+    //Deja solo los ids de cuotas validas para borrar: cargos sin membresia, o la cuota de la
+    //membresia que entra en la anualidad ($claveFinalizar). Evita borrar cuotas de membresias
+    //activas distintas (que SocioForm recrearia, dejando un borrado no durable).
+    private function filtrarCuotasEliminar($claveFinalizar): array
+    {
+        $ids = array_values(array_unique($this->listaCargosFijosEliminados));
+        if (count($ids) === 0) return [];
+
+        return SocioCuota::with('cuota')
+            ->where('id_socio', $this->socio['id'])
+            ->whereIn('id', $ids)
+            ->get()
+            ->filter(function ($sc) use ($claveFinalizar) {
+                $clave = $sc->cuota->clave_membresia;
+                return empty($clave) || $clave === 'N/A' || $clave === $claveFinalizar;
+            })
+            ->pluck('id')
+            ->map(fn($id) => (int) $id)
+            ->values()
+            ->all();
+    }
+
+    #[Computed()]
+    public function membresiasActivas()
+    {
+        if (!$this->socio) return collect();
+        return SocioMembresia::with('membresia')
+            ->where('id_socio', $this->socio['id'])
+            ->whereNot('estado', 'CAN')
+            ->get();
+    }
+
+    //Movimientos del estado de cuenta del socio (mas recientes primero).
+    //Solo cuotas pendientes: cargo mayor a 0, ligadas a una cuota (id_cuota no null)
+    //y con saldo pendiente (saldo > 0, oculta las pagadas al 100%).
+    #[Computed()]
+    public function estadoCuentaSocio()
+    {
+        if (!$this->socio) return collect();
+        return EstadoCuenta::where('id_socio', $this->socio['id'])
+            ->where('cargo', '>', 0)
+            ->where('saldo', '>', 0)
+            ->whereNotNull('id_cuota')
+            ->orderBy('fecha', 'desc')
+            ->orderBy('id', 'desc')
+            ->get();
     }
 
     #[Computed()]
@@ -153,8 +356,17 @@ class Nueva extends Component
     {
         $validatedInfo = $this->verificar();     //Revisamos si los campos de inicio no estan vacios
 
+        //Cuotas a borrar: cargos sin membresia + la cuota de la membresia que entra en la anualidad.
+        //(filtra cuotas de membresias que ya no son la de la anualidad, p.ej. si se cambio el select)
+        $cuotasFijasEliminar = $this->filtrarCuotasEliminar($validatedInfo['membresia_finalizar']);
+        //Membresias a cancelar (CAN): nunca la que entra en la anualidad.
+        $membresiasCancelar = array_values(array_filter(
+            array_unique(array_column($this->listaMembresiasCancelar, 'clave')),
+            fn($c) => $c !== $validatedInfo['membresia_finalizar']
+        ));
+
         try {
-            DB::transaction(function () use ($validatedInfo) {
+            DB::transaction(function () use ($validatedInfo, $cuotasFijasEliminar, $membresiasCancelar) {
                 //Insertamos la informacion de la anualidad
                 $anualidad = Anualidad::create([
                     'id_socio' => $validatedInfo['socio']['id'],
@@ -165,12 +377,17 @@ class Nueva extends Component
                     'descuento_extra' => $this->descuento_extra,
                     'iva' => $this->iva,
                     'observaciones' => $this->observaciones,
+                    //Los cargos fijos marcados se eliminan hasta que el proceso mensual active la anualidad
+                    'cuotas_fijas_eliminar' => count($cuotasFijasEliminar) > 0 ? $cuotasFijasEliminar : null,
+                    //Las membresias marcadas se cancelan (CAN) cuando el proceso mensual active la anualidad
+                    'membresias_cancelar' => count($membresiasCancelar) > 0 ? $membresiasCancelar : null,
                     'clave_mem_f' => $validatedInfo['membresia_finalizar'],
                     'estado_mem_f' => $validatedInfo['estado_finalizar'],
                     'fecha_inicio' => $validatedInfo['fInicio'],
                     'fecha_fin' => $validatedInfo['fFin'],
                     'total' => $this->total,
                 ]);
+
                 //Creamos los registros en las otras tablas
                 foreach ($validatedInfo['listaCuotas'] as $key => $cargo) {
                     //Insertamos registro en los detalles de anualidades
@@ -191,6 +408,18 @@ class Nueva extends Component
                         'saldo' => $this->saldo_cero ? 0 : $cargo['monto'],
                     ]);
                 }
+
+                //Activación inmediata: sólo si la anualidad ya está vigente HOY (inicio
+                //retroactivo o del día en curso), se aplica sin esperar la carga masiva. Se
+                //compara por FECHA EXACTA: una anualidad que empieza en el futuro NO se activa
+                //todavía (la membresía no debe mostrarse como ANU antes de su día de inicio).
+                $hoy = now()->startOfDay();
+                $inicio = Carbon::parse($anualidad->fecha_inicio)->startOfDay();
+                $fin = Carbon::parse($anualidad->fecha_fin)->startOfDay();
+                if ($inicio->lessThanOrEqualTo($hoy) && $fin->greaterThanOrEqualTo($hoy)) {
+                    $anualidad->activar();
+                }
+
                 //Mensage de sesion para el alert-message
                 session()->flash('success', 'Anualidad cargada correctamente');
                 //Emitimos evento para abrir el action message

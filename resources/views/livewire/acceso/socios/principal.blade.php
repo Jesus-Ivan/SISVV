@@ -16,22 +16,34 @@
                     <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                         {{ $socio ? $socio->nombre . ' ' . $socio->apellido_p . ' ' . $socio->apellido_m : '' }}
                     </h5>
-                    <p class="font-normal text-gray-700 dark:text-gray-400">
-                        ESTADO MEMBRESIA: {{ $socio ? $socio->socioMembresia->estado : '' }}
-                    </p>
-                    <p class="font-normal text-gray-700 dark:text-gray-400">
-                        TIPO DE MEMBRESIA: {{ $socio ? $socio->socioMembresia->membresia->descripcion : '' }}
-                    </p>
+                    <div class="font-normal text-gray-700 dark:text-gray-400 mb-1">
+                        <p class="font-semibold">MEMBRESIA:</p>
+                        @php $membresias = $socio->socioMembresias; $activas = $membresias->where('estado', '!=', 'CAN'); @endphp
+                        @if ($membresias->count() > 1)
+                            <p>MEMBRESÍAS MÚLTIPLES ({{ $membresias->count() }})</p>
+                        @elseif ($membresias->count() === 1)
+                            <p>{{ $membresias->first()->clave_membresia }}</p>
+                        @else
+                            <p>Sin membresías</p>
+                        @endif
+                        <p class="font-semibold mt-1">Estado membresía:</p>
+                        @if ($activas->count() > 0)
+                            <p>{{ $activas->first()->estado }}</p>
+                        @else
+                            <p>CAN</p>
+                        @endif
+                    </div>
                     <p class="font-normal text-gray-700 dark:text-gray-400">
                         NO. SOCIO: {{ $socio ? $socio->id : '' }}
                     </p>
 
                     @if ($socio)
                         <div>
-                            @if ($socio->socioMembresia->estado == 'CAN')
-                                <p class="text-xl font-bold text-red-600">ACCESO DENEGADO</p>
-                            @else
+                            {{-- Acceso permitido si existe al menos una membresía activa (RF 6) --}}
+                            @if ($socio->socioMembresias->where('estado', '!=', 'CAN')->count() > 0)
                                 <p class="text-xl font-bold text-green-500">ACCESO PERMITIDO</p>
+                            @else
+                                <p class="text-xl font-bold text-red-600">ACCESO DENEGADO</p>
                             @endif
                         </div>
                     @endif

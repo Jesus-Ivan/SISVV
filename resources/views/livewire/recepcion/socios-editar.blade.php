@@ -257,7 +257,9 @@
                                     </div>
                                     <select wire:model.live="form.estados_membresia.{{ $clave }}"
                                         wire:change="comprobarMembresias"
-                                        class="text-xs py-1 px-2 rounded-md border border-gray-300 bg-white text-gray-900 w-32 shrink-0 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        @disabled($esAnual)
+                                        title="{{ $esAnual ? 'Membresía en anualidad: se gestiona desde el módulo de anualidades' : '' }}"
+                                        class="text-xs py-1 px-2 rounded-md border border-gray-300 bg-white text-gray-900 w-32 shrink-0 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800">
                                         <option value="" @disabled(in_array($clave, $form->claves_originales))>Seleccionar</option>
                                         <option value="MEN">Activa</option>
                                         <option value="INA">Inactiva</option>

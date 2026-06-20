@@ -359,10 +359,10 @@
             {{-- Estado de cuenta del socio: borrado inmediato de movimientos --}}
             <div>
                 <p class="text-lg font-bold text-gray-900 dark:text-white mb-2">Estado de cuenta del socio</p>
-                @if (count($estadoCuentaBorrados) > 0)
+                @if (count($estadoCuentaEliminar) > 0)
                     <div class="flex items-center justify-between p-3 mb-2 text-sm text-yellow-800 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 dark:border-yellow-800"
                         role="alert">
-                        <span>Se eliminaron {{ count($estadoCuentaBorrados) }} concepto(s) del estado de cuenta.</span>
+                        <span>{{ count($estadoCuentaEliminar) }} concepto(s) se eliminarán al aplicar la anualidad.</span>
                         <button type="button" wire:click="restaurarEstadoCuenta"
                             class="font-medium underline hover:no-underline whitespace-nowrap ms-2">
                             Deshacer
@@ -382,8 +382,9 @@
                         </thead>
                         <tbody>
                             @forelse ($this->estadoCuentaSocio as $mov)
-                                <tr wire:key="edo-cuenta-{{ $mov->id }}"
-                                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <tr wire:key="edo-cuenta-{{ $mov->id }}" x-data
+                                    @click="$refs.chk.click()"
+                                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
                                     <td class="px-4 py-2 whitespace-nowrap">{{ $mov->fecha }}</td>
                                     <td class="px-4 py-2 font-medium text-gray-900 dark:text-white">{{ $mov->concepto }}</td>
                                     <td class="px-4 py-2 text-right">${{ number_format($mov->cargo, 2) }}</td>
@@ -391,10 +392,12 @@
                                     <td class="px-4 py-2 h-14">
                                         <div class="flex items-center gap-2">
                                             <input type="checkbox" value="{{ $mov->id }}"
-                                                wire:model="estadoCuentaSeleccionados"
+                                                x-ref="chk" @click.stop
+                                                wire:model.live="estadoCuentaSeleccionados"
                                                 class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
                                                 title="Seleccionar para borrado masivo" />
                                             <button type="button" wire:click="borrarEstadoCuenta({{ $mov->id }})"
+                                                @click.stop
                                                 wire:loading.attr="disabled" wire:target="borrarEstadoCuenta"
                                                 class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"

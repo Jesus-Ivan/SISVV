@@ -31,14 +31,12 @@ class Anualidad extends Model
      */
     public function activar(): void
     {
-        $socioMembresia = SocioMembresia::where('id_socio', $this->id_socio)
-            ->where('clave_membresia', $this->clave_mem_f)
-            ->first();
-        if (!$socioMembresia) {
-            throw new \Exception("No se encontro registro en la tabla socios_membresias para el socio: " . $this->id_socio);
-        }
-        $socioMembresia->estado = 'ANU';
-        $socioMembresia->save();
+        // Pone en ANU la membresia que entra en anualidad. Si el socio aun no la tiene,
+        // se crea (permite "subir" a una membresia nueva mediante la anualidad).
+        SocioMembresia::updateOrCreate(
+            ['id_socio' => $this->id_socio, 'clave_membresia' => $this->clave_mem_f],
+            ['estado' => 'ANU']
+        );
 
         //Eliminamos los cargos fijos marcados al registrar la anualidad
         if ($this->cuotas_fijas_eliminar) {

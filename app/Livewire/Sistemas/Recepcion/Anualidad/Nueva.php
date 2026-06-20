@@ -40,7 +40,7 @@ class Nueva extends Component
     #[Locked]
     public $listaMembresiasCancelar = [];       //Membresias marcadas para cancelarse (CAN) cuando inicie la anualidad: [['clave','concepto']]
     #[Locked]
-    public $estadoCuentaBorrados = [];          //Copias de los movimientos de estado de cuenta borrados, para poder deshacer
+    public $estadoCuentaEliminar = [];          //Ids de movimientos marcados para borrar; se eliminan al aplicar la anualidad (dentro de la transaccion)
     public $estadoCuentaSeleccionados = [];     //Ids de movimientos marcados con el checkbox para borrado masivo
 
     public $total = 0;
@@ -64,8 +64,8 @@ class Nueva extends Component
             ->first();
         //Cargamos los cargos fijos del socio y limpiamos los marcados del socio anterior
         $this->cargarCargosFijos();
-        //Limpiamos el historial de deshacer y la seleccion del socio anterior
-        $this->estadoCuentaBorrados = [];
+        //Limpiamos los marcados para borrar y la seleccion del socio anterior
+        $this->estadoCuentaEliminar = [];
         $this->estadoCuentaSeleccionados = [];
     }
 
@@ -153,48 +153,35 @@ class Nueva extends Component
         $this->cargarCargosFijos();
     }
 
-    //Borra de inmediato un movimiento del estado de cuenta del socio (borrado real),
-    //guardando una copia para poder deshacer la accion.
+    //Marca un movimiento del estado de cuenta para borrarse. NO se borra todavia:
+    //la eliminacion real ocurre dentro de la transaccion de aplicarAnualidad(), de modo
+    //que si la anualidad falla, los conceptos NO se pierden.
     public function borrarEstadoCuenta($id)
     {
-        $this->eliminarMovimiento($id);
+        if (!in_array($id, $this->estadoCuentaEliminar)) {
+            $this->estadoCuentaEliminar[] = $id;
+        }
         //Limpiamos el cache de la propiedad computada para refrescar la tabla
         unset($this->estadoCuentaSocio);
     }
 
-    //Borra los movimientos marcados con el checkbox (borrado masivo).
+    //Marca los movimientos seleccionados con el checkbox (borrado masivo diferido).
     public function borrarSeleccionados()
     {
         foreach ($this->estadoCuentaSeleccionados as $id) {
-            $this->eliminarMovimiento($id);
+            if (!in_array($id, $this->estadoCuentaEliminar)) {
+                $this->estadoCuentaEliminar[] = $id;
+            }
         }
         $this->estadoCuentaSeleccionados = [];
         unset($this->estadoCuentaSocio);
     }
 
-    //Helper compartido: recupera el movimiento (acotado al socio), guarda copia y lo borra.
-    private function eliminarMovimiento($id): void
-    {
-        if (!$this->socio) return;
-        //Recuperamos el movimiento (acotado al socio) antes de borrarlo
-        $mov = EstadoCuenta::where('id', $id)
-            ->where('id_socio', $this->socio['id'])
-            ->first();
-        if (!$mov) return;
-        //Guardamos una copia completa para poder restaurarlo (deshacer)
-        $this->estadoCuentaBorrados[] = $mov->getAttributes();
-        $mov->delete();
-    }
-
-    //Deshace los borrados: vuelve a insertar los movimientos eliminados en esta sesion
+    //Deshace el marcado: como aun no se borro nada, basta con vaciar la lista de marcados.
     public function restaurarEstadoCuenta()
     {
-        if (count($this->estadoCuentaBorrados) > 0) {
-            //Reinsertamos las copias guardadas conservando sus datos originales (incluido el id)
-            EstadoCuenta::insert($this->estadoCuentaBorrados);
-            $this->estadoCuentaBorrados = [];
-            unset($this->estadoCuentaSocio);
-        }
+        $this->estadoCuentaEliminar = [];
+        unset($this->estadoCuentaSocio);
     }
 
     private function cargarCargosFijos()
@@ -251,6 +238,7 @@ class Nueva extends Component
             ->where('cargo', '>', 0)
             ->where('saldo', '>', 0)
             ->whereNotNull('id_cuota')
+            ->whereNotIn('id', $this->estadoCuentaEliminar)
             ->orderBy('fecha', 'desc')
             ->orderBy('id', 'desc')
             ->get();
@@ -367,6 +355,14 @@ class Nueva extends Component
 
         try {
             DB::transaction(function () use ($validatedInfo, $cuotasFijasEliminar, $membresiasCancelar) {
+                //Borrado diferido: ahora SI se eliminan los conceptos marcados, dentro de la
+                //transaccion. Si la anualidad falla mas abajo, este borrado se revierte solo
+                //(no se pierden los conceptos cuando no se llego a hacer el cargo de la anualidad).
+                if (count($this->estadoCuentaEliminar) > 0) {
+                    EstadoCuenta::where('id_socio', $this->socio['id'])
+                        ->whereIn('id', $this->estadoCuentaEliminar)
+                        ->delete();
+                }
                 //Insertamos la informacion de la anualidad
                 $anualidad = Anualidad::create([
                     'id_socio' => $validatedInfo['socio']['id'],

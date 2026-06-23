@@ -29,13 +29,14 @@ use Livewire\Form;
 
 class VentaForm extends Form
 {
-    public $tipo_venta = "socio";    //El tipo de venta a realizar
+    public $tipo_venta = "socio";   //El tipo de venta a realizar
     public $invitado;               //Invitado
     public $nombre_invitado;        //El nombre del invitado
     public $nombre_p_general;       //Nombre del cliente cuanso selecciona publico general
     public $nombre_empleado;        //Nombre del empleado
     public $socioSeleccionado;      //El socio seleccionado
     public $socio = [];             //Datos del socio
+    public $no_comensal = null;     //La cantidad de comensales en la mesa
 
     public $socioPago;              //El socio seleccionado para agregar en metodo de pago
     public $id_pago;                //id del tipo de pago seleccionado en el modal
@@ -71,7 +72,7 @@ class VentaForm extends Form
     public $socioVentaRules = [
         'socio' => 'min:1',
         'productosTable' => 'min:1',
-        'pagosTable' => 'min:1'
+        'pagosTable' => 'min:1',
     ];
 
     //REGLAS PARA VENTA AL INVITADO
@@ -79,14 +80,14 @@ class VentaForm extends Form
         'socio' => 'min:1',
         'nombre_invitado' => 'required',
         'productosTable' => 'min:1',
-        'pagosTable' => 'min:1'
+        'pagosTable' => 'min:1',
     ];
 
     //REGLAS PARA VENTA AL PUBLICO GENERAL
     public $generalVentaRules = [
         'nombre_p_general' => 'required',
         'productosTable' => 'min:1',
-        'pagosTable' => 'min:1'
+        'pagosTable' => 'min:1',
     ];
 
     //REGLAS PARA VENTA AL EMPLEADO
@@ -312,6 +313,8 @@ class VentaForm extends Form
             default:
                 break;
         }
+        //Agregar el numero de comensales
+        $venta['no_comensal'] = $this->no_comensal;
 
         //Verificamos si el total de pago, es el mismo que el total de los productos
         $this->verificarMontos();
@@ -378,6 +381,7 @@ class VentaForm extends Form
         }
         //Agregamos los productos al resultado de la validacion
         $venta['productosTable'] = $this->productosTable;
+        $venta['no_comensal'] = $this->no_comensal;
         //Duplicamos variable para pasarla a la funcion anonima de la transaccion
         $tipo_venta = $this->tipo_venta;
 
@@ -656,7 +660,8 @@ class VentaForm extends Form
             'fecha_cierre' => $isClosed ? $fecha_cierre : null,
             'total' => $this->totalVenta,
             'corte_caja' => $resultCaja->corte,
-            'clave_punto_venta' => $codigopv
+            'clave_punto_venta' => $codigopv,
+            'num_comensales' => $venta['no_comensal']
         ]);
     }
 
@@ -849,7 +854,8 @@ class VentaForm extends Form
             'pagosTable',
             'totalVenta',
             'totalPago',
-            'totalPropina'
+            'totalPropina',
+            'no_comensal'
         );
     }
 

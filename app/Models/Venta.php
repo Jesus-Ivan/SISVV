@@ -43,4 +43,9 @@ class Venta extends Model
     {
         return $this->belongsTo(PuntoVenta::class, 'clave_punto_venta');
     }
+
+    public function detallesCaja(): HasMany
+    {
+        return $this->hasMany(DetallesCaja::class, 'folio_venta');
+    }
 }

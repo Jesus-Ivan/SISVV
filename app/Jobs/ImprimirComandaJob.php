@@ -58,7 +58,7 @@ class ImprimirComandaJob implements ShouldQueue
             if (!$id_zona || !$zona) continue;
 
             try {
-                $printerService->imprimirComanda($collection, $venta, $zona);
+                $printerService->imprimirComanda($collection, $venta, $zona, 2);
 
                 $this->actualizarEstado($collection, PuntosConstants::ID_ESTADO_PRODUCTO_IMPRESO);
 

@@ -4,6 +4,7 @@
         <div class="m-3">
             <p>Nombre: {{ $this->venta->nombre }}</p>
             <p>No. de socio: {{ $this->venta->id_socio }}</p>
+            <p>Comensales: {{ $this->venta->num_comensales }}</p>
         </div>
         <!--Linea -->
         <hr class="h-px my-2 bg-gray-300 border-0 dark:bg-gray-700">

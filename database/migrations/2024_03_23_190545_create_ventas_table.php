@@ -23,7 +23,6 @@ return new class extends Migration
             $table->integer('corte_caja')->unsigned()->nullable();
             $table->string('clave_punto_venta', 20)->nullable();
             $table->string('observaciones', 200)->nullable();
-            $table->smallInteger('num_comensales')->nullable();
 
 
             /*//Relaciones

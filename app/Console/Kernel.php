@@ -12,7 +12,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Envía los datos a la API PORTICO cada 6 horas para la app de escritorio.
+        $schedule->command('sync:portico')
+            ->everySixHours()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**

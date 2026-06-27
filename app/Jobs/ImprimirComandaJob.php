@@ -13,9 +13,9 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
-use Mike42\Escpos\Printer;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class ImprimirComandaJob implements ShouldQueue
@@ -57,20 +57,35 @@ class ImprimirComandaJob implements ShouldQueue
             $zona = $collection[0]->zonaImpresion;
             if (!$id_zona || !$zona) continue;
 
-            try {
-                $printerService->imprimirComanda($collection, $venta, $zona, 2);
+            // Intentamos adquirir el lock de Redis antes de imprimir
+            $lock = Cache::lock("print_zone_{$zona->id}", 30);
 
-                $this->actualizarEstado($collection, PuntosConstants::ID_ESTADO_PRODUCTO_IMPRESO);
+            if ($lock->get()) {
+                try {
+                    // Usamos la versión de Ken con el parámetro 2
+                    $printerService->imprimirComanda($collection, $venta, $zona, 2);
 
-                //Avisamos en tiempo real La comanda nueva (si hay al menos 1 producto en cola, impreso)
-                if (count($collection) > 0)
-                    broadcast(new ComandaDetails(PuntosConstants::COMANDA_NUEVA_EVENT, $venta, $zona));
-            } catch (Throwable $e) {
+                    $this->actualizarEstado($collection, PuntosConstants::ID_ESTADO_PRODUCTO_IMPRESO);
 
-                $this->actualizarEstado($collection, PuntosConstants::ID_ESTADO_PRODUCTO_ERROR);
+                    //Avisamos en tiempo real La comanda nueva (si hay al menos 1 producto en cola, impreso)
+                    if (count($collection) > 0)
+                        broadcast(new ComandaDetails(PuntosConstants::COMANDA_NUEVA_EVENT, $venta, $zona));
+                } catch (Throwable $e) {
 
-                //Avisamos en tiempo real (el error de la impresora de cocina)
-                broadcast(new ComandaDetails(PuntosConstants::COMANDA_ERROR_EVENT, $venta, $zona, $e->getMessage()));
+                    $this->actualizarEstado($collection, PuntosConstants::ID_ESTADO_PRODUCTO_ERROR);
+
+                    //Avisamos en tiempo real (el error de la impresora de cocina)
+                    try {
+                        broadcast(new ComandaDetails(PuntosConstants::COMANDA_ERROR_EVENT, $venta, $zona, $e->getMessage()));
+                    } catch (Throwable $be) {
+                        Log::error("Error broadcasting comanda error event: " . $be->getMessage());
+                    }
+                } finally {
+                    $lock->release();
+                }
+            } else {
+                Log::warning("No se pudo adquirir lock para imprimir en zona {$zona->id}, reintentando job");
+                $this->release(5);
             }
         }
     }

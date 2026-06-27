@@ -79,6 +79,9 @@ class Container extends Component
     //Hook que se ejecuta al inicio de vida el componente.
     public function mount(Venta $venta, $permisospv, $codigopv)
     {
+        if (!isset($this->ventaForm)) {
+            $this->ventaForm = new VentaForm($this, 'ventaForm');
+        }
         //Guardamos la instancia del modelo, correspondiente al registro de la venta(BD)
         $this->venta = $venta;
         $this->ventaForm->tipo_venta = $venta->tipo_venta;      //Guardamos el tipo de venta en el form
@@ -90,6 +93,7 @@ class Container extends Component
 
         $this->ventaForm->nombre_p_general = $venta->nombre;    //Guardamos el nombre del cliente en el form
         $this->ventaForm->nombre_invitado = $venta->nombre;     //Guardamos el nombre del INVITADO en el form
+        $this->ventaForm->nombre_empleado = $venta->nombre;     //Guardamos el nombre del EMPLEADO en el form
 
         //Guardamos en las propiedades del componente, el codigo del punto de venta
         $this->codigopv = $codigopv;
@@ -390,7 +394,7 @@ class Container extends Component
         $this->modificadores = $producto->modificador->toArray();
         $this->gruposModif = $producto->grupoModif->toArray();
 
-        //Agregar descripcion del producto (modificadores posibles)
+        //Agregar descripcion del producto (modificadores posibles) y marca de impresion automatica en cocina
         foreach ($this->modificadores as $index => $modif) {
             $result = Producto::find($modif['clave_modificador']);
             $this->modificadores[$index]['descripcion'] = $result->descripcion;

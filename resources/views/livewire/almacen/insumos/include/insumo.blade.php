@@ -127,7 +127,7 @@
             {{-- Search bar Insumo --}}
             <div class="flex-1">
                 <livewire:search-bar tittle="Insumo de receta" table="insumos" :columns="['clave', 'descripcion']" primary="clave"
-                    event="selected-insumo" />
+                    event="selected-insumo" :conditions="[['deleted_at', '=', null]]" />
             </div>
             {{-- Rendimiento --}}
             <div class="w-64">

@@ -8,10 +8,13 @@ use App\Exports\ProdVendTotalExport;
 use App\Models\Caja;
 use App\Models\DetallesCaja;
 use App\Models\DetallesVentaProducto;
+use App\Models\Producto;
+use App\Models\ProductoZona;
 use App\Models\Proveedor;
 use App\Models\PuntoVenta;
 use App\Models\User;
 use App\Models\Venta;
+use App\Models\ZonaImpresion;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -179,31 +182,35 @@ class SistemasController extends Controller
     }
 
     /**
-     * Se encarga de llenar la tabla 'detalles_caja', por primera vez.
-     * En base a las ventas realizadas
+     * Crea la configuracion inicial de la tabla 'productos_zonas_impresion'\
+     * Para imprimir los productos en la primera zona registrada
      */
-    public function detallesCaja(Request $request)
+    public function crearZonasImpresion(Request $request)
     {
-        $ventasPagos = DB::table('detalles_ventas_pagos')
-            ->join('ventas', 'detalles_ventas_pagos.folio_venta', '=', 'ventas.folio')
-            ->select('detalles_ventas_pagos.*', 'ventas.corte_caja', 'ventas.fecha_apertura')
+        //Obtener todos la primera zona de impresion
+        $first = ZonaImpresion::find(1);
+        //Obtener los puntos de venta
+        $puntos = PuntoVenta::where('inventariable', true)
             ->get();
 
-        DB::transaction(function () use ($ventasPagos) {
-            foreach ($ventasPagos as $key => $pago) {
-                DetallesCaja::create([
-                    'corte_caja' => $pago->corte_caja,
-                    'folio_venta' => $pago->folio_venta,
-                    'id_socio' => $pago->id_socio,
-                    'nombre' => $pago->nombre,
-                    'monto' => $pago->monto,
-                    'propina' => $pago->propina,
-                    'tipo_movimiento' => PuntosConstants::INGRESO_KEY,
-                    'id_tipo_pago' => $pago->id_tipo_pago,
-                    'fecha_venta' => $pago->fecha_apertura,
-                ]);
-            }
-        });
-        return 'Creo que funciono xd';
+        if ($first) {
+            //Realizar la asignacion
+            DB::transaction(function () use ($first, $puntos) {
+                //Obtener todos los porductos con la marca
+                $productos = Producto::where('print_default', 1)
+                    ->get();
+                foreach ($productos as $key => $producto) {
+                    foreach ($puntos as $key_punto => $punto) {
+                        ProductoZona::create([
+                            'clave_producto' => $producto->clave,
+                            'clave_punto' => $punto->clave,
+                            'id_zona' => $first->id
+                        ]);
+                    }
+                }
+            });
+            return 'EXITO :D! generando la tabla: zonas_impresion';
+        }
+        return 'No hay zonas de impresion en la tabla: zonas_impresion';
     }
 }

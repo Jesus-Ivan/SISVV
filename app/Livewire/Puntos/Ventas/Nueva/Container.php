@@ -135,6 +135,16 @@ class Container extends Component
             ->get();
     }
 
+    //hook que monitorea la actualizacion del toggle "Para llevar"
+    public function updatedVentaFormParaLlevar($value)
+    {
+        if ($value) {
+            $this->ventaForm->no_comensal = 'PARA LLEVAR';
+        } else {
+            $this->ventaForm->no_comensal = null;
+        }
+    }
+
     //hook que monitorea la actualizacion del componente
     public function updated($property, $value)
     {

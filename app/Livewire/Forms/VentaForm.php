@@ -37,6 +37,7 @@ class VentaForm extends Form
     public $socioSeleccionado;      //El socio seleccionado
     public $socio = [];             //Datos del socio
     public $no_comensal = null;     //La cantidad de comensales en la mesa
+    public $para_llevar = false;    //Indica si la venta es para llevar
 
     public $socioPago;              //El socio seleccionado para agregar en metodo de pago
     public $id_pago;                //id del tipo de pago seleccionado en el modal
@@ -855,7 +856,8 @@ class VentaForm extends Form
             'totalVenta',
             'totalPago',
             'totalPropina',
-            'no_comensal'
+            'no_comensal',
+            'para_llevar'
         );
     }
 

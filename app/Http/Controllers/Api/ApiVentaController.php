@@ -139,6 +139,7 @@ class ApiVentaController extends Controller
             'productos.*.modificadores.*.precio' => 'nullable|numeric',
             'productos.*.modificadores.*.observaciones' => 'nullable|string',
             'num_comensales' => 'nullable|integer|min:1',
+            'num_comensales' => 'nullable|string|max:20',
         ]);
 
         // Verificación de Idempotencia

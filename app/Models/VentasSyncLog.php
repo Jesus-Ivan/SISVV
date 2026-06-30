@@ -34,3 +34,4 @@ class VentasSyncLog extends Model
         return $this->belongsTo(Venta::class, 'folio_venta', 'folio');
     }
 }
+

@@ -18,7 +18,7 @@
             @if (Route::has('login'))
                 <livewire:welcome.navigation />
             @endif
-            <img src="{{asset('storage/image001.png')}}" alt="LogoVistaVerde">
+            <img src="{{asset('storage/image001.jpg')}}" alt="LogoVistaVerde">
         </div>
     </body>
 </html>

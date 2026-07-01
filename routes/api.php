@@ -46,4 +46,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::get('/hola', function () {
     return response()->json(['message' => '¡Hola desde la API!']);
+    Route::post('/ventas/{folio}/reimprimir', [ApiVentaController::class, 'reimprimir']);
+
+});
+
+    Route::get('/hola', function () {
+        return response()->json(['message' => '¡Hola desde la API!']);
     });

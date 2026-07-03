@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Puntos\Inventario;
 
+use App\Constants\AlmacenConstants;
 use App\Libraries\InventarioService;
 use App\Models\DetallesSolicitudPedido;
 use App\Models\Insumo;
@@ -14,9 +15,10 @@ use Livewire\Component;
 class NuevaSolicitud extends Component
 {
     public $hoy;
-    public $search_input = '';
+    public $searchInsumo = '';
     public $selectedItems = [];
     public $lista_productos = [];
+    public $selectedGrupo = null;
 
     public $codigopv;
     public $permisospv;
@@ -38,10 +40,33 @@ class NuevaSolicitud extends Component
     #[Computed()]
     public function insumos()
     {
-        $result = Insumo::whereAny(['descripcion', 'clave'], 'like', "%$this->search_input%")
+        $query = Insumo::query()
             ->where('inventariable', true);
 
-        return $result->get()->take(50);
+        //Se filtra por el grupo seleccionado
+        if ($this->selectedGrupo) {
+            $query->where('id_grupo', $this->selectedGrupo);
+        }
+
+        if (!empty($this->searchInsumo)) {
+            $query->where(function ($q) {
+                $q->where('descripcion', 'like', '%' . $this->searchInsumo . '%')
+                    ->orWhere('clave', 'like', '%' . $this->searchInsumo . '%');
+            });
+        }
+
+        return $query->take(20)->get();
+    }
+
+    //Mostramos un SELECT con los grupos de insumos para una busqueda mas rapida
+    #[Computed()]
+    public function grupos()
+    {
+        $result = DB::table('grupos')
+            ->where('tipo', AlmacenConstants::INSUMOS_KEY)
+            ->orderBy('descripcion', 'ASC')
+            ->get();
+        return $result;
     }
 
     public function finalizarSeleccion()
@@ -81,7 +106,7 @@ class NuevaSolicitud extends Component
         }
 
         //Limpiar articulos seleccionados y barra de busqueda
-        $this->reset(['selectedItems', 'search_input']);
+        $this->reset(['selectedItems', 'searchInsumo', 'selectedGrupo']);
         //Cerramos el modal
         $this->dispatch('close-modal', name: 'modal-productos');
     }
@@ -104,7 +129,7 @@ class NuevaSolicitud extends Component
                 $result = SolicitudPedido::create([
                     'id_user' => $user->id,
                     'user_name' => $user->name,
-                    'clave_origen' => $claveBodega,
+                    'clave_pv' => $claveBodega,
                     'fecha_existencias' => $this->hoy
                 ]);
 
@@ -119,7 +144,7 @@ class NuevaSolicitud extends Component
                 }
             });
 
-            $this->reset();
+            $this->resetExcept('codigopv');
             session()->flash('success', 'Solicitud registrada exitosamente.');
             $this->dispatch('open-action-message');
         } catch (ValidationException $e) {

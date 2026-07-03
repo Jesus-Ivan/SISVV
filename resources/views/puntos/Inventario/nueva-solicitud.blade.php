@@ -5,7 +5,7 @@
     </x-slot>
 
     {{-- Contenido --}}
-    <div> {{-- Opcional: un contenedor para dar margen --}}
+    <div> 
         @livewire('puntos.inventario.nueva-solicitud', [
             'codigopv' => $codigopv,
             'permisospv' => $permisospv,

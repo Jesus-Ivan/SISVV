@@ -22,4 +22,9 @@ class DetallesSolicitudPedido extends Model
     {
         return $this->belongsTo(TraspasoNew::class, 'folio_pedido', 'folio');
     }
+
+    public function insumo()
+    {
+        return $this->belongsTo(Insumo::class, 'clave_insumo', 'clave');
+    }
 }

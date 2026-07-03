@@ -21,6 +21,6 @@
     </div>
 
     <div>
-        <livewire:puntos.inventario.solicitar-mercancia />
+        <livewire:puntos.inventario.solicitar-mercancia :codigopv="$codigopv" />
     </div>
 </x-app-layout>

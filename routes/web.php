@@ -98,6 +98,7 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
     Route::view('proveedores', 'almacen.Proveedores.proveedores')->name('almacen.proveedores');
     Route::view('unidades', 'almacen.Unidades.unidades')->name('almacen.unidades');
     Route::view('grupos', 'almacen.Grupos.grupos')->name('almacen.grupos');
+    Route::view('solicitudes-pv', 'almacen.Pedidos.solicitudes')->name('almacen.solicitudes-pv');
 
     Route::prefix('entradas')->group(function () {
         Route::view('/', 'almacen.Entradas.entradas')->name('almacen.entradas');
@@ -173,7 +174,12 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
     //Nueva ruta de traspasos
     Route::prefix('traspasos-v2')->group(function () {
         Route::view('/', 'almacen.Traspasos.v2.traspaso')->name('almacen.traspasov2');
-        Route::view('/nuevo', 'almacen.Traspasos.v2.nuevo-traspaso')->name('almacen.traspasov2.nuevo');
+        Route::get('/nuevo/{folio_pedido?}', function ($folio_pedido = null) {
+            return view('almacen.Traspasos.v2.nuevo-traspaso', [
+                'folio_pedido' => $folio_pedido
+            ]);
+        })->name('almacen.traspasov2.nuevo');
+        //Route::view('/nuevo', 'almacen.Traspasos.v2.nuevo-traspaso')->name('almacen.traspasov2.nuevo');
         Route::view('/historial', 'almacen.Traspasos.v2.historial')->name('almacen.traspasov2.historial');
     });
 
@@ -264,7 +270,6 @@ Route::prefix('pv/{codigopv}')->middleware(['auth', 'puntos'])->group(function (
     Route::get('salidas', [PuntosController::class, 'salidas'])->name('pv.salidas');
     Route::get('solicitar-mercancia', [PuntosController::class, 'solicitarMercancia'])->name('pv.solicitud-mercancia');
     Route::get('nueva-solicitud', [PuntosController::class, 'nuevaSolicitud'])->name('puntos.inventario.nueva-solicitud');
-    //Route::view('nuevo-solicitud', 'puntos.Inventario.nueva-solicitud-mercancia')->name('puntos.inventario.nueva-solicitud');
 
     Route::get('socios', [PuntosController::class, 'verSocios'])->name('pv.socios');
     Route::get('caja', [PuntosController::class, 'caja'])->name('pv.caja');

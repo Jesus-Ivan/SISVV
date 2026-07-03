@@ -13,33 +13,37 @@ class SolicitarMercancia extends Component
 {
     use WithPagination;
     public $search_mes;
+    public $codigopv;
 
     #[Locked]
     public $pedido_seleccionado, $pedido, $detalles_pedido = [];
 
     // Inicializar propiedades al cargar el componente
-    public function mount()
+    public function mount($codigopv)
     {
         $this->search_mes = now()->format('Y-m');
+        $this->codigopv = $codigopv;
     }
 
     #[Computed()]
     public function pedidos()
     {
-        $query = SolicitudPedido::query();
+        $claveBodega = "stock_" . strtolower($this->codigopv);
+
+        $query = SolicitudPedido::query()
+            ->where('clave_pv', $claveBodega);
 
         if ($this->search_mes) {
             $year = substr($this->search_mes, 0, 4);
             $month = substr($this->search_mes, 5, 2);
             $query->whereYear('fecha_existencias', $year)
-                ->whereMonth('fecha_existencias', $month)
-                ->orderBy('fecha_existencias', 'desc');
+                ->whereMonth('fecha_existencias', $month);
         }
 
-        return $query->paginate(10);
+        return $query->orderBy('fecha_existencias', 'desc')->paginate(10);
     }
 
-
+    //Muestra los detalles de las solicitudes de mercancia
     public function detallesPedido($folio)
     {   
         $this->pedido_seleccionado = $folio;

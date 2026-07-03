@@ -15,9 +15,9 @@ return new class extends Migration
             $table->integer('folio')->unsigned()->autoIncrement();
             $table->integer('id_user');
             $table->string('user_name', 100);
-            $table->string('clave_origen', 20);
+            $table->string('clave_pv', 20);
             $table->datetime('fecha_existencias');
-            $table->integer('estado')->default(0);
+            $table->integer('folio_traspaso')->default(0);
             $table->timestamps();
         });
     }

@@ -6,6 +6,6 @@
 
     {{-- Contenido --}}
     <div>
-        <livewire:almacen.traspasos.v2.nuevo-traspaso />
+        <livewire:almacen.traspasos.v2.nuevo-traspaso :folio_pedido="$folio_pedido" />
     </div>
 </x-app-layout>

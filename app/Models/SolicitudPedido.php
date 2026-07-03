@@ -20,4 +20,16 @@ class SolicitudPedido extends Model
     {
         return $this->belongsTo(User::class, 'id_user', 'id');
     }
+
+    public function bodegaOrigen(): BelongsTo
+    {
+        return $this->belongsTo(Bodega::class, 'clave_pv', 'clave')->withDefault([
+            'descripcion' => 'N/A'
+        ]);
+    }
+
+    public function detalles()
+    {
+        return $this->hasMany(DetallesSolicitudPedido::class, 'folio_pedido', 'folio');
+    }
 }

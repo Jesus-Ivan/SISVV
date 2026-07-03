@@ -10,6 +10,7 @@ use App\Models\DetalleTraspasoNew;
 use App\Models\Insumo;
 use App\Models\MovimientosAlmacen;
 use App\Models\Presentacion;
+use App\Models\SolicitudPedido;
 use App\Models\TraspasoNew;
 use App\Models\Unidad;
 use Carbon\Carbon;
@@ -34,6 +35,9 @@ class NuevoTraspaso extends Component
     public $indexInsumo = null;
     public $insumXpresent = [];
     public $totalInsumoModal = 0;
+
+    public $id_bodega_solicitud;
+    public $folio_pedido_origen = null;
 
     //Propiedad para evitar cambios en las bodegas
     #[Locked]
@@ -66,12 +70,17 @@ class NuevoTraspaso extends Component
     }
 
     //Hook de iniciodel componente
-    public function mount()
+    public function mount($folio_pedido = null)
     {
         //Fecha inicial
         $this->fecha = now()->toDateString();
         //Hora inicial
         $this->hora = now()->toTimeString('minute');
+
+        if ($folio_pedido) {
+            $this->folio_pedido_origen = $folio_pedido;
+            $this->insumosPedido($folio_pedido);
+        } 
     }
 
     public function bloquearFolio()
@@ -354,6 +363,18 @@ class NuevoTraspaso extends Component
                     'fecha_existencias' => $validated['fecha_existencias']
                 ]);
 
+                //Verificamos si el traspaso viene de una solicitud de pedido
+                if ($this->folio_pedido_origen) {
+                    $pedido = SolicitudPedido::where('folio', $this->folio_pedido_origen)->first();
+
+                    if ($pedido) {
+                        $pedido->update([
+                            'folio_traspaso' => $result->folio
+                        ]);
+                    }
+                
+                }
+
                 //Buscar la bodega, despues de crear el registro de la entrada
                 $bodega = Bodega::find($result->clave_origen);
                 $fecha = now();
@@ -409,7 +430,8 @@ class NuevoTraspaso extends Component
             'locked_b_origen',
             'locked_b_destino',
             'tipo_traspaso',
-            'folio_requisicion'
+            'folio_requisicion',
+            'folio_pedido_origen'
         );
         //Reiniciamos valores iniciales
         $this->mount();
@@ -685,6 +707,47 @@ class NuevoTraspaso extends Component
                 'fecha_existencias' => $fecha->toDateTimeString(),
             ]);
         }
+    }
+
+    //Cargamos los datos de una solicitud de mercancia de un pv
+    private function insumosPedido($folio)
+    {
+        $pedido = SolicitudPedido::with(['detalles.insumo.unidad'])->where('folio', $folio)->first();
+
+        if (!$pedido) {
+            return;
+        }
+
+        //Asignamos las bodegas de origen siempre en almacen y destino la del pv
+        $this->clave_origen = 'stock_alm';
+        $this->clave_destino = $pedido->clave_pv;
+
+        //Bloqueamos las bodegs para evitar modificaciones
+        $this->locked_b_origen = true;
+        $this->locked_b_destino = true;
+
+        //Establecemos la naturaleza de traspaso
+        $bodega_origen = Bodega::find($this->clave_origen);
+        $bodega_destino = Bodega::find($this->clave_destino);
+
+        if ($bodega_origen && $bodega_destino) {
+            $this->tipo_traspaso = "{$bodega_origen->naturaleza}_{$bodega_destino->naturaleza}";
+        }
+
+        $this->lista_articulos = $pedido->detalles->map(function ($detalle) {
+            return [
+                'clave'       => $detalle->clave_insumo,
+                'descripcion' => $detalle->descripcion,
+                'existencia'  => [
+                    'existencias_insumo' => $detalle->existencias
+                ],
+                'cantidad'    => $detalle->cantidad_insumo,
+                'unidad'      => [
+                    'descripcion' => $detalle->insumo->unidad->descripcion ?? 'N/A'
+                ],
+                'rendimiento' => null,
+            ];
+        })->toArray();
     }
 
     public function render()

@@ -547,7 +547,6 @@ class ReportesController extends Controller
             $metodo_pago[$value['id']] = $value['descripcion'];
         }
 
-
         if ($type_file == 'PDF') {
             //Array auxiliar de pagos separados por tipo
             $separados = [];
@@ -587,10 +586,13 @@ class ReportesController extends Controller
             $pdf->setOption(['defaultFont' => 'Courier']);
             return $pdf->stream("reporteMensual.pdf");
         } else {
+
             //Buscar las ventas que coincidan con las cajas
-            $ventas = Venta::with('detallesCaja')
-                ->whereIn('corte_caja', array_column($cajas, 'corte'))
+            $ventas = Venta::withWhereHas('detallesCaja', function ($query) use ($cajas) {
+                $query->whereIn('corte_caja', array_column($cajas, 'corte'));
+            })
                 ->get();
+                
             //GENERAMOS EL REPORTE EN EXCEL
             return Excel::download(
                 new VentasExport($ventas, $puntos_venta, $metodo_pago),

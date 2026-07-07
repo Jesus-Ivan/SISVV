@@ -19,6 +19,7 @@ use App\Models\ZonaImpresion;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -27,6 +28,26 @@ class SistemasController extends Controller
     public function editarCuotas(Socio $socio)
     {
         return view('sistemas.Recepcion.editar-cuotas', ['socio' => $socio]);
+    }
+
+    /**
+     * Ejecuta manualmente la sincronización con la API PORTICO (el mismo comando
+     * que corre en automático cada 6 horas). Se usa desde el botón en el módulo
+     * de Sistemas → Herramientas.
+     */
+    public function sincronizarPortico()
+    {
+        try {
+            $codigo = Artisan::call('sync:portico');
+
+            if ($codigo === 0) {
+                return back()->with('success', 'Sincronización con PORTICO completada correctamente.');
+            }
+
+            return back()->with('fail', 'La sincronización con PORTICO terminó con errores. Revisa los registros.');
+        } catch (\Throwable $e) {
+            return back()->with('fail', 'No se pudo sincronizar con PORTICO: ' . $e->getMessage());
+        }
     }
 
     public function prodVendidos()

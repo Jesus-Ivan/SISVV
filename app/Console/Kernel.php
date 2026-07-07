@@ -12,7 +12,13 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Envía los datos a la API PORTICO en horarios fijos: 00:00, 06:00,
+        // 12:00 y 18:00. La app de escritorio los descarga 5 min después
+        // (00:05, 06:05, ...), cuando la API ya tiene los datos frescos.
+        $schedule->command('sync:portico')
+            ->cron('0 0,6,12,18 * * *')
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**

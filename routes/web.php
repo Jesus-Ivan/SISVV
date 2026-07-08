@@ -98,6 +98,7 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
     Route::view('proveedores', 'almacen.Proveedores.proveedores')->name('almacen.proveedores');
     Route::view('unidades', 'almacen.Unidades.unidades')->name('almacen.unidades');
     Route::view('grupos', 'almacen.Grupos.grupos')->name('almacen.grupos');
+    Route::view('solicitudes-pv', 'almacen.Pedidos.solicitudes')->name('almacen.solicitudes-pv');
 
     Route::prefix('entradas')->group(function () {
         Route::view('/', 'almacen.Entradas.entradas')->name('almacen.entradas');
@@ -173,7 +174,12 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
     //Nueva ruta de traspasos
     Route::prefix('traspasos-v2')->group(function () {
         Route::view('/', 'almacen.Traspasos.v2.traspaso')->name('almacen.traspasov2');
-        Route::view('/nuevo', 'almacen.Traspasos.v2.nuevo-traspaso')->name('almacen.traspasov2.nuevo');
+        Route::get('/nuevo/{folio_pedido?}', function ($folio_pedido = null) {
+            return view('almacen.Traspasos.v2.nuevo-traspaso', [
+                'folio_pedido' => $folio_pedido
+            ]);
+        })->name('almacen.traspasov2.nuevo');
+        //Route::view('/nuevo', 'almacen.Traspasos.v2.nuevo-traspaso')->name('almacen.traspasov2.nuevo');
         Route::view('/historial', 'almacen.Traspasos.v2.historial')->name('almacen.traspasov2.historial');
     });
 
@@ -264,7 +270,6 @@ Route::prefix('pv/{codigopv}')->middleware(['auth', 'puntos'])->group(function (
     Route::get('salidas', [PuntosController::class, 'salidas'])->name('pv.salidas');
     Route::get('solicitar-mercancia', [PuntosController::class, 'solicitarMercancia'])->name('pv.solicitud-mercancia');
     Route::get('nueva-solicitud', [PuntosController::class, 'nuevaSolicitud'])->name('puntos.inventario.nueva-solicitud');
-    //Route::view('nuevo-solicitud', 'puntos.Inventario.nueva-solicitud-mercancia')->name('puntos.inventario.nueva-solicitud');
 
     Route::get('socios', [PuntosController::class, 'verSocios'])->name('pv.socios');
     Route::get('caja', [PuntosController::class, 'caja'])->name('pv.caja');
@@ -294,9 +299,11 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::get('prod-vendidos', [SistemasController::class, 'prodVendidos'])->name('sistemas.pv.prod-vendidos');
         Route::view('notas', 'sistemas.Puntos.notas')->name('sistemas.pv.notas');
         Route::get('/editar/{folioventa}', [SistemasController::class, 'editarVenta'])->name('sistemas.pv.editar');
-        Route::view('crear-detalles-caja', 'sistemas.Puntos.detalles-caja')->name('sistemas.pv.detalles-caja');
-        Route::post('crear-detalles-caja', [SistemasController::class, 'detallesCaja'])->name('sistemas.pv.detalles-caja');
         Route::view('cortes', 'sistemas.Puntos.cortes')->name('sistemas.pv.consultar-cortes');
+
+        Route::view('zonas', 'sistemas.Puntos.zonas-imp')->name('sistemas.pv.zonas-impresion');
+        Route::post('zonas', [SistemasController::class, 'crearZonasImpresion'])->name('sistemas.pv.zonas-impresion');
+
     });
 
     //HERRAMIENTAS ADICIONALES A SISTEMAS
@@ -309,6 +316,10 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::post('/ventas', [ReportesController::class, 'ventasMes'])->name('sistemas.reportes.ventas');
         Route::post('/recibos-mes', [ReportesController::class, 'recibosMes'])->name('sistemas.reportes.recibos');
         Route::post('/socios-actuales', [ReportesController::class, 'socios'])->name('sistemas.reportes.socios');
+    });
+    Route::prefix('portico')->group(function () {
+        Route::view('/', 'sistemas.Herramientas.portico')->name('sistemas.portico');
+        Route::post('/sincronizar', [SistemasController::class, 'sincronizarPortico'])->name('sistemas.portico.sync');
     });
 
     //RECEPCION

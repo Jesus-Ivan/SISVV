@@ -78,7 +78,7 @@
             </a>
             <button type="button" wire:click ='guardarVentaNueva' wire:loading.attr="disabled"
                 wire:target='guardarVentaNueva, cerrarVentaNueva'
-                class="{{ $this->ventaForm->tipo_venta != 'empleado' ? '' : 'pointer-events-none opacity-60' }} inline-flex items-center focus:outline-none text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-900">
+                class="inline-flex items-center focus:outline-none text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-900">
                 <svg class="w-6 h-6 dark:text-gray-800 text-white me-2" aria-hidden="true"
                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
                     viewBox="0 0 24 24">

@@ -34,6 +34,11 @@ class Venta extends Model
         return $this->hasMany(CorreccionVenta::class, 'folio_venta');
     }
 
+    public function syncLogs(): HasMany
+    {
+        return $this->hasMany(VentasSyncLog::class, 'folio_venta', 'folio');
+    }
+
     public function caja(): BelongsTo
     {
         return $this->belongsTo(Caja::class, 'corte_caja');
@@ -42,5 +47,10 @@ class Venta extends Model
     public function puntoVenta(): BelongsTo
     {
         return $this->belongsTo(PuntoVenta::class, 'clave_punto_venta');
+    }
+
+    public function detallesCaja(): HasMany
+    {
+        return $this->hasMany(DetallesCaja::class, 'folio_venta');
     }
 }

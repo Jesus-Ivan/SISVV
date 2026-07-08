@@ -19,6 +19,7 @@ class PuntoVenta extends Model
     protected $primaryKey = 'clave';
     //Desactivar el autoincremento
     public $incrementing = false;
+    protected $keyType = 'string';
 
     public function caja(): HasMany
     {

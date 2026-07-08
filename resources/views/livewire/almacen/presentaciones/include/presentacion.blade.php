@@ -109,7 +109,7 @@
             <div class="py-7">
                 {{-- Search bar Insumo base --}}
                 <livewire:search-bar tittle="Insumo Base" table="insumos" :columns="['clave', 'descripcion']" primary="clave"
-                    event="selected-insumo" />
+                    event="selected-insumo" :conditions="[['deleted_at', '=', null]]" />
                 {{-- Insumo base Descripcion --}}
                 <div class="flex gap-2 items-end">
                     <div class="w-full">

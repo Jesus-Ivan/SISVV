@@ -9,7 +9,9 @@ use App\Models\SocioMembresia;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Pool;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -28,10 +30,14 @@ class SyncPortico extends Command
     public function handle(): int
     {
         $url = rtrim((string) config('portico.api_url'), '/');
-        $key = (string) config('portico.api_key');
 
-        if ($url === '' || $key === '') {
-            $this->error('Faltan PORTICO_API_URL o PORTICO_API_KEY en el archivo .env');
+        // La API es de acceso público (sin API key). Solo se requiere la URL.
+        // Los errores se escriben también en el log: cuando el comando corre
+        // vía Artisan::call() (botón de Sistemas) o por el scheduler, la
+        // salida de consola ($this->error) no la ve nadie.
+        if ($url === '') {
+            $this->error('Falta PORTICO_API_URL en el archivo .env');
+            Log::error('sync:portico: falta PORTICO_API_URL en el archivo .env');
             return self::FAILURE;
         }
 
@@ -71,33 +77,46 @@ class SyncPortico extends Command
                 ->whereNull('socios.deleted_at'))
             ->get();
 
+        // Usuarios del sistema: la API los usa para validar el inicio de
+        // sesión de PorticoVV (y otras funciones futuras). Se envían todos.
+        // Se consulta con DB::table porque el modelo User oculta "password"
+        // al serializar y el hash es justo lo que la API necesita para validar.
+        $users = DB::table('users')
+            ->select('id', 'name', 'email', 'password')
+            ->get();
+
         // 2. Enviar el snapshot completo.
         $this->info(sprintf(
-            'Enviando %d socios, %d membresías, %d socios_membresías, %d integrantes...',
+            'Enviando %d socios, %d membresías, %d socios_membresías, %d integrantes, %d usuarios...',
             $socios->count(),
             $membresias->count(),
             $sociosMembresias->count(),
-            $integrantes->count()
+            $integrantes->count(),
+            $users->count()
         ));
 
         try {
-            $respuesta = Http::withHeaders(['X-API-Key' => $key])
-                ->acceptJson()
+            $respuesta = Http::acceptJson()
                 ->timeout(60)
                 ->post("{$url}/api/portico/sync", [
                     'socios'            => $socios,
                     'membresias'        => $membresias,
                     'socios_membresias' => $sociosMembresias,
                     'integrantes'       => $integrantes,
+                    'users'             => $users,
                 ]);
         } catch (ConnectionException $e) {
             $this->error("No se pudo conectar con la API: {$e->getMessage()}");
+            Log::error("sync:portico: no se pudo conectar con la API: {$e->getMessage()}");
             return self::FAILURE;
         }
 
         if ($respuesta->failed()) {
             $this->error("Error al sincronizar datos: HTTP {$respuesta->status()}");
             $this->line($respuesta->body());
+            Log::error("sync:portico: error HTTP {$respuesta->status()} al sincronizar datos", [
+                'respuesta' => mb_substr($respuesta->body(), 0, 1000),
+            ]);
             return self::FAILURE;
         }
 
@@ -106,7 +125,7 @@ class SyncPortico extends Command
         // 3. Subir SOLO las imágenes que la API pide (cambiadas o faltantes).
         if (! $this->option('sin-imagenes')) {
             $requeridas = $respuesta->json('imagenes_requeridas', ['socio' => [], 'integrante' => []]);
-            $this->subirImagenes($url, $key, $socios, $integrantes, $requeridas);
+            $this->subirImagenes($url, $socios, $integrantes, $requeridas);
         }
 
         return self::SUCCESS;
@@ -116,7 +135,7 @@ class SyncPortico extends Command
      * Sube en paralelo (por lotes) las fotos que la API pidió, con un reintento
      * por imagen fallida.
      */
-    private function subirImagenes(string $url, string $key, $socios, $integrantes, array $requeridas): void
+    private function subirImagenes(string $url, $socios, $integrantes, array $requeridas): void
     {
         $disk = Storage::disk('public');
 
@@ -162,7 +181,7 @@ class SyncPortico extends Command
 
         // Subir de a 5 en paralelo; reintentar una vez las que fallen.
         foreach (array_chunk($items, 5) as $grupo) {
-            $resultado = $this->subirLote($url, $key, $disk, $grupo);
+            $resultado = $this->subirLote($url, $disk, $grupo);
 
             $fallaron = [];
             foreach ($grupo as $idx => $item) {
@@ -174,7 +193,7 @@ class SyncPortico extends Command
             }
 
             if ($fallaron !== []) {
-                $reintento = $this->subirLote($url, $key, $disk, $fallaron);
+                $reintento = $this->subirLote($url, $disk, $fallaron);
                 foreach ($fallaron as $idx => $item) {
                     if ($reintento[$idx] ?? false) {
                         $subidas++;
@@ -190,17 +209,20 @@ class SyncPortico extends Command
         $bar->finish();
         $this->newLine();
         $this->info("Imágenes: {$subidas} subidas, {$omitidas} sin archivo, {$fallidas} con error.");
+
+        if ($fallidas > 0) {
+            Log::warning("sync:portico: {$fallidas} imágenes no se pudieron subir a la API (se reintentarán en la siguiente sincronización).");
+        }
     }
 
     /**
      * Sube un lote de imágenes en paralelo. Devuelve [índice => bool éxito].
      */
-    private function subirLote(string $url, string $key, $disk, array $grupo): array
+    private function subirLote(string $url, $disk, array $grupo): array
     {
         try {
             $respuestas = Http::pool(fn (Pool $pool) => collect($grupo)
-                ->map(fn ($item) => $pool->withHeaders(['X-API-Key' => $key])
-                    ->timeout(60)
+                ->map(fn ($item) => $pool->timeout(60)
                     ->attach('image', $disk->get($item[2]), basename($item[2]))
                     ->post("{$url}/api/portico/images/{$item[0]}/{$item[1]}"))
                 ->all());

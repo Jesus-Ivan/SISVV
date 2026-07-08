@@ -547,49 +547,55 @@ class ReportesController extends Controller
             $metodo_pago[$value['id']] = $value['descripcion'];
         }
 
-        //Array auxiliar de pagos separados por tipo
-        $separados = [];
-        //Consulta que obtiene los detalles de los pagos con su corte de caja
-        $detalles_pago = DetallesCaja::with('venta')
-            ->whereIn('corte_caja', array_column($cajas, 'corte'))
-            ->get();
-
-        //Obtenemos el total del corte
-        $totalVenta = array_sum(array_column($detalles_pago->toArray(), 'monto'));
-        //Separar los pagos por tipo
-        foreach ($tipos_pago as $pago) {
-            //Separar las ventas por tipo de pago
-            $separados[$pago->descripcion] = $detalles_pago
-                ->where('id_tipo_pago', '=', $pago->id);
-        }
-
-
-        $header = [
-            'title' => 'VISTA VERDE COUNTRY CLUB',
-            'rfc' => 'VVC101110AQ4',
-            'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
-            'telefono' => '3745011',
-            'fInicio' => $fInicio,
-            'fFin' => $fFin
-        ];
-
-        //Almacenamos la informacion en un array, para la vista del resporte
-        $data = [
-            'header' => $header,
-            'detalles_pagos' => $separados,
-            'totalVenta' => $totalVenta,
-            'puntos_venta' => $puntos_venta
-        ];
-
         if ($type_file == 'PDF') {
+            //Array auxiliar de pagos separados por tipo
+            $separados = [];
+            //Consulta que obtiene los detalles de los pagos con su corte de caja
+            $detalles_pago = DetallesCaja::with('venta')
+                ->whereIn('corte_caja', array_column($cajas, 'corte'))
+                ->get();
+
+            //Obtenemos el total del corte
+            $totalVenta = array_sum(array_column($detalles_pago->toArray(), 'monto'));
+            //Separar los pagos por tipo
+            foreach ($tipos_pago as $pago) {
+                //Separar las ventas por tipo de pago
+                $separados[$pago->descripcion] = $detalles_pago
+                    ->where('id_tipo_pago', '=', $pago->id);
+            }
+
+
+            $header = [
+                'title' => 'VISTA VERDE COUNTRY CLUB',
+                'rfc' => 'VVC101110AQ4',
+                'direccion' => 'CARRET.FED.MEX-PUE KM252 SAN NICOLAS TETIZINTLA TEHUACÁN, PUEBLA CP.75710',
+                'telefono' => '3745011',
+                'fInicio' => $fInicio,
+                'fFin' => $fFin
+            ];
+
+            //Almacenamos la informacion en un array, para la vista del resporte
+            $data = [
+                'header' => $header,
+                'detalles_pagos' => $separados,
+                'totalVenta' => $totalVenta,
+                'puntos_venta' => $puntos_venta
+            ];
             //GENERAMOS EL REPORTE EN PDF
             $pdf = Pdf::loadView('reportes.ventas', $data);
             $pdf->setOption(['defaultFont' => 'Courier']);
             return $pdf->stream("reporteMensual.pdf");
         } else {
+
+            //Buscar las ventas que coincidan con las cajas
+            $ventas = Venta::withWhereHas('detallesCaja', function ($query) use ($cajas) {
+                $query->whereIn('corte_caja', array_column($cajas, 'corte'));
+            })
+                ->get();
+                
             //GENERAMOS EL REPORTE EN EXCEL
             return Excel::download(
-                new VentasExport($data, $puntos_venta, $metodo_pago),
+                new VentasExport($ventas, $puntos_venta, $metodo_pago),
                 'Ventas - ' . $fInicio . ' - ' . $fFin . '.xlsx'
             );
         }
@@ -609,7 +615,9 @@ class ReportesController extends Controller
         //Buscamos los metodos de pago, permitidos para el reporte de cobranza
         $tipos_pago = TipoPago::whereNot(function (Builder $query) {
             $query->where('descripcion', 'like', 'FIRMA')
-                ->orWhere('descripcion', 'like', '%SALDO%');
+                ->orWhere('descripcion', 'like', '%SALDO%')
+                ->orWhere('descripcion', 'like', '%PENDIENTE%')
+                ->orWhere('descripcion', 'like', '%CORTESIA%');
         })->get();
 
         //Si se paso un id de usuario
@@ -1062,7 +1070,7 @@ class ReportesController extends Controller
         //Si no selecciono bodega
         if (is_null($bodega)) {
             //Cambiar la ruta de la vista
-            $view_path = 'reportes.existencias.existencias-todos';
+            $view_path = 'reportes.Existencias.existencias-todos';
             //Obtener el array inicial con los insumos y las columnas de las bodegas
             $result = $service->obtenerTodosInsumos($grupos, $bodegas, $folio);
 

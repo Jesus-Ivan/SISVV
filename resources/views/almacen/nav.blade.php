@@ -25,6 +25,10 @@
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Traspasos</a>
                             </li>
                             <li>
+                                <a href="{{ route('almacen.solicitudes-pv') }}"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Solicitudes Mercancia</a>
+                            </li>
+                            <li>
                                 <a href="{{ route('almacen.produccion') }}"
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Produccion Insumos</a>
                             </li>

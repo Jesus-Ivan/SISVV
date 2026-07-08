@@ -9,7 +9,7 @@
         <!-- Title -->
         <h4 class="uppercase text-2xl font-bold dark:text-white mx-2">VENTA {{ $venta->folio }} - {{ $venta->tipo_venta }}</h4>
         <div>
-            <livewire:puntos.ventas.editar.container :permisospv="$permisospv" :venta="$venta->folio" :codigopv="$codigopv" />
+            <livewire:puntos.ventas.editar.container :permisospv="$permisospv" :venta="$venta" :codigopv="$codigopv" />
         </div>
     </div>
 </x-app-layout>

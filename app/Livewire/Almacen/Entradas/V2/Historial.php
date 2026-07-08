@@ -46,6 +46,9 @@ class Historial extends Component
     {
         //Parsear la fecha obtenida
         $mes = Carbon::parse($this->mes_busqueda);
+
+        $is_presentacion = $this->isBodegaPresentacion();
+
         //Si la longitud de la clave primaria es mayor a cero
         if (strlen($this->primary) > 0) {
             //Preparar la consulta
@@ -55,7 +58,7 @@ class Historial extends Component
                         ->whereMonth('fecha_existencias', $mes->month)
                         ->whereYear('fecha_existencias', $mes->year);
                 })
-                ->whereAny(['clave_presentacion', 'clave_insumo'],  $this->primary) //Agregar condicion de busqueda para la clave primaria seleccionada
+                ->where($is_presentacion ? 'clave_presentacion' : 'clave_insumo',  $this->primary) //Agregar condicion de busqueda para la clave primaria seleccionada
                 ->orderBy(
                     EntradaNew::select('fecha_existencias')
                         ->whereColumn('entradas_new.folio', 'detalle_entrada_new.folio_entrada') // Relación
@@ -99,7 +102,12 @@ class Historial extends Component
         //Resetar el paginador
         $this->resetPage();
     }
-    public function render()
+
+    /**
+     * Verifica si la bodega seleccionada es de naturaleza 'presen'\
+     * Devuelve true en caso afirmativo.
+     */
+    public function isBodegaPresentacion()
     {
         //Buscar la bodega seleccionada
         $bodega = Bodega::find($this->clave_bodega);
@@ -115,6 +123,12 @@ class Historial extends Component
                 $is_presentacion = false;
             }
         }
+        return $is_presentacion;
+    }
+    
+    public function render()
+    {
+        $is_presentacion = $this->isBodegaPresentacion();
         return view('livewire.almacen.entradas.v2.historial', [
             'is_presentacion' => $is_presentacion,
             'var' => $is_presentacion ? '1' : null

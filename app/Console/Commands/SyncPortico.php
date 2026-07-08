@@ -9,7 +9,9 @@ use App\Models\SocioMembresia;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Pool;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -30,8 +32,12 @@ class SyncPortico extends Command
         $url = rtrim((string) config('portico.api_url'), '/');
 
         // La API es de acceso público (sin API key). Solo se requiere la URL.
+        // Los errores se escriben también en el log: cuando el comando corre
+        // vía Artisan::call() (botón de Sistemas) o por el scheduler, la
+        // salida de consola ($this->error) no la ve nadie.
         if ($url === '') {
             $this->error('Falta PORTICO_API_URL en el archivo .env');
+            Log::error('sync:portico: falta PORTICO_API_URL en el archivo .env');
             return self::FAILURE;
         }
 
@@ -71,13 +77,22 @@ class SyncPortico extends Command
                 ->whereNull('socios.deleted_at'))
             ->get();
 
+        // Usuarios del sistema: la API los usa para validar el inicio de
+        // sesión de PorticoVV (y otras funciones futuras). Se envían todos.
+        // Se consulta con DB::table porque el modelo User oculta "password"
+        // al serializar y el hash es justo lo que la API necesita para validar.
+        $users = DB::table('users')
+            ->select('id', 'name', 'email', 'password')
+            ->get();
+
         // 2. Enviar el snapshot completo.
         $this->info(sprintf(
-            'Enviando %d socios, %d membresías, %d socios_membresías, %d integrantes...',
+            'Enviando %d socios, %d membresías, %d socios_membresías, %d integrantes, %d usuarios...',
             $socios->count(),
             $membresias->count(),
             $sociosMembresias->count(),
-            $integrantes->count()
+            $integrantes->count(),
+            $users->count()
         ));
 
         try {
@@ -88,15 +103,20 @@ class SyncPortico extends Command
                     'membresias'        => $membresias,
                     'socios_membresias' => $sociosMembresias,
                     'integrantes'       => $integrantes,
+                    'users'             => $users,
                 ]);
         } catch (ConnectionException $e) {
             $this->error("No se pudo conectar con la API: {$e->getMessage()}");
+            Log::error("sync:portico: no se pudo conectar con la API: {$e->getMessage()}");
             return self::FAILURE;
         }
 
         if ($respuesta->failed()) {
             $this->error("Error al sincronizar datos: HTTP {$respuesta->status()}");
             $this->line($respuesta->body());
+            Log::error("sync:portico: error HTTP {$respuesta->status()} al sincronizar datos", [
+                'respuesta' => mb_substr($respuesta->body(), 0, 1000),
+            ]);
             return self::FAILURE;
         }
 
@@ -189,6 +209,10 @@ class SyncPortico extends Command
         $bar->finish();
         $this->newLine();
         $this->info("Imágenes: {$subidas} subidas, {$omitidas} sin archivo, {$fallidas} con error.");
+
+        if ($fallidas > 0) {
+            Log::warning("sync:portico: {$fallidas} imágenes no se pudieron subir a la API (se reintentarán en la siguiente sincronización).");
+        }
     }
 
     /**

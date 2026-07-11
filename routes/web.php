@@ -316,6 +316,7 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::post('/ventas', [ReportesController::class, 'ventasMes'])->name('sistemas.reportes.ventas');
         Route::post('/recibos-mes', [ReportesController::class, 'recibosMes'])->name('sistemas.reportes.recibos');
         Route::post('/socios-actuales', [ReportesController::class, 'socios'])->name('sistemas.reportes.socios');
+        Route::post('/firmas', [ReportesController::class, 'reporteFirmas'])->name('sistemas.reportes.firmas');
     });
     Route::prefix('portico')->group(function () {
         Route::view('/', 'sistemas.Herramientas.portico')->name('sistemas.portico');

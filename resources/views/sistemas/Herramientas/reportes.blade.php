@@ -5,14 +5,14 @@
     </x-slot>
 
     {{-- REPORTE DE VENTAS - PAGOS --}}
-    <div>
-        <div class="flex items-center m-2">
+    <div class="p-2">
+        <div class="flex items-center">
             <!-- TITULO -->
-            <h4 class="text-2xl font-bold dark:text-white mx-2">Reporte de ventas - pagos</h4>
+            <h4 class="text-2xl font-bold dark:text-white">Reporte de ventas - pagos</h4>
         </div>
         <form action="{{ route('sistemas.reportes.ventas') }}" method="POST" target="_blank">
             @csrf
-            <div class="flex gap-4">
+            <div class="flex gap-4 items-end">
                 <div class="max-w-sm">
                     <label for="type_file"
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Seleccionar
@@ -23,48 +23,69 @@
                         <option value="XLS">EXCEL</option>
                     </select>
                 </div>
+                <input class="h-fit" type="date" id="fechaInicio" name="fechaInicio">
+                <input class="h-fit" type="date" id="fechaFin" name="fechaFin">
+                <x-primary-button class="h-11" type="submit">Generar</x-primary-button>
             </div>
-            <input type="date" id="fechaInicio" name="fechaInicio">
-            <input type="date" id="fechaFin" name="fechaFin">
-            <button type="submit">Generar</button>
         </form>
-        <div class="ms-3 mx-3 my-2">
-            {{-- Linea divisora --}}
-            <hr class="h-px my-1 bg-gray-300 border-0 dark:bg-gray-700">
-
-        </div>
+        {{-- Linea divisora --}}
+        <hr class="h-px my-1 bg-gray-300 border-0 dark:bg-gray-700">
     </div>
     {{-- REPORTE DE RECIBOS - DETALLES --}}
-    <div>
-        <div class="flex items-center m-2">
+    <div class="p-2">
+        <div class="flex items-center">
             <!-- TITULO -->
-            <h4 class="text-2xl font-bold dark:text-white mx-2">Reporte mensual de recibos - detalles</h4>
+            <h4 class="text-2xl font-bold dark:text-white ">Reporte mensual de recibos - detalles</h4>
         </div>
         <form action="{{ route('sistemas.reportes.recibos') }}" method="POST" target="_blank">
             @csrf
             <input type="date" id="fechaInicio" name="fechaInicio">
             <input type="date" id="fechaFin" name="fechaFin">
-            <button type="submit">Generar</button>
+            <x-primary-button class="h-11" type="submit">Generar</x-primary-button>
         </form>
+        {{-- Linea divisora --}}
+        <hr class="h-px my-1 bg-gray-300 border-0 dark:bg-gray-700">
     </div>
     {{-- REPORTE DE SOCIOS --}}
-    <div>
-        <div class="flex items-center m-2">
+    <div class="p-2">
+        <div class="flex items-center ">
             <!-- TITULO -->
-            <h4 class="text-2xl font-bold dark:text-white mx-2">Reporte mensual de SOCIOS</h4>
+            <h4 class="text-2xl font-bold dark:text-white ">Reporte mensual de SOCIOS</h4>
         </div>
         <form action="{{ route('sistemas.reportes.socios') }}" method="POST" target="_blank">
+            <p>Este reporte muestra los socios actualizados, al momento de descargarlo.</p>
             @csrf
-            <button type="submit" class="bg-slate-600 p-2 text-white rounded-md">Generar</button>
+            <x-primary-button class="h-11" type="submit">Generar</x-primary-button>
         </form>
+        {{-- Linea divisora --}}
+        <hr class="h-px my-1 bg-gray-300 border-0 dark:bg-gray-700">
     </div>
-    {{-- Boton de regresar --}}
-    <a type="button" href="{{ route('sistemas.reportes') }}"
-        class="my-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
-        <svg class="w-5 h-5 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-            fill="none" viewBox="0 0 24 24">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M5 12h14M5 12l4-4m-4 4 4 4" />
-        </svg>Regresar
-    </a>
+    {{-- REPORTE FIRMAS --}}
+    <div class="p-2">
+        <form action="{{ route('sistemas.reportes.firmas') }}" method="POST" target="__blank">
+            <div class="flex items-center">
+                <!-- TITULO -->
+                <h4 class="text-2xl font-bold dark:text-white">Reporte de Firmas x pagar</h4>
+            </div>
+            <p class="my-2">Genera reporte con todas las firmas pendientes de pagar hasta la fecha indicada</p>
+            <p>NOTA: Por defecto aplica la exclusion de notas no vencidas del mes anterior; Segun los primeros 10 dias de cada fecha.</p>
+            <div class="flex my-2">
+                <div class="flex items-center h-5">
+                    <input id="notasLimite" aria-describedby="notasLimite-text" type="checkbox" name="notasLimite"
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div class="ms-2 text-sm">
+                    <label for="notasLimite" class="font-medium text-gray-900 dark:text-gray-300">Incluir notas
+                        limite</label>
+                    <p id="notasLimite-text" class="text-xs font-normal text-gray-500 dark:text-gray-300">Incluye
+                        todas las notas hasta la fecha seleccionada (no vencidas)</p>
+                </div>
+            </div>
+            <input class="h-fit" type="date" id="fechaFin" name="fechaFin">
+            @csrf
+            <x-primary-button class="h-11 mx-2" type="submit">Generar</x-primary-button>
+        </form>
+        {{-- Linea divisora --}}
+        <hr class="h-px my-1 bg-gray-300 border-0 dark:bg-gray-700">
+    </div>
 </x-app-layout>

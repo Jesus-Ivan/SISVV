@@ -8,6 +8,7 @@ use App\Exports\CarteraVencidaExport;
 use App\Exports\CruceInventarioExport;
 use App\Exports\EntradasExport;
 use App\Exports\FacturasExport;
+use App\Exports\FirmasExport;
 use App\Exports\InvSemanalExport;
 use App\Exports\RecibosExport;
 use App\Exports\SociosExport;
@@ -592,7 +593,7 @@ class ReportesController extends Controller
                 $query->whereIn('corte_caja', array_column($cajas, 'corte'));
             })
                 ->get();
-                
+
             //GENERAMOS EL REPORTE EN EXCEL
             return Excel::download(
                 new VentasExport($ventas, $puntos_venta, $metodo_pago),
@@ -895,6 +896,76 @@ class ReportesController extends Controller
         $pdf->setOption(['defaultFont' => 'Courier']);
         $pdf->setPaper([0, 0, 612.283, 792], 'landscape'); // Tamaño aproximado del US LETTER (216 x 279.4) mm
         return $pdf->stream('existencias' . now()->toDateString() . '.pdf');
+    }
+
+    /**
+     * Genera XLS, con las firmas pendendientes x pagar
+     */
+    public function reporteFirmas(Request $request)
+    {
+        //Validar que tenga fecha de fin
+        $validated = $request->validate([
+            'fechaFin' => 'required',
+        ]);
+
+        //Obtener el parametro opcional de la peticion
+        $notas_limite = $request->input('notasLimite');
+
+        //Creamos una instacia de carbon con la fecha seleccionada
+        $hoy = Carbon::parse($validated['fechaFin']);
+        //Duplicamos la fecha, para utilizarla como fecha limite predeterminada
+        $limite = $hoy->copy();
+
+        //Si el dia actual es mayor al dia 10 (dia de vencimiento de notas del mes anterior).
+        if ($hoy->day > 10) {
+            //Si la fecha actual, es un Martes 11.
+            if ($hoy->day == 11  && $hoy->dayOfWeekIso == 2) {
+                //Establecer fecha limite: Ultimo dia de hace dos meses atras (Las firmas no han vencido del mes anterior ni el actual)
+                $limite->setDay(1);
+                $limite->subMonths(2);
+                $limite->setDay($limite->daysInMonth);
+            } else {
+                //Establecer fecha limite: Ultimo dia del mes anterior (firmas vencidas del mes anterior, pero no del mes actual)
+                $limite->setDay(1);
+                $limite->subMonth();
+                $limite->setDay($limite->daysInMonth);
+            }
+        } else {
+            //Establecer fecha limite: Ultimo dia de hace dos meses atras (Las firmas no han vencido del mes anterior ni el actual)
+            $limite->setDay(1);
+            $limite->subMonths(2);
+            $limite->setDay($limite->daysInMonth);
+        }
+
+        //Si la casilla de incluir notas limite esta activada
+        if ($notas_limite) {
+            $limite = $hoy->copy();
+        }
+        //Preparar consulta base
+        $resultados = EstadoCuenta::join('socios', 'estados_cuenta.id_socio', '=', 'socios.id')
+            ->select(
+                'estados_cuenta.id',
+                'estados_cuenta.id_socio',
+                'estados_cuenta.concepto',
+                'estados_cuenta.fecha',
+                'estados_cuenta.cargo',
+                'estados_cuenta.abono',
+                'estados_cuenta.saldo',
+                'estados_cuenta.consumo',
+                'estados_cuenta.created_at',
+                'estados_cuenta.updated_at',
+                'socios.deleted_at'
+            )
+            ->selectRaw("CONCAT_WS(' ', socios.nombre, socios.apellido_p, socios.apellido_m) AS nombre_socio")
+            ->where([
+                ['estados_cuenta.saldo', '>', 0],
+                ['estados_cuenta.concepto', 'LIKE', '%nota%'],
+                ['estados_cuenta.concepto', 'NOT LIKE', '%cargo%']
+            ])
+            ->whereDate('fecha', '<=', $limite->toDateString())
+            ->get();
+
+        return (new FirmasExport($resultados))->download("Firmas x Cobrar - {$validated['fechaFin']}.xlsx");
     }
 
     /**

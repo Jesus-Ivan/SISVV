@@ -9,7 +9,6 @@ use App\Models\Producto;
 use App\Models\Grupos;
 use App\Models\GruposModificadores;
 use App\Models\TipoPago;
-use App\Constants\AlmacenConstants;
 use Illuminate\Http\Request;
 
 class ApiSyncController extends Controller
@@ -112,8 +111,8 @@ class ApiSyncController extends Controller
      */
     public function syncProductos(Request $request)
     {
-        // Excluimos grupos de tipo SERVICIO (SER) — no se venden desde puntos de venta
-        $servicioIds = Grupos::where('tipo', AlmacenConstants::SERVICIO_KEY)->pluck('id');
+        // Excluimos grupos tipo SERVICIO — no se venden desde puntos de venta
+        $servicioIds = Grupos::where('descripcion', 'like', '%SERVICIO%')->pluck('id');
 
         // Traemos todos los productos activos de venta
         $productos = Producto::with(['grupo', 'subgrupo', 'grupoModif.grupoModif', 'modificador'])

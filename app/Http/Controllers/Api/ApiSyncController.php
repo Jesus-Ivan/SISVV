@@ -9,6 +9,7 @@ use App\Models\Producto;
 use App\Models\Grupos;
 use App\Models\GruposModificadores;
 use App\Models\TipoPago;
+use App\Constants\AlmacenConstants;
 use Illuminate\Http\Request;
 
 class ApiSyncController extends Controller
@@ -111,9 +112,13 @@ class ApiSyncController extends Controller
      */
     public function syncProductos(Request $request)
     {
+        // Excluimos grupos de tipo SERVICIO (SER) — no se venden desde puntos de venta
+        $servicioIds = Grupos::where('tipo', AlmacenConstants::SERVICIO_KEY)->pluck('id');
+
         // Traemos todos los productos activos de venta
         $productos = Producto::with(['grupo', 'subgrupo', 'grupoModif.grupoModif', 'modificador'])
             ->whereNot('estado', 0) // Productos activos
+            ->when($servicioIds->isNotEmpty(), fn($q) => $q->whereNotIn('id_grupo', $servicioIds))
             ->get()
             ->map(function ($producto) {
                 return [

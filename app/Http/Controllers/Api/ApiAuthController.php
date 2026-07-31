@@ -34,7 +34,20 @@ class ApiAuthController extends Controller
             ->join('puntos_venta', 'users_permisos.clave_punto_venta', '=', 'puntos_venta.clave')
             ->select('users_permisos.clave_punto_venta', 'puntos_venta.nombre as punto_venta_nombre', 'users_permisos.clave_rol')
             ->where('users_permisos.id_user', $user->id)
+            ->where('users_permisos.clave_departamento', 'PV')
             ->get();
+
+        // Solo tienen acceso a la aplicación los roles MES (mesero) y CAJ (cajero)
+        $rolesPermitidos = ['MES', 'CAJ'];
+        $tieneAcceso = $permisos->contains(function ($permiso) use ($rolesPermitidos) {
+            return in_array($permiso->clave_rol, $rolesPermitidos, true);
+        });
+
+        if (! $tieneAcceso) {
+            return response()->json([
+                'message' => 'No tienes permisos para usar la aplicación.'
+            ], 403);
+        }
 
         // Crear token de Sanctum
         $token = $user->createToken($request->device_name ?? 'mobile_app')->plainTextToken;

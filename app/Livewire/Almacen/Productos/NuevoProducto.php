@@ -19,10 +19,12 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class NuevoProducto extends Component
 {
     public ProductoForm $form;
+    use WithFileUploads;
 
 
     public function mount()

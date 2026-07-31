@@ -223,6 +223,13 @@ class InsumoForm extends Form
     public function eliminacionSuave()
     {
         if ($this->original) {
+            //Eliminarlo de las recetas
+            $ingredientes = Receta::where('clave_insumo', $this->original->clave)
+                ->get();
+            foreach ($ingredientes as $key => $ingrediente) {
+                $ingrediente->delete();
+            }
+            //Eliminar el insumo
             $this->original->delete();
         }
     }

@@ -4,8 +4,10 @@
 /public/hot
 /public/storage
 /public/fotos
+/public/productos
 /storage/*.key
 /storage/app/public/fotos
+/storage/app/public/productos
 /vendor
 .env
 .env.backup

@@ -44,7 +44,7 @@
     <div class="p-4">
         <div x-show="activeTab === 'general'" x-cloak>
             {{-- Grid --}}
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-3 gap-4">
                 {{-- Columna 1 --}}
                 <div>
                     {{-- Descripcion --}}
@@ -137,6 +137,39 @@
                             @enderror
                         </div>
                     </div>
+                </div>
+                {{-- columa 3 --}}
+                <div>
+                    <div class="relative">
+                        @if ($form->img_path)
+                            <img class="w-full max-h-72 rounded-lg" src=" {{ $form->img_path->temporaryUrl() }}"
+                                alt="imagen del producto">
+                        @else
+                            @if ($form->original?->img_path)
+                                {{-- IMAGEN ORIGINAL --}}
+                                <img class="w-full max-h-72 rounded-lg" src=" {{ asset($form->original->img_path) }}"
+                                    alt="imagen del producto">
+                            @else
+                                {{-- PLACEHOLDER --}}
+                                <img class="w-full max-h-72 rounded-lg"
+                                    src=" {{ asset('storage/img-placeholder-7.png') }}" alt="imagen del producto">
+                            @endif
+                        @endif
+                        <div wire:loading wire:target="form.img_path" class="absolute top-2/4 left-1/2">
+                            @include('livewire.utils.loading', ['w' => 8, 'h' => 8])
+                        </div>
+                    </div>
+                    @error('form.img_path')
+                        <x-input-error messages="{{ $message }}" />
+                    @enderror
+                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="file_input">Imagen
+                        del producto</label>
+                    <input wire:model='form.img_path'
+                        class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+                        aria-describedby="file_input_help" id="file_input" type="file"
+                        accept="image/png, image/jpeg">
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-300" id="file_input_help">PNG, JPG
+                        (MAX. 1Mb).</p>
                 </div>
             </div>
         </div>

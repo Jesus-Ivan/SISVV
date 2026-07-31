@@ -89,7 +89,7 @@ class ProductosService
             if (!$f_apertura->isSameDay($f_cierre)) {
                 //Modificar la fecha, para que coincida con la fecha de existencias ('movimientos_almacen')
                 $f_apertura->hours(23)->minutes(30)->seconds(00);
-                
+
                 $f_existencias = $f_apertura->clone();
             } else {
                 $f_existencias = $f_cierre->clone();

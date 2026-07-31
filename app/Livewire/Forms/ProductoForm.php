@@ -12,6 +12,7 @@ use App\Models\ProductoZona;
 use App\Models\Receta;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Form;
 
 class ProductoForm extends Form
@@ -25,6 +26,8 @@ class ProductoForm extends Form
     public $grupos_modif = [], $modif = [];
     //Atributos de producto-bodega (RECETA)
     public $puntos = [], $bodegas = [], $producto_bodega = [];
+
+    public $img_path = null;
     //Producto original
     public ?Producto $original = null;
     //Relacion 'producto-punto-bodega' original
@@ -279,6 +282,8 @@ class ProductoForm extends Form
     {
         //Validar las propiedades;
         $validated = $this->validarGenerales();
+        //Guardamos la imagen y obtenemos la ruta relativa
+        $path = $this->guardarImagen($validated['img_path']);
         //Crear el registro en la bd
         $result = Producto::create([
             'descripcion' => $validated['descripcion'],
@@ -288,7 +293,8 @@ class ProductoForm extends Form
             'id_grupo' => $validated['id_grupo'],
             'id_subgrupo' => $this->id_subgrupo,
             'estado' => $this->estado,
-            'print_default' => $this->print_default
+            'print_default' => $this->print_default,
+            'img_path' => $path
         ]);
 
         return $result;
@@ -300,6 +306,9 @@ class ProductoForm extends Form
     public function actualizarProducto()
     {
         $validated = $this->validarGenerales();
+        //Guardamos la imagen y obtenemos la ruta relativa
+        $validated['img_path'] = $this->actualizarImagen($this->original->img_path, $validated['img_path']);
+
         $this->validarReceta();
         /**
          * Validar propiedades compuestas
@@ -329,6 +338,7 @@ class ProductoForm extends Form
         $this->original->id_subgrupo = $this->id_subgrupo;
         $this->original->estado = $this->estado;
         $this->original->print_default = $this->print_default;
+        $this->original->img_path = $validated['img_path'];
         //Actualizar el registro en la bd
         $this->original->save();
     }
@@ -663,7 +673,8 @@ class ProductoForm extends Form
             'grupos_modif',
             'modif',
             'original',
-            'print_default'
+            'print_default',
+            'img_path'
         );
 
         //reestablece los valores iniciales para la variable 'producto_bodega'
@@ -687,6 +698,7 @@ class ProductoForm extends Form
             'iva' => 'required',
             'costo_con_impuesto' => 'required',
             'id_grupo' => 'required',
+            'img_path' => 'nullable|image|mimes:png,jpg,jpeg|max:1024'
         ]);
     }
 
@@ -765,5 +777,41 @@ class ProductoForm extends Form
         //Calcular Costo sin iva
         $costo_sin_iva = ($this->costo_con_impuesto * 100) / (100 + $this->iva);
         $this->precio = round($costo_sin_iva, 2);
+    }
+
+
+    /**
+     * Elimina la vieja imagen del servidor\
+     * Y crea la nueva
+     */
+    public function actualizarImagen(?string $org_img_path, ?string $img_path): string | null
+    {
+        $final_path = $org_img_path;
+
+        //Si hay imagen nueva
+        if ($img_path) {
+            // 1. Eliminar la imagen anterior si existe en el disco
+            if ($org_img_path && Storage::disk('public')->exists($org_img_path)) {
+                Storage::disk('public')->delete($org_img_path);
+            }
+
+            // 2. Guardar la nueva imagen (genera un hash aleatorio seguro)
+            $final_path = $this->img_path->store('productos', 'public');
+        }
+
+        return $final_path;
+    }
+
+    /**
+     * Guarda la imagen del producto
+     */
+    public function guardarImagen($img_path): string | null
+    {
+        $path = null;
+        //Guardamos la imagen y obtenemos la ruta relativa
+        if ($img_path)
+            $path = $this->img_path->store('productos', 'public');
+
+        return $path;
     }
 }

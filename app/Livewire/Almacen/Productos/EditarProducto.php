@@ -18,9 +18,11 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class EditarProducto extends Component
 {
+    use WithFileUploads;
 
     public ProductoForm $form;
 

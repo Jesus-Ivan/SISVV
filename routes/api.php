@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ApiAuthController;
+use App\Http\Controllers\Api\ApiManualController;
 use App\Http\Controllers\Api\ApiSyncController;
 use App\Http\Controllers\Api\ApiVentaController;
 use Illuminate\Http\Request;
@@ -34,6 +35,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Tipos de pago
     Route::get('/tipos-pago', [ApiSyncController::class, 'getTiposPago']);
+
+    // Manual de usuario (PDF subido desde la web)
+    Route::get('/manual', [ApiManualController::class, 'show']);
 
     // Módulo Ventas
     Route::get('/ventas', [ApiVentaController::class, 'index']);

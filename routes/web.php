@@ -323,6 +323,11 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::post('/sincronizar', [SistemasController::class, 'sincronizarPortico'])->name('sistemas.portico.sync');
     });
 
+    Route::prefix('manual')->group(function () {
+        Route::get('/', [SistemasController::class, 'manualForm'])->name('sistemas.manual');
+        Route::post('/', [SistemasController::class, 'subirManual'])->name('sistemas.manual');
+    });
+
     //RECEPCION
     Route::prefix('recepcion')->group(function () {
         Route::view('/cuotas', 'sistemas.Recepcion.cuotas')->name('sistemas.cuotas');

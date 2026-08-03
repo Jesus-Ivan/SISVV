@@ -21,6 +21,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 class SistemasController extends Controller
@@ -239,5 +240,34 @@ class SistemasController extends Controller
             return 'EXITO :D! generando la tabla: zonas_impresion';
         }
         return 'No hay zonas de impresion en la tabla: zonas_impresion';
+    }
+
+    /**
+     * Muestra el formulario para subir/reemplazar el manual de usuario (PDF)
+     * que consume la app Android.
+     */
+    public function manualForm()
+    {
+        $existe = Storage::disk('public')->exists('manual/manual_usuario.pdf');
+
+        return view('sistemas.Herramientas.manual', [
+            'existe' => $existe,
+            'nombre' => $existe ? 'manual_usuario.pdf' : null,
+        ]);
+    }
+
+    /**
+     * Guarda el PDF del manual de usuario con nombre fijo para que la app
+     * Android lo descargue sin tocar código.
+     */
+    public function subirManual(Request $request)
+    {
+        $request->validate([
+            'pdf' => 'required|file|mimes:pdf|max:20480',
+        ]);
+
+        $request->file('pdf')->storeAs('manual', 'manual_usuario.pdf', 'public');
+
+        return back()->with('success', 'El manual de usuario se actualizó correctamente.');
     }
 }

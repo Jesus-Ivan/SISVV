@@ -126,6 +126,7 @@ class ApiSyncController extends Controller
                     'costo_unitario' => (float)$producto->costo_unitario,
                     'precio' => (float)$producto->precio_con_impuestos,
                     'print_default' => (bool)$producto->print_default,
+                    'img_path' => $producto->img_path ? asset($producto->img_path) : null,
                     'id_grupo' => $producto->id_grupo,
                     'grupo' => $producto->grupo ? $producto->grupo->descripcion : 'N/A',
                     'id_subgrupo' => $producto->id_subgrupo,

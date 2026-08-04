@@ -202,7 +202,7 @@ Route::prefix('recepcion')->middleware(['auth', 'recepcion'])->group(function ()
         Route::view('/', 'recepcion.Cobros.cobros')->name('recepcion.cobros');
         Route::view('nuevo', 'recepcion.Cobros.nuevo-cobro')->name('recepcion.cobros.nuevo');
         Route::view('reportes', 'recepcion.Cobros.reporte-cobros')->name('recepcion.cobros.reportes');
-        Route::get('recibo/{folio}', [ReportesController::class, 'generarRecibo'])->name('recepcion.cobros.recibo');
+        Route::get('recibo/{folio}/{layout_recibo?}', [ReportesController::class, 'generarRecibo'])->name('recepcion.cobros.recibo');
         Route::get('corte-detalles/{caja}', [ReportesController::class, 'generarCobranzaDetalles'])->name('recepcion.cobros.corte-detalles');
         Route::get('corte-resumen/{caja}', [ReportesController::class, 'generarCobranzaResumen'])->name('recepcion.cobros.corte-resumen');
     });
@@ -303,7 +303,6 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
 
         Route::view('zonas', 'sistemas.Puntos.zonas-imp')->name('sistemas.pv.zonas-impresion');
         Route::post('zonas', [SistemasController::class, 'crearZonasImpresion'])->name('sistemas.pv.zonas-impresion');
-
     });
 
     //HERRAMIENTAS ADICIONALES A SISTEMAS

@@ -41,10 +41,13 @@
     }
 
     .opacidad {
-        opacity: 0;
+        opacity: {{ $layout_recibo }};
     }
 </style>
 
+<head>
+    <title>{{ $cobro->folio }}</title>
+</head>
 <div>
     <?php
     $path = 'storage/image001.jpg';

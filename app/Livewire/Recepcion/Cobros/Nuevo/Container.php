@@ -31,6 +31,8 @@ class Container extends Component
     #[Locked]
     public $totalAbono = 0, $totalSaldo = 0, $saldoFavor = 0;
 
+    public $layout_recibo = false;
+
     #[Computed()]
     public function listaCargos()
     {
@@ -112,7 +114,7 @@ class Container extends Component
         /*Cuando se selecciona un nuevo socio del autocomplete,
             limpiar los datos del socio anterior y buscar al nuevo socio.
         */
-        $this->reset();
+        $this->resetExcept('layout_recibo');
         $this->socio = Socio::find($data);
     }
 
@@ -307,10 +309,13 @@ class Container extends Component
             //Verificamos el estado de cuenta
             //$this->verificar_estado_cuenta($edo_cuenta, $validated['cargosTabla']);
             //Emitimos evento para abrir nueva pestaña
-            $this->dispatch('ver-recibo', ['folio' => $result->folio]);
+            $this->dispatch('ver-recibo', [
+                'folio' => $result->folio,
+                "layout_recibo" => intval($this->layout_recibo)
+            ]);
         }, 2);
         //LIMPIAR LOS ATRIBUTOS
-        $this->reset();
+        $this->resetExcept('layout_recibo');
         $this->socio = new Socio();
 
         //MENSAJE DE SESION

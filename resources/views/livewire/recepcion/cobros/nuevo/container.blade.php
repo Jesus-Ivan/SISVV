@@ -17,7 +17,7 @@
                 @enderror
             </div>
         </div>
-        <!-- Observaciones y metodo pago -->
+        <!-- Observaciones, metodo pago, checkbox -->
         <div class="flex gap-2">
             <!-- Observaciones -->
             <div>
@@ -39,7 +39,17 @@
                     @endforeach
                 </select>
             </div>
+
+            {{-- CHECKBOX --}}
+            <div class="flex items-center mx-3 mt-5">
+                <input id="layout-recibo" wire:model="layout_recibo" type="checkbox"
+                    class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                <label for="layout-recibo" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                    Visible
+                </label>
+            </div>
         </div>
+
         <!--Linea -->
         <hr class="h-px my-2 bg-gray-300 border-0 dark:bg-gray-700">
         <!--Boton de cargos -->
@@ -145,9 +155,9 @@
     <script>
         $wire.on('ver-recibo', (e) => {
             // Generar la URL base de la ruta en Blade, usando un marcador temporal (por ejemplo, 'TEMP_FOLIO')
-            let ruta = "{{ route('recepcion.cobros.recibo', ['folio' => 'TEMP_FOLIO']) }}"
+            let ruta = "{{ route('recepcion.cobros.recibo', ['folio' => 'TEMP_FOLIO', 'layout_recibo' => 'TEMP_LAYOUT']) }}"
             // Reemplazar el marcador temporal con el valor real de 'folio' usando JavaScript
-            let ruta_final = ruta.replace('TEMP_FOLIO', e[0].folio);
+            let ruta_final = ruta.replace('TEMP_FOLIO', e[0].folio).replace('TEMP_LAYOUT', e[0].layout_recibo);
             //Abrir en una pestaña el recibo
             window.open(ruta_final, '_blank');
         });

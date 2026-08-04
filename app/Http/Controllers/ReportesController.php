@@ -281,7 +281,7 @@ class ReportesController extends Controller
         return $pdf->stream("ESTADO-CUENTA-$resultSocio->id-$resultSocio->nombre.pdf");
     }
 
-    public function generarRecibo(int $folio)
+    public function generarRecibo(int $folio, int $layout_recibo = 0)
     {
         $detalles_cobro = DB::table('detalles_recibo')
             ->join('estados_cuenta', 'detalles_recibo.id_estado_cuenta', '=', 'estados_cuenta.id')
@@ -311,7 +311,8 @@ class ReportesController extends Controller
             'detalles' => $detalles_cobro,
             'cobro' => $cobro,
             'saldoFavor' => $saldoFavor,
-            'total_letras' => $total_letras
+            'total_letras' => $total_letras,
+            'layout_recibo' => $layout_recibo
         ];
 
 

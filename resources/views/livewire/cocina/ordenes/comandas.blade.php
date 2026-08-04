@@ -1,4 +1,10 @@
 <div>
+    {{-- OFFLINE INDICATOR --}}
+    <div class="w-full p-2 rounded-md alert alert-warning bg-red-200 inline-flex" wire:offline >
+        <p class="w-full text-center text-red-800 font-bold">
+            Dispositivo sin conexión: vista en tiempo real suspendida
+        </p>
+    </div>
     {{-- SEARCH BAR --}}
     <form class="flex" method="GET" wire:submit='$refresh'>
         @csrf

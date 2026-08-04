@@ -303,7 +303,6 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
 
         Route::view('zonas', 'sistemas.Puntos.zonas-imp')->name('sistemas.pv.zonas-impresion');
         Route::post('zonas', [SistemasController::class, 'crearZonasImpresion'])->name('sistemas.pv.zonas-impresion');
-
     });
 
     //HERRAMIENTAS ADICIONALES A SISTEMAS

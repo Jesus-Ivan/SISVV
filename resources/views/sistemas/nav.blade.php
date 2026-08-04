@@ -187,9 +187,13 @@
                                 <a href="{{ route('sistemas.reportes') }}"
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Reportes</a>
                             </li>
-                            <li>
+<li>
                                 <a href="{{ route('sistemas.portico') }}"
                                     class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Sincronizar Portico</a>
+                            </li>
+                            <li>
+                                <a href="{{ route('sistemas.manual') }}"
+                                    class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Manual de Usuario</a>
                             </li>
                         </ul>
                     </div>

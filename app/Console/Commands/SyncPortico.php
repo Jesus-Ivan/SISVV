@@ -2,10 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\IntegrantesSocio;
-use App\Models\Membresias;
-use App\Models\Socio;
-use App\Models\SocioMembresia;
+use App\Services\PorticoSnapshot;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Pool;
@@ -41,41 +38,12 @@ class SyncPortico extends Command
             return self::FAILURE;
         }
 
-        // 1. Recolectar datos (Socio excluye borrados por SoftDeletes).
-        $socios = Socio::query()
-            ->select('id', 'nombre', 'apellido_p', 'apellido_m', 'img_path')
-            ->get();
-
-        $membresias = Membresias::query()
-            ->select('clave', 'descripcion')
-            ->get();
-
-        // Solo membresías de socios vigentes. Se usa whereExists (en vez de
-        // whereIn con todos los ids) para que escale con miles de socios.
-        $sociosMembresias = SocioMembresia::query()
-            ->select('id', 'id_socio', 'clave_membresia', 'estado')
-            ->whereExists(fn ($q) => $q->from('socios')
-                ->whereColumn('socios.id', 'socios_membresias.id_socio')
-                ->whereNull('socios.deleted_at'))
-            ->get();
-
-        // IntegrantesSocio no usa SoftDeletes: filtrar borrados manualmente y
-        // solo los que pertenecen a un socio vigente (whereExists, escalable).
-        $integrantes = IntegrantesSocio::query()
-            ->select(
-                'id',
-                'id_socio',
-                'nombre_integrante',
-                'apellido_p_integrante',
-                'apellido_m_integrante',
-                'img_path_integrante',
-                'parentesco'
-            )
-            ->whereNull('deleted_at')
-            ->whereExists(fn ($q) => $q->from('socios')
-                ->whereColumn('socios.id', 'integrantes_socios.id_socio')
-                ->whereNull('socios.deleted_at'))
-            ->get();
+        // 1. Recolectar datos (misma consulta que usa la exportación manual
+        // de respaldo, para que ambas vías nunca queden desincronizadas).
+        $socios = PorticoSnapshot::socios();
+        $membresias = PorticoSnapshot::membresias();
+        $sociosMembresias = PorticoSnapshot::sociosMembresias();
+        $integrantes = PorticoSnapshot::integrantes();
 
         // Usuarios del sistema: la API los usa para validar el inicio de
         // sesión de PorticoVV (y otras funciones futuras). Se envían todos.

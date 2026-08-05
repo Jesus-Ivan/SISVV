@@ -318,7 +318,7 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
         Route::post('/socios-actuales', [ReportesController::class, 'socios'])->name('sistemas.reportes.socios');
     });
     Route::prefix('portico')->group(function () {
-        Route::view('/', 'sistemas.Herramientas.portico')->name('sistemas.portico');
+        Route::get('/', [SistemasController::class, 'portico'])->name('sistemas.portico');
         Route::post('/sincronizar', [SistemasController::class, 'sincronizarPortico'])->name('sistemas.portico.sync');
     });
 

@@ -79,6 +79,15 @@ services:
             - '${PUSHER_METRICS_PORT:-9601}:9601'
         networks:
             - sail
+    cloudflared:
+        image: cloudflare/cloudflared:latest
+        container_name: sail-cloudflared
+        restart: unless-stopped
+        environment:
+            - 'TUNNEL_TOKEN=${CLOUDFLARE_TOKEN}'
+        command: tunnel --no-autoupdate run
+        networks:
+            - sail
 networks:
     sail:
         driver: bridge

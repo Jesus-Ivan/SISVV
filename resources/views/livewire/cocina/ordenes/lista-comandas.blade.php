@@ -154,7 +154,10 @@
     <div class="flex mt-5">
         {{-- PAGINATOR --}}
         <div class="w-full">
+            {{--
             {{ $this->ordenes->links() }}
+            --}}
+            
         </div>
         <div>
             <button type="button" x-on:click="confirmar"
@@ -169,9 +172,6 @@
             </button>
         </div>
     </div>
-    {{-- NOTIFICACION en tiempo real (alphine js) --}}
-    <x-notification />
-
     {{-- INDICADOR DE CARGA --}}
     <div wire:loading wire:target='confirmarOrdenes'>
         <x-loading-screen name='loading'>

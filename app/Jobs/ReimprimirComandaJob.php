@@ -14,8 +14,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
-use Mike42\Escpos\Printer;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class ReimprimirComandaJob implements ShouldQueue
 {
@@ -50,36 +50,46 @@ class ReimprimirComandaJob implements ShouldQueue
             ->where('id_zona', $this->id_zona)
             ->get();
 
-        try {
-            //Obtenemos la zona de impresion, desde los productos
-            $zona =  $productos_result[0]->zonaImpresion;
-            $printerService->imprimirComanda($productos_result, $venta, $zona);
+        // Intentamos adquirir el lock de Redis antes de imprimir
+        $lock = Cache::lock("print_zone_{$this->id_zona}", 30);
 
-            //Actualizar registros
-            DB::transaction(function () use ($productos_result) {
-                foreach ($productos_result as $key => $p) {
-                    if (
-                        $p->id_estado == PuntosConstants::ID_ESTADO_PRODUCTO_COLA
-                        || $p->id_estado == PuntosConstants::ID_ESTADO_PRODUCTO_ERROR
-                    ) {
-                        $p->id_estado = PuntosConstants::ID_ESTADO_PRODUCTO_IMPRESO;
+        if ($lock->get()) {
+            try {
+                //Obtenemos la zona de impresion, desde los productos
+                $zona =  $productos_result[0]->zonaImpresion;
+                $printerService->imprimirComanda($productos_result, $venta, $zona);
+
+                //Actualizar registros
+                DB::transaction(function () use ($productos_result) {
+                    foreach ($productos_result as $key => $p) {
+                        if (
+                            $p->id_estado == PuntosConstants::ID_ESTADO_PRODUCTO_COLA
+                            || $p->id_estado == PuntosConstants::ID_ESTADO_PRODUCTO_ERROR
+                        ) {
+                            $p->id_estado = PuntosConstants::ID_ESTADO_PRODUCTO_IMPRESO;
+                            $p->save();
+                        }
+                    }
+                }, 2);
+                //Avisamos en tiempo real La comanda reimpresa
+                broadcast(new ComandaDetails(PuntosConstants::COMANDA_REIMP_EVENT, $venta, $zona,));
+            } catch (\Throwable $th) {
+                //Actualizar registros en caso de error
+                DB::transaction(function () use ($productos_result) {
+                    foreach ($productos_result as $key => $p) {
+                        $p->id_estado = PuntosConstants::ID_ESTADO_PRODUCTO_ERROR;
                         $p->save();
                     }
-                }
-            }, 2);
-            //Avisamos en tiempo real La comanda reimpresa
-            broadcast(new ComandaDetails(PuntosConstants::COMANDA_REIMP_EVENT, $venta, $zona,));
-        } catch (\Throwable $th) {
-            //Actualizar registros en caso de error
-            DB::transaction(function () use ($productos_result) {
-                foreach ($productos_result as $key => $p) {
-                    $p->id_estado = PuntosConstants::ID_ESTADO_PRODUCTO_ERROR;
-                    $p->save();
-                }
-            }, 2);
+                }, 2);
 
-            //Avisamos en tiempo real (el error de la impresora de cocina)
-            broadcast(new ComandaDetails(PuntosConstants::COMANDA_ERROR_EVENT, $venta, $zona, $th->getMessage()));
+                //Avisamos en tiempo real (el error de la impresora de cocina)
+                broadcast(new ComandaDetails(PuntosConstants::COMANDA_ERROR_EVENT, $venta, $zona, $th->getMessage()));
+            } finally {
+                $lock->release();
+            }
+        } else {
+            Log::warning("No se pudo adquirir lock para imprimir en zona {$this->id_zona}, reintentando job");
+            $this->release(5);
         }
     }
 }

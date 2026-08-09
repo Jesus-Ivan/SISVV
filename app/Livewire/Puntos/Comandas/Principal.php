@@ -10,10 +10,11 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Principal extends Component
 {
-
+    use WithPagination;
     public $search = "", $fecha = "";
     public $selected_puntos = [];
     public $codigopv;
@@ -70,16 +71,15 @@ class Principal extends Component
         $comandas = []; //Array para almacenar las comandas a renderizar
         foreach ($productos_result as $inicio => $ventas) {
 
-            //Auxiliar para la estructura de datos
-            $comanda_aux['inicio'] = $inicio;
-
             //Para cada venta, extraer la informacion
             foreach ($ventas as $folio => $productos) {
+                //Auxiliar para la estructura de datos
+                $comanda_aux['inicio'] = $inicio;
                 $prod = $productos->toArray();
                 $comanda_aux['detalles'] = $prod;
                 $comanda_aux['venta'] = $prod[0]['venta'];
+                array_push($comandas, $comanda_aux);
             }
-            array_push($comandas, $comanda_aux);
         }
 
         /**

@@ -29,6 +29,8 @@ class ImprimirComandaJob implements ShouldQueue
     // Segundos a esperar antes de reintentar (5 seg)
     public $backoff = 5;
 
+    public $timeout = 60; // Maximum execution time in seconds
+
     /**
      * Create a new job instance.
      */

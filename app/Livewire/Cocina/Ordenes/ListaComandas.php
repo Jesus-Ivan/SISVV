@@ -20,9 +20,9 @@ class ListaComandas extends Component
 {
     use WithPagination;
 
-    #[Modelable] 
+    #[Modelable]
     public $fecha = '';
-    
+
     public $zona = '';
 
     // Hook que se ejecuta despues de actualizar la pagina (paginacion)
@@ -42,13 +42,18 @@ class ListaComandas extends Component
     #[Computed()]
     public function ordenes()
     {
+        $ids_constants = [
+            PuntosConstants::ID_ESTADO_PRODUCTO_COLA,
+            PuntosConstants::ID_ESTADO_PRODUCTO_ERROR,
+            PuntosConstants::ID_ESTADO_PRODUCTO_IMPRESO,
+        ];
         /**
          * Consulta de los productos
          */
         $productos_result = DetallesVentaProducto::with(['venta.puntoVenta'])
             ->where('id_zona', '=', $this->zona)
+            ->whereIn('id_estado', $ids_constants)
             ->whereDate('inicio', $this->fecha)
-            ->whereNotNull('id_estado')
             ->orderby('inicio', 'ASC')
             ->get()
             ->groupBy(['inicio', 'folio_venta']);
@@ -58,18 +63,20 @@ class ListaComandas extends Component
          */
         $comandas = []; //Array para almacenar las comandas a renderizar
         foreach ($productos_result as $inicio => $ventas) {
-
-            //Auxiliar para la estructura de datos
-            $comanda_aux['inicio'] = $inicio;
-
             //Para cada venta, extraer la informacion
             foreach ($ventas as $folio => $productos) {
+                //Auxiliar para la estructura de datos
+                $comanda_aux['inicio'] = $inicio;
+
                 $prod = $productos->toArray();
                 $comanda_aux['detalles'] = $prod;
                 $comanda_aux['venta'] = $prod[0]['venta'];
+                $UUID = hash('sha256', $inicio . $folio);
+                $comandas[$UUID] = $comanda_aux;
             }
-            array_push($comandas, $comanda_aux);
         }
+
+        return $comandas;
 
         /**
          * Paginacion

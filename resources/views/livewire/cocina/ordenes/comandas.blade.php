@@ -1,6 +1,6 @@
 <div>
     {{-- OFFLINE INDICATOR --}}
-    <div class="w-full p-2 rounded-md alert alert-warning bg-red-200 inline-flex" wire:offline >
+    <div class="w-full p-2 rounded-md alert alert-warning bg-red-200 inline-flex" wire:offline>
         <p class="w-full text-center text-red-800 font-bold">
             Dispositivo sin conexión: vista en tiempo real suspendida
         </p>
@@ -39,4 +39,6 @@
     </form>
     {{-- CUERPO DEL COMPONENTE --}}
     <livewire:cocina.ordenes.lista-comandas :key="$id_zona" :zona="$id_zona" wire:model="fecha_busqueda" />
+    {{-- NOTIFICACION en tiempo real (alphine js) --}}
+    <x-notification />
 </div>

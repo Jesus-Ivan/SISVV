@@ -110,6 +110,13 @@
                         <th scope="row"
                             class=" px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                             {{ $producto['nombre'] ?: $producto['catalogo_productos']['nombre'] }}
+                            @if (
+                                (array_key_exists('print_default', $producto) && !$producto['print_default']) ||
+                                    (array_key_exists('id_estado', $producto) && !$producto['id_estado']))
+                                <span
+                                    class="mx-3 border-gray-600 border-2 bg-gray-100 text-gray-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-lg dark:bg-gray-700 dark:text-gray-300">No
+                                    comanda</span>
+                            @endif
                         </th>
                         <td class="px-3 py-2 w-56">
                             @if (array_key_exists('id', $producto))

@@ -88,6 +88,25 @@ services:
         command: tunnel --no-autoupdate run
         networks:
             - sail
+    horizon:
+        build:
+            context: './vendor/laravel/sail/runtimes/8.2'
+            dockerfile: Dockerfile
+            args:
+                WWWGROUP: '${WWWGROUP:-1000}'
+        image: 'sail-8.2/app'
+        environment:
+            WWWUSER: '${WWWUSER}'
+            LARAVEL_SAIL: 1
+            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - sail
+        command: php artisan horizon
+        depends_on:
+            - laravel.test
+            - redis
 networks:
     sail:
         driver: bridge

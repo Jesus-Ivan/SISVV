@@ -21,7 +21,7 @@ yarn-error.log
 /.idea
 /.vscode
 
-# Documentación / planes del proyecto de cuotas (no es código funcional)
+
 /CHANGELOG.md
 /implementation_plan.md
 /planDeImplementacion.md

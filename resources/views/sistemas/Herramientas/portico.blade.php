@@ -10,13 +10,24 @@
     </div>
 
     <div class="ms-3 mx-3 max-w-2xl">
-        <form action="{{ route('sistemas.portico.sync') }}" method="POST">
+        <form action="{{ route('sistemas.portico.sync') }}" method="POST" class="inline-block">
             @csrf
             <button type="submit"
                 class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none">
                 Sincronizar ahora
             </button>
         </form>
+
+        <a href="{{ route('sistemas.portico') }}?exportar=1"
+            class="inline-block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none">
+            Descargar respaldo (.zip)
+        </a>
+
+        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+            El respaldo trae los mismos datos y fotos que se envían a la API PORTICO,
+            en un solo archivo .zip. Sirve para actualizar Pórtico VV manualmente
+            (botón "Importar") cuando la API no esté disponible.
+        </p>
 
         {{-- Mensajes --}}
         @if (session('success'))

@@ -16,6 +16,7 @@ use App\Models\PuntoVenta;
 use App\Models\User;
 use App\Models\Venta;
 use App\Models\ZonaImpresion;
+use App\Services\PorticoSnapshot;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use ZipArchive;
 
 class SistemasController extends Controller
 {
@@ -49,6 +51,62 @@ class SistemasController extends Controller
         } catch (\Throwable $e) {
             return back()->with('fail', 'No se pudo sincronizar con PORTICO: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Página de Sistemas → Herramientas → PORTICO. Con "?exportar=1" en la
+     * URL, en vez de la vista devuelve el .zip de respaldo (mismos datos que
+     * se envían a la API: socios, membresías, integrantes y sus fotos), para
+     * importarlo manualmente en PorticoVV cuando la API no esté disponible.
+     */
+    public function portico(Request $request)
+    {
+        if (! $request->boolean('exportar')) {
+            return view('sistemas.Herramientas.portico');
+        }
+
+        $socios = PorticoSnapshot::socios();
+        $membresias = PorticoSnapshot::membresias();
+        $sociosMembresias = PorticoSnapshot::sociosMembresias();
+        $integrantes = PorticoSnapshot::integrantes();
+
+        // uniqid() además de la fecha: dos exportaciones en el mismo segundo
+        // (doble clic, dos administradores a la vez) no deben pisarse el
+        // mismo archivo mientras se genera.
+        $nombreZip = 'portico_respaldo_' . now()->format('Y-m-d_His') . '_' . uniqid() . '.zip';
+        $rutaZip = storage_path('app/' . $nombreZip);
+
+        $zip = new ZipArchive();
+        if ($zip->open($rutaZip, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            return back()->with('fail', 'No se pudo generar el archivo de respaldo.');
+        }
+
+        $zip->addFromString('datos.json', json_encode([
+            'socios' => $socios,
+            'membresias' => $membresias,
+            'socios_membresias' => $sociosMembresias,
+            'integrantes' => $integrantes,
+        ]));
+
+        // Mismas fotos que sync:portico sube a la API, empacadas aquí en vez
+        // de enviarlas por HTTP. Nombre "{tipo}_{id}.jpg", igual a como
+        // PorticoVV las guarda localmente, para que la importación sea una
+        // simple copia de archivo (sin necesitar descifrar el formato).
+        $disk = Storage::disk('public');
+        foreach ($socios as $s) {
+            if (! empty($s->img_path) && $disk->exists($s->img_path)) {
+                $zip->addFile($disk->path($s->img_path), "imagenes/socio_{$s->id}.jpg");
+            }
+        }
+        foreach ($integrantes as $i) {
+            if (! empty($i->img_path_integrante) && $disk->exists($i->img_path_integrante)) {
+                $zip->addFile($disk->path($i->img_path_integrante), "imagenes/integrante_{$i->id}.jpg");
+            }
+        }
+
+        $zip->close();
+
+        return response()->download($rutaZip, $nombreZip)->deleteFileAfterSend(true);
     }
 
     public function prodVendidos()

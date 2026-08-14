@@ -454,7 +454,8 @@ class VentaForm extends Form
                         'inicio' => $inicio,
                         'tiempo' => $tiempo,
                         'id_estado' => $producto['print_default'] ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null,
-                        'id_zona' => $zona?->id_zona
+                        'id_zona' => $zona?->id_zona,
+                        'mesero' => auth()->user()?->name
                     ]);
                 }
             }
@@ -670,7 +671,6 @@ class VentaForm extends Form
             'corte_caja' => $resultCaja->corte,
             'clave_punto_venta' => $codigopv,
             'num_comensales' => $venta['no_comensal'],
-            'mesero' => auth()->user()?->name
         ]);
     }
 
@@ -708,7 +708,8 @@ class VentaForm extends Form
                 'inicio' => $inicio,
                 'tiempo' => $tiempo,
                 'id_estado' => $producto['print_default'] ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null,
-                'id_zona' => $zona?->id_zona
+                'id_zona' => $zona?->id_zona,
+                'mesero' => auth()->user()?->name
             ]);
         }
     }

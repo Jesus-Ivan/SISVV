@@ -57,7 +57,7 @@
 <p>ACCION: {{ $venta->id_socio }}</p>
 <p>{{ $venta->nombre }}</p>
 <p>VENTA: {{ $venta->folio }}</p>
-<p>MESERO: {{ $venta->mesero ?? '' }}</p>
+<p>MESERO: {{ $productos->first()?->mesero ?? '' }}</p>
 <hr>
 {{-- Datos de productos --}}
 @php

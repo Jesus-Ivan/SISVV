@@ -47,7 +47,7 @@ class TicketPrinterService
                 $printer->text("ACCION: " . $venta->id_socio . "\n"); //No. Accion
                 $printer->text($venta->nombre . "\n");  //Nombre socio
                 $printer->text("VENTA: " . $venta->folio . "\n");    //Folio venta
-                $printer->text("MESERO: " . ($venta->mesero ?? '') . "\n"); //Nombre del mesero
+                $printer->text("MESERO: " . ($productos_result[0]->mesero ?? '') . "\n"); //Nombre del mesero
                 $printer->text("COMENSALES: " . $venta->num_comensales . "\n");    //comensales
                 $printer->text($line);
 

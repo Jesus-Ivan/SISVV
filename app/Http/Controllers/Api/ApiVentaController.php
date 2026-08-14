@@ -233,7 +233,6 @@ class ApiVentaController extends Controller
                     'clave_punto_venta' => $request->clave_punto_venta,
                     'request_id' => $request->request_id,
                     'num_comensales' => $request->num_comensales,
-                    'mesero' => $request->user()?->name,
                 ]);
 
                 $folioVenta = $venta->folio;
@@ -265,6 +264,7 @@ class ApiVentaController extends Controller
                         'tiempo' => $linea['tiempo'],
                         'id_estado' => $prod->print_default ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null,
                         'id_zona' => $zona ? $zona->id_zona : null,
+                        'mesero' => $request->user()?->name,
                     ]);
                 }
 
@@ -404,6 +404,7 @@ class ApiVentaController extends Controller
                         'tiempo' => $linea['tiempo'],
                         'id_estado' => $prod->print_default ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null,
                         'id_zona' => $zona ? $zona->id_zona : null,
+                        'mesero' => $request->user()?->name,
                     ]);
                 }
 

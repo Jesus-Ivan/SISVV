@@ -106,6 +106,33 @@ class PuntosController extends Controller
         ]);
     }
 
+
+    /**
+     * Muestra la vista para mover una venta entre puntos
+     */
+    public function transferirVenta(Request $request)
+    {
+        $permisospv = $request->get('permisos_pv');
+        $codigopv = $request->segment(2);
+        $folioVenta = $request->segment(5);
+
+        //Obtenemos la venta
+        $venta = Venta::with('puntoVenta')
+            ->find($folioVenta);
+
+        //Si no hay venta
+        if (!$venta) {
+            //Redirigir al usuario
+            return redirect()->route('pv.ventas', ['codigopv' => $codigopv]);
+        }
+
+        return view('puntos.Ventas.transferir-venta', [
+            'codigopv' => $codigopv,
+            'permisospv' => $permisospv,
+            'venta' => $venta
+        ]);
+    }
+
     public function reporteVentas(Request $request)
     {
         $permisospv = $request->get('permisos_pv');
@@ -169,7 +196,7 @@ class PuntosController extends Controller
         $codigopv = $request->segment(2);
         return view('puntos.Comandas.comandas', ['codigopv' => $codigopv, 'permisospv' => $permisospv]);
     }
-    
+
     public function solicitarMercancia(Request $request)
     {
         $permisospv = $request->get('permisos_pv'); //Obtenemos los permisos incrutados en la peticion
@@ -183,5 +210,4 @@ class PuntosController extends Controller
         $codigopv = $request->segment(2);
         return view('puntos.Inventario.nueva-solicitud', ['codigopv' => $codigopv, 'permisospv' => $permisospv]);
     }
-
 }

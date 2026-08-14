@@ -20,7 +20,7 @@
                 <th scope="col" class="px-6 py-3">
                     TOTAL
                 </th>
-                <th scope="col" class="px-6 py-3">
+                <th scope="col" class="px-3 py-3">
                     ACCIONES
                 </th>
             </tr>
@@ -57,7 +57,7 @@
                     <td class="px-6 py-2">
                         ${{ $venta->total }}
                     </td>
-                    <td class="px-6 py-2">
+                    <td class="px-3 py-2">
                         @if (!$venta->fecha_cierre)
                             <a href="{{ route('pv.ventas.editar', ['codigopv' => $codigopv, 'folioventa' => $venta->folio]) }}"
                                 class="text-gray-700 border border-gray-700 hover:bg-gray-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-gray-500 dark:text-gray-500 dark:hover:text-white dark:focus:ring-gray-800 dark:hover:bg-gray-500">
@@ -73,7 +73,7 @@
                                 <span class="sr-only">Editar</span>
                             </a>
                         @endif
-                        <a href="{{ route('ventas.ticket', ['venta' => $venta]) }}" target="_blank"
+                        <a href="{{ route('ventas.ticket', ['venta' => $venta]) }}"
                             class="text-green-700 border border-green-700 hover:bg-green-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:focus:ring-green-800 dark:hover:bg-green-500">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                 class="w-5 h-5">
@@ -82,6 +82,15 @@
                                     clip-rule="evenodd" />
                             </svg>
                             <span class="sr-only">Imprimir</span>
+                        </a>
+                        <a href="{{ route('pv.ventas.transferir', ['codigopv' => $codigopv, 'folioventa' => $venta->folio]) }}"
+                            target="_blank"
+                            class="text-yellow-700 border border-yellow-700 hover:bg-yellow-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-yellow-500 dark:text-yellow-500 dark:hover:text-white dark:focus:ring-yellow-800 dark:hover:bg-yellow-500">
+                            <svg class="w-5 h-5 rotate-90" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2" d="M8 20V7m0 13-4-4m4 4 4-4m4-12v13m0-13 4 4m-4-4-4 4" />
+                            </svg>
                         </a>
                     </td>
                 </tr>

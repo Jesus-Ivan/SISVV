@@ -131,7 +131,7 @@ class VentaForm extends Form
                 'precio' => $producto->costo_unitario,
                 'subtotal' => $producto->costo_unitario,
                 'observaciones' => '',
-                'tiempo' => null
+                'tiempo' => '1'
             ];
         }
 
@@ -419,6 +419,10 @@ class VentaForm extends Form
             $this->verificarProductos($folio);
             //Obtener la venta principal
             $result = Venta::find($folio);
+            //Mapa de tiempos por chunk (los modificadores heredan el tiempo del producto base)
+            $tiemposPorChunk = collect($this->productosTable)
+                ->filter(fn($p) => !array_key_exists('modif', $p) && array_key_exists('chunk', $p))
+                ->pluck('tiempo', 'chunk');
             //Recorremos todos los items de la tabla
             foreach ($this->productosTable as $key => $producto) {
                 //Verificamos si el item que se itera, cuenta con un 'id' de la base de datos
@@ -434,6 +438,9 @@ class VentaForm extends Form
                         );
                 } else {
                     $zona = $this->obtenerZona($producto, $result);
+                    $tiempo = array_key_exists('modif', $producto) && array_key_exists('chunk', $producto)
+                        ? ($tiemposPorChunk[$producto['chunk']] ?? null)
+                        : ($producto['tiempo'] ?? null);
                     //Crear el nuevo item
                     DetallesVentaProducto::create([
                         'chunk' => $producto['chunk'],
@@ -445,7 +452,7 @@ class VentaForm extends Form
                         'observaciones' => $producto['observaciones'],
                         'subtotal' => $producto['subtotal'],
                         'inicio' => $inicio,
-                        'tiempo' => $producto['tiempo'],
+                        'tiempo' => $tiempo,
                         'id_estado' => $producto['print_default'] ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null,
                         'id_zona' => $zona?->id_zona
                     ]);
@@ -662,7 +669,8 @@ class VentaForm extends Form
             'total' => $this->totalVenta,
             'corte_caja' => $resultCaja->corte,
             'clave_punto_venta' => $codigopv,
-            'num_comensales' => $venta['no_comensal']
+            'num_comensales' => $venta['no_comensal'],
+            'mesero' => auth()->user()?->name
         ]);
     }
 
@@ -677,9 +685,17 @@ class VentaForm extends Form
         //Obtener venta original (de la BD)
         $result = Venta::find($folio);
 
+        //Mapa de tiempos por chunk (los modificadores heredan el tiempo del producto base)
+        $tiemposPorChunk = collect($venta['productosTable'])
+            ->filter(fn($p) => !array_key_exists('modif', $p))
+            ->pluck('tiempo', 'chunk');
+
         //Detalles Venta
         foreach ($venta['productosTable'] as $key => $producto) {
             $zona = $this->obtenerZona($producto, $result);
+            $tiempo = array_key_exists('modif', $producto) && array_key_exists('chunk', $producto)
+                ? ($tiemposPorChunk[$producto['chunk']] ?? null)
+                : ($producto['tiempo'] ?? null);
             DetallesVentaProducto::create([
                 'chunk' => $producto['chunk'],
                 'folio_venta' => $folio,
@@ -690,7 +706,7 @@ class VentaForm extends Form
                 'observaciones' => $producto['observaciones'],
                 'subtotal' => $producto['subtotal'],
                 'inicio' => $inicio,
-                'tiempo' => $producto['tiempo'],
+                'tiempo' => $tiempo,
                 'id_estado' => $producto['print_default'] ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null,
                 'id_zona' => $zona?->id_zona
             ]);
@@ -911,7 +927,7 @@ class VentaForm extends Form
                 'precio' => $producto->precio_con_impuestos,
                 'subtotal' => $cantidad * $producto->precio_con_impuestos,
                 'observaciones' => '',
-                'tiempo' => null,
+                'tiempo' => '1',
                 'print_default' => $producto->print_default
             ];
         }

@@ -122,27 +122,46 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($orden['detalles'] as $i => $item)
-                                <tr wire:key='p.{{ $key }}.{{ $i }}'
-                                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                    <th scope="row"
-                                        class="w-10 p-2 font-medium text-lg text-gray-900 whitespace-nowrap dark:text-white">
-                                        {{ $item['cantidad'] }}
-                                    </th>
-                                    <td class="{{ $item['id_estado'] == $estado_error ? 'text-red-500' : '' }}">
-                                        <label for="checkbox.{{ $key }}.{{ $i }}"
-                                            class="{{ $item['id_estado'] == $estado_listo ? 'line-through' : '' }}">
-                                            <p class="font-bold">{{ $item['nombre'] }}</p>
-                                            <p>{{ $item['observaciones'] }}</p>
-                                        </label>
-                                    </td>
-                                    <td class="p-2 w-10">
-                                        <input id="checkbox.{{ $key }}.{{ $i }}" type="checkbox"
-                                            name="selected_items[]" value="{{ $item['id'] }}" x-model="selectedItems"
-                                            x-on:change="updateSelectAllState();updateId({{ $item['id'] }})"
-                                            class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                    </td>
-                                </tr>
+                            @php
+                                $gruposTiempo = collect($orden['detalles'])->groupBy(fn($item) => $item['tiempo'] ?: '1');
+                                $ordenTiempos = ['1', '2', '3', '4'];
+                                $count = 0;
+                            @endphp
+                            @foreach ($ordenTiempos as $tiempo)
+                                @php $grupo = $gruposTiempo->get($tiempo); @endphp
+                                @if ($grupo)
+                                    <tr class="bg-gray-100 dark:bg-gray-700">
+                                        <td colspan="3"
+                                            class="p-1 text-center font-bold text-xs uppercase text-gray-700 border-y border-gray-300 dark:text-gray-300 dark:border-gray-600">
+                                            — Tiempo {{ $tiempo }} —
+                                        </td>
+                                    </tr>
+                                    @foreach ($grupo as $item)
+                                        @php $count++; @endphp
+                                        <tr wire:key='p.{{ $key }}.{{ $count }}'
+                                            class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                            <th scope="row"
+                                                class="w-10 p-2 font-medium text-lg text-gray-900 whitespace-nowrap dark:text-white">
+                                                {{ $item['cantidad'] }}
+                                            </th>
+                                            <td class="{{ $item['id_estado'] == $estado_error ? 'text-red-500' : '' }}">
+                                                <label for="checkbox.{{ $key }}.{{ $count }}"
+                                                    class="{{ $item['id_estado'] == $estado_listo ? 'line-through' : '' }}">
+                                                    <p class="font-bold">
+                                                        {{ $item['nombre'] }}
+                                                    </p>
+                                                    <p>{{ $item['observaciones'] }}</p>
+                                                </label>
+                                            </td>
+                                            <td class="p-2 w-10">
+                                                <input id="checkbox.{{ $key }}.{{ $count }}" type="checkbox"
+                                                    name="selected_items[]" value="{{ $item['id'] }}" x-model="selectedItems"
+                                                    x-on:change="updateSelectAllState();updateId({{ $item['id'] }})"
+                                                    class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @endif
                             @endforeach
                         </tbody>
                     </table>

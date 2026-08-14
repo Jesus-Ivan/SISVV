@@ -129,7 +129,8 @@ class ReportesController extends Controller
         $data = [
             "venta" => $venta,
             "productos" => $productos_result,
-            "f_inicio" => $f_inicio
+            "f_inicio" => $f_inicio,
+            "mesero" => $venta->mesero
         ];
 
 

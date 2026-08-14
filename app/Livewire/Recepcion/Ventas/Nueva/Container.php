@@ -93,7 +93,8 @@ class Container extends Component
                 'total' => $total,
                 'corte_caja' => $resultCaja[0]->corte,
                 'clave_punto_venta' => $this->pv->clave,
-                'tipo_venta' => 'socio'
+                'tipo_venta' => 'socio',
+                'mesero' => auth()->user()?->name
             ]);
             //Se crea el detalle de la venta
             foreach ($info['datosProductos'] as $key => $producto) {
@@ -183,7 +184,8 @@ class Container extends Component
                 'total' => $total,
                 'corte_caja' => $resultCaja[0]->corte,
                 'clave_punto_venta' => $this->pv->clave,
-                'tipo_venta' => 'general'
+                'tipo_venta' => 'general',
+                'mesero' => auth()->user()?->name
             ]);
             //Se crea el detalle de la venta
             foreach ($info['datosProductos'] as $key => $producto) {

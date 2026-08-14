@@ -99,6 +99,7 @@ class ApiVentaController extends Controller
                         'observaciones'  => $parent->observaciones ?? '',
                         'subtotal'       => (float) $parent->subtotal + $subtotalMods,
                         'id_estado'      => $parent->id_estado,
+                        'tiempo'         => $parent->tiempo,
                         'modificadores'  => $mods->values()->map(fn($m) => [
                             'clave_producto' => $m->clave_producto,
                             'cantidad'       => $m->cantidad,
@@ -133,6 +134,7 @@ class ApiVentaController extends Controller
             'productos.*.clave_producto' => 'required|integer',
             'productos.*.cantidad' => 'required|integer|min:1',
             'productos.*.observaciones' => 'nullable|string',
+            'productos.*.tiempo' => 'nullable|in:1,2,3,4',
             'productos.*.modificadores' => 'nullable|array',
             'productos.*.modificadores.*.clave_producto' => 'required|integer',
             'productos.*.modificadores.*.cantidad' => 'required|integer|min:1',
@@ -185,6 +187,7 @@ class ApiVentaController extends Controller
                         'observaciones' => $item['observaciones'] ?? '',
                         'chunk' => $chunk,
                         'modif' => false,
+                        'tiempo' => $item['tiempo'] ?? '1',
                     ];
 
                     // Procesar modificadores si tiene
@@ -205,6 +208,7 @@ class ApiVentaController extends Controller
                                 'observaciones' => $modItem['observaciones'] ?? '',
                                 'chunk' => $chunk,
                                 'modif' => true,
+                                'tiempo' => $item['tiempo'] ?? '1',
                             ];
                         }
                     }
@@ -229,6 +233,7 @@ class ApiVentaController extends Controller
                     'clave_punto_venta' => $request->clave_punto_venta,
                     'request_id' => $request->request_id,
                     'num_comensales' => $request->num_comensales,
+                    'mesero' => $request->user()?->name,
                 ]);
 
                 $folioVenta = $venta->folio;
@@ -257,7 +262,7 @@ class ApiVentaController extends Controller
                         'observaciones' => $linea['observaciones'],
                         'subtotal' => $linea['subtotal'],
                         'inicio' => $inicio,
-                        'tiempo' => null,
+                        'tiempo' => $linea['tiempo'],
                         'id_estado' => $prod->print_default ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null,
                         'id_zona' => $zona ? $zona->id_zona : null,
                     ]);
@@ -296,6 +301,7 @@ class ApiVentaController extends Controller
             'productos.*.clave_producto' => 'required|integer',
             'productos.*.cantidad' => 'required|integer|min:1',
             'productos.*.observaciones' => 'nullable|string',
+            'productos.*.tiempo' => 'nullable|in:1,2,3,4',
             'productos.*.modificadores' => 'nullable|array',
             'productos.*.modificadores.*.clave_producto' => 'required|integer',
             'productos.*.modificadores.*.cantidad' => 'required|integer|min:1',
@@ -345,6 +351,7 @@ class ApiVentaController extends Controller
                         'observaciones' => $item['observaciones'] ?? '',
                         'chunk' => $chunk,
                         'modif' => false,
+                        'tiempo' => $item['tiempo'] ?? '1',
                     ];
 
                     // Procesar modificadores si tiene
@@ -364,6 +371,7 @@ class ApiVentaController extends Controller
                                 'observaciones' => $modItem['observaciones'] ?? '',
                                 'chunk' => $chunk,
                                 'modif' => true,
+                                'tiempo' => $item['tiempo'] ?? '1',
                             ];
                         }
                     }
@@ -393,7 +401,7 @@ class ApiVentaController extends Controller
                         'observaciones' => $linea['observaciones'],
                         'subtotal' => $linea['subtotal'],
                         'inicio' => $inicio,
-                        'tiempo' => null,
+                        'tiempo' => $linea['tiempo'],
                         'id_estado' => $prod->print_default ? PuntosConstants::ID_ESTADO_PRODUCTO_COLA : null,
                         'id_zona' => $zona ? $zona->id_zona : null,
                     ]);

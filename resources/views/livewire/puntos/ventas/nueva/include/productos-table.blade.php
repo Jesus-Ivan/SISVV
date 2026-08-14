@@ -10,6 +10,10 @@
         /* Oculta los botones */
     }
 </style>
+@php
+    $hayGeneraComanda = collect($this->ventaForm->productosTable)
+        ->contains(fn($p) => !array_key_exists('modif', $p) && (!empty($p['print_default']) || !is_null($p['id_estado'] ?? null)));
+@endphp
 @if ($this->ventaForm->permisospv->clave_rol == 'MES')
     <div class="px-3 relative overflow-x-auto shadow-md sm:rounded-lg">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 ">
@@ -24,6 +28,11 @@
                     <th scope="col" class="px-2 py-2">
                         CAN
                     </th>
+                    @if ($hayGeneraComanda)
+                        <th scope="col" class="px-2 py-2">
+                            TIEMPO
+                        </th>
+                    @endif
                     <th scope="col" class=" px-2 py-2">
                         SUBTOTAL
                     </th>
@@ -52,6 +61,30 @@
                         <td class="px-2 py-2">
                             {{ $producto['cantidad'] }}
                         </td>
+                        {{-- TIEMPO --}}
+                        @if ($hayGeneraComanda)
+                            <td class="px-2 py-2">
+                                @if (!array_key_exists('modif', $producto))
+                                    @php
+                                        $generaComanda = !empty($producto['print_default']) || !is_null($producto['id_estado'] ?? null);
+                                    @endphp
+                                    @if ($generaComanda)
+                                        @if (array_key_exists('id', $producto))
+                                            <span class="font-semibold">{{ $producto['tiempo'] ?: '1' }}</span>
+                                        @else
+                                            <select wire:model="ventaForm.productosTable.{{ $productoIndex }}.tiempo"
+                                                wire:key="tiempo-{{ $productoIndex }}"
+                                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                                <option value="1" {{ $producto['tiempo'] == '' ? 'selected' : '' }}>1</option>
+                                                <option value="2">2</option>
+                                                <option value="3">3</option>
+                                                <option value="4">4</option>
+                                            </select>
+                                        @endif
+                                    @endif
+                                @endif
+                            </td>
+                        @endif
                         <td class="px-2 py-2 w-32">
                             ${{ number_format($producto['subtotal'], 2) }}
                         </td>
@@ -94,6 +127,11 @@
                     <th scope="col" class="px-2 py-2">
                         CAN
                     </th>
+                    @if ($hayGeneraComanda)
+                        <th scope="col" class="px-2 py-2">
+                            TIEMPO
+                        </th>
+                    @endif
                     <th scope="col" class=" px-2 py-2">
                         SUBTOTAL
                     </th>
@@ -134,6 +172,30 @@
                         <td class="px-2 py-2 w-24">
                             {{ $producto['cantidad'] }}
                         </td>
+                        {{-- TIEMPO --}}
+                        @if ($hayGeneraComanda)
+                            <td class="px-2 py-2 w-28">
+                                @if (!array_key_exists('modif', $producto))
+                                    @php
+                                        $generaComanda = !empty($producto['print_default']) || !is_null($producto['id_estado'] ?? null);
+                                    @endphp
+                                    @if ($generaComanda)
+                                        @if (array_key_exists('id', $producto))
+                                            <span class="font-semibold">{{ $producto['tiempo'] ?: '1' }}</span>
+                                        @else
+                                            <select wire:model="ventaForm.productosTable.{{ $productoIndex }}.tiempo"
+                                                wire:key="tiempo-{{ $productoIndex }}"
+                                                class="bg-gray-50 border border-gray-400 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                                <option value="1" {{ $producto['tiempo'] == '' ? 'selected' : '' }}>1</option>
+                                                <option value="2">2</option>
+                                                <option value="3">3</option>
+                                                <option value="4">4</option>
+                                            </select>
+                                        @endif
+                                    @endif
+                                @endif
+                            </td>
+                        @endif
                         <td class="px-2 py-2 w-32">
                             ${{ number_format($producto['subtotal'], 2) }}
                         </td>
@@ -172,7 +234,11 @@
                     <td class="px-2 py-2"></td>
                     <td class="px-2 py-2"></td>
                     <td class="px-2 py-2"></td>
+                    @if ($hayGeneraComanda)
+                        <td class="px-2 py-2"></td>
+                    @endif
                     <td class="px-2 py-2">${{ $this->ventaForm->totalVenta }}</td>
+                    <td class="px-2 py-2"></td>
                 </tr>
             </tfoot>
         </table>

@@ -131,21 +131,40 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($orden['detalles'] as $key => $prod)
-                                <tr wire:key='p.{{ $i }}.{{ $key }}'
-                                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                    <th scope="row"
-                                        class="w-10 p-2 font-medium text-lg text-gray-900 whitespace-nowrap dark:text-white">
-                                        {{ $prod['cantidad'] }}
-                                    </th>
-                                    <td>
-                                        <p class="font-bold">{{ $prod['nombre'] }}</p>
-                                        <p>{{ $prod['observaciones'] }}</p>
-                                    </td>
-                                    <td class="p-2 w-10">
-                                        @include('livewire.puntos.comandas.include.estado')
-                                    </td>
-                                </tr>
+                            @php
+                                $gruposTiempo = collect($orden['detalles'])->groupBy(fn($prod) => $prod['tiempo'] ?: '1');
+                                $ordenTiempos = ['1', '2', '3', '4'];
+                                $count = 0;
+                            @endphp
+                            @foreach ($ordenTiempos as $tiempo)
+                                @php $grupo = $gruposTiempo->get($tiempo); @endphp
+                                @if ($grupo)
+                                    <tr class="bg-gray-100 dark:bg-gray-700">
+                                        <td colspan="3"
+                                            class="p-1 text-center font-bold text-xs uppercase text-gray-700 border-y border-gray-300 dark:text-gray-300 dark:border-gray-600">
+                                            — Tiempo {{ $tiempo }} —
+                                        </td>
+                                    </tr>
+                                    @foreach ($grupo as $prod)
+                                        @php $count++; @endphp
+                                        <tr wire:key='p.{{ $i }}.{{ $count }}'
+                                            class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                            <th scope="row"
+                                                class="w-10 p-2 font-medium text-lg text-gray-900 whitespace-nowrap dark:text-white">
+                                                {{ $prod['cantidad'] }}
+                                            </th>
+                                            <td>
+                                                <p class="font-bold">
+                                                    {{ $prod['nombre'] }}
+                                                </p>
+                                                <p>{{ $prod['observaciones'] }}</p>
+                                            </td>
+                                            <td class="p-2 w-10">
+                                                @include('livewire.puntos.comandas.include.estado')
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @endif
                             @endforeach
                         </tbody>
                     </table>

@@ -57,15 +57,31 @@
 <p>ACCION: {{ $venta->id_socio }}</p>
 <p>{{ $venta->nombre }}</p>
 <p>VENTA: {{ $venta->folio }}</p>
+<p>MESERO: {{ $venta->mesero ?? '' }}</p>
 <hr>
 {{-- Datos de productos --}}
-@foreach ($productos as $key => $prod)
-    <p>{{ $prod->cantidad }} {{ $prod->nombre }}</p>
-    <p> - {{ $prod->observaciones }}</p>
-    @if ($key < count($productos) - 1)
-        @if ($prod->chunk != $productos[$key + 1]->chunk)
-            <hr>
-        @endif
+@php
+    $gruposTiempo = $productos->groupBy(fn($prod) => $prod->tiempo ?: '1');
+    $ordenTiempos = ['1', '2', '3', '4'];
+@endphp
+@foreach ($ordenTiempos as $tiempo)
+    @php
+        $grupo = $gruposTiempo->get($tiempo);
+    @endphp
+    @if ($grupo)
+        <p style="text-align: center;">--------------------------------</p>
+        <p style="text-align: center; font-weight: bold;">Tiempo {{ $tiempo }}</p>
+        <p style="text-align: center;">--------------------------------</p>
+        @foreach ($grupo as $key => $prod)
+            <p>{{ $prod->cantidad }} {{ $prod->nombre }}</p>
+            <p> - {{ $prod->observaciones }}</p>
+            @if ($key < count($grupo) - 1)
+                @if ($prod->chunk != $grupo[$key + 1]->chunk)
+                    <hr>
+                @endif
+            @endif
+        @endforeach
+        <hr>
     @endif
 @endforeach
 <br>

@@ -47,23 +47,42 @@ class TicketPrinterService
                 $printer->text("ACCION: " . $venta->id_socio . "\n"); //No. Accion
                 $printer->text($venta->nombre . "\n");  //Nombre socio
                 $printer->text("VENTA: " . $venta->folio . "\n");    //Folio venta
+                $printer->text("MESERO: " . ($venta->mesero ?? '') . "\n"); //Nombre del mesero
                 $printer->text("COMENSALES: " . $venta->num_comensales . "\n");    //comensales
                 $printer->text($line);
 
                 /**
                  * BODY
                  */
-                foreach ($productos_result as $key => $producto) {
-                    $printer->setEmphasis(true);
-                    $printer->text($producto->cantidad . " " . $producto->nombre . "\n");
-                    $printer->setEmphasis(false);
-                    $printer->text("  -" . $producto->observaciones . "\n");
-                    //Imprimir linea de separacion de producto (basado en el chunk)
-                    if ($key < count($productos_result) - 1) {
-                        $next_prod = $productos_result[$key + 1];
-                        if ($producto->chunk != $next_prod->chunk)
-                            $printer->text($line);
+                $productosAgrupados = collect($productos_result)->groupBy(function ($item) {
+                    return $item->tiempo ?: '1';
+                });
+                //Orden fijo: 1, 2, 3, 4
+                $ordenTiempos = ['1', '2', '3', '4'];
+                foreach ($ordenTiempos as $tiempo) {
+                    $grupo = $productosAgrupados->get($tiempo);
+                    if (!$grupo) continue;
+
+                    $printer->text($line);
+                    $printer->setJustification(Printer::JUSTIFY_CENTER);
+                    $printer->text("       Tiempo {$tiempo}       \n");
+                    $printer->setJustification();           // Reset
+                    $printer->text($line);
+
+                    $grupo = $grupo->values();
+                    foreach ($grupo as $key => $producto) {
+                        $printer->setEmphasis(true);
+                        $printer->text($producto->cantidad . " " . $producto->nombre . "\n");
+                        $printer->setEmphasis(false);
+                        $printer->text("  -" . $producto->observaciones . "\n");
+                        //Imprimir linea de separacion de producto (basado en el chunk)
+                        if ($key < $grupo->count() - 1) {
+                            $next_prod = $grupo[$key + 1];
+                            if ($producto->chunk != $next_prod->chunk)
+                                $printer->text($line);
+                        }
                     }
+                    $printer->text($line);
                 }
                 $printer->feed();
                 $printer->setJustification(Printer::JUSTIFY_CENTER);

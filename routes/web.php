@@ -261,6 +261,7 @@ Route::prefix('pv/{codigopv}')->middleware(['auth', 'puntos'])->group(function (
         Route::get('/', [PuntosController::class, 'ventasIndex'])->name('pv.ventas');
         Route::get('/editar/{folioventa}', [PuntosController::class, 'editarVenta'])->name('pv.ventas.editar');
         Route::get('/pagar/{folioventa}', [PuntosController::class, 'pagarVenta'])->name('pv.ventas.pagar');
+        Route::get('/transferir/{folioventa}', [PuntosController::class, 'transferirVenta'])->name('pv.ventas.transferir');
         Route::get('nueva', [PuntosController::class, 'nuevaVenta'])->name('pv.ventas.nueva');
         Route::get('reporte', [PuntosController::class, 'reporteVentas'])->name('pv.ventas.reporte');
     });

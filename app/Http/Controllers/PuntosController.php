@@ -120,8 +120,8 @@ class PuntosController extends Controller
         $venta = Venta::with('puntoVenta')
             ->find($folioVenta);
 
-        //Si no hay venta
-        if (!$venta) {
+        //Si no hay venta o esta cerrada
+        if (!$venta || !is_null($venta->fecha_cierre)) {
             //Redirigir al usuario
             return redirect()->route('pv.ventas', ['codigopv' => $codigopv]);
         }

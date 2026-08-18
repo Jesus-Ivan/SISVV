@@ -174,6 +174,37 @@
             </table>
         </div>
     </div>
+
+    {{-- ACTION MESSAGE --}}
+    <x-action-message on='action-message-venta'>
+        @if (session('success'))
+            <div id="alert-exito"
+                class="flex items-center p-4 mb-4 text-green-800 border-t-4 border-green-300 bg-green-50 dark:text-green-400 dark:bg-gray-800 dark:border-green-800"
+                role="alert">
+                <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                        d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                </svg>
+                <div class="ms-3 text-sm font-medium">
+                    {{ session('success') }}
+                </div>
+            </div>
+        @else
+            <div id="alert-error"
+                class="flex items-center p-4 mb-4 text-red-800 border-t-4 border-red-300 bg-red-50 dark:text-red-400 dark:bg-gray-800 dark:border-red-800"
+                role="alert">
+                <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                        d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                </svg>
+                <div class="ms-3 text-sm font-medium">
+                    {{ session('fail') }}
+                </div>
+            </div>
+        @endif
+    </x-action-message>
     <!--Botones de navegacion (transferir)-->
     <div class="my-3">
         <button type="button" x-on:click="confirmar"
@@ -181,4 +212,21 @@
             CONFIRMAR TRANSFERENCIA
         </button>
     </div>
+
+    <!--INDICADOR DE CARGA, DE VENTA-->
+    <div wire:loading wire:target='confirmarTransferencia'>
+        <x-loading-screen name='loading'>
+            <x-slot name='body'>
+                <div class="flex">
+                    <div class="me-4">
+                        @include('livewire.utils.loading', ['w' => 6, 'h' => 6])
+                    </div>
+                    <p>TRANSFIRIENDO VENTA</p>
+                </div>
+            </x-slot>
+        </x-loading-screen>
+    </div>
+
+    <!--Script para cerrar la ventana-->
+    @include('livewire.puntos.ventas.include.close-pendiente')
 </div>

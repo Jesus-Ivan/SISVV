@@ -160,7 +160,9 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
             </tbody>
         </table>
     @endif
-    <br>
+    @for ($i = 0; $i < 4; $i++)
+        <br>
+    @endfor
     <h3>GRACIAS POR SU COMPRA</h3>
 @else
     <div style="width: 100%">
@@ -173,6 +175,8 @@ $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
             </tr>
         </table>
     </div>
-    <br>
+    @for ($i = 0; $i < 4; $i++)
+        <br>
+    @endfor
     <h4>IMPRESION NO VALIDA COMO COMPROBANTE DE PAGO</h4>
 @endif

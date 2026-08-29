@@ -2,11 +2,14 @@
 
 namespace App\Livewire\Puntos\Ventas\Transferir;
 
+use App\Constants\PuntosConstants;
+use App\Events\ComandaDetails;
 use App\Models\Caja;
 use App\Models\CorreccionVenta;
 use App\Models\DetallesVentaProducto;
 use App\Models\MotivoCorreccion;
 use App\Models\Venta;
+use App\Models\ZonaImpresion;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
@@ -79,6 +82,7 @@ class Container extends Component
 
                 $this->fusionarCuenta($this->venta->folio, $this->folio_destino);
             });
+            $this->enviarNotificacion($this->folio_destino);
             //Mensaje de exito en el alert
             session()->flash('success', "VENTA UNIFICADA CORRECTAMENTE");
             // Cerrar ventana
@@ -89,6 +93,43 @@ class Container extends Component
         }
         //Evento para mostrar alert
         $this->dispatch('action-message-venta');
+    }
+
+    /**
+     * Envia el evento de ComandaDetails a la zona de impresion correspondiente\
+     * Segun si tiene productos imprimibles en la venta
+     */
+    public function enviarNotificacion($folio_venta)
+    {
+        //Definimos los estados validos para la accion
+        $status = [
+            PuntosConstants::ID_ESTADO_PRODUCTO_COLA,
+            PuntosConstants::ID_ESTADO_PRODUCTO_IMPRESO,
+            PuntosConstants::ID_ESTADO_PRODUCTO_ERROR
+        ];
+
+        //Obtener los productos imprimibles cuyo estado sea diferente de 'listo'
+        $productos = DetallesVentaProducto::where('folio_venta', $folio_venta)
+            ->whereNotNull('id_zona')
+            ->whereIn('id_estado', $status)
+            ->get();
+        //Agrupar los resultados
+        $productos_agrupados = $productos->groupBy('id_zona');
+
+        //Avisamos en tiempo real (la modificacion de la venta) a cada zona
+        foreach ($productos_agrupados as $id_zona => $results) {
+            //Buscar la zona de impresion
+            $zona = ZonaImpresion::find($id_zona);
+            //Si existe la zona.
+            if ($zona) {
+                broadcast(new ComandaDetails(
+                    PuntosConstants::COMANDA_ACTUALIZADA_EVENT,
+                    Venta::find($this->folio_destino),
+                    $zona,
+                    "Se ha fusionado la comanda: $folio_venta"
+                ));
+            }
+        }
     }
 
     /**

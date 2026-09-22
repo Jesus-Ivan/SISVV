@@ -16,6 +16,7 @@ class SocioCuota extends Model
     protected $fillable = [
         'id_socio',
         'id_cuota',
+        'id_locker',
         'monto_personalizado',
         'texto_concepto',
         'posicion_texto',
@@ -54,5 +55,10 @@ class SocioCuota extends Model
                 'tipo' => 'N/A',
                 'clave_membresia' => 'N/A',
             ]);
+    }
+
+    public function locker(): HasOne
+    {
+        return $this->hasOne(Locker::class, 'id_locker', 'id_locker');
     }
 }

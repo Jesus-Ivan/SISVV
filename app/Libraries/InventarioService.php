@@ -317,8 +317,7 @@ class InventarioService
         //Obtener el total de los movimientos, agrupados por clave_insumo
         $movimientos = MovimientosAlmacen::select('clave_insumo')
             ->selectRaw('SUM(cantidad_insumo) as total_cantidad')
-            ->whereDate('fecha_existencias', '>=', $fecha_inicio)
-            ->whereDate('fecha_existencias', '<=', $fecha_fin)
+            ->whereBetween('fecha_existencias', [$fecha_inicio, $fecha_fin])
             ->whereIn('clave_concepto', $clave_conceptos)
             ->where('clave_bodega', $clave_bodega)
             ->groupBy('clave_insumo')

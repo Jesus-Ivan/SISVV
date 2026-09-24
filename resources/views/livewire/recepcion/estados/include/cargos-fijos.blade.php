@@ -37,6 +37,9 @@
                         </td>
                         <td class="px-6 py-2 {{ $fijo['auto_delete'] ? 'text-orange-600 font-semibold' : '' }}">
                             {{ $fijo['cuota']['descripcion'] }}
+                            <p class="italic">
+                                {{ $fijo['locker'] ? $fijo['locker']['numero'] . '-' . $fijo['locker']['seccion'] : '' }}
+                            </p>
                         </td>
                         <td class="px-6 py-2 {{ $fijo['auto_delete'] ? 'text-orange-600 font-semibold' : '' }}">
                             ${{ number_format($fijo['monto_personalizado'] ?? $fijo['cuota']['monto'], 2) }}

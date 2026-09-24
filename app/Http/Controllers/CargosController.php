@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CargosController extends Controller
 {
@@ -48,36 +49,45 @@ class CargosController extends Controller
                         ->get()
                         ->toArray();
 
-                    //Todas las cuotas fijas del socio, agrupadas por id_cuota para detectar multiples
+                    //Todas las cuotas fijas del socio, agrupadas por id_cuota para detectar multiples. Y agrupada por monto_personalizado.
+                    //Esto crea un array: [ 'id_cuota' => ['monto_personalizado' => [...] ... ] ]
                     $socio_cuotas = SocioCuota::with('cuota')
                         ->where('id_socio', $id_socio)
                         ->get()
-                        ->groupBy('id_cuota');
+                        ->groupBy(['id_cuota', 'monto_personalizado']);
 
-                    $estadoGrouped = collect($estado_cuenta)->groupBy('id_cuota');
+                    //Agrupar los cargos del estado de cuenta por id_cuota y cargo.
+                    $estadoGrouped = collect($estado_cuenta)->groupBy(['id_cuota', 'cargo']);
 
-                    foreach ($socio_cuotas as $idCuota => $rows) {
-                        $enEstado = $estadoGrouped->get($idCuota, collect())->count();
+                    foreach ($socio_cuotas as $idCuota => $cuotas) {
+                        //Obtener de los cargos en el estado de cuenta, la sub-colleccion agrupada por id_cuota
+                        $enEstadoAux = $estadoGrouped->get($idCuota, collect());
 
-                        // Saltar las primeras $enEstado filas (ya cobradas) e iterar las restantes
-                        // Cada fila usa su propio monto_a_cobrar para respetar monto_personalizado distinto
-                        foreach ($rows->values()->slice($enEstado) as $sc) {
-                            //Descripción base + texto personalizado (si la cuota lo tiene), igual que la carga manual
-                            $descripcionBase = $sc->cuota->descripcion . ' ' . $this->getMes($fecha->month) . '-' . $fecha->year;
-                            EstadoCuenta::create([
-                                'id_cuota' => $sc->id_cuota,
-                                'id_socio'  => $id_socio,
-                                'concepto'  => $sc->aplicarTextoConcepto($descripcionBase),
-                                'fecha'     => $fecha->toDateString(),
-                                'cargo'     => $sc->monto_a_cobrar,
-                                'abono'     => 0,
-                                'saldo'     => $sc->monto_a_cobrar,
-                            ]);
+                        foreach ($cuotas as $monto_personalizado => $rows) {
+                            //Obtener de la colleccion agrupada por id_cuota, la sub-colleccion agrupada por cargo. Que coincida con el monto personalizado. o el default
+                            $enEstado = $enEstadoAux->get($monto_personalizado ?: $rows[0]->cuota->monto, collect())
+                                ->count();
+
+                            // Saltar las primeras $enEstado filas (ya cobradas) e iterar las restantes
+                            // Cada fila usa su propio monto_a_cobrar para respetar monto_personalizado distinto
+                            foreach ($rows->values()->slice($enEstado) as $sc) {
+                                //Descripción base + texto personalizado (si la cuota lo tiene), igual que la carga manual
+                                $descripcionBase = $sc->cuota->descripcion . ' ' . $this->getMes($fecha->month) . '-' . $fecha->year;
+                                EstadoCuenta::create([
+                                    'id_cuota' => $sc->id_cuota,
+                                    'id_socio'  => $id_socio,
+                                    'concepto'  => $sc->aplicarTextoConcepto($descripcionBase),
+                                    'fecha'     => $fecha->toDateString(),
+                                    'cargo'     => $sc->monto_a_cobrar,
+                                    'abono'     => 0,
+                                    'saldo'     => $sc->monto_a_cobrar,
+                                ]);
+                            }
                         }
                     }
                 }, 2);
             } catch (\Throwable $e) {
-                \Log::error("cargarMensualidades: error procesando socio {$id_socio}: " . $e->getMessage());
+                Log::error("cargarMensualidades: error procesando socio {$id_socio}: " . $e->getMessage());
                 $errores[] = "Socio {$id_socio}: " . $e->getMessage();
             }
         }
@@ -365,5 +375,4 @@ class CargosController extends Controller
             ]);
         }
     }
-
 }

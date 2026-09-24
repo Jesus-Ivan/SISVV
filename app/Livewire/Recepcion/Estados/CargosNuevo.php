@@ -192,6 +192,7 @@ class CargosNuevo extends Component
                 'tipo' => $cuota['tipo'],
                 'clave_membresia' => $cuota['clave_membresia'],
             ],
+            'locker' => null,
             'auto_delete' => false
         ];
     }
@@ -346,7 +347,7 @@ class CargosNuevo extends Component
 
     private function obtenerCargosFijos($socio)
     {
-        return SocioCuota::with('cuota.membresia')
+        return SocioCuota::with(['cuota', 'locker'])
             ->where('id_socio', $socio->id)
             ->orderBy('id_cuota')
             ->get()

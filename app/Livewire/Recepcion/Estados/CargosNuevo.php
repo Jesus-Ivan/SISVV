@@ -5,9 +5,11 @@ namespace App\Livewire\Recepcion\Estados;
 use App\Constants\RecepcionConstants;
 use App\Models\Anualidad;
 use App\Models\Cuota;
+use App\Models\DetalleAnualidad;
 use App\Models\EstadoCuenta;
 use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
+use App\Services\LockerService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -60,7 +62,7 @@ class CargosNuevo extends Component
                 ->pluck('id');
             //Buscar los detalles de todas las anualidades vigentes
             if ($anualidadesVigentes->isNotEmpty()) {
-                $this->cargos_anualidad = DB::table('detalles_anualidades')
+                $this->cargos_anualidad = DetalleAnualidad::with('locker')
                     ->whereIn('id_anualidad', $anualidadesVigentes)
                     ->get();
             }
@@ -302,11 +304,11 @@ class CargosNuevo extends Component
         unset($this->listaCargosFijos[$cargoIndex]);
     }
 
-    public function guardarCambios()
+    public function guardarCambios(LockerService $lockerService)
     {
         try {
             //Creamos una transaccion para que si hay un error, no se guarden los datos
-            DB::transaction(function () {
+            DB::transaction(function () use ($lockerService) {
                 //Actualizamos el estado de cuenta con los cargos aplicados a un mes
                 foreach ($this->listaCargos as $key => $cargo) {
                     EstadoCuenta::create([
@@ -328,7 +330,7 @@ class CargosNuevo extends Component
                     }
                 }
                 foreach ($this->listaCargosEliminados as $id) {
-                    SocioCuota::destroy($id);
+                    $this->eliminarCargosFijos($lockerService, $id);
                 }
                 //Volvemos a cargar la 'listaCargosFijos'
                 $this->listaCargosFijos = $this->obtenerCargosFijos($this->socio);
@@ -342,6 +344,23 @@ class CargosNuevo extends Component
         } catch (Exception $e) {
             $this->dispatch('action-message-cargos');
             session()->flash('fail', $e->getMessage());
+        }
+    }
+
+    /**
+     * Elimina los cargos fijos de la tabla 'socios_cuotas'\
+     * En caso de ser locker. Ejecuta la baja correspondiente
+     */
+    public function eliminarCargosFijos(LockerService $lockerService, $id)
+    {
+        $cuota_fija = SocioCuota::with('locker')->find($id);
+        if ($cuota_fija) {
+            if ($cuota_fija->locker) {
+                $user = auth()->user();
+                $lockerService->bajaLocker($cuota_fija->id_locker, $user->name, 'DESDE: RECEPCION -> ESTADOS DE CUENTA');
+            } else {
+                $cuota_fija->delete();
+            }
         }
     }
 

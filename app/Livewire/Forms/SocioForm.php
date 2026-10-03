@@ -4,11 +4,14 @@ namespace App\Livewire\Forms;
 
 use App\Models\Cuota;
 use App\Models\IntegrantesSocio;
+use App\Models\Locker;
 use App\Models\Membresias;
 use App\Models\Socio;
 use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
+use App\Services\LockerService;
 use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Validate;
@@ -73,6 +76,8 @@ class SocioForm extends Form
     public $integrante_eliminar;
     //Propiedad axiliar para definir el bloqueo de registro de integrantes
     public $registro_permitido = false;
+    //Propiedad que almacena los lockers del socio (asignados)
+    public ?Collection $lockers;
 
     protected $messages = [
         'clave_membresia.required' => 'Selecciona al menos una membresía.',
@@ -103,7 +108,10 @@ class SocioForm extends Form
         'rfc' => 'max:13',
     ];
 
-    //Setear los valores a editar
+    /**
+     * Setear los valores a editar al socio.\
+     * Obtiene los lockers del mismo.
+     */
     public function setSocio(Socio $socio)
     {
         $this->socio = $socio;
@@ -127,6 +135,7 @@ class SocioForm extends Form
         $this->correo2 = $socio->correo2;
         $this->curp = $socio->curp;
         $this->rfc = $socio->rfc;
+        $this->lockers = Locker::where('id_socio_actual', $socio->id)->get();
 
         //Todas las membresías desde socios_membresias (fuente de verdad del estado)
         $todasMembresias = $socio->socioMembresias()->get();
@@ -225,41 +234,88 @@ class SocioForm extends Form
         $this->cleanEdit();
     }
 
-    public function confirmDelete()
+    /**
+     * Confirma la eliminacion del integrante en el modal de recepcion
+     */
+    public function confirmDelete(LockerService $lockerService)
     {
-        //Si existe imagen del miembro, la borramos del servidor
-        if ($this->integrante_eliminar['img_path_integrante']) {
-            Storage::disk('public')->delete($this->integrante_eliminar['img_path_integrante']);
-        }
-        //Eliminamos el registro del miembro
-        IntegrantesSocio::destroy($this->integrante_eliminar['id']);
+        DB::transaction(function () use ($lockerService) {
+            $this->eliminar_integrante($lockerService, $this->integrante_eliminar, $this->lockers);
+        });
         //Buscamos los nuevos integrantes del socio
         $this->setIntegrantes($this->socio);
         //Limipamos el integrante
         $this->reset('integrante_eliminar');
     }
 
-    //se confirma la actualizacion de los datos del socio, incluyendo el cambio de membresia
-    public function confirmUpdate()
+    /**
+     * Se confirma la actualizacion de los datos del socio.\
+     * Elimina TODOS los integrantes de la membresia.
+     */
+    public function confirmUpdate(LockerService $lockerService)
     {
-        //Buscamos todos los integrantes de la membresia
-        $integrantes = IntegrantesSocio::where('id_socio', $this->socio->id)->get();
+        DB::transaction(function () use ($lockerService) {
+            //Buscamos todos los integrantes de la membresia
+            $integrantes = IntegrantesSocio::where('id_socio', $this->socio->id)->get();
 
-        DB::transaction(function () use ($integrantes) {
             //Actualizamos la informacion del socio
             $this->update();
             //Recorremos todos los integrantes
             foreach ($integrantes as $integrante) {
-                //Si existe imagen del miembro, la borramos del servidor
-                if ($integrante->img_path_integrante) {
-                    Storage::disk('public')->delete($integrante->img_path_integrante);
-                }
-                //Eliminamos el registro del miembro
-                IntegrantesSocio::destroy($integrante->id);
-                //Buscamos los nuevos integrantes del socio
-                $this->setIntegrantes($this->socio);
+                $this->eliminar_integrante($lockerService, $integrante->toArray(), $this->lockers);
             }
+            //Buscamos los nuevos integrantes del socio
+            $this->setIntegrantes($this->socio);
         });
+    }
+
+    /**
+     * Elimina los integrantes, excepto el primero registrado.\
+     * Actualiza la informacion del socio.
+     */
+    public function reducirIntegrantes(LockerService $lockerService)
+    {
+        DB::transaction(function () use ($lockerService) {
+            // Conservar solo el integrante más antiguo, eliminar el resto
+            $integrantes = IntegrantesSocio::where('id_socio', $this->socio->id)
+                ->orderBy('id')->get();
+
+            $this->update();
+
+            //Recorremos todos los integrantes
+            foreach ($integrantes->skip(1) as $integrante) {
+                $this->eliminar_integrante($lockerService, $integrante->toArray(), $this->lockers);
+            }
+            //Buscamos los nuevos integrantes del socio
+            $this->setIntegrantes($this->socio);
+        });
+    }
+
+    /**
+     * Elimina el registro del integrante en la BD, y la imagen del servidor.\
+     * Ademas, reasigna lockers. en caso de existir.
+     */
+    public function eliminar_integrante(LockerService $lockerService, array $integrante_eliminar, Collection $lockers)
+    {
+        $user = auth()->user();
+
+        //Si existe imagen del miembro, la borramos del servidor
+        if ($integrante_eliminar['img_path_integrante']) {
+            Storage::disk('public')->delete($integrante_eliminar['img_path_integrante']);
+        }
+
+        $lockers_integrante = $lockers
+            ->where('id_integrante_actual', $integrante_eliminar['id']);
+        //Retirar el integrante asignado de los lockers correspondientes 
+        foreach ($lockers_integrante as $key => $locker) {
+            $lockerService->removerIntegrante(
+                $locker->id_locker,
+                $user->name
+            );
+        }
+
+        //Eliminamos el registro del miembro
+        IntegrantesSocio::destroy($integrante_eliminar['id']);
     }
 
     //Finalizar registro del socio y guardar toda la informacion, junto con los integrantes
@@ -352,7 +408,9 @@ class SocioForm extends Form
         });
     }
 
-    //Actualiza la informacion del socio aplicando el diff de dropdowns de estado
+    /**
+     * Actualiza la informacion del socio aplicando el diff de dropdowns de estado
+     */
     public function update()
     {
         $reglas = $this->socio_rules;

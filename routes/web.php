@@ -364,7 +364,6 @@ Route::prefix('lockers')->middleware(['auth', 'acceso'])->group(function () {
         Route::get('alta', [LockersController::class, 'altaCasillero'])->name('lockers.alta');
         Route::get('baja', [LockersController::class, 'bajaCasillero'])->name('lockers.baja');
         Route::get('transferir', [LockersController::class, 'transferirCasillero'])->name('lockers.transferir');
-        Route::get('editar/{id_locker}', [LockersController::class, 'editarCasillero'])->name('lockers.editar');
     });
 });
 

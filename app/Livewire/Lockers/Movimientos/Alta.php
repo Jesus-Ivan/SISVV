@@ -3,7 +3,9 @@
 namespace App\Livewire\Lockers\Movimientos;
 
 use App\Constants\LockersConstants;
+use App\Models\Anualidad;
 use App\Models\Cuota;
+use App\Models\DetalleAnualidad;
 use App\Models\IntegrantesSocio;
 use App\Models\Locker;
 use App\Models\Socio;
@@ -11,6 +13,7 @@ use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
 use App\Services\LockerService;
 use Exception;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -25,6 +28,8 @@ class Alta extends Component
 
     //Seccion del locker
     public array $secciones = LockersConstants::ENUM_SECCION_LOCKER;
+    //Estados del locker
+    public array $estados = LockersConstants::ENUM_ESTADO_LOCKER;
 
     public string $seccion_general = '';    //Utilizado para definir la seccion de busqueda para locker excepcional
     public string $input_search = '';       //Define el numero de locker a buscar (excepcional)
@@ -82,7 +87,8 @@ class Alta extends Component
                     $this->miembros[$row['index_miembro']],
                     $usuario_sistema->name,
                     $row['observaciones'],
-                    $row['id']
+                    $row['id'],
+                    array_key_exists('anualidad', $row)
                 );
             }
             $this->reset();
@@ -103,13 +109,30 @@ class Alta extends Component
         //Obtener al usuario actual
         $usuario_sistema = auth()->user();
 
+        $this->validarLockerExcepcionales();
+
         try {
             foreach ($this->lockers_excep as $key => $row) {
-                $lockerService->asignarLockerExcep(
-                    $row['id_locker'],
-                    $usuario_sistema->name,
-                    $row['observaciones'],
-                );
+                switch ($row['estado_actual']) {
+                    case $this->estados[1]:
+                        $lockerService->asignarLockerExcep(
+                            $row['id_locker'],
+                            $usuario_sistema->name,
+                            $row['observaciones'],
+                        );
+                        break;
+                    case $this->estados[2]:
+                        $lockerService->mandarAMantenimiento(
+                            $row['id_locker'],
+                            $usuario_sistema->name,
+                            $row['observaciones']
+                        );
+                        break;
+
+                    default:
+                        # code...
+                        break;
+                }
             }
             $this->reset();
             $this->limpiarLockers();    //Limpiar tabla
@@ -212,12 +235,31 @@ class Alta extends Component
 
         //Obtener los id's de las cuotas que corresponden a lockers
         $locker_ids = Cuota::where('descripcion', 'like', '%LOCKER%')->get()->toarray();
-        //Buscar las cuotas del socio
+        //Buscar las cuotas del socio (cuotas fijas)
         $cuotas = SocioCuota::whereIn('id_cuota', array_column($locker_ids, 'id'))
             ->whereNull('id_locker')
             ->where('id_socio', $socio->id)
             ->get()
             ->toArray();
+
+        //Buscar las cuotas del socio (cuotas anuales activas)
+        $hoy = now()->toDateString();
+        $cuotas_anu = DetalleAnualidad::with('anualidad')
+            ->whereHas('anualidad', function ($query) use ($hoy, $socio) {
+                $query->where([
+                    ['fecha_inicio', '<=', $hoy],
+                    ['fecha_fin', '>=', $hoy]
+                ])
+                    ->where('id_socio', $socio->id);
+            })
+            ->whereIn('id_cuota', array_column($locker_ids, 'id'))
+            ->whereNull('id_locker')
+            ->get()
+            ->toArray();
+        //Unir ambos arrays en uno mismo
+        $cuotas = [...$cuotas, ...$cuotas_anu];
+
+
         //Mapear propiedades extra
         $this->lockers_sistema = array_map(function ($row) {
             $row['index_miembro'] = '';
@@ -266,6 +308,23 @@ class Alta extends Component
                 ]);
             }
         }
+    }
+
+    /**
+     * Valida que los locker excepcionales tengan comentarios obligatorios
+     */
+    public function validarLockerExcepcionales()
+    {
+        $validated = $this->validate([
+            'lockers_excep.*.estado_actual' => ['required', Rule::notIn($this->estados[0])],
+            'lockers_excep.*.observaciones' => 'required',
+        ], [
+            'lockers_excep.*.estado_actual.required' => 'Obligatorio',
+            'lockers_excep.*.estado_actual.not_in' => 'El estado no puede ser ' . $this->estados[0],
+            'lockers_excep.*.observaciones.required' => 'Obligatorio',
+        ]);
+
+        return $validated;
     }
 
     public function render()

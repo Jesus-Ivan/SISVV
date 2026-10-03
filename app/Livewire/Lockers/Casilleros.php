@@ -34,14 +34,13 @@ class Casilleros extends Component
     #[Computed()]
     public function data_lockers()
     {
-        if ($this->selected_seccion == '') {
-            return [];
+        $atributos_busqueda = [['estado_actual', 'like', "%$this->status%"]];
+
+        if ($this->selected_seccion != '') {
+            $atributos_busqueda[] = ['seccion', '=', $this->selected_seccion];
         }
 
-        $consulta = LockerSocioView::where([
-            ['seccion', '=', $this->selected_seccion],
-            ['estado_actual', 'like', "%$this->status%"]
-        ]);
+        $consulta = LockerSocioView::where($atributos_busqueda);
 
         if ($this->status == $this->locker_ocupado_key) {
             $result = $consulta->whereAny(

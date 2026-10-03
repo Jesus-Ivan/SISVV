@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Constants\LockersConstants;
 use App\Models\Locker;
 use App\Models\CuotaSocio;
+use App\Models\DetalleAnualidad;
 use App\Models\HistorialAsignacionLocker;
 use App\Models\MovimientoLocker;
 use App\Models\SocioCuota;
@@ -22,9 +23,10 @@ class LockerService
         array $miembroSeleccionado,
         string $usuario,
         ?string $observaciones = null,
-        ?int $id_cuota = null
+        ?int $id_cuota = null,
+        bool $is_anual = false
     ): ?Locker {
-        return DB::transaction(function () use ($seccion, $numero, $miembroSeleccionado, $usuario, $observaciones, $id_cuota) {
+        return DB::transaction(function () use ($seccion, $numero, $miembroSeleccionado, $usuario, $observaciones, $id_cuota, $is_anual) {
             // Bloqueo de fila para evitar que dos usuarios asignen el mismo locker al mismo tiempo
             $locker = Locker::where([
                 ['seccion', '=', $seccion],
@@ -45,8 +47,12 @@ class LockerService
                 'observaciones' => $observaciones,
             ]);
 
-            // 2. Actualizar la cuota mensual activa
-            $cuota = SocioCuota::find($id_cuota);
+            // 2. Actualizar la cuota mensual activa o anualidad
+            if ($is_anual) {
+                $cuota = DetalleAnualidad::find($id_cuota);
+            } else {
+                $cuota = SocioCuota::find($id_cuota);
+            }
             $cuota->id_locker =  $locker->id_locker;
             $cuota->save();
 
@@ -121,7 +127,8 @@ class LockerService
     }
 
     /**
-     * Transfiere la ocupación y cuota de un socio desde un locker origen hacia un locker destino.
+     * Transfiere la ocupación y cuota de un socio desde un locker origen hacia un locker destino.\
+     * Mantiene el nombre del socio o integrante de origen.
      */
     public function transferirLocker(
         int $idLockerOrigen,
@@ -156,7 +163,7 @@ class LockerService
             // A. PROCESAR BAJA EN LOCKER ORIGEN
             // ==========================================
             $lockerOrigen->update([
-                'estado_actual' => 'DISPONIBLE',
+                'estado_actual' => LockersConstants::ENUM_ESTADO_LOCKER[0],
                 'id_socio_actual' => null,
                 'id_integrante_actual' => null,
                 'observaciones' => null
@@ -236,7 +243,7 @@ class LockerService
         return DB::transaction(function () use ($idLocker, $usuario, $observaciones) {
             $locker = Locker::where('id_locker', $idLocker)->lockForUpdate()->firstOrFail();
 
-            if ($locker->estado_actual !== 'OCUPADO') {
+            if ($locker->estado_actual !== LockersConstants::ENUM_ESTADO_LOCKER[1]) {
                 throw new Exception("El locker #{$locker->numero} no está ocupado.");
             }
 
@@ -244,33 +251,36 @@ class LockerService
 
             // 1. Liberar el locker
             $locker->update([
-                'estado_actual' => 'DISPONIBLE',
+                'estado_actual' => LockersConstants::ENUM_ESTADO_LOCKER[0],
                 'id_socio_actual' => null,
+                'id_integrante_actual' => null,
+                'observaciones' => null
             ]);
 
             // 2. Cerrar historial de ocupación
-            HistorialAsignacionLocker::where('id_locker', $idLocker)
+            $historialAsignacion = HistorialAsignacionLocker::where('id_locker', $idLocker)
                 ->where('id_socio', $idSocio)
                 ->whereNull('fecha_fin')
-                ->update(['fecha_fin' => now()]);
+                ->first();
+            $historialAsignacion->fecha_fin = now();
+            $historialAsignacion->save();
 
-            // 3. Desactivar cuota recurrente
-            CuotaSocio::where('id_socio', $idSocio)
-                ->where('id_locker', $idLocker)
-                ->where('activo', true)
-                ->update([
-                    'activo' => false,
-                    'fecha_fin' => now(),
-                ]);
+            // 3. Desactivar/eliminar cuota recurrente
+            if ($idSocio) {
+                SocioCuota::where('id_socio', $idSocio)
+                    ->where('id_locker', $idLocker)
+                    ->delete();
+            }
 
             // 4. Registrar auditoría de movimiento
             MovimientoLocker::create([
                 'id_locker' => $idLocker,
                 'id_socio' => $idSocio,
-                'tipo_movimiento' => 'BAJA',
+                'nombre' => $historialAsignacion->nombre,
+                'tipo_movimiento' => LockersConstants::ENUM_MOVIMIENTOS_LOCKER[1],
                 'fecha_movimiento' => now(),
                 'usuario_sistema' => $usuario,
-                'observaciones' => $observaciones ?? 'Baja de locker efectuada.',
+                'observaciones' => $observaciones ?? 'Baja de locker efectuada ',
             ]);
 
             return $locker;
@@ -288,19 +298,20 @@ class LockerService
         return DB::transaction(function () use ($idLocker, $usuario, $observaciones) {
             $locker = Locker::where('id_locker', $idLocker)->lockForUpdate()->firstOrFail();
 
-            if ($locker->estado_actual === 'OCUPADO') {
+            if ($locker->estado_actual === LockersConstants::ENUM_ESTADO_LOCKER[1]) {
                 throw new Exception("No es posible enviar a mantenimiento un locker que se encuentra ocupado. Procese una baja primero.");
             }
 
             $locker->update([
-                'estado_actual' => 'EN_MANTENIMIENTO',
+                'estado_actual' => LockersConstants::ENUM_ESTADO_LOCKER[2],
+                'observaciones' => $observaciones ?? 'Locker puesto en mantenimiento.',
             ]);
 
             // Registrar movimiento en bitácora
             MovimientoLocker::create([
                 'id_locker' => $idLocker,
                 'id_socio' => null,
-                'tipo_movimiento' => 'BAJA',
+                'tipo_movimiento' => LockersConstants::ENUM_MOVIMIENTOS_LOCKER[4],
                 'fecha_movimiento' => now(),
                 'usuario_sistema' => $usuario,
                 'observaciones' => $observaciones ?? 'Locker puesto en mantenimiento.',
@@ -313,19 +324,115 @@ class LockerService
     /**
      * Retorna un locker en mantenimiento a estado disponible.
      */
-    public function salirDeMantenimiento(int $idLocker, string $usuario): Locker
+    public function salirDeMantenimiento(int $idLocker, string $usuario, ?string $observaciones): Locker
     {
-        return DB::transaction(function () use ($idLocker, $usuario) {
+        return DB::transaction(function () use ($idLocker, $usuario, $observaciones) {
             $locker = Locker::where('id_locker', $idLocker)->lockForUpdate()->firstOrFail();
 
-            if ($locker->estado_actual !== 'EN_MANTENIMIENTO') {
+            if ($locker->estado_actual !== LockersConstants::ENUM_ESTADO_LOCKER[2]) {
                 throw new Exception("El locker #{$locker->numero} no está en mantenimiento.");
             }
 
             $locker->update([
-                'estado_actual' => 'DISPONIBLE',
+                'estado_actual' => LockersConstants::ENUM_ESTADO_LOCKER[0],
+                'observaciones' => null,
             ]);
 
+            // Registrar movimiento en bitácora
+            MovimientoLocker::create([
+                'id_locker' => $idLocker,
+                'id_socio' => null,
+                'tipo_movimiento' => LockersConstants::ENUM_MOVIMIENTOS_LOCKER[5],
+                'fecha_movimiento' => now(),
+                'usuario_sistema' => $usuario,
+                'observaciones' => $observaciones
+            ]);
+
+            return $locker;
+        });
+    }
+
+
+    /**
+     * Remueve el integrante del locker. Dejando unicamente al socio titular.\
+     */
+    public function removerIntegrante(int $idLocker, string $usuario) : Locker
+    {
+        return DB::transaction(function () use ($idLocker, $usuario) {
+            $locker = Locker::with('socio')
+                ->where('id_locker', $idLocker)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($locker->estado_actual == LockersConstants::ENUM_ESTADO_LOCKER[0]) {
+                throw new Exception("El locker #{$locker->numero} ya está disponible.");
+            }
+            if (!$locker->id_integrante_actual) {
+                return $locker;
+            }
+
+            $idSocio = $locker->id_socio_actual;
+            $nombreSocio = implode(
+                ' ',
+                [$locker->socio->nombre, $locker->socio->apellido_p, $locker->socio->apellido_m]
+            );
+
+            /**
+             * Eliminar el integrante actual del locker
+             */
+
+            $locker->update([
+                'id_integrante_actual' => null,
+            ]);
+
+            /**
+             * Procesar baja del locker
+             */
+
+            //Cerrar el historial de ocupacion
+            $historialAsignacionOrigen = HistorialAsignacionLocker::where('id_locker', $idLocker)
+                ->where('id_socio', $idSocio)
+                ->whereNull('fecha_fin')
+                ->first();
+            $historialAsignacionOrigen->fecha_fin = now();
+            $historialAsignacionOrigen->save();
+
+            // Registrar movimiento en bitácora
+            MovimientoLocker::create([
+                'id_locker' => $idLocker,
+                'id_socio' => $idSocio,
+                'nombre' => $historialAsignacionOrigen->nombre,
+                'tipo_movimiento' => LockersConstants::ENUM_MOVIMIENTOS_LOCKER[1],
+                'fecha_movimiento' => now(),
+                'usuario_sistema' => $usuario,
+                'observaciones' => 'DESDE: RECEPCION -> SOCIOS -> EDITAR'
+            ]);
+
+
+            /**
+             * Procesar alta del locker con el titular.
+             */
+
+            //Crear registro de ocupacion nuevo
+            HistorialAsignacionLocker::create([
+                'id_locker' => $idLocker,
+                'id_socio' => $idSocio,
+                'nombre' =>  $nombreSocio,
+                'observaciones' => $historialAsignacionOrigen->observaciones,
+                'fecha_inicio' => now(),
+                'fecha_fin' => null,
+            ]);
+
+            //Crear registro en lockers
+            MovimientoLocker::create([
+                'id_locker' => $idLocker,
+                'id_socio' => $idSocio,
+                'nombre' => $nombreSocio,
+                'tipo_movimiento' => LockersConstants::ENUM_MOVIMIENTOS_LOCKER[0],
+                'fecha_movimiento' => now(),
+                'usuario_sistema' => $usuario,
+                'observaciones' => 'DESDE: RECEPCION -> SOCIOS -> EDITAR'
+            ]);
             return $locker;
         });
     }

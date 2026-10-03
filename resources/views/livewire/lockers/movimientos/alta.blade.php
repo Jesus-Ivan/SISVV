@@ -226,12 +226,24 @@
                                     {{ $locker['seccion'] }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    {{ $locker['estado_actual'] }}
+                                    <select wire:model='lockers_excep.{{ $i }}.estado_actual'
+                                        class="w-fit bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                        <option selected value="">Estado</option>
+                                        @foreach ($estados as $item)
+                                            <option value="{{ $item }}">{{ $item }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('lockers_excep.' . $i . '.estado_actual')
+                                        <x-input-error messages="{{ $message }}" />
+                                    @enderror
                                 </td>
                                 <td class="px-6 py-4 ">
                                     <input type="text"
                                         wire:model='lockers_excep.{{ $i }}.observaciones'
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                    @error('lockers_excep.' . $i . '.observaciones')
+                                        <x-input-error messages="{{ $message }}" />
+                                    @enderror
                                 </td>
                                 <td class="px-6 py-4 ">
                                     <button type="button" wire:click="eliminar({{ $i }})"
@@ -334,7 +346,7 @@
             </div>
         @endif
     </x-action-message>
-    <!--INDICADOR DE CARGA, DE VENTA-->
+    <!--INDICADOR DE CARGA-->
     <div wire:loading wire:target='guardarLockers'>
         <x-loading-screen name='loading'>
             <x-slot name='body'>

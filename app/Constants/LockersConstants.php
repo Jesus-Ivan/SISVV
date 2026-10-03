@@ -21,7 +21,14 @@ class LockersConstants
     /**
      * Define los tipos de movimientos que se realizan en los lockers
      */
-    public const ENUM_MOVIMIENTOS_LOCKER = ['ASIGNACION','BAJA','ASIGNACION_TRANSFERENCIA','BAJA_TRANSFERENCIA'];
+    public const ENUM_MOVIMIENTOS_LOCKER = [
+        'ASIGNACION',
+        'BAJA',
+        'ASIGNACION_TRANSFERENCIA',
+        'BAJA_TRANSFERENCIA',
+        'ASIGNACION_MANTENIMIENTO',
+        'BAJA_MANTENIMIENTO',
+    ];
 
     /**
      * Define la clave para busqueda de socios

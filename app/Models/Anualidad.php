@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Anualidad extends Model
 {
@@ -58,5 +59,10 @@ class Anualidad extends Model
                     ->delete();
             }
         }
+    }
+
+    public function detallesAnualidad(): HasMany
+    {
+        return $this->hasMany(DetalleAnualidad::class, 'id_anualidad', 'id');
     }
 }

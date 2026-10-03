@@ -31,7 +31,9 @@ return new class extends Migration
                 'ASIGNACION',
                 'BAJA',
                 'ASIGNACION_TRANSFERENCIA',
-                'BAJA_TRANSFERENCIA'
+                'BAJA_TRANSFERENCIA',
+                'ASIGNACION_MANTENIMIENTO',
+                'BAJA_MANTENIMIENTO',
             ]);
 
             $table->dateTime('fecha_movimiento')->useCurrent();

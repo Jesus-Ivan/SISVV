@@ -23,17 +23,6 @@ class LockersController extends Controller
         return view('lockers.Casilleros.casilleros');
     }
 
-
-    /**
-     * Prepara el panel para editar el locker seleccionado
-     */
-    public function editarCasillero(Request $request)
-    {
-        return view('lockers.Casilleros.editar', [
-            'id_locker' => $request->segment(4)  //'id_locker' está en el 5to segmento de la ruta
-        ]);
-    }
-
     /**
      * Muestra la vista con todos los movimientos realizados durante el dia
      */
@@ -54,7 +43,10 @@ class LockersController extends Controller
     /**
      * Prepara la vista para dar de baja un locker
      */
-    public function bajaCasillero(Request $request) {}
+    public function bajaCasillero(Request $request)
+    {
+        return view('lockers.Movimientos.baja');
+    }
 
     /**
      * Prepara la vista para cambiar un numero de locker ya asignado

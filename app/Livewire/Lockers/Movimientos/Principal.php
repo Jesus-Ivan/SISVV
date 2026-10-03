@@ -25,11 +25,13 @@ class Principal extends Component
     public function movimientos()
     {
         $result = MovimientoLocker::with('locker')
-            ->whereAny(
-                ['id_socio', 'nombre', 'observaciones'],
-                'like',
-                "%$this->search%"
-            )
+            ->when($this->search, function ($query) {
+                $query->whereAny(
+                    ['id_socio', 'nombre', 'observaciones'],
+                    'like',
+                    "%$this->search%"
+                );
+            })
             ->whereDate('fecha_movimiento', $this->date_search)
             ->paginate(10);
         return $result;

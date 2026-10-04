@@ -220,6 +220,7 @@ return [
                 'balance' => 'auto', // Auto-escala los workers según la carga
                 'minProcesses' => 1,
                 'maxProcesses' => 10,
+                'memory' => 256,     // Si un worker supera 256MB de RAM, Horizon lo reinicia
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
                 'tries' => 3,

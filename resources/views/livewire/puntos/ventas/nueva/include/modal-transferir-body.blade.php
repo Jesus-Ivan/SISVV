@@ -1,4 +1,20 @@
-<div>
+<div x-data="{
+    ventas_abiertas: [],
+    ventas_mostradas: [],
+    buscar(e) {
+        let input = e.target.value; //Obtener el valor de entrada (busqueda)
+        //Filtrar los resultados originales, y asignarlos temporalmente
+        this.ventas_mostradas = this.ventas_abiertas.filter(venta => venta.id_socio == input || venta.nombre.toLowerCase().includes(input.toLowerCase()));
+    },
+    confirmarTransferencia(params) {
+        let ventas = this.ventas_abiertas.filter(venta => venta.cantidad_destino > 0);
+        $wire.confirmarTransferencia(ventas);
+    }
+}"
+    x-on:ventas-abiertas.window="    
+        ventas_abiertas = $event.detail.ventas_abiertas;
+        ventas_mostradas = $event.detail.ventas_abiertas;
+    ">
     {{-- Search input --}}
     <div class="pb-4 w-full bg-white dark:bg-gray-900">
         <label for="table-search" class="sr-only">Descripcion</label>
@@ -15,7 +31,7 @@
                     @include('livewire.utils.loading', ['w' => 5, 'h' => 5])
                 </div>
             </div>
-            <input type="text" wire:model.live.debounce.700ms ="ventaForm.seachVenta"
+            <input type="text" x-on:input.debounce.500ms="buscar"
                 class="w-full block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="Nombre o No. de socio">
         </div>
@@ -50,37 +66,47 @@
                         Total
                     </th>
                     <th scope="col" class="px-6 py-3">
-                        Accion
+                        DESTINO
                     </th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($this->ventas_abiertas as $index => $venta)
-                    <tr wire:key='{{ $index }}'
+                <template x-for="(v, i) in ventas_mostradas" :key="i">
+                    <tr
                         class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
-                        <th scope="row"
+                        <th scope="row" x-text="v.folio"
                             class="px-6 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            {{ $venta->folio }}
                         </th>
                         <td class="px-6 py-2">
                             <div>
-                                {{ $venta->nombre }}
+                                <p x-text="v.nombre" class="font-semibold" />
                             </div>
                             <div>
-                                {{ $venta->id_socio }}
+                                <p x-text="v.id_socio" class="font-semibold" />
                             </div>
                         </td>
                         <td class="px-6 py-2">
-                            ${{ $venta->total }}
+                            <p x-text="v.total" />
                         </td>
                         <td class="px-6 py-2">
-                            <a wire:click='confirmarMovimiento({{ $venta->folio }})'
-                                class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Mover</a>
+                            <input type="number" min="0" max="300" step="1"
+                                x-model="v.cantidad_destino"
+                                class="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         </td>
                     </tr>
-                @endforeach
+                </template>
             </tbody>
         </table>
+        <!-- Modal footer -->
+        <div class="flex items-center border-t border-gray-200 rounded-b dark:border-gray-600">
+            <button type="button" x-on:click="confirmarTransferencia()"
+                class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                <div wire:loading.delay wire:target='agregarPago' class="me-4">
+                    @include('livewire.utils.loading', ['w' => 4, 'h' => 4])
+                </div>
+                Aceptar
+            </button>
+        </div>
     </div>
 
 </div>

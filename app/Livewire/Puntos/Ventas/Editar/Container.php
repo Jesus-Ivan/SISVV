@@ -64,18 +64,6 @@ class Container extends Component
         return ConceptoCancelacion::all();
     }
 
-    #[Computed()]
-    public function ventas_abiertas()
-    {
-        return Venta::whereNull('fecha_cierre')
-            ->where([
-                ["corte_caja", '=', $this->venta->corte_caja],
-                ['folio', '<>', $this->venta->folio],
-            ])
-            ->whereAny(['id_socio', 'nombre'], 'LIKE', '%' . $this->ventaForm->seachVenta . '%')
-            ->get();
-    }
-
     //Hook que se ejecuta al inicio de vida el componente.
     public function mount(Venta $venta, $permisospv, $codigopv)
     {
@@ -328,13 +316,25 @@ class Container extends Component
     {
         //Guardamos el indice del producto a transferir en el formulario
         $this->ventaForm->saveProductoTransferible($index_producto);
+        //Obtenemos las ventas abiertas
+        $ventas_abiertas = Venta::whereNull('fecha_cierre')
+            ->where([
+                ["corte_caja", '=', $this->venta->corte_caja],
+                ['folio', '<>', $this->venta->folio],
+            ])
+            ->whereAny(['id_socio', 'nombre'], 'LIKE', '%' . $this->ventaForm->seachVenta . '%')
+            ->get();
+
         //Evento para abrir el modal
         $this->dispatch('open-modal', name: 'modal-transferir');
+        //Evento para enviar informacion al front (alphine)
+        $this->dispatch('ventas-abiertas', ventas_abiertas: $ventas_abiertas);
     }
 
-    //Del modal de tranferir producto, guarda el producto en una lista para mover el producto.
-    public function confirmarMovimiento($folio_venta)
+    //Del modal de tranferir producto, recibe las ventas de destino y la cantidad a dividir
+    public function confirmarTransferencia($ventas)
     {
+        dd($ventas);
         $this->ventaForm->agregarTransferidos($folio_venta);
         $this->dispatch('close-modal');
     }

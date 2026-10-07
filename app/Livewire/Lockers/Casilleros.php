@@ -8,9 +8,11 @@ use App\Models\LockerSocioView;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Casilleros extends Component
 {
+    use WithPagination;
     /**
      * Propiedades para la busqueda
      */
@@ -54,10 +56,10 @@ class Casilleros extends Component
                 'like',
                 "%$this->input_search%"
             )
-                ->get();
+                ->paginate(10);
         } else {
             $result = $consulta->where('numero', 'like', "%$this->input_search%")
-                ->get();
+                ->paginate(10);
         }
         return $result;
     }

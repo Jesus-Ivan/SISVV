@@ -13,6 +13,7 @@ use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
 use App\Services\LockerService;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -74,13 +75,15 @@ class Alta extends Component
         $usuario_sistema = auth()->user();
         //Validar que los locker tengan los parametros necesarios
         $this->validarLocker();
+        $flag_error = false;    //Determina si hubo error en alguna iteracion. Al asignar lockers.
 
-        try {
-            foreach ($this->lockers_sistema as $key => $row) {
-                //Si algun parametro no esta definido. omitir iteracion
-                if ($row['seccion'] === '' || $row['numero'] === '' || $row['index_miembro'] === '') {
-                    continue;
-                }
+        foreach ($this->lockers_sistema as $key => $row) {
+            //Si algun parametro no esta definido. omitir iteracion
+            if ($row['seccion'] === '' || $row['numero'] === '' || $row['index_miembro'] === '') {
+                continue;
+            }
+
+            try {
                 $lockerService->asignarLocker(
                     $row['seccion'],
                     $row['numero'],
@@ -90,18 +93,25 @@ class Alta extends Component
                     $row['id'],
                     array_key_exists('anualidad', $row)
                 );
+
+                unset($this->lockers_sistema[$key]); //Eliminar del array, una vez procesado
+
+            } catch (\Throwable $th) {
+                //Cambiar el flag en caso de encontrar error en alguna iteracion
+                $flag_error = true;
+                $new_message = $th->getMessage(); //Guardamos mensaje de sesion anterior 
+                $old_message = session('fail', ''); //Obtenemos el nuevo mensaje de error
+                //Concatenar el mensaje final
+                session()->flash('fail', $old_message . "\n" . $new_message);
             }
+        }
+
+        if (!$flag_error) {
+            session()->flash('success', 'Asignación de locker realizada.'); //Guardamos mensaje de sesion, en caso de ningun error.
             $this->reset();
             $this->limpiarLockers();    //Limpiar tabla
-
-            //Emitimos mensaje de sesion 
-            session()->flash('success', 'Asignación de locker realizada.');
-        } catch (Exception $th) {
-            //Emitimos mensaje de sesion 
-            session()->flash('fail', $th->getMessage());
-        } finally {
-            $this->dispatch('action-message-locker');
         }
+        $this->dispatch('action-message-locker');
     }
 
     public function guardarLockersExcepcionales(LockerService $lockerService)
@@ -261,13 +271,18 @@ class Alta extends Component
 
 
         //Mapear propiedades extra
-        $this->lockers_sistema = array_map(function ($row) {
+        $lockers_map = array_map(function ($row) {
             $row['index_miembro'] = '';
             $row['seccion'] = '';
             $row['numero'] = '';
             $row['observaciones'] = '';
             return $row;
         }, $cuotas);
+
+        //Convertir indices a tipo string
+        foreach ($lockers_map as $key_principal => $subArray) {
+            $this->lockers_sistema['item_' . $key_principal] = $subArray;
+        }
     }
 
     /**

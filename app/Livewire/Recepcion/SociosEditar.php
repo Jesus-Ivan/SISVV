@@ -5,9 +5,7 @@ namespace App\Livewire\Recepcion;
 use App\Livewire\Forms\SocioForm;
 use App\Models\IntegrantesSocio;
 use App\Models\Membresias;
-use App\Models\SocioMembresia;
 use App\Services\LockerService;
-use Exception;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
@@ -81,10 +79,10 @@ class SociosEditar extends Component
         $this->dispatch('open-action-message');
     }
 
-    public function confirmarEliminacion(LockerService $lockerService)
+    public function confirmarEliminacion()
     {
         try {
-            $this->form->confirmDelete($lockerService);
+            $this->form->confirmDelete();
             session()->flash('success', "Integrante eliminado correctamente");
         } catch (\Throwable $th) {
             session()->flash('fail', $th->getMessage());
@@ -120,13 +118,13 @@ class SociosEditar extends Component
         }
     }
 
-    public function confirmarActualizacion(LockerService $lockerService)
+    public function confirmarActualizacion()
     {
         try {
             if ($this->reducirIntegrantes) {
-                $this->form->reducirIntegrantes($lockerService);
+                $this->form->reducirIntegrantes();
             } else {
-                $this->form->confirmUpdate($lockerService);
+                $this->form->confirmUpdate();
             }
             session()->flash('success', "Socio actualizado con exito");
         } catch (ValidationException $e) {

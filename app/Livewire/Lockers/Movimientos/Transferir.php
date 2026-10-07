@@ -14,8 +14,8 @@ class Transferir extends Component
     public array $secciones = LockersConstants::ENUM_SECCION_LOCKER;
 
 
-    public string $seccion_general = '';    //Utilizado para definir la seccion de busqueda para locker excepcional
-    public string $input_search = '';       //Define el numero de locker a buscar (excepcional)
+    public string $seccion_general = '';    //Utilizado para definir la seccion de busqueda
+    public string $input_search = '';       //Define el numero de locker a buscar
 
     public array $lockers = [];
 

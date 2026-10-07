@@ -237,10 +237,10 @@ class SocioForm extends Form
     /**
      * Confirma la eliminacion del integrante en el modal de recepcion
      */
-    public function confirmDelete(LockerService $lockerService)
+    public function confirmDelete()
     {
-        DB::transaction(function () use ($lockerService) {
-            $this->eliminar_integrante($lockerService, $this->integrante_eliminar, $this->lockers);
+        DB::transaction(function () {
+            $this->eliminar_integrante($this->integrante_eliminar, $this->lockers);
         });
         //Buscamos los nuevos integrantes del socio
         $this->setIntegrantes($this->socio);
@@ -252,9 +252,9 @@ class SocioForm extends Form
      * Se confirma la actualizacion de los datos del socio.\
      * Elimina TODOS los integrantes de la membresia.
      */
-    public function confirmUpdate(LockerService $lockerService)
+    public function confirmUpdate()
     {
-        DB::transaction(function () use ($lockerService) {
+        DB::transaction(function () {
             //Buscamos todos los integrantes de la membresia
             $integrantes = IntegrantesSocio::where('id_socio', $this->socio->id)->get();
 
@@ -262,7 +262,7 @@ class SocioForm extends Form
             $this->update();
             //Recorremos todos los integrantes
             foreach ($integrantes as $integrante) {
-                $this->eliminar_integrante($lockerService, $integrante->toArray(), $this->lockers);
+                $this->eliminar_integrante($integrante->toArray(), $this->lockers);
             }
             //Buscamos los nuevos integrantes del socio
             $this->setIntegrantes($this->socio);
@@ -273,9 +273,9 @@ class SocioForm extends Form
      * Elimina los integrantes, excepto el primero registrado.\
      * Actualiza la informacion del socio.
      */
-    public function reducirIntegrantes(LockerService $lockerService)
+    public function reducirIntegrantes()
     {
-        DB::transaction(function () use ($lockerService) {
+        DB::transaction(function () {
             // Conservar solo el integrante más antiguo, eliminar el resto
             $integrantes = IntegrantesSocio::where('id_socio', $this->socio->id)
                 ->orderBy('id')->get();
@@ -284,7 +284,7 @@ class SocioForm extends Form
 
             //Recorremos todos los integrantes
             foreach ($integrantes->skip(1) as $integrante) {
-                $this->eliminar_integrante($lockerService, $integrante->toArray(), $this->lockers);
+                $this->eliminar_integrante($integrante->toArray(), $this->lockers);
             }
             //Buscamos los nuevos integrantes del socio
             $this->setIntegrantes($this->socio);
@@ -295,9 +295,11 @@ class SocioForm extends Form
      * Elimina el registro del integrante en la BD, y la imagen del servidor.\
      * Ademas, reasigna lockers. en caso de existir.
      */
-    public function eliminar_integrante(LockerService $lockerService, array $integrante_eliminar, Collection $lockers)
+    public function eliminar_integrante(array $integrante_eliminar, Collection $lockers)
     {
         $user = auth()->user();
+        // Resolvemos el servicio mediante el helper de Laravel
+        $lockerService = app(LockerService::class);
 
         //Si existe imagen del miembro, la borramos del servidor
         if ($integrante_eliminar['img_path_integrante']) {
@@ -430,8 +432,12 @@ class SocioForm extends Form
         } else {
             $validated['img_path'] = $this->socio->img_path;
         }
+        //Obtenemos el usuario autenticado
+        $user = auth()->user();
+        // Resolvemos el servicio mediante el helper de Laravel
+        $lockerService = app(LockerService::class);
 
-        DB::transaction(function () use ($validated) {
+        DB::transaction(function () use ($validated, $user, $lockerService) {
             $idSocio = $this->socio->id;
 
             $adicionalesActuales = SocioCuota::where('id_socio', $idSocio)
@@ -469,6 +475,17 @@ class SocioForm extends Form
                 SocioCuota::where('id_socio', $idSocio)
                     ->whereIn('id_cuota', Cuota::whereNotNull('clave_membresia')->pluck('id'))
                     ->delete();
+                /**
+                 * Borrar todos los lockers del socio.
+                 */
+                // Buscar primero los lockers (MEN) asignados al socio. en la tabla 'socios_cuotas'
+                $locker_cuotas = SocioCuota::where('id_socio', $idSocio)
+                    ->whereNotNull('id_locker')
+                    ->get()->toArray();
+                foreach ($locker_cuotas as $key => $cuota) {
+                    $lockerService->bajaLocker($cuota['id_locker'],  $user->name, 'BAJA DEL SOCIO');
+                }
+
                 unset($validated['clave_membresia'], $validated['claves_membresia'], $validated['estado_membresia'], $validated['estados_membresia']);
                 $this->socio->update($validated);
                 return;

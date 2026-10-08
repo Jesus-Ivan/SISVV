@@ -25,4 +25,9 @@ class DetalleAnualidad extends Model
     {
         return $this->belongsTo(Locker::class, 'id_locker', 'id_locker');
     }
+
+    public function cuota(): BelongsTo
+    {
+        return $this->belongsTo(Cuota::class, 'id_cuota', 'id');
+    }
 }

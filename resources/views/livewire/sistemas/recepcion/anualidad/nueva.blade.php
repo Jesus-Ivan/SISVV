@@ -214,6 +214,11 @@
                                 </td>
                                 <td class="px-6 py-2 ">
                                     {{ $cuota['descripcion'] }}
+                                    @if (!empty($cuota['locker_numero']) || !empty($cuota['locker_seccion']))
+                                        <span class="inline-flex items-center px-2 py-0.5 ml-2 text-xs font-semibold text-blue-800 bg-blue-100 rounded dark:bg-blue-900 dark:text-blue-300">
+                                            Locker #{{ $cuota['locker_numero'] }} ({{ $cuota['locker_seccion'] }})
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-2 ">
                                     <input type="number" id="monto-{{ $index }}"
@@ -300,6 +305,11 @@
                                     class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <td class="px-6 py-2 font-medium text-gray-900 dark:text-white">
                                         {{ $fijo['cuota']['descripcion'] }}
+                                        @if (!empty($fijo['locker']))
+                                            <span class="inline-flex items-center px-2 py-0.5 ml-1 text-xs font-semibold text-green-800 bg-green-100 rounded dark:bg-green-900 dark:text-green-300">
+                                                #{{ $fijo['locker']['numero'] }} ({{ $fijo['locker']['seccion'] }})
+                                            </span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-2">
                                         {{ $fijo['cuota']['tipo'] }}
@@ -315,6 +325,7 @@
                                             $claveFijo = $fijo['cuota']['clave_membresia'] ?? null;
                                             $esMembresia = !empty($claveFijo) && $claveFijo !== 'N/A';
                                             $esMembresiaAnualidad = $esMembresia && $membresia_finalizar && $claveFijo === $membresia_finalizar;
+                                            $esLocker = !empty($fijo['id_locker']) || preg_match('/LOC/i', $fijo['cuota']['tipo'] ?? '') || preg_match('/LOCKER/i', $fijo['cuota']['descripcion'] ?? '');
                                         @endphp
                                         @if ($esMembresia && !$esMembresiaAnualidad)
                                             {{-- Otra membresia: se cancela (CAN), no se borra la cuota --}}
@@ -328,6 +339,27 @@
                                                         clip-rule="evenodd" />
                                                 </svg>
                                                 <span class="sr-only">Cancelar membresía {{ $claveFijo }}</span>
+                                            </button>
+                                        @elseif ($esLocker)
+                                            {{-- Locker mensual: convertir a anual o borrar cuota --}}
+                                            <button type="button" wire:click="convertirLockerAnual({{ $index }})"
+                                                title="Convertir a Locker Anual"
+                                                class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-2.5 py-1.5 text-center inline-flex items-center me-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 me-1">
+                                                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                                                </svg>
+                                                Convertir Anual
+                                            </button>
+                                            <button type="button" wire:click="removerCargoFijo({{ $index }})"
+                                                title="Borrar cuota"
+                                                class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-1.5 text-center inline-flex items-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                    fill="currentColor" class="w-4 h-4">
+                                                    <path fill-rule="evenodd"
+                                                        d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                                <span class="sr-only">Borrar cuota</span>
                                             </button>
                                         @else
                                             {{-- Cargo sin membresia (locker/resguardo) o la membresia que entra en la anualidad: borrar cuota --}}

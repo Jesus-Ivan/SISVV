@@ -3,6 +3,8 @@
 namespace App\Livewire\Sistemas\Recepcion;
 
 use App\Models\Socio;
+use App\Models\SocioCuota;
+use App\Services\LockerService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -21,6 +23,19 @@ class ListaSocios extends Component
     public function deleteSocio($id)
     {
         $socio = Socio::find($id);
+        //Obtenemos el usuario autenticado
+        $lockerService = new LockerService;
+        $user = auth()->user();
+        /**
+         * Borrar todos los lockers del socio.
+         */
+        // Buscar primero los lockers (MEN) asignados al socio. en la tabla 'socios_cuotas'
+        $locker_cuotas = SocioCuota::where('id_socio', $socio->id)
+            ->whereNotNull('id_locker')
+            ->get()->toArray();
+        foreach ($locker_cuotas as $key => $cuota) {
+            $lockerService->bajaLocker($cuota['id_locker'],  $user->name, 'BAJA DEL SOCIO');
+        }
         $socio->delete();
     }
 

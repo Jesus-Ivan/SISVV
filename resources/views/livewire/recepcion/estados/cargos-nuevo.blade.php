@@ -8,7 +8,8 @@
             <p class="text-sm font-medium text-gray-700 dark:text-gray-400">Membresías:</p>
             @forelse($this->membresiasSocio as $m)
                 <p class="text-sm">
-                    <span class="font-medium text-gray-900 dark:text-white">{{ $m->membresia->descripcion ?? $m->clave_membresia }}</span>
+                    <span
+                        class="font-medium text-gray-900 dark:text-white">{{ $m->membresia->descripcion ?? $m->clave_membresia }}</span>
                     <span class="text-gray-500 ml-1">{{ $m->estado }}</span>
                 </p>
             @empty
@@ -149,9 +150,14 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         {{ $item->descripcion }}
+                                        @if ($item->locker)
+                                            <p class="italic">
+                                                {{ $item->locker->numero . '-' . $item->locker->seccion }}
+                                            </p>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4">
-                                        {{ $item->monto }}
+                                        ${{ number_format($item->monto, 2) }}
                                     </td>
                                 </tr>
                             @endforeach

@@ -5,8 +5,8 @@ namespace App\Livewire\Recepcion;
 use App\Livewire\Forms\SocioForm;
 use App\Models\IntegrantesSocio;
 use App\Models\Membresias;
-use App\Models\SocioMembresia;
-use Exception;
+use App\Services\LockerService;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -78,7 +78,7 @@ class SociosEditar extends Component
         //emitir evento para mostrar el action-message
         $this->dispatch('open-action-message');
     }
-    
+
     public function confirmarEliminacion()
     {
         try {
@@ -122,16 +122,7 @@ class SociosEditar extends Component
     {
         try {
             if ($this->reducirIntegrantes) {
-                // Conservar solo el integrante más antiguo, eliminar el resto
-                $integrantes = IntegrantesSocio::where('id_socio', $this->form->socio->id)
-                    ->orderBy('id')->get();
-                foreach ($integrantes->skip(1) as $extra) {
-                    if ($extra->img_path_integrante) {
-                        \Illuminate\Support\Facades\Storage::disk('public')->delete($extra->img_path_integrante);
-                    }
-                    $extra->delete();
-                }
-                $this->form->update();
+                $this->form->reducirIntegrantes();
             } else {
                 $this->form->confirmUpdate();
             }

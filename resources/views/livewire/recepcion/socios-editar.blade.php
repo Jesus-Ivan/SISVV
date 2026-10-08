@@ -237,27 +237,29 @@
                     {{-- MEMBRESIAS: dropdown de estado para todas las membresías del catálogo --}}
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresías</label>
-                        <div class="border border-gray-300 rounded-lg bg-white divide-y divide-gray-200 max-h-64 overflow-y-auto dark:bg-gray-800 dark:border-gray-600 dark:divide-gray-700">
+                        <div
+                            class="border border-gray-300 rounded-lg bg-white divide-y divide-gray-200 max-h-64 overflow-y-auto dark:bg-gray-800 dark:border-gray-600 dark:divide-gray-700">
                             @foreach ($this->membresias as $membresia)
                                 @php
                                     $clave = $membresia->clave;
-                                    $esPrincipal = ($clave === $form->clave_membresia);
+                                    $esPrincipal = $clave === $form->clave_membresia;
                                     $estadoActual = $form->estados_membresia[$clave] ?? '';
                                     $esAnual = $estadoActual === 'ANU';
                                     $estaSeleccionada = !empty($estadoActual);
                                 @endphp
-                                <div class="flex items-center justify-between gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700" wire:key="memb-{{ $clave }}">
+                                <div class="flex items-center justify-between gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    wire:key="memb-{{ $clave }}">
                                     <div class="flex items-center gap-2 flex-grow">
                                         <span class="text-sm font-medium text-gray-900 dark:text-white">
                                             {{ $membresia->descripcion }}
                                         </span>
-                                                        @if ($esAnual)
-                                            <span class="px-2 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">ANUAL</span>
+                                        @if ($esAnual)
+                                            <span
+                                                class="px-2 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">ANUAL</span>
                                         @endif
                                     </div>
                                     <select wire:model.live="form.estados_membresia.{{ $clave }}"
-                                        wire:change="comprobarMembresias"
-                                        @disabled($esAnual)
+                                        wire:change="comprobarMembresias" @disabled($esAnual)
                                         title="{{ $esAnual ? 'Membresía en anualidad: se gestiona desde el módulo de anualidades' : '' }}"
                                         class="text-xs py-1 px-2 rounded-md border border-gray-300 bg-white text-gray-900 w-32 shrink-0 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800">
                                         <option value="" @disabled(in_array($clave, $form->claves_originales))>Seleccionar</option>
@@ -673,11 +675,14 @@
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
-                    <h3 class="mb-5 text-xl font-normal text-gray-500 dark:text-gray-400">¿Desea eliminar a:
+                    <h3 class="mb-5 text-xl font-bold text-gray-500 dark:text-gray-400">¿Desea eliminar a:
                         {{ $form->integrante_eliminar ? $form->integrante_eliminar['nombre_integrante'] : '' }}?
                     </h3>
                     <p class="text-gray-500 dark:text-gray-400">Esta accion eliminara al integrante de la membresia
                         actual
+                    </p>
+                    <p class="text-gray-500 dark:text-gray-400">
+                        ¡¡Si cuenta con lockers asignados. Seran reasignados al titular!!
                     </p>
                 </div>
             </x-slot>
@@ -704,7 +709,8 @@
                 @if ($reducirIntegrantes)
                     <p class="text-gray-500 dark:text-gray-400">
                         Con dos membresías individuales solo se permite un familiar.
-                        Al guardar se eliminarán los integrantes adicionales, conservando únicamente el primero registrado.
+                        Al guardar se eliminarán los integrantes adicionales, conservando únicamente el primero
+                        registrado.
                     </p>
                 @else
                     <p class="text-gray-500 dark:text-gray-400">

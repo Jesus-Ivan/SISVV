@@ -6,16 +6,19 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SocioCuota extends Model
 {
     use HasFactory;
-
+    use SoftDeletes;
+    
     protected $table = 'socios_cuotas';
     protected $primaryKey = 'id';
     protected $fillable = [
         'id_socio',
         'id_cuota',
+        'id_locker',
         'monto_personalizado',
         'texto_concepto',
         'posicion_texto',
@@ -54,5 +57,10 @@ class SocioCuota extends Model
                 'tipo' => 'N/A',
                 'clave_membresia' => 'N/A',
             ]);
+    }
+
+    public function locker(): HasOne
+    {
+        return $this->hasOne(Locker::class, 'id_locker', 'id_locker');
     }
 }

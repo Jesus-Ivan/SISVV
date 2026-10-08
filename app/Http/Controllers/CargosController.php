@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Anualidad;
 use App\Models\Cuota;
+use App\Models\DetalleAnualidad;
 use App\Models\EstadoCuenta;
 use App\Models\SocioCuota;
 use App\Models\SocioMembresia;
@@ -11,6 +12,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CargosController extends Controller
 {
@@ -48,36 +50,45 @@ class CargosController extends Controller
                         ->get()
                         ->toArray();
 
-                    //Todas las cuotas fijas del socio, agrupadas por id_cuota para detectar multiples
+                    //Todas las cuotas fijas del socio, agrupadas por id_cuota para detectar multiples. Y agrupada por monto_personalizado.
+                    //Esto crea un array: [ 'id_cuota' => ['monto_personalizado' => [...] ... ] ]
                     $socio_cuotas = SocioCuota::with('cuota')
                         ->where('id_socio', $id_socio)
                         ->get()
-                        ->groupBy('id_cuota');
+                        ->groupBy(['id_cuota', 'monto_personalizado']);
 
-                    $estadoGrouped = collect($estado_cuenta)->groupBy('id_cuota');
+                    //Agrupar los cargos del estado de cuenta por id_cuota y cargo.
+                    $estadoGrouped = collect($estado_cuenta)->groupBy(['id_cuota', 'cargo']);
 
-                    foreach ($socio_cuotas as $idCuota => $rows) {
-                        $enEstado = $estadoGrouped->get($idCuota, collect())->count();
+                    foreach ($socio_cuotas as $idCuota => $cuotas) {
+                        //Obtener de los cargos en el estado de cuenta, la sub-colleccion agrupada por id_cuota
+                        $enEstadoAux = $estadoGrouped->get($idCuota, collect());
 
-                        // Saltar las primeras $enEstado filas (ya cobradas) e iterar las restantes
-                        // Cada fila usa su propio monto_a_cobrar para respetar monto_personalizado distinto
-                        foreach ($rows->values()->slice($enEstado) as $sc) {
-                            //Descripción base + texto personalizado (si la cuota lo tiene), igual que la carga manual
-                            $descripcionBase = $sc->cuota->descripcion . ' ' . $this->getMes($fecha->month) . '-' . $fecha->year;
-                            EstadoCuenta::create([
-                                'id_cuota' => $sc->id_cuota,
-                                'id_socio'  => $id_socio,
-                                'concepto'  => $sc->aplicarTextoConcepto($descripcionBase),
-                                'fecha'     => $fecha->toDateString(),
-                                'cargo'     => $sc->monto_a_cobrar,
-                                'abono'     => 0,
-                                'saldo'     => $sc->monto_a_cobrar,
-                            ]);
+                        foreach ($cuotas as $monto_personalizado => $rows) {
+                            //Obtener de la colleccion agrupada por id_cuota, la sub-colleccion agrupada por cargo. Que coincida con el monto personalizado. o el default
+                            $enEstado = $enEstadoAux->get($monto_personalizado ?: $rows[0]->cuota->monto, collect())
+                                ->count();
+
+                            // Saltar las primeras $enEstado filas (ya cobradas) e iterar las restantes
+                            // Cada fila usa su propio monto_a_cobrar para respetar monto_personalizado distinto
+                            foreach ($rows->values()->slice($enEstado) as $sc) {
+                                //Descripción base + texto personalizado (si la cuota lo tiene), igual que la carga manual
+                                $descripcionBase = $sc->cuota->descripcion . ' ' . $this->getMes($fecha->month) . '-' . $fecha->year;
+                                EstadoCuenta::create([
+                                    'id_cuota' => $sc->id_cuota,
+                                    'id_socio'  => $id_socio,
+                                    'concepto'  => $sc->aplicarTextoConcepto($descripcionBase),
+                                    'fecha'     => $fecha->toDateString(),
+                                    'cargo'     => $sc->monto_a_cobrar,
+                                    'abono'     => 0,
+                                    'saldo'     => $sc->monto_a_cobrar,
+                                ]);
+                            }
                         }
                     }
                 }, 2);
             } catch (\Throwable $e) {
-                \Log::error("cargarMensualidades: error procesando socio {$id_socio}: " . $e->getMessage());
+                Log::error("cargarMensualidades: error procesando socio {$id_socio}: " . $e->getMessage());
                 $errores[] = "Socio {$id_socio}: " . $e->getMessage();
             }
         }
@@ -289,13 +300,120 @@ class CargosController extends Controller
     private function verificarCargosFijos($id_socio, $anualidad_inicio, $anualidad_fin)
     {
         if ($anualidad_fin && is_null($anualidad_inicio)) {
-            $this->crearCargosNuevos($anualidad_fin, $id_socio);
+            // CASO 2: La anualidad terminó y el socio no renovó.
+            // Sus lockers (y cuotas de membresía si aplica) se convierten en cuotas mensuales en socios_cuotas.
+            $this->crearCargosNuevos($anualidad_fin, $id_socio, true);
         } elseif (is_null($anualidad_fin) && $anualidad_inicio) {
+            // CASO 1: Socio sin anualidad previa que inicia una nueva anualidad.
             $this->eliminarCargosAnteriores($id_socio, $anualidad_inicio->clave_mem_f);
+            // Salvaguarda: si detalles_anualidades tiene lockers anuales sin asignar (id_locker null),
+            // y el socio tiene lockers mensuales activos en socios_cuotas, vincularlos y eliminar la cuota mensual.
+            $this->vincularLockersMensualesAAnualidad($id_socio, $anualidad_inicio);
         } elseif ($anualidad_fin && $anualidad_inicio) {
+            // CASO 3: El socio renovó su anualidad a tiempo.
             $this->eliminarCargosAnteriores($id_socio, $anualidad_inicio->clave_mem_f);
-            $this->crearCargosNuevos($anualidad_fin, $id_socio, false);
+            $this->procesarRenovacionAnualidad($id_socio, $anualidad_fin, $anualidad_inicio);
         }
+    }
+
+    /**
+     * Salvaguarda para el Caso 1 (o renovaciones sin id_locker asignado):
+     * Si detalles_anualidades contiene cuotas de locker anual con id_locker nulo,
+     * busca cuotas de locker mensual del socio en socios_cuotas con id_locker asignado,
+     * transfiere el id_locker al detalle anual y elimina la cuota mensual.
+     */
+    private function vincularLockersMensualesAAnualidad($id_socio, $anualidad_inicio)
+    {
+        $detallesSinLocker = DetalleAnualidad::where('id_anualidad', $anualidad_inicio->id)
+            ->whereNull('id_locker')
+            ->whereHas('cuota', function ($q) {
+                $q->where('descripcion', 'like', '%LOCKER%')
+                    ->orWhere('tipo', 'like', '%LOC%');
+            })
+            ->get();
+
+        if ($detallesSinLocker->isEmpty()) {
+            return;
+        }
+
+        $cuotasMensualesLocker = SocioCuota::where('id_socio', $id_socio)
+            ->whereNotNull('id_locker')
+            ->whereHas('cuota', function ($q) {
+                $q->where('descripcion', 'like', '%LOCKER%')
+                    ->orWhere('tipo', 'like', '%LOC%');
+            })
+            ->get();
+
+        foreach ($detallesSinLocker as $detalle) {
+            $sc = $cuotasMensualesLocker->shift();
+            if ($sc) {
+                $detalle->id_locker = $sc->id_locker;
+                $detalle->save();
+                $sc->delete();
+            }
+        }
+    }
+
+    /**
+     * Procesa la renovación de anualidad (Caso 3):
+     * - Si la nueva anualidad tiene lockers anuales con id_locker nulo, hereda los id_locker
+     *   de los detalles de la anualidad previa.
+     * - No genera cargos mensuales para los lockers renovados.
+     * - Si hubo renovación parcial (quedaron lockers de la anualidad fin no renovados),
+     *   convierte únicamente los lockers no renovados a cuotas mensuales.
+     */
+    private function procesarRenovacionAnualidad($id_socio, $anualidad_fin, $anualidad_inicio)
+    {
+        $detallesFinLockers = DetalleAnualidad::where('id_anualidad', $anualidad_fin->id)
+            ->whereNotNull('id_locker')
+            ->whereHas('cuota', function ($q) {
+                $q->where('descripcion', 'like', '%LOCKER%')
+                    ->orWhere('tipo', 'like', '%LOC%');
+            })
+            ->get();
+
+        $detallesInicioLockers = DetalleAnualidad::where('id_anualidad', $anualidad_inicio->id)
+            ->whereHas('cuota', function ($q) {
+                $q->where('descripcion', 'like', '%LOCKER%')
+                    ->orWhere('tipo', 'like', '%LOC%');
+            })
+            ->get();
+
+        // 1. Heredar id_locker si en la nueva anualidad vinieron con id_locker nulo
+        $lockersUsadosEnInicio = $detallesInicioLockers->pluck('id_locker')->filter()->values()->all();
+        $disponiblesFin = $detallesFinLockers->filter(function ($df) use ($lockersUsadosEnInicio) {
+            return !in_array($df->id_locker, $lockersUsadosEnInicio);
+        });
+
+        foreach ($detallesInicioLockers as $di) {
+            if (is_null($di->id_locker)) {
+                $heredado = $disponiblesFin->shift();
+                if ($heredado) {
+                    $di->id_locker = $heredado->id_locker;
+                    $di->save();
+                    $lockersUsadosEnInicio[] = $heredado->id_locker;
+                }
+            }
+        }
+
+        // Si todavía quedan detalles anuales sin locker en inicio, aplicar salvaguarda con socios_cuotas
+        $this->vincularLockersMensualesAAnualidad($id_socio, $anualidad_inicio);
+
+        // Recalcular los lockers renovados finales
+        $lockersRenovados = DetalleAnualidad::where('id_anualidad', $anualidad_inicio->id)
+            ->whereNotNull('id_locker')
+            ->whereHas('cuota', function ($q) {
+                $q->where('descripcion', 'like', '%LOCKER%')
+                    ->orWhere('tipo', 'like', '%LOC%');
+            })
+            ->pluck('id_locker')
+            ->all();
+
+        // 2. Para la anualidad previa, llamar a crearCargosNuevos pero:
+        // - Sin cuotas mensuales de membresía (enable_mensualidad = false)
+        // - Omitiendo los lockers que fueron renovados (skipLockerIds = $lockersRenovados)
+        // Esto automáticamente convierte a mensual los lockers que NO se hayan renovado.
+        $this->crearCargosNuevos($anualidad_fin, $id_socio, false, $lockersRenovados);
     }
 
     /**
@@ -317,7 +435,8 @@ class CargosController extends Controller
                             ->where('tipo', 'like', '%MEN%')
                             ->where(function ($q3) {
                                 $q3->where('tipo', 'like', '%LOC%')
-                                    ->orWhere('tipo', 'like', '%RES%');
+                                    ->orWhere('tipo', 'like', '%RES%')
+                                    ->orWhere('descripcion', 'like', '%LOCKER%');
                             });
                     });
             })
@@ -325,45 +444,74 @@ class CargosController extends Controller
     }
 
     /**
-     * Crea los nuevos cargos fijos en la tabla 'socios_cuotas'
+     * Crea los nuevos cargos fijos en la tabla 'socios_cuotas' a partir de los detalles de una anualidad vencida.
+     *
+     * @param Anualidad $anualidad_fin
+     * @param int $id_socio
+     * @param bool $enable_mensualidad Habilita crear cuota mensual de membresía
+     * @param array $skipLockerIds Lista de id_locker que no deben crearse como mensual (ya renovados)
      */
-    private function crearCargosNuevos($anualidad_fin, $id_socio, $enable_mensualidad = true)
+    private function crearCargosNuevos($anualidad_fin, $id_socio, $enable_mensualidad = true, array $skipLockerIds = [])
     {
-        //Buscamos los detalles de la anualidad
-        $detalles_anualidad = DB::table('detalles_anualidades')
-            ->where('id_anualidad', $anualidad_fin->id)
-            ->get();
-        //Para cada detalle, cargar la cuota en la tabla 'socios_cuotas'
-        foreach ($detalles_anualidad as $key => $detalle) {
-            //Buscamos la cuota original que se itera
+        // Buscamos los detalles de la anualidad
+        $detalles_anualidad = DetalleAnualidad::where('id_anualidad', $anualidad_fin->id)->get();
+
+        // Para cada detalle, cargar la cuota en la tabla 'socios_cuotas'
+        foreach ($detalles_anualidad as $detalle) {
+            // Buscamos la cuota original que se itera
             $cuota_org = Cuota::find($detalle->id_cuota);
-            //Si la cuota tiene clave de membresia
+            if (!$cuota_org) {
+                continue;
+            }
+
+            $cuota_nueva = null;
+            $esLocker = preg_match("/LOC/i", $cuota_org->tipo) || preg_match("/LOCKER/i", $cuota_org->descripcion);
+
+            // Si la cuota tiene clave de membresia
             if ($cuota_org->clave_membresia) {
-                //Si no se habilito la carga de las cuotas mensuales (correspondientes a la membresia)
-                if (!$enable_mensualidad)
+                // Si no se habilito la carga de las cuotas mensuales (correspondientes a la membresia)
+                if (!$enable_mensualidad) {
                     continue;
+                }
                 $cuota_nueva = Cuota::where([
                     ['clave_membresia', '=', $cuota_org->clave_membresia],
                     ['tipo', '=', 'MEN']
                 ])->first();
-            } elseif (preg_match("/LOC/i", $cuota_org->tipo)) {
-                $cuota_nueva = Cuota::where([
-                    ['tipo', 'like', '%LOC%'],
-                    ['tipo', 'like', '%MEN%']
-                ])->first();
+            } elseif ($esLocker) {
+                // Si el locker está en la lista de renovados, no crear cuota mensual
+                if ($detalle->id_locker && in_array($detalle->id_locker, $skipLockerIds)) {
+                    continue;
+                }
+                // Idempotencia: si ya existe cuota para este locker y socio en socios_cuotas, omitir
+                if ($detalle->id_locker && SocioCuota::where('id_socio', $id_socio)->where('id_locker', $detalle->id_locker)->exists()) {
+                    continue;
+                }
+                // Buscar dinámicamente la cuota mensual de locker
+                $cuota_nueva = Cuota::where('descripcion', 'like', '%LOCKER%')
+                    ->where('tipo', 'like', '%MEN%')
+                    ->first();
+                if (!$cuota_nueva) {
+                    $cuota_nueva = Cuota::where([
+                        ['tipo', 'like', '%LOC%'],
+                        ['tipo', 'like', '%MEN%']
+                    ])->first();
+                }
             } elseif (preg_match("/RES/i", $cuota_org->tipo)) {
                 $cuota_nueva = Cuota::where([
                     ['tipo', 'like', '%RES%'],
                     ['tipo', 'like', '%MEN%']
                 ])->first();
             }
-            //Agregamos cuota mensual en la tabla 'socios_cuotas'
-            SocioCuota::create([
-                'id_socio' => $id_socio,
-                'id_cuota' => $cuota_nueva->id,
-                'auto_delete' => true            //Indicador de eliminacion, para la activacion de la anualidad
-            ]);
+
+            if ($cuota_nueva) {
+                // Agregamos cuota mensual en la tabla 'socios_cuotas'
+                SocioCuota::create([
+                    'id_socio'    => $id_socio,
+                    'id_cuota'    => $cuota_nueva->id,
+                    'id_locker'   => $esLocker ? $detalle->id_locker : null,
+                    'auto_delete' => true, // Indicador de eliminacion, para la activacion de la anualidad
+                ]);
+            }
         }
     }
-
 }

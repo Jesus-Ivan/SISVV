@@ -150,6 +150,13 @@ class Nueva extends Component
     //Deshace lo marcado, recargando los cargos fijos desde la BD
     public function restaurarCargosFijos()
     {
+        // Remover de listaCuotas las cuotas anuales que provenían de conversión de locker
+        $this->listaCuotas = array_values(array_filter(
+            $this->listaCuotas,
+            fn($c) => empty($c['converted_from_socio_cuota_id'])
+        ));
+        $this->total = array_sum(array_column($this->listaCuotas, 'monto'));
+
         $this->cargarCargosFijos();
     }
 
@@ -186,7 +193,7 @@ class Nueva extends Component
 
     private function cargarCargosFijos()
     {
-        $this->listaCargosFijos = SocioCuota::with('cuota')
+        $this->listaCargosFijos = SocioCuota::with(['cuota', 'locker'])
             ->where('id_socio', $this->socio['id'])
             ->orderBy('id_cuota')
             ->get()
@@ -294,10 +301,87 @@ class Nueva extends Component
     //Eliminar el cargo del array de cargos
     public function removeCuota($cargoIndex)
     {
-        //Remover el cargo de la lista de cuotas
-        unset($this->listaCuotas[$cargoIndex]);
-        //Actualizar el total de la anualidad
+        if (isset($this->listaCuotas[$cargoIndex])) {
+            $cuota = $this->listaCuotas[$cargoIndex];
+            // Si la cuota proviene de una conversión de locker mensual, restaurar el cargo fijo
+            if (!empty($cuota['converted_from_socio_cuota_id'])) {
+                $socioCuotaId = $cuota['converted_from_socio_cuota_id'];
+                $this->listaCargosFijosEliminados = array_values(array_filter(
+                    $this->listaCargosFijosEliminados,
+                    fn($id) => $id != $socioCuotaId
+                ));
+                $scRestaurar = SocioCuota::with(['cuota', 'locker'])->find($socioCuotaId);
+                if ($scRestaurar) {
+                    $this->listaCargosFijos[] = $scRestaurar->toArray();
+                }
+            }
+
+            unset($this->listaCuotas[$cargoIndex]);
+            $this->listaCuotas = array_values($this->listaCuotas);
+            $this->total = array_sum(array_column($this->listaCuotas, 'monto'));
+        }
+    }
+
+    // Convierte un cargo de locker mensual del socio a cuota de locker anual en la anualidad
+    public function convertirLockerAnual($index)
+    {
+        if (!isset($this->listaCargosFijos[$index])) {
+            return;
+        }
+
+        $fijo = $this->listaCargosFijos[$index];
+
+        if (!$this->fInicio) {
+            session()->flash('fail', 'No has seleccionado la fecha de inicio de la anualidad.');
+            $this->dispatch('action-message-venta');
+            return;
+        }
+
+        if (!$this->no_corrida) {
+            session()->flash('fail', 'No has ingresado el número de meses.');
+            $this->dispatch('action-message-venta');
+            return;
+        }
+
+        // Buscar la cuota anual para locker dinámicamente
+        $cuotaAnual = Cuota::where('descripcion', 'like', '%LOCKER%')
+            ->where('tipo', 'like', '%ANU%')
+            ->first();
+
+        if (!$cuotaAnual) {
+            $cuotaAnual = Cuota::where('tipo', 'like', '%LOC%')
+                ->where('tipo', 'like', '%ANU%')
+                ->first();
+        }
+
+        if (!$cuotaAnual) {
+            session()->flash('fail', 'No se encontró la cuota de Locker Anual en el catálogo.');
+            $this->dispatch('action-message-venta');
+            return;
+        }
+
+        $cuotaArray = $cuotaAnual->toArray();
+        $cuotaArray = $this->addYear($cuotaArray, "/loc/i");
+        if (!preg_match("/\d{4}$/i", $cuotaArray['descripcion'])) {
+            $cuotaArray['descripcion'] .= ' ' . Carbon::parse($this->fInicio)->year;
+        }
+
+        // Asociar datos del locker para la anualidad
+        $cuotaArray['id_locker'] = $fijo['id_locker'] ?? null;
+        $cuotaArray['locker_numero'] = $fijo['locker']['numero'] ?? null;
+        $cuotaArray['locker_seccion'] = $fijo['locker']['seccion'] ?? null;
+        $cuotaArray['converted_from_socio_cuota_id'] = $fijo['id'];
+
+        $this->listaCuotas[] = $cuotaArray;
         $this->total = array_sum(array_column($this->listaCuotas, 'monto'));
+
+        // Marcar el cargo mensual para eliminación diferida (se almacena en cuotas_fijas_eliminar)
+        if (!in_array($fijo['id'], $this->listaCargosFijosEliminados)) {
+            $this->listaCargosFijosEliminados[] = $fijo['id'];
+        }
+
+        unset($this->listaCargosFijos[$index]);
+        $this->listaCargosFijos = array_values($this->listaCargosFijos);
     }
 
     //Agrega el cargo de forma temporal al array de cargos
@@ -390,8 +474,11 @@ class Nueva extends Component
                     DB::table('detalles_anualidades')->insert([
                         'id_anualidad' => $anualidad->id,
                         'id_cuota' => $cargo['id'],
+                        'id_locker' => $cargo['id_locker'] ?? null,
                         'descripcion' => $cargo['descripcion'],
                         'monto' => $cargo['monto'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                     //Creamos los cargos en el estado de cuenta.
                     EstadoCuenta::create([

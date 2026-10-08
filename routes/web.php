@@ -7,6 +7,7 @@ use App\Http\Controllers\CatalogoController;
 use App\Http\Controllers\CocinaController;
 use App\Http\Controllers\EdoCuentaController;
 use App\Http\Controllers\ExcelController;
+use App\Http\Controllers\LockersController;
 use App\Http\Controllers\PuntosController;
 use App\Http\Controllers\RecepcionController;
 use App\Http\Controllers\ReportesController;
@@ -347,6 +348,23 @@ Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
 Route::prefix('acceso')->middleware(['auth', 'acceso'])->group(function () {
     Route::view('/', 'acceso.index')->name('acceso');
     Route::view('socios', 'acceso.Socios.principal')->name('acceso.socios');
+});
+
+//Lockers
+Route::prefix('lockers')->middleware(['auth', 'acceso'])->group(function () {
+
+    Route::get('/', [LockersController::class, 'index'])->name('lockers');
+
+    Route::prefix('casilleros')->group(function () {
+        Route::get('/', [LockersController::class, 'consultarCasilleros'])->name('lockers.consultar');
+    });
+
+    Route::prefix('movimientos')->group(function () {
+        Route::get('/', [LockersController::class, 'consultarMovimientos'])->name('lockers.consultarMovimientos');
+        Route::get('alta', [LockersController::class, 'altaCasillero'])->name('lockers.alta');
+        Route::get('baja', [LockersController::class, 'bajaCasillero'])->name('lockers.baja');
+        Route::get('transferir', [LockersController::class, 'transferirCasillero'])->name('lockers.transferir');
+    });
 });
 
 Route::get('venta/ticket/{venta}', [ReportesController::class, 'generarTicket'])->name('ventas.ticket');

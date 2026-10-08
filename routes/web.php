@@ -351,7 +351,7 @@ Route::prefix('acceso')->middleware(['auth', 'acceso'])->group(function () {
 });
 
 //Lockers
-Route::prefix('lockers')->middleware(['auth', 'acceso'])->group(function () {
+Route::prefix('lockers')->middleware(['auth', 'lockers'])->group(function () {
 
     Route::get('/', [LockersController::class, 'index'])->name('lockers');
 

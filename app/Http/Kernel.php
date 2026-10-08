@@ -70,5 +70,6 @@ class Kernel extends HttpKernel
         'administracion' => \App\Http\Middleware\AdministracionPermisos::class,
         'acceso' =>  \App\Http\Middleware\AccesoPermisos::class,
         'cocina' => \App\Http\Middleware\CocinaPermisos::class,
+        'lockers' => \App\Http\Middleware\LockersPermisos::class,
     ];
 }

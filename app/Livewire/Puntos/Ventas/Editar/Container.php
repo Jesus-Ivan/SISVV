@@ -64,18 +64,6 @@ class Container extends Component
         return ConceptoCancelacion::all();
     }
 
-    #[Computed()]
-    public function ventas_abiertas()
-    {
-        return Venta::whereNull('fecha_cierre')
-            ->where([
-                ["corte_caja", '=', $this->venta->corte_caja],
-                ['folio', '<>', $this->venta->folio],
-            ])
-            ->whereAny(['id_socio', 'nombre'], 'LIKE', '%' . $this->ventaForm->seachVenta . '%')
-            ->get();
-    }
-
     //Hook que se ejecuta al inicio de vida el componente.
     public function mount(Venta $venta, $permisospv, $codigopv)
     {
@@ -101,6 +89,7 @@ class Container extends Component
         $this->ventaForm->permisospv = $permisospv;
         //Buscamos los detalles de los productos vendidos
         $result = DetallesVentaProducto::where('folio_venta', $venta->folio)
+            ->orderBy('chunk')
             ->get()
             ->toArray();
 
@@ -328,15 +317,78 @@ class Container extends Component
     {
         //Guardamos el indice del producto a transferir en el formulario
         $this->ventaForm->saveProductoTransferible($index_producto);
+        $producto_sel = $this->ventaForm->productosTable[$index_producto];
+
+        //Obtenemos las ventas abiertas
+        $ventas_abiertas = Venta::whereNull('fecha_cierre')
+            ->where([
+                ["corte_caja", '=', $this->venta->corte_caja],
+                ['folio', '<>', $this->venta->folio],
+            ])
+            ->whereAny(['id_socio', 'nombre'], 'LIKE', '%' . $this->ventaForm->seachVenta . '%')
+            ->get();
+
+        // Modificadores asociados en la tabla por chunk
+        $modificadores_capturados = array_values(array_filter($this->ventaForm->productosTable, function ($p) use ($producto_sel) {
+            return ($p['chunk'] == $producto_sel['chunk']) && (array_key_exists('modif', $p) && $p['modif']);
+        }));
+
+        $grupos_reglas = [];
+        $modificadores_catalogo = [];
+
+        if (count($modificadores_capturados) > 0) {
+            $prodModel = Producto::with(['modificador', 'grupoModif'])->find($producto_sel['clave_producto']);
+            if ($prodModel) {
+                $grupos = $this->gruposModificadores;
+                foreach ($prodModel->grupoModif as $gm) {
+                    $gInfo = $grupos->find($gm->id_grupo);
+                    $grupos_reglas[] = [
+                        'id_grupo' => $gm->id_grupo,
+                        'descripcion' => $gInfo ? $gInfo->descripcion : 'Grupo ' . $gm->id_grupo,
+                        'modif_incluidos' => (int)$gm->modif_incluidos,
+                        'modif_maximos' => (int)$gm->modif_maximos,
+                        'forzar_captura' => (bool)$gm->forzar_captura,
+                    ];
+                }
+                foreach ($prodModel->modificador as $m) {
+                    $modificadores_catalogo[] = [
+                        'id_grupo' => $m->id_grupo,
+                        'clave_modificador' => $m->clave_modificador,
+                        'precio' => (float)$m->precio,
+                    ];
+                }
+            }
+        }
+
+        // Asociar id_grupo a cada modificador capturado
+        foreach ($modificadores_capturados as $idx => $mCap) {
+            $cat = collect($modificadores_catalogo)->firstWhere('clave_modificador', $mCap['clave_producto']);
+            $modificadores_capturados[$idx]['id_grupo'] = $cat ? $cat['id_grupo'] : null;
+        }
+
         //Evento para abrir el modal
         $this->dispatch('open-modal', name: 'modal-transferir');
+        //Evento para enviar informacion al front (alpine)
+        $this->dispatch(
+            'inicializar-transferencia',
+            ventas_abiertas: $ventas_abiertas,
+            producto: $producto_sel,
+            modificadores_capturados: $modificadores_capturados,
+            grupos_reglas: $grupos_reglas,
+            modificadores_catalogo: $modificadores_catalogo,
+        );
     }
 
-    //Del modal de tranferir producto, guarda el producto en una lista para mover el producto.
-    public function confirmarMovimiento($folio_venta)
+    //Del modal de transferir producto, recibe la estructura de transferencia
+    public function confirmarTransferencia($payload)
     {
-        $this->ventaForm->agregarTransferidos($folio_venta);
-        $this->dispatch('close-modal');
+        try {
+            $this->ventaForm->ejecutarTransferenciaEnMemoria($payload);
+            $this->dispatch('close-modal');
+        } catch (\Throwable $th) {
+            session()->flash('fail', $th->getMessage());
+            $this->dispatch('action-message-venta');
+        }
     }
 
     public function seleccionarProducto($clave)

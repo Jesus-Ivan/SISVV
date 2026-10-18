@@ -13,6 +13,8 @@ use App\Models\DetallesCaja;
 use App\Models\DetallesVentaPago;
 use App\Models\DetallesVentaProducto;
 use App\Models\EstadoCuenta;
+use App\Models\Modificador;
+use App\Models\ModifProducto;
 use App\Models\Producto;
 use App\Models\MotivoCorreccion;
 use App\Models\ProductoZona;
@@ -22,10 +24,13 @@ use App\Models\SocioMembresia;
 use App\Models\Stock;
 use App\Models\TipoPago;
 use App\Models\Venta;
+use App\Models\ZonaImpresion;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Locked;
 use Livewire\Form;
+
+use function Livewire\Volt\with;
 
 class VentaForm extends Form
 {
@@ -63,7 +68,7 @@ class VentaForm extends Form
     #[Locked]
     public $indexSeleccionado;        //Es el posible producto a transferir o eliminar
     public $seachVenta = '';          //el parametro de busqueda, del modal de tranferir producto
-    public $lista_transferidos = [];  //La lista de los productos a transferir
+    public $operaciones_transferencia = []; //Detalle estructurado de transferencias de productos
     public $lista_eliminados = [];    //La lista de los productos a eliminar
 
     public $permisospv;               //Almacena los permisos del usuario en el punto
@@ -425,6 +430,10 @@ class VentaForm extends Form
                 ->pluck('tiempo', 'chunk');
             //Recorremos todos los items de la tabla
             foreach ($this->productosTable as $key => $producto) {
+                // Si este item pertenece a un chunk que está siendo transferido/dividido, moverProductos() lo procesará
+                if ($this->chunkEstaEnTransferencia($producto['chunk'] ?? null)) {
+                    continue;
+                }
                 //Verificamos si el item que se itera, cuenta con un 'id' de la base de datos
                 if (array_key_exists('id', $producto)) {
                     //Actualizar el registro en la BD
@@ -459,36 +468,58 @@ class VentaForm extends Form
                     ]);
                 }
             }
+            // 2. Movemos los productos de venta (transferencias y divisiones)
+            $this->moverProductos($folio);
+
+            // 3. Eliminamos suavemente los productos cancelados por el usuario
             $this->eliminarProductos();
             $this->crearCorreccion($folio);
-            //Movemos los productos de venta
-            $this->moverProductos();
-            //Actualizamos el total de la venta de origen
-            Venta::where('folio', $folio)->update(['total' => $this->totalVenta]);
+
+            // 4. Actualizamos el total de la venta de origen calculando la suma real de productos vigentes en la BD
+            $totalRealOrigen = DetallesVentaProducto::where('folio_venta', $folio)->sum('subtotal') ?? 0;
+            Venta::where('folio', $folio)->update(['total' => $totalRealOrigen]);
+            $this->totalVenta = $totalRealOrigen;
         }, 2);
 
 
         //Verificamos si hay productos modificados
-        if (count($this->lista_eliminados) || count($this->lista_transferidos)) {
-            //Generar array unificado de productos eliminados y movidos de la venta
-            $modified_productos = array_merge($this->lista_eliminados, $this->lista_transferidos);
-            //Buscar los productos, junto a la zona de impresion.
-            $result_productos = DetallesVentaProducto::with('zonaImpresion')
-                ->whereIn('id', array_column($modified_productos, 'id'))
-                ->withTrashed()
-                ->get();
-            //Agrupar por id_zona los productos
-            $prod_sorted = $result_productos->groupBy('id_zona');
+        if (count($this->lista_eliminados) || count($this->operaciones_transferencia)) {
+            $zonasIds = $this->obtenerZonasModificadas();
+            $zonas = ZonaImpresion::whereIn('id', $zonasIds)->get();
+            $ventaModel = Venta::find($folio);
 
-            foreach ($prod_sorted as $id_zona => $collection) {
-                $zona = $collection[0]->zonaImpresion;
-                if (!$id_zona || !$zona) continue;
-                //Avisamos en tiempo real (la modificacion de la venta)
+            foreach ($zonas as $zona) {
+                if (!$zona) continue;
+                //Avisamos en tiempo real (la modificacion de la venta origen)
                 broadcast(new ComandaDetails(
                     PuntosConstants::COMANDA_ACTUALIZADA_EVENT,
-                    Venta::find($folio),
+                    $ventaModel,
                     $zona
                 ));
+            }
+
+            // Avisamos en tiempo real a las ventas destino involucradas
+            $destinosNotificar = [];
+            foreach ($this->operaciones_transferencia as $op) {
+                if ($op['es_fast_path']) {
+                    $destinosNotificar[] = $op['folio_destino_unico'];
+                } else {
+                    foreach ($op['ventas_destino'] as $d) {
+                        $destinosNotificar[] = $d['folio'];
+                    }
+                }
+            }
+            foreach (array_unique(array_filter($destinosNotificar)) as $fDest) {
+                $vDest = Venta::find($fDest);
+                if ($vDest) {
+                    foreach ($zonas as $zona) {
+                        broadcast(new ComandaDetails(
+                            PuntosConstants::COMANDA_ACTUALIZADA_EVENT,
+                            $vDest,
+                            $zona
+                        ));
+                    }
+                }
             }
         }
     }
@@ -536,78 +567,550 @@ class VentaForm extends Form
     }
 
     /**
-     * Agrega el producto seleccionado a una lista para transferirlo, a la venta dada como parametro
+     * Comprueba si un chunk está siendo transferido
      */
-    public function agregarTransferidos($folio)
+    public function chunkEstaEnTransferencia($chunk): bool
     {
-        //Producto a transferir
-        $producto_selec = $this->productosTable[$this->indexSeleccionado];
+        if (!$chunk) return false;
+        foreach ($this->operaciones_transferencia as $op) {
+            if ($op['chunk_original'] == $chunk) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-        //resguardar aquellos items de la tabla, que contengan el mismo chunk del item seleccionado
-        $moved = array_filter($this->productosTable, function ($producto) use ($producto_selec) {
-            return $producto['chunk'] ==  $producto_selec['chunk'];
-        });
-        //Agregar el folio de destino a cada articulo
-        $moved_folio = array_map(function ($producto) use ($folio) {
-            $producto['folio_destino'] = $folio;
-            return $producto;
-        }, $moved);
-        //Guardar los productos transferidos en la lista de transferidos
-        $this->lista_transferidos = array_merge($this->lista_transferidos, $moved_folio);
+    /**
+     * Obtiene los IDs de zonas de impresión afectadas por eliminaciones y transferencias
+     */
+    public function obtenerZonasModificadas(): array
+    {
+        $zonas = [];
+        foreach ($this->lista_eliminados as $el) {
+            if (!empty($el['id_zona'])) $zonas[] = $el['id_zona'];
+        }
+        foreach ($this->operaciones_transferencia as $op) {
+            if (!empty($op['producto_base']['id_zona'])) {
+                $zonas[] = $op['producto_base']['id_zona'];
+            }
+            foreach ($op['modificadores_originales'] as $mo) {
+                if (!empty($mo['id_zona'])) $zonas[] = $mo['id_zona'];
+            }
+        }
+        return array_values(array_unique(array_filter($zonas)));
+    }
 
-        //Quitar aquellos items de la tabla
-        $this->productosTable = array_filter($this->productosTable, function ($producto) use ($producto_selec) {
-            return $producto['chunk'] !=  $producto_selec['chunk'];
-        });
-        //resetear la propiedad
+    /**
+     * Recalcula precios de modificadores aplicando las reglas de grupo_modificador_producto
+     */
+    public function recalcularPreciosModificadores($clave_producto_base, int $cantidad_unidades, array $modificadores_asignados): array
+    {
+        if (empty($modificadores_asignados) || $cantidad_unidades <= 0) {
+            return [];
+        }
+
+        $gruposReglas = ModifProducto::where('clave_producto', $clave_producto_base)->get()->keyBy('id_grupo');
+        $modificadoresCatalogo = Modificador::where('clave_producto', $clave_producto_base)->get()->keyBy('clave_modificador');
+
+        $porGrupo = [];
+        foreach ($modificadores_asignados as $mod) {
+            $claveMod = $mod['clave_producto'];
+            $cat = $modificadoresCatalogo->get($claveMod);
+            $idGrupo = $cat ? $cat->id_grupo : ($mod['id_grupo'] ?? 0);
+            $precioCatalogo = $cat && !is_null($cat->precio) ? (float)$cat->precio : (float)($mod['precio'] ?? 0);
+
+            $porGrupo[$idGrupo][] = [
+                'clave_producto' => $claveMod,
+                'nombre' => $mod['nombre'],
+                'cantidad' => (int)$mod['cantidad'],
+                'precio_catalogo' => $precioCatalogo,
+                'id_zona' => $mod['id_zona'] ?? null,
+                'print_default' => $mod['print_default'] ?? false,
+            ];
+        }
+
+        $resultado = [];
+
+        foreach ($porGrupo as $idGrupo => $items) {
+            $regla = $gruposReglas->get($idGrupo);
+            $incluidosTotal = $regla ? ($regla->modif_incluidos * $cantidad_unidades) : 0;
+            $incluidosConsumidos = 0;
+
+            foreach ($items as $item) {
+                $cant = $item['cantidad'];
+                if ($cant <= 0) continue;
+
+                $gratuitos = max(0, min($cant, $incluidosTotal - $incluidosConsumidos));
+                $conCosto = $cant - $gratuitos;
+                $incluidosConsumidos += $gratuitos;
+
+                if ($gratuitos > 0) {
+                    $resultado[] = [
+                        'clave_producto' => $item['clave_producto'],
+                        'nombre' => $item['nombre'],
+                        'cantidad' => $gratuitos,
+                        'precio' => 0.00,
+                        'subtotal' => 0.00,
+                        'modif' => true,
+                        'id_zona' => $item['id_zona'],
+                        'print_default' => $item['print_default'],
+                    ];
+                }
+
+                if ($conCosto > 0) {
+                    $resultado[] = [
+                        'clave_producto' => $item['clave_producto'],
+                        'nombre' => $item['nombre'],
+                        'cantidad' => $conCosto,
+                        'precio' => $item['precio_catalogo'],
+                        'subtotal' => round($conCosto * $item['precio_catalogo'], 2),
+                        'modif' => true,
+                        'id_zona' => $item['id_zona'],
+                        'print_default' => $item['print_default'],
+                    ];
+                }
+            }
+        }
+
+        return $resultado;
+    }
+
+    /**
+     * Ejecuta la transferencia/división en memoria Livewire
+     */
+    public function ejecutarTransferenciaEnMemoria(array $payload)
+    {
+        if (is_null($this->indexSeleccionado) || !isset($this->productosTable[$this->indexSeleccionado])) {
+            throw new Exception("No hay ningún producto seleccionado para transferir.");
+        }
+
+        $productoCapturado = $this->productosTable[$this->indexSeleccionado];
+        $chunk = $productoCapturado['chunk'];
+
+        $chunkItems = array_values(array_filter($this->productosTable, function ($p) use ($chunk) {
+            return ($p['chunk'] ?? null) == $chunk;
+        }));
+
+        $modificadoresOriginales = array_values(array_filter($chunkItems, function ($p) use ($productoCapturado) {
+            return ($p['clave_producto'] != $productoCapturado['clave_producto']) || (array_key_exists('modif', $p) && $p['modif']);
+        }));
+
+        // Caso Fast-Path (100% a una sola venta destino)
+        if (!empty($payload['es_fast_path'])) {
+            $folioDestino = (int)$payload['folio_destino'];
+
+            $op = [
+                'chunk_original' => $chunk,
+                'producto_base' => $productoCapturado,
+                'modificadores_originales' => $modificadoresOriginales,
+                'es_fast_path' => true,
+                'folio_destino_unico' => $folioDestino,
+                'ventas_destino' => [
+                    [
+                        'folio' => $folioDestino,
+                        'cantidad' => $productoCapturado['cantidad'],
+                        'subtotal_base' => $productoCapturado['subtotal'],
+                        'modificadores' => $modificadoresOriginales,
+                    ]
+                ],
+                'remanente_origen' => [
+                    'cantidad' => 0,
+                    'subtotal_base' => 0,
+                    'modificadores' => [],
+                ]
+            ];
+
+            $this->operaciones_transferencia[] = $op;
+
+            // Retirar de la tabla en memoria
+            $this->productosTable = array_values(array_filter($this->productosTable, function ($p) use ($chunk) {
+                return ($p['chunk'] ?? null) != $chunk;
+            }));
+
+            $this->reset('indexSeleccionado');
+            $this->actualizarTotal();
+            return;
+        }
+
+        // Caso División / Múltiples destinos
+        $ventasDestinoPayload = $payload['ventas_destino'] ?? [];
+        $remanenteOrigenPayload = $payload['remanente_origen'] ?? ['cantidad' => 0, 'modificadores' => []];
+
+        $ventasDestinoProcesadas = [];
+        foreach ($ventasDestinoPayload as $vDest) {
+            $cantDest = (int)($vDest['cantidad_destino'] ?? $vDest['cantidad'] ?? 0);
+            if ($cantDest <= 0) continue;
+
+            $modsAsignados = $vDest['modificadores'] ?? [];
+            $modsRecalculados = $this->recalcularPreciosModificadores(
+                $productoCapturado['clave_producto'],
+                $cantDest,
+                $modsAsignados
+            );
+
+            $subtotalBase = round($cantDest * $productoCapturado['precio'], 2);
+
+            $ventasDestinoProcesadas[] = [
+                'folio' => (int)$vDest['folio'],
+                'cantidad' => $cantDest,
+                'subtotal_base' => $subtotalBase,
+                'modificadores' => $modsRecalculados,
+            ];
+        }
+
+        $cantRemanente = (int)($remanenteOrigenPayload['cantidad'] ?? 0);
+        $modsRemanenteRecalculados = [];
+        $subtotalRemanenteBase = 0;
+
+        if ($cantRemanente > 0) {
+            $subtotalRemanenteBase = round($cantRemanente * $productoCapturado['precio'], 2);
+            $modsRemanenteRecalculados = $this->recalcularPreciosModificadores(
+                $productoCapturado['clave_producto'],
+                $cantRemanente,
+                $remanenteOrigenPayload['modificadores'] ?? []
+            );
+        }
+
+        $op = [
+            'chunk_original' => $chunk,
+            'producto_base' => $productoCapturado,
+            'modificadores_originales' => $modificadoresOriginales,
+            'es_fast_path' => false,
+            'folio_destino_unico' => null,
+            'ventas_destino' => $ventasDestinoProcesadas,
+            'remanente_origen' => [
+                'cantidad' => $cantRemanente,
+                'subtotal_base' => $subtotalRemanenteBase,
+                'modificadores' => $modsRemanenteRecalculados,
+            ]
+        ];
+
+        $this->operaciones_transferencia[] = $op;
+
+        // Actualizar productosTable en memoria
+        if ($cantRemanente === 0) {
+            $this->productosTable = array_values(array_filter($this->productosTable, function ($p) use ($chunk) {
+                return ($p['chunk'] ?? null) != $chunk;
+            }));
+        } else {
+            $nuevosProductos = [];
+            foreach ($this->productosTable as $p) {
+                if (($p['chunk'] ?? null) == $chunk) {
+                    if ($p['clave_producto'] == $productoCapturado['clave_producto'] && empty($p['modif'])) {
+                        $p['cantidad'] = $cantRemanente;
+                        $p['subtotal'] = $subtotalRemanenteBase;
+                        $nuevosProductos[] = $p;
+
+                        foreach ($modsRemanenteRecalculados as $modRem) {
+                            $modRem['chunk'] = $chunk;
+                            $modRem['observaciones'] = '';
+                            $modRem['tiempo'] = null;
+                            $nuevosProductos[] = $modRem;
+                        }
+                    }
+                } else {
+                    $nuevosProductos[] = $p;
+                }
+            }
+            $this->productosTable = $nuevosProductos;
+        }
+
         $this->reset('indexSeleccionado');
-        //Actualizar el total
         $this->actualizarTotal();
     }
 
     /**
-     * Consulta la BD la lista de productos de la venta, y si existio un movimiento de productos entre ventas, lanza una excepcion
+     * Alias para compatibilidad
+     */
+    public function agregarATransferir($payload)
+    {
+        $this->ejecutarTransferenciaEnMemoria($payload);
+    }
+
+    /**
+     * Consulta la BD la lista de productos de la venta, y si existio un movimiento de productos entre ventas o cambio de cantidad, lanza una excepcion
      */
     private function verificarProductos($folio)
     {
-        //Buscar los productos que tiene la venta en la BD
-        $productos_bd = DetallesVentaProducto::where('folio_venta', $folio)->get();
-        //De la tabla de productos, filtrar aquellos que tienen id, de la base de datos
-        $productos_current = array_filter($this->productosTable, function ($producto) {
-            return array_key_exists('id', $producto);
-        });
+        // Buscar los productos activos que tiene la venta en la BD con bloqueo para consistencia transaccional
+        $productos_bd = DetallesVentaProducto::where('folio_venta', $folio)
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('id');
 
-        //Si la cantidad de productos de la BD, es diferente de la actual en la tabla. (proveniente de un movimiento de productos)
-        if (count($productos_bd) != count($productos_current) + count($this->lista_eliminados) + count($this->lista_transferidos)) {
-            throw new Exception('Otro usuario transfirio un producto');
+        // 1. Verificar productos actuales en la tabla (que tienen id)
+        foreach ($this->productosTable as $producto) {
+            if (array_key_exists('id', $producto) && $producto['id']) {
+                $prodBd = $productos_bd->get($producto['id']);
+                $prodNombre = $producto['nombre'] ?? 'seleccionado';
+
+                if (!$prodBd) {
+                    throw new Exception("El producto '{$prodNombre}' fue eliminado o transferido por otro usuario. Actualice la página.");
+                }
+
+                // Si este item pertenece a una transferencia procesada en esta misma petición,
+                // su validación de cantidad original se realiza en el bloque 3 (operaciones_transferencia).
+                if (!$this->chunkEstaEnTransferencia($producto['chunk'] ?? null)) {
+                    if ((int)$prodBd->cantidad !== (int)$producto['cantidad']) {
+                        throw new Exception("El producto '{$prodNombre}' fue modificado por otro usuario (la cantidad en la venta cambió de {$producto['cantidad']} a {$prodBd->cantidad}). Actualice la página.");
+                    }
+                }
+            }
+        }
+
+        // 2. Verificar productos a eliminar
+        foreach ($this->lista_eliminados as $producto) {
+            if (array_key_exists('id', $producto) && $producto['id']) {
+                $prodBd = $productos_bd->get($producto['id']);
+                $prodNombre = $producto['nombre'] ?? 'seleccionado';
+
+                if (!$prodBd) {
+                    throw new Exception("El producto '{$prodNombre}' a eliminar ya fue eliminado o transferido por otro usuario. Actualice la página.");
+                }
+
+                // Si NO pertenece a un chunk transferido en esta misma sesión, su cantidad en BD debe coincidir con la esperada
+                if (!$this->chunkEstaEnTransferencia($producto['chunk'] ?? null)) {
+                    if ((int)$prodBd->cantidad !== (int)$producto['cantidad']) {
+                        throw new Exception("El producto '{$prodNombre}' a eliminar fue modificado por otro usuario (la cantidad en la venta cambió de {$producto['cantidad']} a {$prodBd->cantidad}). Actualice la página.");
+                    }
+                }
+            }
+        }
+
+        // 3. Verificar productos en transferencias
+        foreach ($this->operaciones_transferencia as $op) {
+            $baseId = $op['producto_base']['id'] ?? null;
+            $prodNombre = $op['producto_base']['nombre'] ?? 'seleccionado';
+            if ($baseId) {
+                $prodBd = $productos_bd->get($baseId);
+                if (!$prodBd) {
+                    throw new Exception("El producto '{$prodNombre}' a transferir fue eliminado o transferido por otro usuario. Actualice la página.");
+                }
+                if ((int)$prodBd->cantidad !== (int)$op['producto_base']['cantidad']) {
+                    throw new Exception("El producto '{$prodNombre}' a transferir fue modificado por otro usuario (la cantidad en la venta cambió de {$op['producto_base']['cantidad']} a {$prodBd->cantidad}). Actualice la página.");
+                }
+            }
+            foreach ($op['modificadores_originales'] as $modOrig) {
+                if (array_key_exists('id', $modOrig) && $modOrig['id']) {
+                    $modBd = $productos_bd->get($modOrig['id']);
+                    $modNombre = $modOrig['nombre'] ?? 'modificador';
+                    if (!$modBd) {
+                        throw new Exception("El modificador '{$modNombre}' del producto a transferir fue eliminado o transferido por otro usuario. Actualice la página.");
+                    }
+                    if ((int)$modBd->cantidad !== (int)$modOrig['cantidad']) {
+                        throw new Exception("El modificador '{$modNombre}' del producto a transferir fue modificado por otro usuario (la cantidad en la venta cambió de {$modOrig['cantidad']} a {$modBd->cantidad}). Actualice la página.");
+                    }
+                }
+            }
+        }
+
+        // 4. Verificar que todas las ventas destino involucradas sigan abiertas
+        foreach ($this->operaciones_transferencia as $op) {
+            $prodNombre = $op['producto_base']['nombre'] ?? 'seleccionado';
+            $destinos = $op['es_fast_path']
+                ? [$op['folio_destino_unico']]
+                : array_column($op['ventas_destino'], 'folio');
+
+            foreach (array_unique(array_filter($destinos)) as $folioDest) {
+                $vDest = Venta::where('folio', $folioDest)->whereNull('fecha_cierre')->first();
+                if (!$vDest) {
+                    throw new Exception("El producto {$prodNombre} no se pudo transferir a la venta #{$folioDest}. Ya está cerrada o fue fusionada. Actualice la página.");
+                }
+            }
         }
     }
 
     /**
-     * Mueve los productos correspondientes y actualiza el total de la venta destino
+     * Mueve los productos correspondientes y actualiza el total de las ventas destino y origen
      */
-    private function moverProductos()
+    private function moverProductos($folio)
     {
-        //Recorrer la lista de productos a transferir
-        foreach ($this->lista_transferidos as $key => $transferido) {
-            //comprobar si la venta destino, esta abierta
-            $venta = Venta::where('folio', $transferido['folio_destino'])
-                ->whereNull('fecha_cierre')
-                ->first();
-            //Si la venta no se encontro
-            if (! $venta) {
-                throw new Exception("La venta : " . $transferido['folio_destino'] . " Ya esta cerrada ", 1);
+        $timestampOperacion = time();
+        $chunkOffset = 0;
+
+        // 1. Procesar operaciones de transferencia detalladas
+        foreach ($this->operaciones_transferencia as $op) {
+            $chunkOrig = $op['chunk_original'];
+
+            // Caso Fast-Path (100% a una sola venta destino)
+            if ($op['es_fast_path']) {
+                $folioDest = $op['folio_destino_unico'];
+                $prodNombre = $op['producto_base']['nombre'] ?? 'seleccionado';
+                $ventaDest = Venta::where('folio', $folioDest)->whereNull('fecha_cierre')->first();
+                if (!$ventaDest) {
+                    throw new Exception("El producto {$prodNombre} no se pudo transferir a la venta #{$folioDest}. Ya está cerrada o fue fusionada. Actualice la página.");
+                }
+
+                $subtotalChunk = DetallesVentaProducto::where('chunk', $chunkOrig)
+                    ->where('folio_venta', $folio)
+                    ->sum('subtotal');
+
+                DetallesVentaProducto::where('chunk', $chunkOrig)
+                    ->where('folio_venta', $folio)
+                    ->update(['folio_venta' => $folioDest]);
+
+                $ventaDest->total = DetallesVentaProducto::where('folio_venta', $folioDest)->sum('subtotal') ?? 0;
+                $ventaDest->save();
+                continue;
             }
-            //Mover el producto a la venta destino
-            DetallesVentaProducto::where('id', $transferido['id'])
-                ->update([
-                    'folio_venta' => $transferido['folio_destino'],
-                    'cantidad' => $transferido['cantidad'],
-                    'subtotal' => $transferido['subtotal']
+
+            // Caso División / Múltiples destinos
+            $inicio = now()->format('Y-m-d H:i:s');
+            $prodBase = $op['producto_base'];
+            $modsOrigMap = collect($op['modificadores_originales'])->keyBy('clave_producto');
+
+            foreach ($op['ventas_destino'] as $idxDest => $dest) {
+                $folioDest = $dest['folio'];
+                $prodNombre = $prodBase['nombre'] ?? 'seleccionado';
+                $ventaDest = Venta::where('folio', $folioDest)->whereNull('fecha_cierre')->first();
+                if (!$ventaDest) {
+                    throw new Exception("El producto {$prodNombre} no se pudo transferir a la venta #{$folioDest}. Ya está cerrada o fue fusionada. Actualice la página.");
+                }
+
+                $chunkNuevo = (string) ($timestampOperacion + $chunkOffset++);
+                $subtotalTotalDestino = $dest['subtotal_base'];
+
+                DetallesVentaProducto::create([
+                    'chunk' => $chunkNuevo,
+                    'folio_venta' => $folioDest,
+                    'clave_producto' => $prodBase['clave_producto'],
+                    'nombre' => $prodBase['nombre'],
+                    'cantidad' => $dest['cantidad'],
+                    'precio' => $prodBase['precio'],
+                    'subtotal' => $dest['subtotal_base'],
+                    'observaciones' => $prodBase['observaciones'] ?? '',
+                    'inicio' => $prodBase['inicio'] ?? $inicio,
+                    'tiempo' => $prodBase['tiempo'] ?? null,
+                    'id_estado' => $prodBase['id_estado'] ?? null,
+                    'id_zona' => $prodBase['id_zona'] ?? null,
+                    'mesero' => auth()->user()?->name
                 ]);
-            //Actualizar el total de la venta destino
-            $venta->total = $venta->total + $transferido['subtotal'];
-            $venta->save();
+
+                foreach ($dest['modificadores'] as $mod) {
+                    $subtotalTotalDestino += $mod['subtotal'];
+                    $modOrig = $modsOrigMap->get($mod['clave_producto']);
+                    $modEstado = $modOrig ? ($modOrig['id_estado'] ?? null) : ($prodBase['id_estado'] ?? null);
+                    $modZona = $modOrig ? ($modOrig['id_zona'] ?? null) : ($mod['id_zona'] ?? $prodBase['id_zona'] ?? null);
+
+                    DetallesVentaProducto::create([
+                        'chunk' => $chunkNuevo,
+                        'folio_venta' => $folioDest,
+                        'clave_producto' => $mod['clave_producto'],
+                        'nombre' => $mod['nombre'],
+                        'cantidad' => $mod['cantidad'],
+                        'precio' => $mod['precio'],
+                        'subtotal' => $mod['subtotal'],
+                        'observaciones' => $modOrig['observaciones'] ?? '',
+                        'inicio' => $prodBase['inicio'] ?? $inicio,
+                        'tiempo' => null,
+                        'id_estado' => $modEstado,
+                        'id_zona' => $modZona,
+                        'mesero' => auth()->user()?->name
+                    ]);
+                }
+
+                $ventaDest->total = DetallesVentaProducto::where('folio_venta', $folioDest)->sum('subtotal') ?? 0;
+                $ventaDest->save();
+            }
+
+            // Manejo de la venta de origen
+            $rem = $op['remanente_origen'];
+            $remanenteEliminado = collect($this->lista_eliminados)->contains('chunk', $chunkOrig);
+
+            if ($rem['cantidad'] === 0) {
+                // No quedó nada en origen: eliminar definitivamente con forceDelete para no ensuciar reportes
+                DetallesVentaProducto::where('chunk', $chunkOrig)
+                    ->where('folio_venta', $folio)
+                    ->forceDelete();
+            } elseif ($remanenteEliminado) {
+                $itemEliminado = collect($this->lista_eliminados)->firstWhere('chunk', $chunkOrig);
+                $idCancelacion = $itemEliminado['id_cancelacion'] ?? null;
+                $motivoCancelacion = $itemEliminado['motivo_cancelacion'] ?? null;
+                $usuarioCancela = auth()->user()?->name ?? ($itemEliminado['usuario_cancela'] ?? null);
+                $fechaCancela = now()->format('Y-m-d H:i:s');
+
+                // El usuario transfirió una parte y posteriormente canceló el remanente en la tabla
+                DetallesVentaProducto::withTrashed()
+                    ->where('id', $prodBase['id'])
+                    ->update([
+                        'cantidad' => $rem['cantidad'],
+                        'subtotal' => $rem['subtotal_base'],
+                        'id_cancelacion' => $idCancelacion,
+                        'motivo_cancelacion' => $motivoCancelacion,
+                        'deleted_at' => $fechaCancela,
+                        'usuario_cancela' => $usuarioCancela,
+                    ]);
+
+                // Eliminar los modificadores viejos en origen
+                DetallesVentaProducto::where('chunk', $chunkOrig)
+                    ->where('id', '<>', $prodBase['id'])
+                    ->where('folio_venta', $folio)
+                    ->forceDelete();
+
+                // Crear los modificadores del producto remanente eliminado para fines de auditoría,
+                // directamente con la misma información de cancelación del producto base
+                foreach ($rem['modificadores'] as $modRem) {
+                    $modOrig = $modsOrigMap->get($modRem['clave_producto']);
+                    $modEstado = $modOrig ? ($modOrig['id_estado'] ?? null) : ($prodBase['id_estado'] ?? null);
+                    $modZona = $modOrig ? ($modOrig['id_zona'] ?? null) : ($modRem['id_zona'] ?? $prodBase['id_zona'] ?? null);
+
+                    DetallesVentaProducto::create([
+                        'chunk' => $chunkOrig,
+                        'folio_venta' => $folio,
+                        'clave_producto' => $modRem['clave_producto'],
+                        'nombre' => $modRem['nombre'],
+                        'cantidad' => $modRem['cantidad'],
+                        'precio' => $modRem['precio'],
+                        'subtotal' => $modRem['subtotal'],
+                        'observaciones' => $modOrig['observaciones'] ?? '',
+                        'inicio' => $prodBase['inicio'] ?? $inicio,
+                        'tiempo' => null,
+                        'id_estado' => $modEstado,
+                        'id_zona' => $modZona,
+                        'mesero' => auth()->user()?->name,
+                        'id_cancelacion' => $idCancelacion,
+                        'motivo_cancelacion' => $motivoCancelacion,
+                        'deleted_at' => $fechaCancela,
+                        'usuario_cancela' => $usuarioCancela,
+                    ]);
+                }
+            } else {
+                // Actualizar producto base en origen
+                DetallesVentaProducto::where('id', $prodBase['id'])
+                    ->update([
+                        'cantidad' => $rem['cantidad'],
+                        'subtotal' => $rem['subtotal_base'],
+                    ]);
+
+                // Eliminar modificadores viejos en origen
+                DetallesVentaProducto::where('chunk', $chunkOrig)
+                    ->where('id', '<>', $prodBase['id'])
+                    ->where('folio_venta', $folio)
+                    ->forceDelete();
+
+                // Insertar los modificadores restantes recalculados en origen
+                foreach ($rem['modificadores'] as $modRem) {
+                    $modOrig = $modsOrigMap->get($modRem['clave_producto']);
+                    $modEstado = $modOrig ? ($modOrig['id_estado'] ?? null) : ($prodBase['id_estado'] ?? null);
+                    $modZona = $modOrig ? ($modOrig['id_zona'] ?? null) : ($modRem['id_zona'] ?? $prodBase['id_zona'] ?? null);
+
+                    DetallesVentaProducto::create([
+                        'chunk' => $chunkOrig,
+                        'folio_venta' => $folio,
+                        'clave_producto' => $modRem['clave_producto'],
+                        'nombre' => $modRem['nombre'],
+                        'cantidad' => $modRem['cantidad'],
+                        'precio' => $modRem['precio'],
+                        'subtotal' => $modRem['subtotal'],
+                        'observaciones' => $modOrig['observaciones'] ?? '',
+                        'inicio' => $prodBase['inicio'] ?? $inicio,
+                        'tiempo' => null,
+                        'id_estado' => $modEstado,
+                        'id_zona' => $modZona,
+                        'mesero' => auth()->user()?->name
+                    ]);
+                }
+            }
         }
     }
 
@@ -623,8 +1126,11 @@ class VentaForm extends Form
             //Verificamos si el item que se itera, cuenta con un 'id' de la base de datos
             if (array_key_exists('id', $producto)) {
                 //Actualizar el registro en la BD
-                DetallesVentaProducto::where('id', $producto['id'])
+                DetallesVentaProducto::withTrashed()
+                    ->where('id', $producto['id'])
                     ->update([
+                        'cantidad' => $producto['cantidad'],
+                        'subtotal' => $producto['subtotal'],
                         'id_cancelacion' => $producto['id_cancelacion'],
                         'motivo_cancelacion' => $producto['motivo_cancelacion'],
                         'deleted_at' => now(),

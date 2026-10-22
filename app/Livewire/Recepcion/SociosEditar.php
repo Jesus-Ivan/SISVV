@@ -5,10 +5,14 @@ namespace App\Livewire\Recepcion;
 use App\Livewire\Forms\SocioForm;
 use App\Models\IntegrantesSocio;
 use App\Models\Membresias;
+use App\Models\SocioParentesco;
+use App\Models\UserPermisos;
 use App\Services\LockerService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -17,6 +21,9 @@ class SociosEditar extends Component
     use WithFileUploads;
     public SocioForm $form;
     public bool $reducirIntegrantes = false;
+
+    #[Locked]
+    public ?UserPermisos $permisos;
 
     #[Computed()]
     public function membresias()
@@ -27,11 +34,19 @@ class SociosEditar extends Component
             ->get();
     }
 
+    #[Computed()]
+    public function parentescos()
+    {
+        return SocioParentesco::where('estado', true)->get();
+    }
+
     //Inicializar el componente con los valores, obtenidos desde el controlador
-    public function mount($socio)
+    public function mount($socio, $permisos)
     {
         $this->form->setSocio($socio);
         $this->form->setIntegrantes($socio);
+        //Obtenemos los permisos opcionales
+        $this->permisos = $permisos;
     }
 
     //Se ejecuta cada vez que cambian las membresias seleccionadas, para restringir el registro de integrantes

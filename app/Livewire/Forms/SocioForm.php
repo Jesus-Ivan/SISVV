@@ -292,19 +292,14 @@ class SocioForm extends Form
     }
 
     /**
-     * Elimina el registro del integrante en la BD, y la imagen del servidor.\
-     * Ademas, reasigna lockers. en caso de existir.
+     * Realiza la eliminación suave del registro del integrante en la BD (soft delete)
+     * y reasigna lockers en caso de existir. La imagen se conserva en el servidor.
      */
     public function eliminar_integrante(array $integrante_eliminar, Collection $lockers)
     {
         $user = auth()->user();
         // Resolvemos el servicio mediante el helper de Laravel
         $lockerService = app(LockerService::class);
-
-        //Si existe imagen del miembro, la borramos del servidor
-        if ($integrante_eliminar['img_path_integrante']) {
-            Storage::disk('public')->delete($integrante_eliminar['img_path_integrante']);
-        }
 
         $lockers_integrante = $lockers
             ->where('id_integrante_actual', $integrante_eliminar['id']);
@@ -316,7 +311,7 @@ class SocioForm extends Form
             );
         }
 
-        //Eliminamos el registro del miembro
+        //Eliminamos el registro del miembro (Soft delete)
         IntegrantesSocio::destroy($integrante_eliminar['id']);
     }
 

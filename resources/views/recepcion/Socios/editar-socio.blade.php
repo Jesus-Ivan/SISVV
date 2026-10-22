@@ -5,11 +5,11 @@
     </x-slot>
 
     {{-- Contenido --}}
-    <div >
+    <div>
         <!-- Title -->
-        <h4 class="text-2xl font-bold dark:text-white mx-2">Editar socio - {{$socio->id}}</h4>
+        <h4 class="text-2xl font-bold dark:text-white mx-2">Editar socio - {{ $socio->id }}</h4>
         <div>
-           <livewire:recepcion.socios-editar :socio="$socio"/>
+            <livewire:recepcion.socios-editar :socio="$socio" :permisos="$permisos" />
         </div>
     </div>
 </x-app-layout>

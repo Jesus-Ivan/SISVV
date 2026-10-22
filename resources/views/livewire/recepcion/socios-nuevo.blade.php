@@ -207,14 +207,14 @@
                 {{-- MEMBRESIAS: lista de checkboxes (registro nuevo, todas se crean activas) --}}
                 <div>
                     <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresías</label>
-                    <div class="border border-gray-300 rounded-lg bg-white divide-y divide-gray-200 max-h-64 overflow-y-auto dark:bg-gray-800 dark:border-gray-600 dark:divide-gray-700">
+                    <div
+                        class="border border-gray-300 rounded-lg bg-white divide-y divide-gray-200 max-h-64 overflow-y-auto dark:bg-gray-800 dark:border-gray-600 dark:divide-gray-700">
                         @foreach ($this->membresias as $membresia)
-                            <label class="flex items-center gap-2 px-3 py-2 cursor-pointer text-sm font-medium text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-700"
+                            <label
+                                class="flex items-center gap-2 px-3 py-2 cursor-pointer text-sm font-medium text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-700"
                                 wire:key="memb-{{ $membresia->clave }}">
-                                <input type="checkbox"
-                                    wire:model="formSocio.claves_membresia"
-                                    wire:change="comprobarMembresias"
-                                    value="{{ $membresia->clave }}"
+                                <input type="checkbox" wire:model="formSocio.claves_membresia"
+                                    wire:change="comprobarMembresias" value="{{ $membresia->clave }}"
                                     class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                 <span>{{ $membresia->descripcion }}</span>
                             </label>
@@ -288,17 +288,9 @@
                             <select wire:model='formSocio.parentesco' id="membresias"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 <option selected value="{{ null }}">Seleccione</option>
-                                <option value="Padre">Padre</option>
-                                <option value="Madre">Madre</option>
-                                <option value="Esposo">Esposo</option>
-                                <option value="Esposa">Esposa</option>
-                                <option value="Hijo/a">Hijo/a</option>
-                                <option value="Hermano/a">Hermano/a</option>
-                                <option value="Yerno/nuera">Yerno/nuera</option>
-                                <option value="Sobrino/a">Sobrino/a</option>
-                                <option value="Nieto/a">Nieto/a</option>
-                                <option value="Tio/a">Tio/a</option>
-                                <option value="Suegro/a">Suegro/a</option>
+                                @foreach ($this->parentescos as $item)
+                                    <option value="{{ $item->parentesco }}">{{ $item->parentesco }}</option>
+                                @endforeach
                             </select>
                             @error('formSocio.parentesco')
                                 <x-input-error messages="{{ $message }}" />

@@ -69,7 +69,7 @@
             </div>
 
             <!-- columna 2 -->
-            <div class="w-full">
+            <div class="w-full ">
                 <div class="flex gap-2">
                     <!-- APELLIDO PATERNO -->
                     <div class="w-full">
@@ -235,7 +235,7 @@
                 </div>
                 <div>
                     {{-- MEMBRESIAS: dropdown de estado para todas las membresías del catálogo --}}
-                    <div>
+                    <div class="{{ !$permisos ? 'opacity-50 pointer-events-none ' : '' }}">
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Membresías</label>
                         <div
                             class="border border-gray-300 rounded-lg bg-white divide-y divide-gray-200 max-h-64 overflow-y-auto dark:bg-gray-800 dark:border-gray-600 dark:divide-gray-700">
@@ -260,6 +260,7 @@
                                     </div>
                                     <select wire:model.live="form.estados_membresia.{{ $clave }}"
                                         wire:change="comprobarMembresias" @disabled($esAnual)
+                                        {{ !$permisos ? 'tabindex=-1' : '' }}
                                         title="{{ $esAnual ? 'Membresía en anualidad: se gestiona desde el módulo de anualidades' : '' }}"
                                         class="text-xs py-1 px-2 rounded-md border border-gray-300 bg-white text-gray-900 w-32 shrink-0 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800">
                                         <option value="" @disabled(in_array($clave, $form->claves_originales))>Seleccionar</option>
@@ -350,17 +351,9 @@
                             <select wire:model='form.parentesco' id="membresias"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 <option selected value="{{ null }}">Seleccione</option>
-                                <option value="Padre">Padre</option>
-                                <option value="Madre">Madre</option>
-                                <option value="Esposo">Esposo</option>
-                                <option value="Esposa">Esposa</option>
-                                <option value="Hijo/a">Hijo/a</option>
-                                <option value="Hermano/a">Hermano/a</option>
-                                <option value="Yerno/nuera">Yerno/nuera</option>
-                                <option value="Sobrino/a">Sobrino/a</option>
-                                <option value="Nieto/a">Nieto/a</option>
-                                <option value="Tio/a">Tio/a</option>
-                                <option value="Suegro/a">Suegro/a</option>
+                                @foreach ($this->parentescos as $item)
+                                    <option value="{{ $item->parentesco }}">{{ $item->parentesco }}</option>
+                                @endforeach
                             </select>
                             @error('formSocio.parentesco')
                                 <x-input-error messages="{{ $message }}" />
@@ -546,17 +539,9 @@
                                     <select id="parentesco" wire:model='form.editando_parentesco'
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                         <option selected value="{{ null }}">Seleccione</option>
-                                        <option value="Padre">Padre</option>
-                                        <option value="Madre">Madre</option>
-                                        <option value="Esposo">Esposo</option>
-                                        <option value="Esposa">Esposa</option>
-                                        <option value="Hijo/a">Hijo/a</option>
-                                        <option value="Hermano/a">Hermano/a</option>
-                                        <option value="Yerno/nuera">Yerno/nuera</option>
-                                        <option value="Sobrino/a">Sobrino/a</option>
-                                        <option value="Nieto/a">Nieto/a</option>
-                                        <option value="Tio/a">Tio/a</option>
-                                        <option value="Suegro/a">Suegro/a</option>
+                                        @foreach ($this->parentescos as $item)
+                                            <option value="{{ $item->parentesco }}">{{ $item->parentesco }}</option>
+                                        @endforeach
                                     </select>
                                     @error('form.editando_parentesco')
                                         <x-input-error messages="{{ $message }}" />

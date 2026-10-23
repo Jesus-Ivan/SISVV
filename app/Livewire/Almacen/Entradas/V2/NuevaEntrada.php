@@ -90,10 +90,13 @@ class NuevaEntrada extends Component
 
         return  $result->get()->take(100);
     }
+
     #[Computed()]
     public function proveedores()
     {
-        return Proveedor::all();
+        return Proveedor::query()
+            ->orderBy('nombre', 'ASC')
+            ->get();
     }
 
     public function agregarArticulos()

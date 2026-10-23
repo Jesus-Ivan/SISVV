@@ -46,6 +46,7 @@ class NuevoProducto extends Component
     public function subgrupos()
     {
         return Subgrupos::where('id_grupo', $this->form->id_grupo)
+            ->orderBy('descripcion', 'ASC')
             ->get();
     }
 
@@ -53,6 +54,7 @@ class NuevoProducto extends Component
     public function grupos()
     {
         $result = Grupos::where('tipo', AlmacenConstants::PRODUCTOS_KEY)
+            ->orderBy('descripcion', 'ASC')
             ->get();
         return $result;
     }

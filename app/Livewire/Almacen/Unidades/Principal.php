@@ -61,13 +61,13 @@ class Principal extends Component
         ]);
 
         $unidad = Unidad::find($this->edit_id_unidad);
-        
+
         //Actualizamos los datos en la base de datos
         $unidad->update([
             'descripcion' => $validated['edit_descripcion_unidad'],
             'estado' => $validated['edit_estado_unidad']
         ]);
-        
+
         try {
             $unidad->update($validated);
             session()->flash('success', "Registro modificado correctamente");
@@ -86,8 +86,10 @@ class Principal extends Component
     public function render()
     {
         return view('livewire.almacen.unidades.principal', [
-            'listaUnidades' => Unidad::where('descripcion', 'like', '%' . $this->search . '%')->orWhere('id', '=', $this->search)
-            ->paginate(10)
+            'listaUnidades' => Unidad::where('descripcion', 'like', '%' . $this->search . '%')
+                ->orWhere('id', '=', $this->search)
+                ->orderBy('descripcion', 'ASC')
+                ->paginate(10)
         ]);
     }
 }

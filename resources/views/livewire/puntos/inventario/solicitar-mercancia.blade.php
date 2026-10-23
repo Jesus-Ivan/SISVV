@@ -1,6 +1,5 @@
 <div class="ms-3 mx-3">
     {{-- FECHA MES --}}
-    {{-- FECHA MES --}}
     <div class="flex gap-4 items-end my-3">
         <div>
             <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Buscar por Mes</label>
@@ -84,11 +83,18 @@
         {{ $this->pedidos->links() }}
     </div>
 
-    {{-- Modal para ver los detalles de la factura --}}
+    {{-- Modal para ver los detalles del traspaso --}}
     <x-modal name="detalles" title="DETALLES DE SOLICITUD">
         <x-slot:body>
             <p>FOLIO SOLICITUD: {{ $pedido_seleccionado }}</p>
-            {{-- Detalles de la factura --}}
+            {{-- Detalles de la solicitud --}}
+            @php
+                $detalles_solicitud_por_clave = collect($detalles_pedido)->keyBy('clave_insumo');
+                $detalles_traspaso_por_clave = collect($detalles_traspaso);
+                $claves_detalle = $detalles_solicitud_por_clave->keys()
+                    ->merge($detalles_traspaso_por_clave->keys())
+                    ->unique();
+            @endphp
             <div class="relative overflow-x-auto shadow-md sm:rounded-lg" style="max-height: 300px; overflow-y: auto;">
                 <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -105,23 +111,34 @@
                             <th scope="col" class="px-3 py-2">
                                 CANTIDAD SOLICITADA
                             </th>
+                            <th scope="col" class="px-3 py-2">
+                                CANTIDAD TRASPASADA
+                            </th>
+                        </tr>
                     </thead>
                     <tbody>
-                        @foreach ($detalles_pedido as $index => $detalle)
-                            <tr wire:key='{{ $index }}'
+                        @foreach ($claves_detalle as $clave)
+                            @php
+                                $detalle = $detalles_solicitud_por_clave->get($clave);
+                                $traspaso = $detalles_traspaso_por_clave->get($clave);
+                            @endphp
+                            <tr wire:key="detalle-{{ $clave }}"
                                 class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
                                 <th scope="row"
                                     class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                    {{ $detalle->clave_insumo }}
+                                    {{ $detalle->clave_insumo ?? $traspaso->clave_insumo }}
                                 </th>
                                 <td class="px-3 py-2 w-96">
-                                    {{ $detalle->descripcion }}
-                                </td>
-                                <td class="px-3 py-2">
-                                    {{ $detalle->existencias }}
+                                    {{ $detalle->descripcion ?? $traspaso->descripcion }}
                                 </td>
                                 <td class="px-3 py-2 text-center">
-                                    {{ $detalle->cantidad_insumo }}
+                                    {{ $detalle->existencias ?? ($existencias_antes_traspaso[$clave] ?? 'N/A') }}
+                                </td>
+                                <td class="px-3 py-2 text-center">
+                                    {{ $detalle->cantidad_insumo ?? 'N/A' }}
+                                </td>
+                                <td class="px-3 py-2 text-center">
+                                    {{ $traspaso->cantidad_insumo ?? 'N/A' }}
                                 </td>
                             </tr>
                         @endforeach

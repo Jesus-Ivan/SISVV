@@ -31,7 +31,7 @@ class Principal extends Component
                 ->whereMonth('fecha_existencias', $month);
         }
 
-        return $query->orderBy('fecha_existencias', 'asc')->paginate(10);
+        return $query->orderBy('fecha_existencias', 'desc')->paginate(10);
     }
 
     public function render()

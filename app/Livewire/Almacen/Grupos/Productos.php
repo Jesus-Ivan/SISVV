@@ -221,7 +221,9 @@ class Productos extends Component
 
     public function render()
     {
-        $grupos = Grupos::where('tipo', '!=', 'INSUM')->get();
+        $grupos = Grupos::where('tipo', '!=', 'INSUM')
+            ->orderBy('descripcion', 'ASC')
+            ->get();
 
         return view(
             'livewire.almacen.grupos.productos',

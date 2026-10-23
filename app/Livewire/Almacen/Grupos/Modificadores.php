@@ -91,7 +91,9 @@ class Modificadores extends Component
 
     public function render()
     {
-        $result = DB::table('grupos_modificadores')->get();
+        $result = DB::table('grupos_modificadores')
+            ->orderBy('descripcion', 'ASC')
+            ->get();
         return view('livewire.almacen.grupos.modificadores', [
             'listaModificadores' => $result
         ]);

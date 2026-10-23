@@ -552,20 +552,36 @@ class ReportesController extends Controller
         if ($type_file == 'PDF') {
             //Array auxiliar de pagos separados por tipo
             $separados = [];
-            //Consulta que obtiene los detalles de los pagos con su corte de caja
-            $detalles_pago = DetallesCaja::with('venta')
-                ->whereIn('corte_caja', array_column($cajas, 'corte'))
+            $separados_pendientes = [];
+            //Consulta que obtiene los detalles de pagos normales de los cortes
+            $detalles_pago = DB::table('detalles_caja')
+                ->join('ventas', 'detalles_caja.folio_venta', '=', 'ventas.folio')
+                ->select('detalles_caja.*', 'ventas.fecha_apertura', 'ventas.clave_punto_venta', 'ventas.tipo_venta')
+                ->whereIn('detalles_caja.corte_caja', array_column($cajas, 'corte'))
+                ->where('detalles_caja.tipo_movimiento', PuntosConstants::INGRESO_KEY)
                 ->get();
 
-            //Obtenemos el total del corte
-            $totalVenta = array_sum(array_column($detalles_pago->toArray(), 'monto'));
-            //Separar los pagos por tipo
+            //Consulta por separado los pagos de pendientes realizados en esos cortes
+            $detalles_pendientes = DB::table('detalles_caja')
+                ->join('ventas', 'detalles_caja.folio_venta', '=', 'ventas.folio')
+                ->select('detalles_caja.*', 'ventas.fecha_apertura', 'ventas.clave_punto_venta', 'ventas.tipo_venta')
+                ->whereIn('detalles_caja.corte_caja', array_column($cajas, 'corte'))
+                ->where('detalles_caja.tipo_movimiento', PuntosConstants::INGRESO_PENDIENTE_KEY)
+                ->get();
+
+            //Separar movimientos normales y pagos de pendientes por metodo de pago
             foreach ($tipos_pago as $pago) {
-                //Separar las ventas por tipo de pago
                 $separados[$pago->descripcion] = $detalles_pago
+                    ->where('id_tipo_pago', '=', $pago->id);
+                $separados_pendientes[$pago->descripcion] = $detalles_pendientes
                     ->where('id_tipo_pago', '=', $pago->id);
             }
 
+            //Excluir las notas pendientes sin cobrar del total y sumar las pendientes ya pagadas
+            $totalVenta = $detalles_pago
+                ->reject(fn ($detalle) => ($metodo_pago[$detalle->id_tipo_pago] ?? null) === 'PENDIENTE')
+                ->sum('monto')
+                + $detalles_pendientes->sum('monto');
 
             $header = [
                 'title' => 'VISTA VERDE COUNTRY CLUB',
@@ -580,6 +596,7 @@ class ReportesController extends Controller
             $data = [
                 'header' => $header,
                 'detalles_pagos' => $separados,
+                'detalles_pendientes' => $separados_pendientes,
                 'totalVenta' => $totalVenta,
                 'puntos_venta' => $puntos_venta
             ];
@@ -593,6 +610,9 @@ class ReportesController extends Controller
             $ventas = Venta::withWhereHas('detallesCaja', function ($query) use ($cajas) {
                 $query->whereIn('corte_caja', array_column($cajas, 'corte'));
             })
+                ->with(['detallesProductos' => fn ($query) => $query
+                    ->withTrashed()
+                    ->orderBy('id')])
                 ->get();
 
             //GENERAMOS EL REPORTE EN EXCEL
@@ -1091,6 +1111,7 @@ class ReportesController extends Controller
     public function getExistencias()
     {
         $grupos = Grupos::where('tipo', AlmacenConstants::INSUMOS_KEY)
+            ->orderBy('descripcion', 'ASC')
             ->get();
         $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
         //Establecer fecha inicial
@@ -1220,6 +1241,7 @@ class ReportesController extends Controller
     public function getInvSemanal()
     {
         $grupos = Grupos::where('tipo', AlmacenConstants::INSUMOS_KEY)
+            ->orderBy('descripcion', 'asc')
             ->get();
         $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
         //Establecer fecha inicial
@@ -1379,6 +1401,7 @@ class ReportesController extends Controller
     public function getCruce()
     {
         $grupos = Grupos::where('tipo', AlmacenConstants::INSUMOS_KEY)
+            ->orderBy('descripcion', 'asc')
             ->get();
         $bodegas = Bodega::where('tipo', AlmacenConstants::BODEGA_INTER_KEY)->get();
         //Establecer fecha inicial

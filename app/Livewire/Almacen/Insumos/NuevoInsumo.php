@@ -22,6 +22,7 @@ class NuevoInsumo extends Component
     {
         $result = DB::table('grupos')
             ->where('tipo', AlmacenConstants::INSUMOS_KEY)
+            ->orderBy('descripcion', 'ASC')
             ->get();
         return $result;
     }
@@ -29,7 +30,9 @@ class NuevoInsumo extends Component
     #[Computed()]
     public function unidades()
     {
-        return Unidad::all();
+        return Unidad::query()
+            ->orderBy('descripcion', 'ASC')
+            ->get();
     }
 
     #[On('selected-insumo')]

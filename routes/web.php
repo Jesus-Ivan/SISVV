@@ -238,10 +238,13 @@ Route::prefix('cocina')->middleware(['auth', 'cocina'])->group(function () {
 
     Route::view('inventarios', 'cocina.Inventarios.inventarios')->name('cocina.inventarios');
 
-    Route::prefix('solicitud-mercancia')->group(function () {
-        Route::view('/', 'cocina.Inventarios.SolicitarMercancia.mercancias')->name('cocina.mercancias');
-        Route::view('nueva', 'cocina.Inventarios.SolicitarMercancia.nueva-mercancia')->name('cocina.mercancias.nueva-soli');
+    Route::prefix('inventario')->group(function () {
+        Route::view('/', 'cocina.Inventario.solicitar-mercancia')->name('cocina.inventario.solicitar-mercancia');
+        Route::view('nueva-solicitud', 'cocina.Inventario.nueva-solicitud')->name('cocina.inventario.nueva-solicitud');
     });
+
+    //Route::get('solicitar-mercancia', [PuntosController::class, 'solicitarMercancia'])->name('pv.solicitud-mercancia');
+    //Route::get('nueva-solicitud', [PuntosController::class, 'nuevaSolicitud'])->name('puntos.inventario.nueva-solicitud');
 
     Route::view('platillos', 'cocina.Platillos.platillos')->name('cocina.platillos');
 

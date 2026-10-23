@@ -102,6 +102,14 @@
                         <h6 class="font-bold dark:text-white">Cliente:</h6>
                         <p class="font-normal text-gray-700 dark:text-gray-400">{{ $orden['venta']['nombre'] }}</p>
                     </div>
+                    <div class="flex gap-1 items-end">
+                        <h6 class="font-bold dark:text-white">Comensales:</h6>
+                        <p class="font-normal text-gray-700 dark:text-gray-400">{{ $orden['venta']['num_comensales'] }}</p>
+                    </div>
+                    <div class="flex gap-1 items-end">
+                        <h6 class="font-bold dark:text-white">Mesero:</h6>
+                        <p class="font-normal text-gray-700 dark:text-gray-400">{{ collect($orden['detalles'])->first()['mesero'] }}</p>
+                    </div>
                 </div>
                 <!--Table-->
                 <div>

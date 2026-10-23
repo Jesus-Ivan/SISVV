@@ -51,6 +51,7 @@ class InventarioNuevo extends Component
     public function grupos()
     {
         $result = Grupos::where('tipo', AlmacenConstants::INSUMOS_KEY)
+            ->orderBy('descripcion', 'ASC')
             ->get();
         return $result;
     }

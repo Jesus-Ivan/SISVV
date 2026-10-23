@@ -21,7 +21,9 @@ class NuevaPresentacion extends Component
     #[Computed()]
     public function proveedores()
     {
-        return Proveedor::all();
+        return Proveedor::query()
+            ->orderBy('nombre', 'ASC')
+            ->get();
     }
 
     #[Computed()]
@@ -29,6 +31,7 @@ class NuevaPresentacion extends Component
     {
         $result = DB::table('grupos')
             ->where('tipo', AlmacenConstants::INSUMOS_KEY)
+            ->orderBy('descripcion', 'ASC')
             ->get();
         return $result;
     }

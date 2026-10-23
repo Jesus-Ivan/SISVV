@@ -47,6 +47,7 @@ class Principal extends Component
     {
         $result = Grupos::with('subgrupos')
             ->where('tipo', AlmacenConstants::PRODUCTOS_KEY)
+            ->orderBy('descripcion', 'ASC')
             ->get();
         return $result;
     }

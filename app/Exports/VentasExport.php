@@ -31,10 +31,16 @@ class VentasExport implements FromArray
             'propina' => 'PROPINA',
             'tipo_pago' => 'METODO PAGO',
             'clave_punto_venta' => 'ZONA',
+            'mesero' => 'MESERO',
             'num_comensales' => 'COMENSALES',
         ];
 
         foreach ($this->data as $venta) {
+            $mesero = $venta->detallesProductos
+                ->sortBy('id')
+                ->first(fn ($detalle) => filled($detalle->mesero))
+                ?->mesero;
+
             foreach ($venta->detallesCaja as $key => $detalle) {
                 $ventasDia[] = [
                     'movimiento' => $detalle->id,
@@ -48,6 +54,7 @@ class VentasExport implements FromArray
                     'propina' => $detalle->propina,
                     'tipo_pago' => $this->metodo_pago[$detalle->id_tipo_pago],
                     'clave_punto_venta' => $this->puntos_venta[$venta->clave_punto_venta],
+                    'mesero' => $mesero,
                     'num_comensales' => $key == 0 ? $venta->num_comensales : null
                 ];
             }

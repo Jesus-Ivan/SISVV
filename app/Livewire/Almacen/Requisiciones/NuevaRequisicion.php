@@ -55,7 +55,7 @@ class NuevaRequisicion extends Component
     #[Computed()]
     public function proveedores()
     {
-        return Proveedor::all();
+        return Proveedor::query()->orderBy('nombre', 'ASC')->get();
     }
 
     #[Computed()]

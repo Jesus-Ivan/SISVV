@@ -24,6 +24,7 @@ class Principal extends Component
         $result = CatalogoVistaVerde::with('stocks')
         ->whereAny(['codigo', 'nombre'], 'like', '%' . $this->search_input . '%')
         ->whereNot('clave_dpto', 'RECEP')
+        ->orderBy('nombre', 'ASC')
         ->paginate(20);
         
         return $result;

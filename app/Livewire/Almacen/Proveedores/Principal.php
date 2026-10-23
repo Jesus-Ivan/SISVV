@@ -114,7 +114,9 @@ class Principal extends Component
     public function render()
     {
         return view('livewire.almacen.proveedores.principal', [
-            'listaProveedores' => Proveedor::where('nombre', 'like', '%' . $this->search . '%')->orWhere('id', '=', $this->search)
+            'listaProveedores' => Proveedor::where('nombre', 'like', '%' . $this->search . '%')
+                ->orWhere('id', '=', $this->search)
+                ->orderBy('nombre', 'ASC')
                 ->paginate(20)
         ]);
     }

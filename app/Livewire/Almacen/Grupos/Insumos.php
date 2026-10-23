@@ -100,7 +100,9 @@ class Insumos extends Component
 
     public function render()
     {
-        $insumos = Grupos::where('tipo', '!=', 'PRODU')->get();
+        $insumos = Grupos::where('tipo', '!=', 'PRODU')
+            ->orderBy('descripcion', 'ASC')
+            ->get();
 
         return view(
             'livewire.almacen.grupos.insumos',

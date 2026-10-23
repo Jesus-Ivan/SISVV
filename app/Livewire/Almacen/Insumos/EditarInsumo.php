@@ -36,6 +36,7 @@ class EditarInsumo extends Component
     {
         $result = DB::table('grupos')
             ->where('tipo', AlmacenConstants::INSUMOS_KEY)
+            ->orderBy('descripcion', 'ASC')
             ->get();
         return $result;
     }

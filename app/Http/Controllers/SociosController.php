@@ -11,8 +11,9 @@ class SociosController extends Controller
     //
 
     //Muestra el formulario para editar
-    public function showEdit(Socio $socio)
+    public function showEdit(Request $request, Socio $socio)
     {
-        return view('recepcion.Socios.editar-socio',['socio'=> $socio]);
+        $permisos = $request->get('permisos_sistemas'); //Obtenemos los permisos (opcionales) incrutados en la peticion
+        return view('recepcion.Socios.editar-socio', ['socio' => $socio, 'permisos' => $permisos]);
     }
 }

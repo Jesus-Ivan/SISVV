@@ -4,6 +4,7 @@ namespace App\Livewire\Recepcion;
 
 use App\Livewire\Forms\SocioForm;
 use App\Models\Membresias;
+use App\Models\SocioParentesco;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -19,6 +20,11 @@ class SociosNuevo extends Component
     public function membresias()
     {
         return Membresias::where('disponible', true)->get();
+    }
+
+    #[Computed()]
+    public function parentescos(){
+        return SocioParentesco::where('estado', true)->get();
     }
 
     //Se ejecuta cada vez que cambian las membresias seleccionadas, para restringir el registro de integrantes

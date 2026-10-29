@@ -44,7 +44,7 @@ class PorticoSnapshot
 
     public static function integrantes(): Collection
     {
-        // IntegrantesSocio no usa SoftDeletes: filtrar borrados manualmente y
+        // IntegrantesSocio excluye borrados por SoftDeletes; se filtran además
         // solo los que pertenecen a un socio vigente (whereExists, escalable).
         return IntegrantesSocio::query()
             ->select(
@@ -56,7 +56,6 @@ class PorticoSnapshot
                 'img_path_integrante',
                 'parentesco'
             )
-            ->whereNull('deleted_at')
             ->whereExists(fn ($q) => $q->from('socios')
                 ->whereColumn('socios.id', 'integrantes_socios.id_socio')
                 ->whereNull('socios.deleted_at'))

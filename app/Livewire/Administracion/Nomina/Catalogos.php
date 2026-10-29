@@ -75,14 +75,14 @@ class Catalogos extends Component
                 'descripcion' => $this->areaDescripcion,
                 'activo' => $this->areaActivo,
             ]);
-            $this->successMessage = 'Área actualizada con éxito.';
+            $this->dispatch('toast', message: 'Área actualizada con éxito.', type: 'success');
         } else {
             NominaArea::create([
                 'nombre' => $this->areaNombre,
                 'descripcion' => $this->areaDescripcion,
                 'activo' => $this->areaActivo,
             ]);
-            $this->successMessage = 'Área registrada con éxito.';
+            $this->dispatch('toast', message: 'Área registrada con éxito.', type: 'success');
         }
 
         $this->showAreaModal = false;
@@ -93,19 +93,19 @@ class Catalogos extends Component
         $area = NominaArea::findOrFail($id);
         $area->activo = !$area->activo;
         $area->save();
-        $this->successMessage = 'Estado del área actualizado.';
+        $this->dispatch('toast', message: 'Estado del área actualizado.', type: 'success');
     }
 
     public function deleteArea(int $id): void
     {
         $area = NominaArea::withCount(['empleados', 'puestos'])->findOrFail($id);
         if ($area->empleados_count > 0 || $area->puestos_count > 0) {
-            $this->errorMessage = 'No se puede eliminar el área porque tiene puestos o empleados asignados. Puedes desactivarla en su lugar.';
+            $this->dispatch('toast', message: 'No se puede eliminar el área porque tiene puestos o empleados asignados. Puedes desactivarla en su lugar.', type: 'warning');
             return;
         }
 
         $area->delete();
-        $this->successMessage = 'Área eliminada exitosamente.';
+        $this->dispatch('toast', message: 'Área eliminada exitosamente.', type: 'info');
     }
 
     // --- MÉTODOS PUESTO ---
@@ -155,7 +155,7 @@ class Catalogos extends Component
                 'descripcion' => $this->puestoDescripcion,
                 'activo' => $this->puestoActivo,
             ]);
-            $this->successMessage = 'Puesto actualizado correctamente.';
+            $this->dispatch('toast', message: 'Puesto actualizado correctamente.', type: 'success');
         } else {
             NominaPuesto::create([
                 'nombre' => $this->puestoNombre,
@@ -164,7 +164,7 @@ class Catalogos extends Component
                 'descripcion' => $this->puestoDescripcion,
                 'activo' => $this->puestoActivo,
             ]);
-            $this->successMessage = 'Puesto registrado exitosamente.';
+            $this->dispatch('toast', message: 'Puesto registrado exitosamente.', type: 'success');
         }
 
         $this->showPuestoModal = false;
@@ -175,19 +175,19 @@ class Catalogos extends Component
         $puesto = NominaPuesto::findOrFail($id);
         $puesto->activo = !$puesto->activo;
         $puesto->save();
-        $this->successMessage = 'Estado del puesto actualizado.';
+        $this->dispatch('toast', message: 'Estado del puesto actualizado.', type: 'success');
     }
 
     public function deletePuesto(int $id): void
     {
         $puesto = NominaPuesto::withCount('empleados')->findOrFail($id);
         if ($puesto->empleados_count > 0) {
-            $this->errorMessage = 'No se puede eliminar el puesto porque tiene empleados asignados. Puedes desactivarlo.';
+            $this->dispatch('toast', message: 'No se puede eliminar el puesto porque tiene empleados asignados. Puedes desactivarlo.', type: 'warning');
             return;
         }
 
         $puesto->delete();
-        $this->successMessage = 'Puesto eliminado exitosamente.';
+        $this->dispatch('toast', message: 'Puesto eliminado exitosamente.', type: 'info');
     }
 
     public function render()

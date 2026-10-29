@@ -27,6 +27,8 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
         $periodo = NominaPeriodo::findOrFail($this->id_periodo);
 
         DB::transaction(function () use ($rows, $periodo) {
+            $consecutivosAsignados = [];
+
             foreach ($rows as $index => $row) {
                 // Compatible con id_empleado o id
                 $idEmpleado = $row['id_empleado'] ?? $row['id'] ?? null;
@@ -72,9 +74,12 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                         'observaciones' => $observaciones,
                     ]);
                 } else {
-                    $folio = 'REC-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -5));
+                    $folioData = NominaRecibo::generarSiguienteFolio($empleado->id, $consecutivosAsignados[$empleado->id] ?? []);
+                    $consecutivosAsignados[$empleado->id][] = $folioData['consecutivo'];
+
                     $recibo = NominaRecibo::create([
-                        'folio' => $folio,
+                        'folio' => $folioData['folio'],
+                        'consecutivo_empleado' => $folioData['consecutivo'],
                         'id_periodo' => $periodo->id,
                         'id_empleado' => $empleado->id,
                         'tipo_recibo' => 'NOMINA',

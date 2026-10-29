@@ -1,19 +1,5 @@
-<div class="space-y-6">
-    <!-- Notificaciones -->
-    @if ($successMessage)
-        <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 flex justify-between items-center shadow-sm">
-            <span>{{ $successMessage }}</span>
-            <button wire:click="$set('successMessage', '')" class="text-green-800 dark:text-green-400 font-bold">&times;</button>
-        </div>
-    @endif
-
-    @if ($errorMessage)
-        <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 flex justify-between items-center shadow-sm">
-            <span>{{ $errorMessage }}</span>
-            <button wire:click="$set('errorMessage', '')" class="text-red-800 dark:text-red-400 font-bold">&times;</button>
-        </div>
-    @endif
-
+<div>
+    <div class="space-y-6">
     <!-- Selector de Sub-Pestaña de Catálogo -->
     <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-3">
         <div class="flex gap-2">
@@ -165,92 +151,121 @@
             </table>
         </div>
     @endif
+    </div>
 
     <!-- MODAL ÁREA -->
     @if ($showAreaModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">
-                    {{ $isEditingArea ? 'Editar Área' : 'Nueva Área' }}
-                </h3>
-                <form wire:submit="saveArea" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Nombre del Área *</label>
-                        <input type="text" wire:model="areaNombre"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            placeholder="Ej. Restaurante & Bar">
-                        @error('areaNombre') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+        <div class="fixed inset-0 z-50 overflow-y-auto m-0" role="dialog" aria-modal="true">
+            <!-- Backdrop fijo (cubre el 100% de la pantalla) -->
+            <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity m-0"
+                 wire:click="$set('showAreaModal', false)"
+                 aria-hidden="true"></div>
+
+            <!-- Contenedor centrado para scroll -->
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0 m-0"
+                 wire:click.self="$set('showAreaModal', false)">
+                <div class="relative w-full max-w-md my-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 text-left overflow-hidden transform transition-all"
+                     @click.stop>
+                    <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                            {{ $isEditingArea ? 'Editar Área' : 'Nueva Área' }}
+                        </h3>
+                        <button wire:click="$set('showAreaModal', false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold">&times;</button>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
-                        <textarea wire:model="areaDescripcion" rows="2"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
-                    </div>
+                    <form wire:submit="saveArea" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Nombre del Área *</label>
+                            <input type="text" wire:model="areaNombre"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="Ej. Restaurante & Bar">
+                            @error('areaNombre') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
 
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" wire:model="areaActivo" class="w-4 h-4 text-blue-600 rounded">
-                        <label class="text-sm text-gray-700 dark:text-gray-300">Área Activa</label>
-                    </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
+                            <textarea wire:model="areaDescripcion" rows="2"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                        </div>
 
-                    <div class="flex justify-end gap-3 pt-3 border-t">
-                        <button type="button" wire:click="$set('showAreaModal', false)" class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
-                        <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Guardar</button>
-                    </div>
-                </form>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" wire:model="areaActivo" class="w-4 h-4 text-blue-600 rounded">
+                            <label class="text-sm text-gray-700 dark:text-gray-300">Área Activa</label>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <button type="button" wire:click="$set('showAreaModal', false)" class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">Cancelar</button>
+                            <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Guardar</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     @endif
 
     <!-- MODAL PUESTO -->
     @if ($showPuestoModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">
-                    {{ $isEditingPuesto ? 'Editar Puesto' : 'Nuevo Puesto' }}
-                </h3>
-                <form wire:submit="savePuesto" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Nombre del Puesto *</label>
-                        <input type="text" wire:model="puestoNombre"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            placeholder="Ej. Mesero, Cocinero, Caddie">
-                        @error('puestoNombre') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+        <div class="fixed inset-0 z-50 overflow-y-auto m-0" role="dialog" aria-modal="true">
+            <!-- Backdrop fijo (cubre el 100% de la pantalla) -->
+            <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity m-0"
+                 wire:click="$set('showPuestoModal', false)"
+                 aria-hidden="true"></div>
+
+            <!-- Contenedor centrado para scroll -->
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0 m-0"
+                 wire:click.self="$set('showPuestoModal', false)">
+                <div class="relative w-full max-w-md my-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 text-left overflow-hidden transform transition-all"
+                     @click.stop>
+                    <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                            {{ $isEditingPuesto ? 'Editar Puesto' : 'Nuevo Puesto' }}
+                        </h3>
+                        <button wire:click="$set('showPuestoModal', false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold">&times;</button>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Área Asociada</label>
-                        <select wire:model="puestoIdArea"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <option value="">Selecciona área...</option>
-                            @foreach ($areas as $a)
-                                <option value="{{ $a->id }}">{{ $a->nombre }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                    <form wire:submit="savePuesto" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Nombre del Puesto *</label>
+                            <input type="text" wire:model="puestoNombre"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="Ej. Mesero, Cocinero, Caddie">
+                            @error('puestoNombre') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
 
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Salario Sugerido ($)</label>
-                        <input type="number" step="0.01" wire:model="puestoSalarioSugerido"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Área Asociada</label>
+                            <select wire:model="puestoIdArea"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="">Selecciona área...</option>
+                                @foreach ($areas as $a)
+                                    <option value="{{ $a->id }}">{{ $a->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
-                        <textarea wire:model="puestoDescripcion" rows="2"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
-                    </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Salario Sugerido ($)</label>
+                            <input type="number" step="0.01" wire:model="puestoSalarioSugerido"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        </div>
 
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" wire:model="puestoActivo" class="w-4 h-4 text-blue-600 rounded">
-                        <label class="text-sm text-gray-700 dark:text-gray-300">Puesto Activo</label>
-                    </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
+                            <textarea wire:model="puestoDescripcion" rows="2"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                        </div>
 
-                    <div class="flex justify-end gap-3 pt-3 border-t">
-                        <button type="button" wire:click="$set('showPuestoModal', false)" class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
-                        <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Guardar</button>
-                    </div>
-                </form>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" wire:model="puestoActivo" class="w-4 h-4 text-blue-600 rounded">
+                            <label class="text-sm text-gray-700 dark:text-gray-300">Puesto Activo</label>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <button type="button" wire:click="$set('showPuestoModal', false)" class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">Cancelar</button>
+                            <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Guardar</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     @endif

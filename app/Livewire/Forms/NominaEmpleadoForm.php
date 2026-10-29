@@ -24,13 +24,17 @@ class NominaEmpleadoForm extends Form
     public string $tipo_empleado = 'PLANTA';
 
     #[Validate('nullable|exists:nomina_areas,id')]
-    public ?int $id_area = null;
+    public int|string|null $id_area = null;
 
     #[Validate('nullable|exists:nomina_puestos,id')]
-    public ?int $id_puesto = null;
+    public int|string|null $id_puesto = null;
 
-    #[Validate('required|numeric|min:0')]
-    public float $salario_base = 0;
+    #[Validate('required|numeric|min:0', message: [
+        'required' => 'El salario base es obligatorio.',
+        'numeric' => 'El salario base debe ser un número válido.',
+        'min' => 'El salario base no puede ser negativo.'
+    ])]
+    public float|int|string|null $salario_base = 0;
 
     #[Validate('required|in:EFECTIVO,TRANSFERENCIA,MIXTO')]
     public string $tipo_pago_predeterminado = 'EFECTIVO';
@@ -94,9 +98,9 @@ class NominaEmpleadoForm extends Form
             'apellido_paterno' => $validated['apellido_paterno'],
             'apellido_materno' => $validated['apellido_materno'],
             'tipo_empleado' => $validated['tipo_empleado'],
-            'id_area' => $validated['id_area'] ?: null,
-            'id_puesto' => $validated['id_puesto'] ?: null,
-            'salario_base' => $validated['salario_base'] ?? 0,
+            'id_area' => !empty($validated['id_area']) ? (int) $validated['id_area'] : null,
+            'id_puesto' => !empty($validated['id_puesto']) ? (int) $validated['id_puesto'] : null,
+            'salario_base' => (float) ($validated['salario_base'] ?? 0),
             'tipo_pago_predeterminado' => $validated['tipo_pago_predeterminado'],
             'fecha_ingreso' => $validated['fecha_ingreso'] ?: now()->toDateString(),
             'fecha_baja' => $validated['fecha_baja'] ?: null,
@@ -107,6 +111,18 @@ class NominaEmpleadoForm extends Form
             'curp' => $validated['curp'] ? strtoupper($validated['curp']) : null,
             'nss' => $validated['nss'] ?: null,
             'saldo_adelantos' => 0,
+        ]);
+
+        // Crear ciclo inicial en el historial laboral
+        $empleado->historialLaboral()->create([
+            'fecha_ingreso' => $empleado->fecha_ingreso ? $empleado->fecha_ingreso->format('Y-m-d') : ($validated['fecha_ingreso'] ?: now()->toDateString()),
+            'fecha_baja' => $empleado->fecha_baja ? $empleado->fecha_baja->format('Y-m-d') : ($validated['fecha_baja'] ?: null),
+            'salario_base' => $empleado->salario_base,
+            'id_puesto' => $empleado->id_puesto,
+            'id_area' => $empleado->id_area,
+            'tipo_empleado' => $empleado->tipo_empleado,
+            'motivo_reingreso' => 'Alta inicial de empleado',
+            'motivo_baja' => $empleado->fecha_baja ? 'Baja registrada en alta inicial' : null,
         ]);
 
         $this->reset();
@@ -126,9 +142,9 @@ class NominaEmpleadoForm extends Form
             'apellido_paterno' => $validated['apellido_paterno'],
             'apellido_materno' => $validated['apellido_materno'],
             'tipo_empleado' => $validated['tipo_empleado'],
-            'id_area' => $validated['id_area'] ?: null,
-            'id_puesto' => $validated['id_puesto'] ?: null,
-            'salario_base' => $validated['salario_base'] ?? 0,
+            'id_area' => !empty($validated['id_area']) ? (int) $validated['id_area'] : null,
+            'id_puesto' => !empty($validated['id_puesto']) ? (int) $validated['id_puesto'] : null,
+            'salario_base' => (float) ($validated['salario_base'] ?? 0),
             'tipo_pago_predeterminado' => $validated['tipo_pago_predeterminado'],
             'fecha_ingreso' => $validated['fecha_ingreso'] ?: null,
             'fecha_baja' => $validated['fecha_baja'] ?: null,
@@ -147,6 +163,19 @@ class NominaEmpleadoForm extends Form
         }
 
         $this->empleado->update($data);
+
+        // Sincronizar datos relevantes con el ciclo activo actual si existe
+        $cicloActivo = $this->empleado->cicloLaboralActivo;
+        if ($cicloActivo) {
+            $cicloActivo->update([
+                'salario_base' => (float) ($validated['salario_base'] ?? 0),
+                'id_puesto' => !empty($validated['id_puesto']) ? (int) $validated['id_puesto'] : null,
+                'id_area' => !empty($validated['id_area']) ? (int) $validated['id_area'] : null,
+                'tipo_empleado' => $validated['tipo_empleado'],
+                'fecha_ingreso' => $validated['fecha_ingreso'] ?: $cicloActivo->fecha_ingreso,
+                'fecha_baja' => $validated['fecha_baja'] ?: null,
+            ]);
+        }
     }
 }
 

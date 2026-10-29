@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
@@ -61,6 +62,27 @@ class NominaEmpleado extends Model
     public function movimientosCuenta(): HasMany
     {
         return $this->hasMany(NominaMovimientoCuenta::class, 'id_empleado')->orderBy('fecha', 'desc');
+    }
+
+    public function historialLaboral(): HasMany
+    {
+        return $this->hasMany(NominaEmpleadoHistorialLaboral::class, 'id_empleado')
+            ->orderBy('fecha_ingreso', 'desc')
+            ->orderBy('id', 'desc');
+    }
+
+    public function cicloLaboralActivo(): HasOne
+    {
+        return $this->hasOne(NominaEmpleadoHistorialLaboral::class, 'id_empleado')
+            ->whereNull('fecha_baja')
+            ->latestOfMany('fecha_ingreso');
+    }
+
+    public function scopeLaborandoEnPeriodo($query, $fechaInicio, $fechaFin)
+    {
+        return $query->whereHas('historialLaboral', function ($q) use ($fechaInicio, $fechaFin) {
+            $q->laborandoEnRango($fechaInicio, $fechaFin);
+        });
     }
 
     public function getNombreCompletoAttribute(): string

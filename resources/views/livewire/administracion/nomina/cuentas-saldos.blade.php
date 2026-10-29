@@ -1,17 +1,5 @@
-<div class="space-y-6">
-    <!-- Mensajes de Notificación -->
-    @if ($successMessage)
-        <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 flex justify-between items-center shadow-sm">
-            <div class="flex items-center">
-                <svg class="w-4 h-4 me-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
-                </svg>
-                <span>{{ $successMessage }}</span>
-            </div>
-            <button wire:click="$set('successMessage', '')" class="text-green-800 dark:text-green-400 font-bold">&times;</button>
-        </div>
-    @endif
-
+<div>
+    <div class="space-y-6">
     <!-- Tarjetas de Métricas / KPIs de Saldos -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <!-- Total Pendiente -->
@@ -87,15 +75,6 @@
 
             <!-- Botones de Acción -->
             <div class="flex flex-wrap items-center gap-2">
-                <!-- Botón Registrar Adelanto / Abono -->
-                <button wire:click="openMovimientoModal()" type="button"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Registrar Adelanto / Abono
-                </button>
-
                 <!-- Exportar a Excel -->
                 <a href="{{ route('nomina.excel.cuentas', ['tipo_empleado' => $tipo_empleado]) }}" target="_blank"
                     class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800 transition">
@@ -212,153 +191,227 @@
             </div>
         @endif
     </div>
+    </div>
 
     <!-- MODAL REGISTRAR MOVIMIENTO (Adelanto / Abono en Efectivo) -->
     @if ($showMovimientoModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6">
-                <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">
-                        Registrar Movimiento de Cuenta
-                    </h3>
-                    <button wire:click="$set('showMovimientoModal', false)" class="text-gray-400 hover:text-gray-600">&times;</button>
-                </div>
+        <div class="fixed inset-0 z-50 overflow-y-auto m-0" role="dialog" aria-modal="true">
+            <!-- Backdrop fijo (cubre el 100% de la pantalla) -->
+            <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity m-0"
+                 wire:click="$set('showMovimientoModal', false)"
+                 aria-hidden="true"></div>
 
-                <form wire:submit="registrarMovimiento" class="space-y-4">
-                    <!-- Seleccionar Empleado -->
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Empleado *</label>
-                        <select wire:model.live="empleadoIdSeleccionado"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <option value="">Selecciona un empleado...</option>
-                            @foreach ($todosEmpleadosActivos as $e)
-                                <option value="{{ $e->id }}">#{{ $e->id }} - {{ $e->nombre_completo }} (Saldo: ${{ number_format($e->saldo_adelantos, 2) }})</option>
-                            @endforeach
-                        </select>
-                        @error('empleadoIdSeleccionado') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+            <!-- Contenedor centrado para scroll -->
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0 m-0"
+                 wire:click.self="$set('showMovimientoModal', false)">
+                <div class="relative w-full max-w-md my-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 text-left overflow-hidden transform transition-all"
+                     @click.stop>
+                    <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                            Registrar Movimiento de Cuenta
+                        </h3>
+                        <button wire:click="$set('showMovimientoModal', false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold">&times;</button>
                     </div>
 
-                    @if ($empleadoSeleccionado)
-                        <div class="p-2.5 bg-blue-50 rounded-lg text-xs text-blue-900 dark:bg-blue-900/30 dark:text-blue-300">
-                            Saldo Actual: <strong>${{ number_format($empleadoSeleccionado->saldo_adelantos, 2) }}</strong>
-                        </div>
-                    @endif
-
-                    <!-- Tipo de Movimiento -->
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Tipo de Movimiento *</label>
-                        <select wire:model="tipo_movimiento"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <option value="ADELANTO_EFECTIVO">Adelanto en Efectivo (Aumenta Deuda)</option>
-                            <option value="ABONO_DIRECTO">Abono Directo en Efectivo (Disminuye Deuda)</option>
-                            <option value="AJUSTE">Ajuste Manual de Saldo</option>
-                        </select>
-                    </div>
-
-                    <!-- Monto y Fecha -->
-                    <div class="grid grid-cols-2 gap-3">
+                    <form wire:submit="registrarMovimiento" class="space-y-4">
+                        <!-- Empleado (Fijo / Deshabilitado para evitar modificaciones accidentales) -->
                         <div>
-                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Monto ($) *</label>
-                            <input type="number" step="0.01" wire:model="monto"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                placeholder="0.00">
-                            @error('monto') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Empleado</label>
+                            @if ($empleadoSeleccionado)
+                                <div class="p-3 bg-gray-50 dark:bg-gray-750 border border-gray-200 dark:border-gray-600 rounded-lg flex items-center justify-between">
+                                    <div>
+                                        <div class="text-sm font-bold text-gray-900 dark:text-white">
+                                            #{{ $empleadoSeleccionado->id }} - {{ $empleadoSeleccionado->nombre_completo }}
+                                        </div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                                            {{ $empleadoSeleccionado->puesto?->nombre ?? 'Sin puesto asignado' }}
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 block">Saldo Actual</span>
+                                        <span class="text-sm font-black text-rose-600 dark:text-rose-400">
+                                            ${{ number_format($empleadoSeleccionado->saldo_adelantos, 2) }}
+                                        </span>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="p-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-500 text-sm rounded-lg">
+                                    No hay empleado seleccionado.
+                                </div>
+                            @endif
+                            @error('empleadoIdSeleccionado') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
 
+                        <!-- Tipo de Movimiento -->
                         <div>
-                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Fecha *</label>
-                            <input type="date" wire:model="fecha"
+                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Tipo de Movimiento *</label>
+                            <select wire:model.live="tipo_movimiento"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            @error('fecha') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                <option value="ADELANTO_EFECTIVO">Adelanto en Efectivo (Aumenta Deuda)</option>
+                                <option value="ABONO_DIRECTO">Abono Directo en Efectivo (Disminuye Deuda)</option>
+                                <option value="AJUSTE">Ajuste Manual de Saldo</option>
+                            </select>
+                            @if ($tipo_movimiento === 'AJUSTE')
+                                <p class="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
+                                    Captura el nuevo saldo objetivo que debe tener el empleado. El sistema calculará el cargo o abono necesario.
+                                </p>
+                            @endif
                         </div>
-                    </div>
 
-                    <!-- Referencia / Motivo -->
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Referencia / Motivo</label>
-                        <input type="text" wire:model="referencia"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            placeholder="Ej. Anticipo solicitado para gastos personales">
-                    </div>
+                        <!-- Monto y Fecha -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                                    {{ $tipo_movimiento === 'AJUSTE' ? 'Nuevo Saldo Objetivo ($) *' : 'Monto ($) *' }}
+                                </label>
+                                <input type="number" step="0.01" wire:model="monto"
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    placeholder="0.00">
+                                @error('monto') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            </div>
 
-                    <div class="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <button type="button" wire:click="$set('showMovimientoModal', false)"
-                            class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                            Cancelar
-                        </button>
-                        <button type="submit"
-                            class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-                            Registrar
-                        </button>
-                    </div>
-                </form>
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Fecha *</label>
+                                <input type="date" wire:model="fecha"
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                @error('fecha') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
+                        <!-- Referencia / Motivo -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Referencia / Motivo</label>
+                            <input type="text" wire:model="referencia"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="Ej. Anticipo solicitado para gastos personales">
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <button type="button" wire:click="$set('showMovimientoModal', false)"
+                                class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                                Cancelar
+                            </button>
+                            <button type="submit"
+                                class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                                Registrar
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     @endif
 
     <!-- MODAL HISTORIAL / KARDEX DE CUENTA -->
     @if ($showHistorialModal && $historialEmpleado)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="relative w-full max-w-3xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6">
-                <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-200 dark:border-gray-700">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">
-                            Kardex de Cuenta: #{{ $historialEmpleado->id }} - {{ $historialEmpleado->nombre_completo }}
-                        </h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ $historialEmpleado->puesto?->nombre }} &bull; Saldo Actual: <strong class="text-rose-600">${{ number_format($historialEmpleado->saldo_adelantos, 2) }}</strong>
-                        </p>
+        <div class="fixed inset-0 z-50 overflow-y-auto m-0" role="dialog" aria-modal="true">
+            <!-- Backdrop fijo (cubre el 100% de la pantalla) -->
+            <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity m-0"
+                 wire:click="$set('showHistorialModal', false)"
+                 aria-hidden="true"></div>
+
+            <!-- Contenedor centrado para scroll -->
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0 m-0"
+                 wire:click.self="$set('showHistorialModal', false)">
+                <div class="relative w-full max-w-3xl my-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 text-left overflow-hidden transform transition-all"
+                     @click.stop>
+                    <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-200 dark:border-gray-700">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                                Kardex de Cuenta: #{{ $historialEmpleado->id }} - {{ $historialEmpleado->nombre_completo }}
+                            </h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ $historialEmpleado->puesto?->nombre }} &bull; Saldo Actual: <strong class="text-rose-600">${{ number_format($historialEmpleado->saldo_adelantos, 2) }}</strong>
+                            </p>
+                        </div>
+                        <button wire:click="$set('showHistorialModal', false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold">&times;</button>
                     </div>
-                    <button wire:click="$set('showHistorialModal', false)" class="text-gray-400 hover:text-gray-600">&times;</button>
-                </div>
 
-                <div class="max-h-[60vh] overflow-y-auto">
-                    <table class="w-full text-xs text-left text-gray-500 dark:text-gray-400">
-                        <thead class="text-[11px] text-gray-700 uppercase bg-gray-50 dark:bg-gray-750 dark:text-gray-300 sticky top-0">
-                            <tr>
-                                <th class="p-2.5">Fecha</th>
-                                <th class="p-2.5">Tipo Movimiento</th>
-                                <th class="p-2.5">Referencia</th>
-                                <th class="p-2.5 text-right">Monto</th>
-                                <th class="p-2.5 text-right">Saldo Ant.</th>
-                                <th class="p-2.5 text-right">Saldo Nvo.</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                            @forelse ($historialMovimientos as $mov)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                    <td class="p-2.5">{{ $mov->fecha ? $mov->fecha->format('d/m/Y') : '' }}</td>
-                                    <td class="p-2.5">
-                                        <span class="px-2 py-0.5 rounded font-semibold {{ $mov->naturaleza === 'CARGO' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200' }}">
-                                            {{ $mov->tipo_movimiento }}
-                                        </span>
-                                    </td>
-                                    <td class="p-2.5">{{ $mov->referencia ?: '-' }}</td>
-                                    <td class="p-2.5 text-right font-bold {{ $mov->naturaleza === 'CARGO' ? 'text-rose-600' : 'text-emerald-600' }}">
-                                        {{ $mov->naturaleza === 'CARGO' ? '+' : '-' }}${{ number_format($mov->monto, 2) }}
-                                    </td>
-                                    <td class="p-2.5 text-right text-gray-400">${{ number_format($mov->saldo_anterior, 2) }}</td>
-                                    <td class="p-2.5 text-right font-bold text-gray-800 dark:text-white">${{ number_format($mov->saldo_nuevo, 2) }}</td>
-                                </tr>
-                            @empty
+                    <div class="max-h-[60vh] overflow-y-auto">
+                        <table class="w-full text-xs text-left text-gray-500 dark:text-gray-400">
+                            <thead class="text-[11px] text-gray-700 uppercase bg-gray-50 dark:bg-gray-750 dark:text-gray-300 sticky top-0">
                                 <tr>
-                                    <td colspan="6" class="p-4 text-center text-gray-400">
-                                        No hay movimientos registrados para este empleado.
-                                    </td>
+                                    <th class="p-2.5">Folio / Fecha</th>
+                                    <th class="p-2.5">Tipo Movimiento</th>
+                                    <th class="p-2.5">Referencia</th>
+                                    <th class="p-2.5 text-right">Monto</th>
+                                    <th class="p-2.5 text-right">Saldo Ant.</th>
+                                    <th class="p-2.5 text-right">Saldo Nvo.</th>
+                                    <th class="p-2.5 text-center">Comprobante</th>
                                 </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                @forelse ($historialMovimientos as $mov)
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                        <td class="p-2.5">
+                                            @if ($mov->folio)
+                                                <span class="font-mono font-bold text-gray-900 dark:text-gray-100 block">{{ $mov->folio }}</span>
+                                            @endif
+                                            <span class="text-gray-400 text-[11px]">{{ $mov->fecha ? $mov->fecha->format('d/m/Y') : '' }}</span>
+                                        </td>
+                                        <td class="p-2.5">
+                                            <span class="px-2 py-0.5 rounded font-semibold {{ $mov->naturaleza === 'CARGO' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200' }}">
+                                                {{ $mov->tipo_movimiento }}
+                                            </span>
+                                        </td>
+                                        <td class="p-2.5">{{ $mov->referencia ?: '-' }}</td>
+                                        <td class="p-2.5 text-right font-bold {{ $mov->naturaleza === 'CARGO' ? 'text-rose-600' : 'text-emerald-600' }}">
+                                            {{ $mov->naturaleza === 'CARGO' ? '+' : '-' }}${{ number_format($mov->monto, 2) }}
+                                        </td>
+                                        <td class="p-2.5 text-right text-gray-400">${{ number_format($mov->saldo_anterior, 2) }}</td>
+                                        <td class="p-2.5 text-right font-bold text-gray-800 dark:text-white">${{ number_format($mov->saldo_nuevo, 2) }}</td>
+                                        <td class="p-2.5 text-center">
+                                            @if (in_array($mov->tipo_movimiento, ['ADELANTO_EFECTIVO', 'ABONO_DIRECTO']))
+                                                <a href="{{ route('nomina.pdf.movimiento', $mov->id) }}" target="_blank"
+                                                   class="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800"
+                                                   title="Imprimir Vale / Recibo">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                                    </svg>
+                                                    Imprimir
+                                                </a>
+                                            @else
+                                                <span class="text-gray-300 dark:text-gray-600 text-xs">-</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="p-4 text-center text-gray-400">
+                                            No hay movimientos registrados para este empleado.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
 
-                <div class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700 mt-4">
-                    <button wire:click="$set('showHistorialModal', false)"
-                        class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                        Cerrar
-                    </button>
+                    <div class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700 mt-4">
+                        <button wire:click="$set('showHistorialModal', false)"
+                            class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                            Cerrar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     @endif
+
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            Livewire.on('abrir-pdf', (data) => {
+                const url = data?.url || (Array.isArray(data) && data[0]?.url);
+                if (url) {
+                    window.open(url, '_blank');
+                }
+            });
+        });
+        window.addEventListener('abrir-pdf', (event) => {
+            const url = event.detail?.url || event.detail;
+            if (url && typeof url === 'string') {
+                window.open(url, '_blank');
+            }
+        });
+    </script>
 </div>
 

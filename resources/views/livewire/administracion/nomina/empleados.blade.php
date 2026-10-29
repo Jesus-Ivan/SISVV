@@ -1,29 +1,5 @@
-<div class="space-y-6">
-    <!-- Notificaciones / Alertas -->
-    @if ($successMessage)
-        <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 flex justify-between items-center" role="alert">
-            <div class="flex items-center">
-                <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
-                </svg>
-                <span>{{ $successMessage }}</span>
-            </div>
-            <button wire:click="$set('successMessage', '')" class="text-green-800 dark:text-green-400 font-bold ml-4">&times;</button>
-        </div>
-    @endif
-
-    @if ($errorMessage)
-        <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 flex justify-between items-center" role="alert">
-            <div class="flex items-center">
-                <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM10 15a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm1-4a1 1 0 0 1-2 0V6a1 1 0 0 1 2 0v5Z"/>
-                </svg>
-                <span>{{ $errorMessage }}</span>
-            </div>
-            <button wire:click="$set('errorMessage', '')" class="text-red-800 dark:text-red-400 font-bold ml-4">&times;</button>
-        </div>
-    @endif
-
+<div>
+    <div class="space-y-6">
     <!-- Barra de Herramientas y Filtros -->
     <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -200,6 +176,15 @@
                             <!-- Acciones -->
                             <td class="px-4 py-3 text-center">
                                 <div class="inline-flex items-center gap-2">
+                                    <!-- Historial Laboral -->
+                                    <button wire:click="openHistorialLaboral({{ $empleado->id }})"
+                                        class="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg dark:text-indigo-400 dark:hover:bg-gray-700 transition"
+                                        title="Historial de Ciclos Laborales">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </button>
+
                                     <!-- Editar -->
                                     <button wire:click="edit({{ $empleado->id }})"
                                         class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg dark:text-blue-400 dark:hover:bg-gray-700 transition"
@@ -243,14 +228,24 @@
             </div>
         @endif
     </div>
+    </div>
 
     <!-- Modal Formulario Empleado (Crear / Editar) -->
     @if ($showModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden my-8">
+        <div class="fixed inset-0 z-50 overflow-y-auto m-0" role="dialog" aria-modal="true">
+            <!-- Backdrop fijo (cubre el 100% de la pantalla) -->
+            <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity m-0"
+                 wire:click="closeModal"
+                 aria-hidden="true"></div>
+
+            <!-- Contenedor centrado para scroll -->
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0 m-0"
+                 wire:click.self="closeModal">
+                <div class="relative w-full max-w-2xl my-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 text-left overflow-hidden transform transition-all flex flex-col max-h-[90vh]"
+                     @click.stop>
                 
-                <!-- Cabecera del Modal -->
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                <!-- Cabecera del Modal (Fija / Sticky) -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 shrink-0">
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <span class="p-2 bg-blue-100 text-blue-600 rounded-lg dark:bg-blue-900 dark:text-blue-300">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,8 +261,9 @@
                     </button>
                 </div>
 
-                <!-- Formulario -->
-                <form wire:submit="save" class="p-6 space-y-5">
+                <!-- Formulario con scroll interno -->
+                <form wire:submit="save" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 space-y-5 overflow-y-auto flex-1">
                     @if ($errorMessage)
                         <div class="p-3 text-sm text-red-800 bg-red-50 rounded-lg dark:bg-gray-700 dark:text-red-400">
                             {{ $errorMessage }}
@@ -450,8 +446,10 @@
                         </div>
                     </div>
 
-                    <!-- Botones de Acción -->
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    </div>
+
+                    <!-- Botones de Acción (Pie Fijo) -->
+                    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 shrink-0">
                         <button type="button" wire:click="closeModal"
                             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 transition">
                             Cancelar
@@ -463,35 +461,388 @@
                         </button>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
     @endif
 
     <!-- Modal Confirmación Eliminar / Desactivar -->
     @if ($showDeleteModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 text-center">
-                <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400 mx-auto flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
+        <div class="fixed inset-0 z-50 overflow-y-auto m-0" role="dialog" aria-modal="true">
+            <!-- Backdrop fijo -->
+            <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity m-0"
+                 wire:click="closeDeleteModal"
+                 aria-hidden="true"></div>
+
+            <!-- Contenedor centrado -->
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0 m-0"
+                 wire:click.self="closeDeleteModal">
+                <div class="relative w-full max-w-md my-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 text-center overflow-hidden transform transition-all"
+                     @click.stop>
+                    <button wire:click="closeDeleteModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold">
+                        &times;
+                    </button>
+                    <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400 mx-auto flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                        ¿Eliminar empleado?
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                        ¿Estás seguro de eliminar a <strong class="text-gray-800 dark:text-gray-200">{{ $empleadoNameToDelete }}</strong>?
+                        <br><span class="text-xs text-amber-600 dark:text-amber-400 mt-2 block">Nota: Si el empleado tiene recibos emitidos o movimientos de adelantos registrados, el sistema lo marcará como Inactivo (Baja) para proteger el historial financiero.</span>
+                    </p>
+                    <div class="flex items-center justify-center gap-3">
+                        <button wire:click="closeDeleteModal" type="button"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                            Cancelar
+                        </button>
+                        <button wire:click="delete" type="button"
+                            class="px-5 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-300">
+                            Sí, Continuar
+                        </button>
+                    </div>
                 </div>
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                    ¿Eliminar empleado?
-                </h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                    ¿Estás seguro de eliminar a <strong class="text-gray-800 dark:text-gray-200">{{ $empleadoNameToDelete }}</strong>?
-                    <br><span class="text-xs text-amber-600 dark:text-amber-400 mt-2 block">Nota: Si el empleado tiene recibos emitidos o movimientos de adelantos registrados, el sistema lo marcará como Inactivo (Baja) para proteger el historial financiero.</span>
-                </p>
-                <div class="flex items-center justify-center gap-3">
-                    <button wire:click="closeDeleteModal" type="button"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
-                        Cancelar
-                    </button>
-                    <button wire:click="delete" type="button"
-                        class="px-5 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-300">
-                        Sí, Continuar
-                    </button>
+            </div>
+        </div>
+    @endif
+
+    <!-- Modal Registrar Reingreso -->
+    @if ($showReingresoModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto m-0" role="dialog" aria-modal="true">
+            <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity m-0"
+                 wire:click="$set('showReingresoModal', false)"
+                 aria-hidden="true"></div>
+
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0 m-0"
+                 wire:click.self="$set('showReingresoModal', false)">
+                <div class="relative w-full max-w-xl my-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 text-left overflow-hidden transform transition-all flex flex-col"
+                     @click.stop>
+                    
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 shrink-0">
+                        <div class="flex items-center gap-2">
+                            <span class="p-2 bg-emerald-100 text-emerald-600 rounded-lg dark:bg-emerald-950 dark:text-emerald-300">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                                    Registrar Reingreso
+                                </h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    #{{ $empleadoParaReingreso?->id }} {{ $empleadoParaReingreso?->nombre_completo }}
+                                </p>
+                            </div>
+                        </div>
+                        <button wire:click="$set('showReingresoModal', false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold">
+                            &times;
+                        </button>
+                    </div>
+
+                    <form wire:submit.prevent="saveReingreso" class="p-6 space-y-4">
+                        @if ($empleadoParaReingreso && $empleadoParaReingreso->saldo_adelantos > 0)
+                            <div class="p-3 bg-amber-50 border border-amber-300 rounded-xl dark:bg-amber-950/40 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 flex items-center gap-2.5">
+                                <svg class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                <div>
+                                    <span class="font-bold">Anticipos deudores activos:</span>
+                                    El trabajador mantiene una deuda previa de <strong>${{ number_format($empleadoParaReingreso->saldo_adelantos, 2) }}</strong>. Se preserva intacta para amortizar en sus próximas nóminas.
+                                </div>
+                            </div>
+                        @endif
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                                    Fecha de Reingreso *
+                                </label>
+                                <input type="date" wire:model="reingresoFecha"
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                @error('reingresoFecha') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                                    Salario Base *
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 font-bold">$</span>
+                                    <input type="number" step="0.01" wire:model="reingresoSalario"
+                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-7 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                </div>
+                                @error('reingresoSalario') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                                    Área
+                                </label>
+                                <select wire:model.live="reingresoAreaId"
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <option value="">-- Sin Área --</option>
+                                    @foreach ($areas as $a)
+                                        <option value="{{ $a->id }}">{{ $a->nombre }}</option>
+                                    @endforeach
+                                </select>
+                                @error('reingresoAreaId') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                                    Puesto
+                                </label>
+                                <select wire:model="reingresoPuestoId"
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <option value="">-- Sin Puesto --</option>
+                                    @foreach ($puestosReingreso as $pu)
+                                        <option value="{{ $pu->id }}">{{ $pu->nombre }}</option>
+                                    @endforeach
+                                </select>
+                                @error('reingresoPuestoId') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                                    Tipo de Contrato *
+                                </label>
+                                <select wire:model="reingresoTipo"
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    <option value="PLANTA">PLANTA</option>
+                                    <option value="TEMPORAL">TEMPORAL</option>
+                                </select>
+                                @error('reingresoTipo') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                                    Motivo de Reingreso
+                                </label>
+                                <input type="text" wire:model="reingresoMotivo" placeholder="Ej. Recontratación, regreso..."
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                @error('reingresoMotivo') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <button type="button" wire:click="$set('showReingresoModal', false)"
+                                class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                                Cancelar
+                            </button>
+                            <button type="submit"
+                                class="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 flex items-center gap-2">
+                                <span wire:loading wire:target="saveReingreso" class="inline-block animate-spin">&#9696;</span>
+                                Confirmar Reingreso
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Modal Registrar Baja -->
+    @if ($showBajaModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto m-0" role="dialog" aria-modal="true">
+            <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity m-0"
+                 wire:click="$set('showBajaModal', false)"
+                 aria-hidden="true"></div>
+
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0 m-0"
+                 wire:click.self="$set('showBajaModal', false)">
+                <div class="relative w-full max-w-md my-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 text-left overflow-hidden transform transition-all flex flex-col"
+                     @click.stop>
+                    
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 shrink-0">
+                        <div class="flex items-center gap-2">
+                            <span class="p-2 bg-rose-100 text-rose-600 rounded-lg dark:bg-rose-950 dark:text-rose-300">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                                    Registrar Baja Laboral
+                                </h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    #{{ $empleadoParaBaja?->id }} {{ $empleadoParaBaja?->nombre_completo }}
+                                </p>
+                            </div>
+                        </div>
+                        <button wire:click="$set('showBajaModal', false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold">
+                            &times;
+                        </button>
+                    </div>
+
+                    <form wire:submit.prevent="saveBaja" class="p-6 space-y-4">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Al registrar la baja, el ciclo laboral actual del empleado se cerrará de manera formal y no aparecerá en las nóminas posteriores a su fecha de baja.
+                        </p>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                                Fecha de Baja *
+                            </label>
+                            <input type="date" wire:model="bajaFecha"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            @error('bajaFecha') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
+                                Motivo de la Baja
+                            </label>
+                            <input type="text" wire:model="bajaMotivo" placeholder="Ej. Renuncia voluntaria, fin de temporada..."
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            @error('bajaMotivo') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <button type="button" wire:click="$set('showBajaModal', false)"
+                                class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                                Cancelar
+                            </button>
+                            <button type="submit"
+                                class="px-5 py-2 text-sm font-semibold text-white bg-rose-600 rounded-lg hover:bg-rose-700 flex items-center gap-2">
+                                <span wire:loading wire:target="saveBaja" class="inline-block animate-spin">&#9696;</span>
+                                Confirmar Baja
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Modal Historial de Ciclos Laborales -->
+    @if ($showHistorialLaboralModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto m-0" role="dialog" aria-modal="true">
+            <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity m-0"
+                 wire:click="closeHistorialLaboralModal"
+                 aria-hidden="true"></div>
+
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0 m-0"
+                 wire:click.self="closeHistorialLaboralModal">
+                <div class="relative w-full max-w-3xl my-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 text-left overflow-hidden transform transition-all flex flex-col max-h-[90vh]"
+                     @click.stop>
+                    
+                    <!-- Header Sticky -->
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 shrink-0">
+                        <div class="flex items-center gap-3">
+                            <span class="p-2.5 bg-indigo-100 text-indigo-600 rounded-xl dark:bg-indigo-950 dark:text-indigo-300">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    Historial de Ciclos Laborales
+                                    <span class="text-xs px-2 py-0.5 rounded-full font-mono {{ $empleadoHistorial?->activo ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300' }}">
+                                        {{ $empleadoHistorial?->activo ? 'ACTIVO' : 'EN BAJA' }}
+                                    </span>
+                                </h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    #{{ $empleadoHistorial?->id }} {{ $empleadoHistorial?->nombre_completo }} · {{ $empleadoHistorial?->puesto?->nombre ?? 'Sin puesto' }} · {{ $empleadoHistorial?->area?->nombre ?? 'Sin área' }}
+                                </p>
+                            </div>
+                        </div>
+                        <button wire:click="closeHistorialLaboralModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold">
+                            &times;
+                        </button>
+                    </div>
+
+                    <!-- Métricas Resumen -->
+                    <div class="grid grid-cols-3 gap-3 p-4 bg-gray-50/60 dark:bg-gray-750/30 border-b border-gray-200 dark:border-gray-700 shrink-0">
+                        <div class="bg-white dark:bg-gray-700 p-3 rounded-xl border border-gray-200 dark:border-gray-600 text-center">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ciclos Totales</span>
+                            <div class="text-base font-black text-gray-900 dark:text-white mt-0.5">
+                                {{ $empleadoHistorial?->historialLaboral?->count() ?? 0 }} ciclo(s)
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-700 p-3 rounded-xl border border-gray-200 dark:border-gray-600 text-center">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Salario Base Actual</span>
+                            <div class="text-base font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                                ${{ number_format($empleadoHistorial?->salario_base ?? 0, 2) }}
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-700 p-3 rounded-xl border border-gray-200 dark:border-gray-600 text-center">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Saldo Anticipos</span>
+                            <div class="text-base font-black text-rose-600 dark:text-rose-400 mt-0.5">
+                                ${{ number_format($empleadoHistorial?->saldo_adelantos ?? 0, 2) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista Cronológica / Tabla con Scroll Interno -->
+                    <div class="overflow-y-auto flex-1 p-5 divide-y divide-gray-100 dark:divide-gray-700">
+                        @forelse ($empleadoHistorial?->historialLaboral ?? [] as $index => $ciclo)
+                            <div class="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs {{ $ciclo->fecha_baja ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' }} shrink-0 mt-0.5">
+                                        {{ ($empleadoHistorial?->historialLaboral?->count() ?? 1) - $index }}
+                                    </div>
+                                    <div class="space-y-1">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="font-bold text-gray-900 dark:text-white text-sm">
+                                                {{ $ciclo->fecha_ingreso ? $ciclo->fecha_ingreso->format('d/m/Y') : 'N/A' }}
+                                                &rarr;
+                                                @if ($ciclo->fecha_baja)
+                                                    {{ $ciclo->fecha_baja->format('d/m/Y') }}
+                                                @else
+                                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                                        Activo Actualmente
+                                                    </span>
+                                                @endif
+                                            </span>
+                                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded {{ $ciclo->tipo_empleado === 'PLANTA' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' }}">
+                                                {{ $ciclo->tipo_empleado }}
+                                            </span>
+                                        </div>
+
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            {{ $ciclo->puesto?->nombre ?? 'Sin puesto' }} · {{ $ciclo->area?->nombre ?? 'Sin área' }}
+                                        </p>
+
+                                        @if ($ciclo->motivo_reingreso || $ciclo->motivo_baja)
+                                            <div class="text-[11px] text-gray-600 dark:text-gray-300 flex items-center gap-2 flex-wrap pt-0.5">
+                                                @if ($ciclo->motivo_reingreso)
+                                                    <span><strong class="text-gray-700 dark:text-gray-200">Alta:</strong> {{ $ciclo->motivo_reingreso }}</span>
+                                                @endif
+                                                @if ($ciclo->motivo_baja)
+                                                    <span>·</span>
+                                                    <span class="text-rose-600 dark:text-rose-400"><strong class="text-rose-700 dark:text-rose-300">Baja:</strong> {{ $ciclo->motivo_baja }}</span>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="text-right sm:text-right flex-shrink-0 self-start">
+                                    <div class="font-mono font-bold text-gray-900 dark:text-white text-sm">
+                                        ${{ number_format($ciclo->salario_base, 2) }}
+                                    </div>
+                                    <div class="text-[10px] text-gray-400">
+                                        Salario Base Ciclo
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-center text-xs text-gray-400 py-6">
+                                No hay ciclos registrados en el historial de este trabajador.
+                            </p>
+                        @endforelse
+                    </div>
+
+                    <!-- Footer Sticky -->
+                    <div class="px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 flex justify-end shrink-0">
+                        <button type="button" wire:click="closeHistorialLaboralModal"
+                            class="px-5 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 transition">
+                            Cerrar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

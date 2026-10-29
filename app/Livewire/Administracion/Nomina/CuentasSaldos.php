@@ -74,45 +74,78 @@ class CuentasSaldos extends Component
 
     public function registrarMovimiento(): void
     {
+        $minMonto = $this->tipo_movimiento === 'AJUSTE' ? 0 : 0.01;
+
         $this->validate([
             'empleadoIdSeleccionado' => 'required|exists:nomina_empleados,id',
             'tipo_movimiento' => 'required|in:ADELANTO_EFECTIVO,ABONO_DIRECTO,AJUSTE',
-            'monto' => 'required|numeric|min:0.01',
+            'monto' => "required|numeric|min:{$minMonto}",
             'fecha' => 'required|date',
             'referencia' => 'nullable|string|max:255',
         ]);
 
-        DB::transaction(function () {
+        $movimientoCreado = DB::transaction(function () {
             $empleado = NominaEmpleado::lockForUpdate()->findOrFail($this->empleadoIdSeleccionado);
             $saldoAnterior = (float) $empleado->saldo_adelantos;
+            $montoCapturado = (float) $this->monto;
 
             if ($this->tipo_movimiento === 'ADELANTO_EFECTIVO') {
                 $naturaleza = 'CARGO';
-                $saldoNuevo = $saldoAnterior + $this->monto;
+                $montoOperacion = $montoCapturado;
+                $saldoNuevo = $saldoAnterior + $montoOperacion;
             } elseif ($this->tipo_movimiento === 'ABONO_DIRECTO') {
                 $naturaleza = 'ABONO';
-                $saldoNuevo = max(0, $saldoAnterior - $this->monto);
-            } else { // AJUSTE
-                $naturaleza = $this->monto >= $saldoAnterior ? 'CARGO' : 'ABONO';
-                $saldoNuevo = $this->monto;
+                $montoOperacion = $montoCapturado;
+                $saldoNuevo = max(0, $saldoAnterior - $montoOperacion);
+            } else { // AJUSTE (Monto representa el nuevo saldo objetivo deseado)
+                $nuevoSaldoObjetivo = max(0, $montoCapturado);
+                $diferencia = round($nuevoSaldoObjetivo - $saldoAnterior, 2);
+
+                if ($diferencia >= 0) {
+                    $naturaleza = 'CARGO';
+                    $montoOperacion = $diferencia;
+                } else {
+                    $naturaleza = 'ABONO';
+                    $montoOperacion = abs($diferencia);
+                }
+                $saldoNuevo = $nuevoSaldoObjetivo;
             }
 
-            NominaMovimientoCuenta::create([
+            $folioData = NominaMovimientoCuenta::generarSiguienteFolio($empleado->id, $this->tipo_movimiento);
+
+            $referenciaDefault = match ($this->tipo_movimiento) {
+                'ADELANTO_EFECTIVO' => 'Adelanto en efectivo otorgado',
+                'ABONO_DIRECTO' => 'Abono directo en efectivo',
+                'AJUSTE' => 'Ajuste manual de saldo deudor',
+                default => 'Movimiento de cuenta contable',
+            };
+
+            $movimiento = NominaMovimientoCuenta::create([
                 'id_empleado' => $empleado->id,
+                'folio' => $folioData['folio'],
+                'consecutivo_empleado' => $folioData['consecutivo'],
                 'tipo_movimiento' => $this->tipo_movimiento,
                 'naturaleza' => $naturaleza,
-                'monto' => $this->monto,
+                'monto' => $montoOperacion,
                 'saldo_anterior' => $saldoAnterior,
                 'saldo_nuevo' => $saldoNuevo,
                 'fecha' => $this->fecha,
-                'referencia' => $this->referencia ?: ($this->tipo_movimiento === 'ADELANTO_EFECTIVO' ? 'Adelanto en efectivo otorgado' : 'Abono en efectivo'),
+                'referencia' => $this->referencia ?: $referenciaDefault,
                 'id_usuario' => auth()->id(),
             ]);
 
             $empleado->update(['saldo_adelantos' => $saldoNuevo]);
+
+            return $movimiento;
         });
 
-        $this->successMessage = 'Movimiento de cuenta contable registrado correctamente.';
+        $this->dispatch('toast', message: "Movimiento {$movimientoCreado->folio} registrado exitosamente.", type: 'success');
+
+        // Si fue adelanto o abono en efectivo, disparar apertura del comprobante para imprimir en nueva pestaña
+        if (in_array($movimientoCreado->tipo_movimiento, ['ADELANTO_EFECTIVO', 'ABONO_DIRECTO'])) {
+            $this->dispatch('abrir-pdf', url: route('nomina.pdf.movimiento', $movimientoCreado->id));
+        }
+
         $this->showMovimientoModal = false;
     }
 

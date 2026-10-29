@@ -30,6 +30,26 @@ class Empleados extends Component
     public string $errorMessage = '';
     public string $successMessage = '';
 
+    // Modal Reingreso
+    public bool $showReingresoModal = false;
+    public ?NominaEmpleado $empleadoParaReingreso = null;
+    public string $reingresoFecha = '';
+    public float|int|string $reingresoSalario = 0;
+    public ?int $reingresoPuestoId = null;
+    public ?int $reingresoAreaId = null;
+    public string $reingresoTipo = 'PLANTA';
+    public string $reingresoMotivo = 'Recontratación';
+
+    // Modal Baja
+    public bool $showBajaModal = false;
+    public ?NominaEmpleado $empleadoParaBaja = null;
+    public string $bajaFecha = '';
+    public string $bajaMotivo = 'Renuncia voluntaria';
+
+    // Modal Historial Laboral
+    public bool $showHistorialLaboralModal = false;
+    public ?NominaEmpleado $empleadoHistorial = null;
+
     protected $paginationTheme = 'tailwind';
 
     public function updatingSearch(): void
@@ -60,6 +80,9 @@ class Empleados extends Component
     public function create(): void
     {
         $this->form->reset();
+        $this->form->id_area = null;
+        $this->form->id_puesto = null;
+        $this->form->salario_base = 0;
         $this->form->tipo_empleado = $this->tipo_empleado === 'TEMPORAL' ? 'TEMPORAL' : 'PLANTA';
         $this->form->tipo_pago_predeterminado = 'EFECTIVO';
         $this->form->activo = true;
@@ -67,6 +90,14 @@ class Empleados extends Component
         $this->isEditing = false;
         $this->errorMessage = '';
         $this->showModal = true;
+    }
+
+    public function updatedFormIdArea($value): void
+    {
+        if (empty($value)) {
+            $this->form->id_area = null;
+        }
+        $this->form->id_puesto = null;
     }
 
     public function edit(int $id): void
@@ -84,10 +115,10 @@ class Empleados extends Component
         try {
             if ($this->isEditing) {
                 $this->form->update();
-                $this->successMessage = 'Empleado actualizado correctamente.';
+                $this->dispatch('toast', message: 'Empleado actualizado correctamente.', type: 'success');
             } else {
                 $this->form->store();
-                $this->successMessage = 'Empleado registrado exitosamente.';
+                $this->dispatch('toast', message: 'Empleado registrado exitosamente.', type: 'success');
             }
 
             $this->showModal = false;
@@ -95,21 +126,142 @@ class Empleados extends Component
             throw $e;
         } catch (\Exception $e) {
             $this->errorMessage = 'Error al guardar el empleado: ' . $e->getMessage();
+            $this->dispatch('toast', message: $this->errorMessage, type: 'error');
         }
+    }
+
+    // --- REINGRESO ---
+
+    public function openReingresoModal(int $id): void
+    {
+        $emp = NominaEmpleado::with(['area', 'puesto'])->findOrFail($id);
+        $this->empleadoParaReingreso = $emp;
+        $this->reingresoFecha = now()->toDateString();
+        $this->reingresoSalario = (float) $emp->salario_base;
+        $this->reingresoPuestoId = $emp->id_puesto;
+        $this->reingresoAreaId = $emp->id_area;
+        $this->reingresoTipo = $emp->tipo_empleado ?: 'PLANTA';
+        $this->reingresoMotivo = 'Recontratación / Nueva temporada';
+        $this->showReingresoModal = true;
+    }
+
+    public function updatedReingresoAreaId($val): void
+    {
+        if (empty($val)) {
+            $this->reingresoAreaId = null;
+        }
+        $this->reingresoPuestoId = null;
+    }
+
+    public function saveReingreso(): void
+    {
+        $this->validate([
+            'reingresoFecha' => 'required|date',
+            'reingresoSalario' => 'required|numeric|min:0',
+            'reingresoPuestoId' => 'nullable|exists:nomina_puestos,id',
+            'reingresoAreaId' => 'nullable|exists:nomina_areas,id',
+            'reingresoTipo' => 'required|in:PLANTA,TEMPORAL',
+            'reingresoMotivo' => 'nullable|string|max:255',
+        ]);
+
+        if (!$this->empleadoParaReingreso) {
+            return;
+        }
+
+        $emp = $this->empleadoParaReingreso;
+        $emp->update([
+            'activo' => true,
+            'fecha_ingreso' => $this->reingresoFecha,
+            'fecha_baja' => null,
+            'salario_base' => (float) $this->reingresoSalario,
+            'id_puesto' => $this->reingresoPuestoId,
+            'id_area' => $this->reingresoAreaId,
+            'tipo_empleado' => $this->reingresoTipo,
+        ]);
+
+        $emp->historialLaboral()->create([
+            'fecha_ingreso' => $this->reingresoFecha,
+            'salario_base' => (float) $this->reingresoSalario,
+            'id_puesto' => $this->reingresoPuestoId,
+            'id_area' => $this->reingresoAreaId,
+            'tipo_empleado' => $this->reingresoTipo,
+            'motivo_reingreso' => $this->reingresoMotivo ?: 'Recontratación',
+        ]);
+
+        $this->showReingresoModal = false;
+        $this->empleadoParaReingreso = null;
+        $this->dispatch('toast', message: "Reingreso de '{$emp->nombre_completo}' registrado exitosamente con nuevo ciclo laboral.", type: 'success');
+    }
+
+    // --- BAJA ---
+
+    public function openBajaModal(int $id): void
+    {
+        $emp = NominaEmpleado::findOrFail($id);
+        $this->empleadoParaBaja = $emp;
+        $this->bajaFecha = now()->toDateString();
+        $this->bajaMotivo = 'Renuncia voluntaria';
+        $this->showBajaModal = true;
+    }
+
+    public function saveBaja(): void
+    {
+        $this->validate([
+            'bajaFecha' => 'required|date',
+            'bajaMotivo' => 'nullable|string|max:255',
+        ]);
+
+        if (!$this->empleadoParaBaja) {
+            return;
+        }
+
+        $emp = $this->empleadoParaBaja;
+        $emp->update([
+            'activo' => false,
+            'fecha_baja' => $this->bajaFecha,
+        ]);
+
+        $cicloActivo = $emp->cicloLaboralActivo;
+        if ($cicloActivo) {
+            $cicloActivo->update([
+                'fecha_baja' => $this->bajaFecha,
+                'motivo_baja' => $this->bajaMotivo ?: 'Baja de empleado',
+            ]);
+        }
+
+        $this->showBajaModal = false;
+        $this->empleadoParaBaja = null;
+        $this->dispatch('toast', message: "Empleado '{$emp->nombre_completo}' dado de baja exitosamente.", type: 'success');
     }
 
     public function toggleActivo(int $id): void
     {
         $empleado = NominaEmpleado::findOrFail($id);
-        $empleado->activo = !$empleado->activo;
-        if (!$empleado->activo && !$empleado->fecha_baja) {
-            $empleado->fecha_baja = now()->toDateString();
-        } elseif ($empleado->activo) {
-            $empleado->fecha_baja = null;
+        if ($empleado->activo) {
+            $this->openBajaModal($id);
+        } else {
+            $this->openReingresoModal($id);
         }
-        $empleado->save();
+    }
 
-        $this->successMessage = "Estado del empleado '{$empleado->nombre_completo}' actualizado.";
+    // --- HISTORIAL LABORAL ---
+
+    public function openHistorialLaboral(int $id): void
+    {
+        $this->empleadoHistorial = NominaEmpleado::with([
+            'historialLaboral' => fn($q) => $q->orderBy('fecha_ingreso', 'desc')->orderBy('id', 'desc'),
+            'historialLaboral.puesto',
+            'historialLaboral.area',
+            'puesto',
+            'area'
+        ])->findOrFail($id);
+        $this->showHistorialLaboralModal = true;
+    }
+
+    public function closeHistorialLaboralModal(): void
+    {
+        $this->showHistorialLaboralModal = false;
+        $this->empleadoHistorial = null;
     }
 
     public function confirmDelete(int $id): void
@@ -137,13 +289,20 @@ class Empleados extends Component
                     'activo' => false,
                     'fecha_baja' => now()->toDateString(),
                 ]);
-                $this->successMessage = "El empleado tiene historial de nómina o cuentas, por lo que fue desactivado en lugar de eliminarse permanentemente.";
+                $ciclo = $empleado->cicloLaboralActivo;
+                if ($ciclo) {
+                    $ciclo->update([
+                        'fecha_baja' => now()->toDateString(),
+                        'motivo_baja' => 'Baja por eliminación con historial',
+                    ]);
+                }
+                $this->dispatch('toast', message: "El empleado tiene historial de nómina o cuentas, por lo que fue desactivado en lugar de eliminarse permanentemente.", type: 'warning');
             } else {
                 if ($empleado->foto_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($empleado->foto_path)) {
                     \Illuminate\Support\Facades\Storage::disk('public')->delete($empleado->foto_path);
                 }
                 $empleado->delete();
-                $this->successMessage = "Empleado eliminado con éxito.";
+                $this->dispatch('toast', message: 'Empleado eliminado con éxito.', type: 'info');
             }
         }
 
@@ -205,8 +364,14 @@ class Empleados extends Component
             ->paginate(15);
 
         $areas = NominaArea::where('activo', true)->orderBy('nombre')->get();
+        $formAreaId = !empty($this->form->id_area) ? $this->form->id_area : null;
         $puestos = NominaPuesto::where('activo', true)
-            ->when($this->form->id_area, fn($q) => $q->where('id_area', $this->form->id_area))
+            ->when($formAreaId, fn($q) => $q->where('id_area', $formAreaId))
+            ->orderBy('nombre')
+            ->get();
+
+        $puestosReingreso = NominaPuesto::where('activo', true)
+            ->when($this->reingresoAreaId, fn($q) => $q->where('id_area', $this->reingresoAreaId))
             ->orderBy('nombre')
             ->get();
 
@@ -214,6 +379,7 @@ class Empleados extends Component
             'empleados' => $empleados,
             'areas' => $areas,
             'puestos' => $puestos,
+            'puestosReingreso' => $puestosReingreso,
         ]);
     }
 }

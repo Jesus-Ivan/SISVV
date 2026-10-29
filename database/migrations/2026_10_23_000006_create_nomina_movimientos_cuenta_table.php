@@ -16,7 +16,17 @@ return new class extends Migration
             $table->foreignId('id_empleado')->constrained('nomina_empleados')->cascadeOnDelete();
             $table->foreignId('id_recibo')->nullable()->constrained('nomina_recibos')->nullOnDelete();
             $table->foreignId('id_periodo')->nullable()->constrained('nomina_periodos')->nullOnDelete();
-            $table->enum('tipo_movimiento', ['ADELANTO', 'PRESTAMO', 'PAGO_NOMINA', 'DESCUENTO_NOMINA', 'AGUINALDO', 'FINIQUITO', 'AJUSTE'])->index();
+            $table->enum('tipo_movimiento', [
+                'ADELANTO_EFECTIVO',
+                'ABONO_DIRECTO',
+                'DESCUENTO_NOMINA',
+                'AJUSTE',
+                'ADELANTO',
+                'PRESTAMO',
+                'PAGO_NOMINA',
+                'AGUINALDO',
+                'FINIQUITO'
+            ])->index();
             $table->enum('naturaleza', ['CARGO', 'ABONO'])->index();
             $table->decimal('monto', 10, 2);
             $table->decimal('saldo_anterior', 10, 2)->default(0);

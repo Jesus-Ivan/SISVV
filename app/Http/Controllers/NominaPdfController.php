@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\NominaMovimientoCuenta;
 use App\Models\NominaRecibo;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -88,15 +89,51 @@ class NominaPdfController extends Controller
     }
 
     /**
+     * Genera el PDF del comprobante / vale de caja para anticipos o abonos en efectivo
+     */
+    public function comprobanteMovimiento(int $id)
+    {
+        $movimiento = NominaMovimientoCuenta::with(['empleado.area', 'empleado.puesto'])->findOrFail($id);
+
+        $formatter = new NumeroALetras();
+        $totalLetras = $formatter->toMoney((float) $movimiento->monto, 2, 'PESOS', 'CENTAVOS');
+
+        $empresa = [
+            'nombre' => 'VISTA VERDE COUNTRY CLUB',
+            'rfc' => 'VVC101110AQ4',
+            'direccion' => 'CARRET. FED. MEX-PUE KM 252, SAN NICOLAS TETIZINTLA, TEHUACÁN, PUEBLA CP. 75710',
+            'telefono' => '(238) 374-5011',
+        ];
+
+        $data = [
+            'empresa' => $empresa,
+            'movimiento' => $movimiento,
+            'empleado' => $movimiento->empleado,
+            'totalLetras' => $totalLetras,
+        ];
+
+        $pdf = Pdf::loadView('reportes.Nominas.comprobante-caja', $data);
+        $pdf->setOption(['defaultFont' => 'Helvetica', 'isHtml5ParserEnabled' => true]);
+        // Tamaño Media Carta (5.5 x 8.5 in): [0, 0, 396, 612]
+        $pdf->setPaper([0, 0, 396, 612], 'portrait');
+
+        $nombreArchivo = ($movimiento->folio ?: "MOV-{$movimiento->id}") . '.pdf';
+
+        return $pdf->stream($nombreArchivo);
+    }
+
+    /**
      * Descarga plantilla Excel de nómina
      */
     public function descargarPlantilla(Request $request)
     {
         $idPeriodo = $request->input('id_periodo') ? (int) $request->input('id_periodo') : null;
-        $fileName = 'Plantilla_Nomina_' . ($idPeriodo ? "Periodo_{$idPeriodo}_" : '') . date('Ymd_His') . '.xlsx';
+        $soloIncompletos = $request->boolean('solo_incompletos');
+        $prefix = $soloIncompletos ? 'Plantilla_Saldos_Pendientes_' : 'Plantilla_Nomina_';
+        $fileName = $prefix . ($idPeriodo ? "Periodo_{$idPeriodo}_" : '') . date('Ymd_His') . '.xlsx';
 
         return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\NominaPlantillaExport($idPeriodo),
+            new \App\Exports\NominaPlantillaExport($idPeriodo, $soloIncompletos),
             $fileName
         );
     }
@@ -114,6 +151,25 @@ class NominaPdfController extends Controller
 
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\NominaCuentasExport($idEmpleado, $tipo, $fechaInicio, $fechaFin),
+            $fileName
+        );
+    }
+
+    /**
+     * Exporta reporte contable detallado de recibos de nómina a Excel
+     */
+    public function exportarReporteRecibos(Request $request)
+    {
+        $anio = $request->input('anio') ? (int) $request->input('anio') : null;
+        $idPeriodo = $request->input('id_periodo') ? (int) $request->input('id_periodo') : null;
+        $idEmpleado = $request->input('id_empleado') ? (int) $request->input('id_empleado') : null;
+        $metodoPago = $request->input('metodo_pago');
+        $estadoPago = $request->input('estado_pago');
+
+        $fileName = 'Reporte_Recibos_Nomina_' . date('Ymd_His') . '.xlsx';
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\NominaReporteRecibosExport($anio, $idPeriodo, $idEmpleado, $metodoPago, $estadoPago),
             $fileName
         );
     }

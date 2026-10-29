@@ -6,6 +6,7 @@ use App\Exports\NominaPlantillaExport;
 use App\Imports\NominaPlantillaImport;
 use App\Livewire\Forms\NominaReciboForm;
 use App\Models\NominaEmpleado;
+use App\Models\NominaMovimientoCuenta;
 use App\Models\NominaPeriodo;
 use App\Models\NominaRecibo;
 use Illuminate\Support\Facades\DB;
@@ -20,9 +21,11 @@ class Dispersion extends Component
 
     public NominaReciboForm $form;
 
-    // Período Activo
+    // Período Activo y Filtros de Cabecera
     public ?int $selectedPeriodoId = null;
     public string $periodoSearch = '';
+    public int|string $filtroAnioPeriodo = '';
+    public string $filtroTipoPeriodo = 'TODOS';
     public bool $showPeriodoModal = false;
     public bool $isEditingPeriodo = false;
 
@@ -45,6 +48,8 @@ class Dispersion extends Component
     public bool $showReciboModal = false;
     public bool $isEditingRecibo = false;
     public bool $darDeBajaAlFiniquitar = false;
+    public string $empleadoSearch = '';
+    public ?NominaEmpleado $empleadoSeleccionado = null;
 
     // Selección múltiple para impresión
     public array $selectedRecibos = [];
@@ -67,27 +72,84 @@ class Dispersion extends Component
     // Acordeón de detalles expandidos
     public array $expandedRecibos = [];
 
+    // Modal Auditoría y Saldos Pendientes
+    public bool $showAuditoriaModal = false;
+    public array $selectedEmpleadosAuditoria = [];
+    public bool $selectAllAuditoria = false;
+    public string $filtroAuditoria = 'TODOS'; // TODOS, PARCIAL, SIN_RECIBO
+    public string $filtroAuditoriaTipoEmpleado = 'TODOS'; // TODOS, PLANTA, TEMPORAL
+    public string $searchAuditoria = '';
+
+    // Aviso empleado fuera del período de labores
+    public bool $empleadoFueraDePeriodo = false;
+    public ?string $motivoEmpleadoFueraDePeriodo = null;
+
+    // Secuencia de Recibos Complementarios
+    public bool $enSecuencia = false;
+    public array $colaSecuencia = [];
+    public int $secuenciaTotal = 0;
+    public int $secuenciaIndice = 0;
+    public float $saldoPendienteEmpleadoActual = 0.0;
+    public float $salarioBaseEmpleadoActual = 0.0;
+    public float $totalEmitidoPrevioEmpleadoActual = 0.0;
+    public int $recibosPreviosCountEmpleadoActual = 0;
+
+    // Modal Reporte Contable de Recibos
+    public bool $showReporteModal = false;
+    public ?int $filtroReporteAnio = null;
+    public ?int $filtroReportePeriodoId = null;
+    public ?int $filtroReporteEmpleadoId = null;
+    public ?string $filtroReporteEmpleadoNombre = null;
+    public string $filtroReporteEmpleadoSearch = '';
+    public string $filtroReporteMetodoPago = 'TODOS';
+    public string $filtroReporteEstadoPago = 'TODOS';
+
     protected $paginationTheme = 'tailwind';
 
     public function mount(): void
     {
-        // Seleccionar por defecto el periodo más reciente
+        // Seleccionar por defecto el periodo más reciente y su año
         $ultimoPeriodo = NominaPeriodo::orderBy('fecha_inicio', 'desc')->first();
         if ($ultimoPeriodo) {
             $this->selectedPeriodoId = $ultimoPeriodo->id;
+            $this->filtroAnioPeriodo = $ultimoPeriodo->fecha_inicio ? (int) $ultimoPeriodo->fecha_inicio->year : (int) now()->year;
+        } else {
+            $this->filtroAnioPeriodo = (int) now()->year;
         }
+        $this->filtroTipoPeriodo = 'TODOS';
 
         $this->periodoFechaInicio = now()->startOfMonth()->toDateString();
         $this->periodoFechaFin = now()->endOfMonth()->toDateString();
         $this->periodoFechaPago = now()->toDateString();
     }
 
-    public function selectPeriodo(int $id): void
+    public function updatedFiltroAnioPeriodo(): void
     {
-        $this->selectedPeriodoId = $id;
+        $this->selectedPeriodoId = null;
         $this->selectedRecibos = [];
         $this->selectAll = false;
         $this->resetPage();
+    }
+
+    public function updatedFiltroTipoPeriodo(): void
+    {
+        $this->selectedPeriodoId = null;
+        $this->selectedRecibos = [];
+        $this->selectAll = false;
+        $this->resetPage();
+    }
+
+    public function updatedSelectedPeriodoId($id): void
+    {
+        $this->selectedPeriodoId = !empty($id) ? (int) $id : null;
+        $this->selectedRecibos = [];
+        $this->selectAll = false;
+        $this->resetPage();
+    }
+
+    public function selectPeriodo($id): void
+    {
+        $this->updatedSelectedPeriodoId($id);
     }
 
     public function updatedSelectAll($value): void
@@ -165,7 +227,7 @@ class Dispersion extends Component
             'periodoFechaInicio' => 'required|date',
             'periodoFechaFin' => 'required|date|after_or_equal:periodoFechaInicio',
             'periodoFechaPago' => 'nullable|date',
-            'periodoEstado' => 'required|in:BORRADOR,EN_PROCESO,DISPERSADO,CERRADO',
+            'periodoEstado' => 'required|in:BORRADOR,EN_PROCESO,APROBADO,DISPERSADO,PAGADO,CERRADO',
         ]);
 
         if ($this->isEditingPeriodo && $this->periodoId) {
@@ -179,7 +241,9 @@ class Dispersion extends Component
                 'estado' => $this->periodoEstado,
             ]);
             $p->recalcularTotales();
-            $this->successMessage = "Período '{$p->nombre}' actualizado con éxito.";
+            $this->filtroAnioPeriodo = (int) date('Y', strtotime($this->periodoFechaInicio));
+            $this->selectedPeriodoId = $p->id;
+            $this->dispatch('toast', message: "Período '{$p->nombre}' actualizado con éxito.", type: 'success');
         } else {
             $folio = 'PER-' . date('Y') . '-' . strtoupper(substr(uniqid(), -5));
             $p = NominaPeriodo::create([
@@ -192,8 +256,10 @@ class Dispersion extends Component
                 'estado' => $this->periodoEstado,
                 'id_usuario' => auth()->id(),
             ]);
+            $this->filtroAnioPeriodo = (int) date('Y', strtotime($this->periodoFechaInicio));
+            $this->filtroTipoPeriodo = 'TODOS';
             $this->selectedPeriodoId = $p->id;
-            $this->successMessage = "Período '{$p->nombre}' creado exitosamente.";
+            $this->dispatch('toast', message: "Período '{$p->nombre}' creado exitosamente.", type: 'success');
         }
 
         $this->showPeriodoModal = false;
@@ -209,12 +275,17 @@ class Dispersion extends Component
         if ($this->selectedPeriodoId) {
             $p = NominaPeriodo::find($this->selectedPeriodoId);
             if ($p) {
+                if ($p->estado === 'CERRADO') {
+                    $this->dispatch('toast', message: 'No se puede eliminar un período con estado CERRADO. Actualiza su estado primero si deseas gestionarlo.', type: 'error');
+                    $this->showDeletePeriodoModal = false;
+                    return;
+                }
                 // Eliminar recibos asociados
                 $p->recibos()->delete();
                 $p->delete();
-                $this->successMessage = "Período y sus recibos eliminados.";
+                $this->dispatch('toast', message: 'Período y sus recibos eliminados.', type: 'info');
             }
-            $this->selectedPeriodoId = NominaPeriodo::orderBy('fecha_inicio', 'desc')->first()?->id;
+            $this->selectedPeriodoId = null;
         }
         $this->showDeletePeriodoModal = false;
     }
@@ -224,7 +295,7 @@ class Dispersion extends Component
         if ($this->selectedPeriodoId) {
             $p = NominaPeriodo::find($this->selectedPeriodoId);
             $p?->recalcularTotales();
-            $this->successMessage = "Totales del período recalculados.";
+            $this->dispatch('toast', message: 'Totales del período recalculados.', type: 'success');
         }
     }
 
@@ -232,14 +303,27 @@ class Dispersion extends Component
 
     public function createRecibo(): void
     {
+        if (!$this->selectedPeriodoId) {
+            $this->dispatch('toast', message: 'Por favor selecciona un período de nómina primero.', type: 'warning');
+            return;
+        }
+
+        $p = NominaPeriodo::find($this->selectedPeriodoId);
+        if ($p && $p->estado === 'CERRADO') {
+            $this->dispatch('toast', message: 'No se pueden crear nuevos recibos en un período CERRADO.', type: 'warning');
+            return;
+        }
+
         $this->form->reset();
+        $this->limpiarEmpleadoSeleccionado();
         $this->form->id_periodo = $this->selectedPeriodoId;
         $this->form->metodo_pago = 'EFECTIVO';
         $this->form->estado_pago = 'PENDIENTE';
         $this->form->tipo_recibo = 'NOMINA';
+        $this->empleadoFueraDePeriodo = false;
+        $this->motivoEmpleadoFueraDePeriodo = null;
 
-        if ($this->selectedPeriodoId) {
-            $p = NominaPeriodo::find($this->selectedPeriodoId);
+        if ($p) {
             if ($p) {
                 $this->form->fecha_inicio = $p->fecha_inicio ? $p->fecha_inicio->format('Y-m-d') : '';
                 $this->form->fecha_fin = $p->fecha_fin ? $p->fecha_fin->format('Y-m-d') : '';
@@ -255,56 +339,462 @@ class Dispersion extends Component
         $this->isEditingRecibo = false;
         $this->darDeBajaAlFiniquitar = false;
         $this->showReciboModal = true;
+        $this->dispatch('focus-empleado-search');
     }
 
-    public function onEmpleadoSelected($empleadoId): void
+    public function seleccionarEmpleado(int $id): void
     {
-        if (!$empleadoId) {
+        $empleado = NominaEmpleado::with(['area', 'puesto', 'historialLaboral'])->find($id);
+        if (!$empleado) {
             return;
         }
-        $empleado = NominaEmpleado::find($empleadoId);
-        if ($empleado) {
-            $this->form->nomina_fiscal = (float) $empleado->salario_base;
+
+        $this->form->id_empleado = $empleado->id;
+        $this->empleadoSeleccionado = $empleado;
+        $this->empleadoSearch = '';
+
+        // Validar si el trabajador tiene ciclo laboral en el rango de este período
+        $periodo = $this->selectedPeriodoId ? NominaPeriodo::find($this->selectedPeriodoId) : null;
+        if ($periodo) {
+            $laboroEnPeriodo = $empleado->historialLaboral()
+                ->laborandoEnRango($periodo->fecha_inicio, $periodo->fecha_fin)
+                ->exists();
+
+            if (!$laboroEnPeriodo) {
+                $this->empleadoFueraDePeriodo = true;
+                $fIni = $periodo->fecha_inicio ? $periodo->fecha_inicio->format('d/m/Y') : '';
+                $fFin = $periodo->fecha_fin ? $periodo->fecha_fin->format('d/m/Y') : '';
+                $this->motivoEmpleadoFueraDePeriodo = "Aviso: {$empleado->nombre_completo} no cuenta con ciclo de labores activo dentro de las fechas de este período ({$fIni} al {$fFin}). Puedes continuar si se trata de un recibo complementario o extemporáneo.";
+            } else {
+                $this->empleadoFueraDePeriodo = false;
+                $this->motivoEmpleadoFueraDePeriodo = null;
+            }
+        } else {
+            $this->empleadoFueraDePeriodo = false;
+            $this->motivoEmpleadoFueraDePeriodo = null;
+        }
+
+        // Verificar si ya tiene recibos en este período para precarga complementaria
+        $recibosPrevios = $this->selectedPeriodoId
+            ? NominaRecibo::where('id_periodo', $this->selectedPeriodoId)->where('id_empleado', $empleado->id)->get()
+            : collect([]);
+
+        // Buscar salario base del ciclo laboral activo durante el período o del empleado
+        $ciclo = null;
+        if ($periodo) {
+            $ciclo = $empleado->historialLaboral->first(function ($c) use ($periodo) {
+                return $c->fecha_ingreso <= $periodo->fecha_fin && ($c->fecha_baja === null || $c->fecha_baja >= $periodo->fecha_inicio);
+            });
+        }
+        $salarioBasePeriodo = $ciclo ? (float) $ciclo->salario_base : (float) $empleado->salario_base;
+
+        $this->recibosPreviosCountEmpleadoActual = $recibosPrevios->count();
+        $this->salarioBaseEmpleadoActual = $salarioBasePeriodo;
+        $this->totalEmitidoPrevioEmpleadoActual = (float) $recibosPrevios->sum('total_percepciones');
+        $this->saldoPendienteEmpleadoActual = max(0, round($this->salarioBaseEmpleadoActual - $this->totalEmitidoPrevioEmpleadoActual, 2));
+
+        if ($recibosPrevios->isNotEmpty() && $this->saldoPendienteEmpleadoActual > 0) {
+            // Empleado con recibos previos y saldo faltante
+            $montoAsignar = $this->saldoPendienteEmpleadoActual;
+            $ultimoRecibo = $recibosPrevios->sortByDesc('id')->first();
+            $this->form->tipo_recibo = $ultimoRecibo->tipo_recibo;
+            $this->form->metodo_pago = $ultimoRecibo->metodo_pago;
+            $numComplemento = $this->recibosPreviosCountEmpleadoActual + 1;
+            $this->form->observaciones = "Recibo complementario #{$numComplemento} - Saldo restante";
+        } else {
+            $montoAsignar = $this->salarioBaseEmpleadoActual;
             $this->form->metodo_pago = $empleado->tipo_pago_predeterminado ?: 'EFECTIVO';
         }
+
+        // Precarga de montos según método de pago
+        if ($this->form->metodo_pago === 'TRANSFERENCIA') {
+            $this->form->nomina_fiscal = $montoAsignar;
+            $this->form->diferencia_efectivo = 0;
+        } else {
+            $this->form->nomina_fiscal = 0;
+            $this->form->diferencia_efectivo = $montoAsignar;
+        }
+    }
+
+    public function limpiarEmpleadoSeleccionado(): void
+    {
+        $this->form->id_empleado = null;
+        $this->empleadoSeleccionado = null;
+        $this->empleadoSearch = '';
+        $this->form->nomina_fiscal = 0;
+        $this->form->diferencia_efectivo = 0;
+        $this->saldoPendienteEmpleadoActual = 0.0;
+        $this->salarioBaseEmpleadoActual = 0.0;
+        $this->totalEmitidoPrevioEmpleadoActual = 0.0;
+        $this->recibosPreviosCountEmpleadoActual = 0;
+        $this->empleadoFueraDePeriodo = false;
+        $this->motivoEmpleadoFueraDePeriodo = null;
+        $this->dispatch('focus-empleado-search');
     }
 
     public function editRecibo(int $id): void
     {
-        $recibo = NominaRecibo::findOrFail($id);
+        $recibo = NominaRecibo::with('periodo')->findOrFail($id);
+        if ($recibo->periodo && $recibo->periodo->estado === 'CERRADO') {
+            $this->dispatch('toast', message: 'No se puede editar un recibo de un período CERRADO.', type: 'warning');
+            return;
+        }
+
         $this->form->setRecibo($recibo);
+        $this->empleadoSeleccionado = NominaEmpleado::with(['area', 'puesto'])->find($recibo->id_empleado);
+        $this->empleadoSearch = '';
+        $this->saldoPendienteEmpleadoActual = 0.0;
+        $this->salarioBaseEmpleadoActual = (float) ($this->empleadoSeleccionado?->salario_base ?? 0);
+        $this->totalEmitidoPrevioEmpleadoActual = (float) $recibo->total_percepciones;
+        $this->recibosPreviosCountEmpleadoActual = 1;
         $this->isEditingRecibo = true;
         $this->darDeBajaAlFiniquitar = false;
+        $this->empleadoFueraDePeriodo = false;
+        $this->motivoEmpleadoFueraDePeriodo = null;
         $this->showReciboModal = true;
     }
 
-    public function saveRecibo(): void
+    public function saveRecibo(bool $crearOtro = false): void
     {
+        if ($this->form->id_periodo) {
+            $periodo = NominaPeriodo::find($this->form->id_periodo);
+            if ($periodo && $periodo->estado === 'CERRADO') {
+                $this->dispatch('toast', message: 'Operación bloqueada: El período de nómina está CERRADO.', type: 'error');
+                return;
+            }
+        }
+
         try {
             if ($this->isEditingRecibo) {
                 $this->form->update();
-                $this->successMessage = 'Recibo de nómina actualizado correctamente.';
+                $this->dispatch('toast', message: 'Recibo de nómina actualizado correctamente.', type: 'success');
+                $this->showReciboModal = false;
             } else {
+                $savedFechaInicio = $this->form->fecha_inicio;
+                $savedFechaFin = $this->form->fecha_fin;
+                $savedFechaPago = $this->form->fecha_pago;
+                $savedIdPeriodo = $this->form->id_periodo;
+                $savedTipoRecibo = $this->form->tipo_recibo;
+                $idEmpleadoOriginal = $this->form->id_empleado;
+
                 $recibo = $this->form->store();
 
                 // Si fue finiquito y el usuario optó por dar de baja al empleado
-                if ($this->form->tipo_recibo === 'FINIQUITO' && $this->darDeBajaAlFiniquitar && $this->form->id_empleado) {
-                    $emp = NominaEmpleado::find($this->form->id_empleado);
-                    $emp?->update([
-                        'activo' => false,
-                        'fecha_baja' => now()->toDateString(),
-                    ]);
-                    $this->successMessage = 'Recibo de finiquito creado y empleado dado de baja exitosamente.';
+                if ($savedTipoRecibo === 'FINIQUITO' && $this->darDeBajaAlFiniquitar && $idEmpleadoOriginal) {
+                    $emp = NominaEmpleado::find($idEmpleadoOriginal);
+                    if ($emp) {
+                        $fechaBaja = $savedFechaPago ?: now()->toDateString();
+                        $emp->update([
+                            'activo' => false,
+                            'fecha_baja' => $fechaBaja,
+                        ]);
+                        // Cerrar ciclo laboral activo en el historial
+                        $cicloActivo = $emp->cicloLaboralActivo;
+                        if ($cicloActivo) {
+                            $periodoNombre = $savedIdPeriodo ? (NominaPeriodo::find($savedIdPeriodo)?->nombre ?? '') : '';
+                            $cicloActivo->update([
+                                'fecha_baja' => $fechaBaja,
+                                'motivo_baja' => 'Baja por finiquito' . ($periodoNombre ? " (Período: {$periodoNombre})" : ''),
+                            ]);
+                        }
+                    }
+                    $this->dispatch('toast', message: 'Recibo de finiquito creado y empleado dado de baja exitosamente.', type: 'success');
                 } else {
-                    $this->successMessage = 'Recibo de nómina registrado exitosamente.';
+                    $this->dispatch('toast', message: "Recibo de {$recibo->nombre_empleado_snapshot} emitido exitosamente.", type: 'success');
+                }
+
+                if ($this->enSecuencia) {
+                    // Pasar de inmediato al siguiente empleado en la secuencia
+                    $this->cargarSiguienteEnSecuencia();
+                } elseif ($crearOtro) {
+                    // Mantener el modal abierto, limpiar el empleado seleccionado y enfocar el buscador
+                    $this->limpiarEmpleadoSeleccionado();
+                    $this->form->id_periodo = $savedIdPeriodo;
+                    $this->form->tipo_recibo = $savedTipoRecibo;
+                    $this->form->fecha_inicio = $savedFechaInicio;
+                    $this->form->fecha_fin = $savedFechaFin;
+                    $this->form->fecha_pago = $savedFechaPago;
+                    $this->form->horas_extras = 0;
+                    $this->form->bonos_otros = 0;
+                    $this->form->monto_aguinaldo = 0;
+                    $this->form->monto_vacaciones = 0;
+                    $this->form->monto_prima_vacacional = 0;
+                    $this->form->descuento_adelanto = 0;
+                    $this->form->descuento_infonavit = 0;
+                    $this->form->otros_descuentos = 0;
+                    $this->form->observaciones = null;
+                    $this->darDeBajaAlFiniquitar = false;
+                    $this->dispatch('focus-empleado-search');
+                } else {
+                    $this->showReciboModal = false;
                 }
             }
-
-            $this->showReciboModal = false;
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
-            $this->errorMessage = 'Error al procesar recibo: ' . $e->getMessage();
+            $this->dispatch('toast', message: 'Error al procesar recibo: ' . $e->getMessage(), type: 'error');
+        }
+    }
+
+    // --- AUDITORÍA Y SALDOS PENDIENTES ---
+
+    public function openAuditoriaModal(): void
+    {
+        if (!$this->selectedPeriodoId) {
+            $this->dispatch('toast', message: 'Por favor selecciona un período de nómina primero.', type: 'warning');
+            return;
+        }
+
+        $this->selectedEmpleadosAuditoria = [];
+        $this->selectAllAuditoria = false;
+        $this->filtroAuditoria = 'TODOS';
+        $this->filtroAuditoriaTipoEmpleado = 'TODOS';
+        $this->searchAuditoria = '';
+        $this->showAuditoriaModal = true;
+    }
+
+    public function updatedSelectAllAuditoria($value): void
+    {
+        if ($value && $this->selectedPeriodoId) {
+            $empleados = $this->obtenerEmpleadosAuditoria();
+            $this->selectedEmpleadosAuditoria = array_map(fn($item) => (string) $item['id_empleado'], $empleados);
+        } else {
+            $this->selectedEmpleadosAuditoria = [];
+        }
+    }
+
+    public function obtenerEmpleadosAuditoria(): array
+    {
+        if (!$this->selectedPeriodoId) {
+            return [];
+        }
+
+        $periodo = NominaPeriodo::find($this->selectedPeriodoId);
+        if (!$periodo) {
+            return [];
+        }
+
+        // Consultar únicamente empleados con ciclo laboral en las fechas del período o con recibo emitido en este período
+        $empleados = NominaEmpleado::with(['area', 'puesto', 'historialLaboral'])
+            ->where(function ($q) use ($periodo) {
+                $q->laborandoEnPeriodo($periodo->fecha_inicio, $periodo->fecha_fin)
+                  ->orWhereHas('recibos', fn($rq) => $rq->where('id_periodo', $periodo->id));
+            })
+            ->orderBy('nombre', 'asc')
+            ->get();
+
+        $recibos = NominaRecibo::where('id_periodo', $this->selectedPeriodoId)->get()->groupBy('id_empleado');
+        $resultado = [];
+        $search = mb_strtolower(trim($this->searchAuditoria));
+
+        foreach ($empleados as $emp) {
+            // Filtro por tipo de contrato (TODOS, PLANTA, TEMPORAL)
+            if ($this->filtroAuditoriaTipoEmpleado !== 'TODOS' && $emp->tipo_empleado !== $this->filtroAuditoriaTipoEmpleado) {
+                continue;
+            }
+
+            // Determinar salario base correspondiente al período
+            $ciclo = $emp->historialLaboral->first(function ($c) use ($periodo) {
+                return $c->fecha_ingreso <= $periodo->fecha_fin && ($c->fecha_baja === null || $c->fecha_baja >= $periodo->fecha_inicio);
+            });
+            $salarioBase = $ciclo ? (float) $ciclo->salario_base : (float) $emp->salario_base;
+
+            $recibosEmp = $recibos->get($emp->id, collect([]));
+            $cantRecibos = $recibosEmp->count();
+            $emitido = (float) $recibosEmp->sum('total_percepciones');
+            $faltante = max(0, round($salarioBase - $emitido, 2));
+
+            // Solo empleados con saldo pendiente
+            if ($faltante <= 0.01) {
+                continue;
+            }
+
+            // Filtro por pestaña (PARCIAL vs SIN_RECIBO)
+            if ($this->filtroAuditoria === 'PARCIAL' && $cantRecibos === 0) {
+                continue;
+            }
+            if ($this->filtroAuditoria === 'SIN_RECIBO' && $cantRecibos > 0) {
+                continue;
+            }
+
+            // Filtro por texto de búsqueda
+            if ($search !== '') {
+                $nombreCompleto = mb_strtolower($emp->nombre_completo);
+                $puesto = mb_strtolower($emp->puesto?->nombre ?? '');
+                $area = mb_strtolower($emp->area?->nombre ?? '');
+                $idStr = (string) $emp->id;
+
+                if (!str_contains($nombreCompleto, $search) &&
+                    !str_contains($puesto, $search) &&
+                    !str_contains($area, $search) &&
+                    !str_contains($idStr, $search)) {
+                    continue;
+                }
+            }
+
+            $resultado[] = [
+                'id_empleado' => $emp->id,
+                'empleado' => $emp,
+                'nombre_completo' => $emp->nombre_completo,
+                'tipo_empleado' => $emp->tipo_empleado,
+                'puesto' => $emp->puesto?->nombre ?? 'Sin puesto',
+                'area' => $emp->area?->nombre ?? 'Sin área',
+                'salario_base' => $salarioBase,
+                'emitido' => $emitido,
+                'faltante' => $faltante,
+                'cant_recibos' => $cantRecibos,
+                'saldo_adelantos' => (float) $emp->saldo_adelantos,
+                'porcentaje_cubierto' => $salarioBase > 0 ? min(100, round(($emitido / $salarioBase) * 100)) : 0,
+            ];
+        }
+
+        return $resultado;
+    }
+
+    public function getTotalSeleccionadosAuditoriaProperty(): float
+    {
+        if (empty($this->selectedEmpleadosAuditoria)) {
+            return 0.0;
+        }
+
+        $empleados = $this->obtenerEmpleadosAuditoria();
+        $ids = array_map('intval', $this->selectedEmpleadosAuditoria);
+        $total = 0.0;
+        foreach ($empleados as $item) {
+            if (in_array((int) $item['id_empleado'], $ids, true)) {
+                $total += (float) $item['faltante'];
+            }
+        }
+
+        return $total;
+    }
+
+    public function iniciarSecuenciaComplementaria(): void
+    {
+        if (empty($this->selectedEmpleadosAuditoria)) {
+            $this->dispatch('toast', message: 'Selecciona al menos un empleado para iniciar la secuencia.', type: 'warning');
+            return;
+        }
+
+        $this->colaSecuencia = array_values(array_unique(array_map('intval', $this->selectedEmpleadosAuditoria)));
+        $this->secuenciaTotal = count($this->colaSecuencia);
+        $this->secuenciaIndice = 0;
+        $this->enSecuencia = true;
+        $this->showAuditoriaModal = false;
+
+        $this->cargarSiguienteEnSecuencia();
+    }
+
+    public function cargarSiguienteEnSecuencia(): void
+    {
+        if (empty($this->colaSecuencia)) {
+            $this->enSecuencia = false;
+            $this->showReciboModal = false;
+            $this->recalcularTotalesPeriodo();
+            $this->dispatch('toast', message: '¡Secuencia de recibos complementarios finalizada con éxito!', type: 'success');
+            return;
+        }
+
+        $idEmpleado = array_shift($this->colaSecuencia);
+        $this->secuenciaIndice++;
+
+        $empleado = NominaEmpleado::with(['area', 'puesto'])->find($idEmpleado);
+        if (!$empleado) {
+            $this->cargarSiguienteEnSecuencia();
+            return;
+        }
+
+        $this->form->reset();
+        $this->isEditingRecibo = false;
+        $this->darDeBajaAlFiniquitar = false;
+        $this->form->id_periodo = $this->selectedPeriodoId;
+        $this->form->id_empleado = $empleado->id;
+        $this->empleadoSeleccionado = $empleado;
+        $this->empleadoSearch = '';
+
+        // Periodo y Fechas
+        $periodo = NominaPeriodo::find($this->selectedPeriodoId);
+        if ($periodo) {
+            $this->form->fecha_inicio = $periodo->fecha_inicio ? $periodo->fecha_inicio->format('Y-m-d') : '';
+            $this->form->fecha_fin = $periodo->fecha_fin ? $periodo->fecha_fin->format('Y-m-d') : '';
+            $this->form->fecha_pago = $periodo->fecha_pago ? $periodo->fecha_pago->format('Y-m-d') : now()->toDateString();
+        }
+
+        // Recibos previos de este empleado en el período
+        $recibosPrevios = NominaRecibo::where('id_periodo', $this->selectedPeriodoId)
+            ->where('id_empleado', $empleado->id)
+            ->get();
+
+        $this->recibosPreviosCountEmpleadoActual = $recibosPrevios->count();
+        $this->salarioBaseEmpleadoActual = (float) $empleado->salario_base;
+        $this->totalEmitidoPrevioEmpleadoActual = (float) $recibosPrevios->sum('total_percepciones');
+        $this->saldoPendienteEmpleadoActual = max(0, round($this->salarioBaseEmpleadoActual - $this->totalEmitidoPrevioEmpleadoActual, 2));
+
+        $montoAsignar = $this->saldoPendienteEmpleadoActual > 0 ? $this->saldoPendienteEmpleadoActual : $this->salarioBaseEmpleadoActual;
+
+        // Heredar tipo de recibo y método de pago
+        $ultimoRecibo = $recibosPrevios->sortByDesc('id')->first();
+        if ($ultimoRecibo) {
+            $this->form->tipo_recibo = $ultimoRecibo->tipo_recibo;
+            $this->form->metodo_pago = $ultimoRecibo->metodo_pago;
+        } else {
+            if ($periodo && in_array($periodo->tipo_periodo, ['AGUINALDO', 'FINIQUITO'])) {
+                $this->form->tipo_recibo = $periodo->tipo_periodo;
+            } else {
+                $this->form->tipo_recibo = 'NOMINA';
+            }
+            $this->form->metodo_pago = $empleado->tipo_pago_predeterminado ?: 'EFECTIVO';
+        }
+
+        // Asignar monto a diferencia_efectivo o nomina_fiscal
+        if ($this->form->metodo_pago === 'TRANSFERENCIA') {
+            $this->form->nomina_fiscal = $montoAsignar;
+            $this->form->diferencia_efectivo = 0;
+        } else {
+            $this->form->nomina_fiscal = 0;
+            $this->form->diferencia_efectivo = $montoAsignar;
+        }
+
+        // Percepciones adicionales y deducciones en 0.00
+        $this->form->horas_extras = 0;
+        $this->form->bonos_otros = 0;
+        $this->form->monto_aguinaldo = 0;
+        $this->form->monto_vacaciones = 0;
+        $this->form->monto_prima_vacacional = 0;
+        $this->form->descuento_adelanto = 0;
+        $this->form->descuento_infonavit = 0;
+        $this->form->otros_descuentos = 0;
+        $this->form->estado_pago = 'PENDIENTE';
+
+        $numComplemento = $this->recibosPreviosCountEmpleadoActual + 1;
+        $this->form->observaciones = $this->recibosPreviosCountEmpleadoActual > 0
+            ? "Recibo complementario #{$numComplemento} - Saldo restante de nómina"
+            : null;
+
+        $this->showReciboModal = true;
+    }
+
+    public function omitirSiguienteEnSecuencia(): void
+    {
+        $nombre = $this->empleadoSeleccionado?->nombre_completo ?? 'Empleado';
+        $this->dispatch('toast', message: "Se omitió a {$nombre} en la secuencia.", type: 'info');
+        $this->cargarSiguienteEnSecuencia();
+    }
+
+    public function cancelarSecuencia(): void
+    {
+        $this->colaSecuencia = [];
+        $this->enSecuencia = false;
+        $this->showReciboModal = false;
+        $this->recalcularTotalesPeriodo();
+        $this->dispatch('toast', message: 'Secuencia de recibos complementarios cancelada.', type: 'info');
+    }
+
+    public function aplicarDescuentoAdelantoSugerido(): void
+    {
+        if ($this->empleadoSeleccionado && $this->empleadoSeleccionado->saldo_adelantos > 0) {
+            $this->form->descuento_adelanto = (float) $this->empleadoSeleccionado->saldo_adelantos;
+            $this->dispatch('toast', message: 'Descuento de anticipo ($' . number_format($this->empleadoSeleccionado->saldo_adelantos, 2) . ') cargado.', type: 'info');
         }
     }
 
@@ -319,7 +809,7 @@ class Dispersion extends Component
             $recibo->fecha_pago_real = now()->toDateString();
         }
         $recibo->save();
-        $this->successMessage = "Estado del recibo {$recibo->folio} actualizado a {$recibo->estado_pago}.";
+        $this->dispatch('toast', message: "Estado del recibo {$recibo->folio} actualizado a {$recibo->estado_pago}.", type: 'success');
     }
 
     public function confirmDeleteRecibo(int $id): void
@@ -333,12 +823,28 @@ class Dispersion extends Component
         if ($this->reciboIdToDelete) {
             $recibo = NominaRecibo::find($this->reciboIdToDelete);
             if ($recibo) {
-                $periodoId = $recibo->id_periodo;
-                $recibo->delete();
-                if ($periodoId) {
-                    NominaPeriodo::find($periodoId)?->recalcularTotales();
+                $periodo = NominaPeriodo::find($recibo->id_periodo);
+                if ($periodo && $periodo->estado === 'CERRADO') {
+                    $this->dispatch('toast', message: 'No se puede eliminar un recibo de un período CERRADO.', type: 'error');
+                    $this->showDeleteReciboModal = false;
+                    $this->reciboIdToDelete = null;
+                    return;
                 }
-                $this->successMessage = "Recibo eliminado correctamente.";
+
+                DB::transaction(function () use ($recibo) {
+                    // Reversar amortización de adelanto si existía
+                    if ((float) $recibo->descuento_adelanto > 0 && $recibo->id_empleado) {
+                        NominaEmpleado::where('id', $recibo->id_empleado)->increment('saldo_adelantos', (float) $recibo->descuento_adelanto);
+                        NominaMovimientoCuenta::where('id_recibo_nomina', $recibo->id)->delete();
+                    }
+
+                    $recibo->delete();
+                });
+
+                if ($recibo->id_periodo) {
+                    NominaPeriodo::find($recibo->id_periodo)?->recalcularTotales();
+                }
+                $this->dispatch('toast', message: 'Recibo eliminado correctamente y saldo deudor sincronizado.', type: 'info');
             }
         }
         $this->showDeleteReciboModal = false;
@@ -349,6 +855,17 @@ class Dispersion extends Component
 
     public function openImportModal(): void
     {
+        if (!$this->selectedPeriodoId) {
+            $this->dispatch('toast', message: 'Por favor selecciona un período de nómina primero para importar el archivo.', type: 'warning');
+            return;
+        }
+
+        $periodo = NominaPeriodo::find($this->selectedPeriodoId);
+        if ($periodo && $periodo->estado === 'CERRADO') {
+            $this->dispatch('toast', message: 'No se puede importar en un período CERRADO.', type: 'error');
+            return;
+        }
+
         $this->archivoExcel = null;
         $this->importErrors = [];
         $this->showImportModal = true;
@@ -356,6 +873,14 @@ class Dispersion extends Component
 
     public function importarExcel(): void
     {
+        if ($this->selectedPeriodoId) {
+            $periodo = NominaPeriodo::find($this->selectedPeriodoId);
+            if ($periodo && $periodo->estado === 'CERRADO') {
+                $this->dispatch('toast', message: 'No se puede importar en un período CERRADO.', type: 'error');
+                return;
+            }
+        }
+
         $this->validate([
             'archivoExcel' => 'required|file|mimes:xlsx,xls,csv|max:10240',
         ]);
@@ -371,32 +896,131 @@ class Dispersion extends Component
                 NominaPeriodo::find($this->selectedPeriodoId)?->recalcularTotales();
             }
 
-            $this->successMessage = "Se procesaron {$registrados} recibos exitosamente desde el archivo Excel.";
+            $this->dispatch('toast', message: "Se procesaron {$registrados} recibos exitosamente desde el archivo Excel.", type: 'success');
 
             if (empty($this->importErrors)) {
                 $this->showImportModal = false;
             }
         } catch (\Exception $e) {
-            $this->errorMessage = 'Error en la importación: ' . $e->getMessage();
+            $this->dispatch('toast', message: 'Error en la importación: ' . $e->getMessage(), type: 'error');
         }
+    }
+
+    // --- REPORTE CONTABLE DE RECIBOS ---
+
+    public function openReporteModal(): void
+    {
+        $this->filtroReporteAnio = $this->filtroAnioPeriodo ? (int) $this->filtroAnioPeriodo : (int) now()->year;
+        $this->filtroReportePeriodoId = $this->selectedPeriodoId ?: null;
+        $this->filtroReporteEmpleadoId = null;
+        $this->filtroReporteEmpleadoNombre = null;
+        $this->filtroReporteEmpleadoSearch = '';
+        $this->filtroReporteMetodoPago = 'TODOS';
+        $this->filtroReporteEstadoPago = 'TODOS';
+        $this->showReporteModal = true;
+    }
+
+    public function seleccionarEmpleadoReporte(int $id, string $nombre): void
+    {
+        $this->filtroReporteEmpleadoId = $id;
+        $this->filtroReporteEmpleadoNombre = "#{$id} - {$nombre}";
+        $this->filtroReporteEmpleadoSearch = '';
+    }
+
+    public function limpiarEmpleadoReporte(): void
+    {
+        $this->filtroReporteEmpleadoId = null;
+        $this->filtroReporteEmpleadoNombre = null;
+        $this->filtroReporteEmpleadoSearch = '';
     }
 
     public function render()
     {
-        // Períodos disponibles
-        $periodos = NominaPeriodo::when($this->periodoSearch, function ($q) {
-            $q->where('nombre', 'like', '%' . $this->periodoSearch . '%')
-                ->orWhere('folio', 'like', '%' . $this->periodoSearch . '%');
-        })
-            ->orderBy('fecha_inicio', 'desc')
-            ->limit(20)
-            ->get();
+        // Años disponibles en la base de datos
+        $aniosDisponibles = NominaPeriodo::selectRaw('YEAR(fecha_inicio) as anio')
+            ->distinct()
+            ->whereNotNull('fecha_inicio')
+            ->orderBy('anio', 'desc')
+            ->pluck('anio')
+            ->map(fn($y) => (int)$y)
+            ->toArray();
 
+        $currentYear = (int) now()->year;
+        if (!in_array($currentYear, $aniosDisponibles)) {
+            array_unshift($aniosDisponibles, $currentYear);
+        }
+
+        // Períodos filtrados por Año y Tipo
+        $periodosQuery = NominaPeriodo::query();
+
+        if (!empty($this->filtroAnioPeriodo)) {
+            $periodosQuery->whereYear('fecha_inicio', $this->filtroAnioPeriodo);
+        }
+
+        if ($this->filtroTipoPeriodo !== 'TODOS') {
+            $periodosQuery->where('tipo_periodo', $this->filtroTipoPeriodo);
+        }
+
+        $periodos = $periodosQuery->orderBy('fecha_inicio', 'desc')->get();
+
+        // Período y Auditoría
         $selectedPeriodo = $this->selectedPeriodoId ? NominaPeriodo::find($this->selectedPeriodoId) : null;
 
+        $totalPresupuestoPeriodo = 0.0;
+        $totalEmitidoPeriodo = 0.0;
+        $totalPendientePeriodo = 0.0;
+        $conteoIncompletosPeriodo = 0;
+        $empleadosEnPeriodoInfo = [];
+
+        if ($this->selectedPeriodoId && $selectedPeriodo) {
+            $empleadosPeriodo = NominaEmpleado::with(['area', 'puesto', 'historialLaboral'])
+                ->where(function ($q) use ($selectedPeriodo) {
+                    $q->laborandoEnPeriodo($selectedPeriodo->fecha_inicio, $selectedPeriodo->fecha_fin)
+                      ->orWhereHas('recibos', fn($rq) => $rq->where('id_periodo', $selectedPeriodo->id));
+                })
+                ->get();
+
+            $recibosPeriodo = NominaRecibo::where('id_periodo', $this->selectedPeriodoId)->get()->groupBy('id_empleado');
+            $totalEmitidoPeriodo = (float) ($selectedPeriodo?->total_neto ?? 0);
+
+            foreach ($empleadosPeriodo as $emp) {
+                // Determinar el salario base correspondiente a este período
+                $ciclo = $emp->historialLaboral->first(function ($c) use ($selectedPeriodo) {
+                    return $c->fecha_ingreso <= $selectedPeriodo->fecha_fin && ($c->fecha_baja === null || $c->fecha_baja >= $selectedPeriodo->fecha_inicio);
+                });
+                $salarioBase = $ciclo ? (float) $ciclo->salario_base : (float) $emp->salario_base;
+                $totalPresupuestoPeriodo += $salarioBase;
+
+                $recibosEmp = $recibosPeriodo->get($emp->id, collect([]));
+                $cantRecibos = $recibosEmp->count();
+                $emitido = (float) $recibosEmp->sum('total_percepciones');
+                $faltante = max(0, round($salarioBase - $emitido, 2));
+
+                $empleadosEnPeriodoInfo[$emp->id] = [
+                    'cant_recibos' => $cantRecibos,
+                    'emitido' => $emitido,
+                    'faltante' => $faltante,
+                    'salario_base' => $salarioBase,
+                    'cubierto' => $faltante <= 0.01,
+                ];
+
+                if ($faltante > 0.01) {
+                    $totalPendientePeriodo += $faltante;
+                    $conteoIncompletosPeriodo++;
+                }
+            }
+        }
+
+        $empleadosAuditoria = $this->showAuditoriaModal ? $this->obtenerEmpleadosAuditoria() : [];
+
         // Recibos
-        $recibosQuery = NominaRecibo::with(['empleado.area', 'empleado.puesto'])
-            ->when($this->selectedPeriodoId, fn($q) => $q->where('id_periodo', $this->selectedPeriodoId));
+        $recibosQuery = NominaRecibo::with(['empleado.area', 'empleado.puesto']);
+        if ($this->selectedPeriodoId) {
+            $recibosQuery->where('id_periodo', $this->selectedPeriodoId);
+        } else {
+            // Si no hay período seleccionado, no consultar recibos
+            $recibosQuery->whereRaw('1 = 0');
+        }
 
         if ($this->reciboSearch) {
             $search = '%' . trim($this->reciboSearch) . '%';
@@ -421,16 +1045,65 @@ class Dispersion extends Component
 
         $recibos = $recibosQuery->orderBy('id_empleado_snapshot', 'asc')->paginate(15);
 
-        // Empleados para el select en modal
-        $empleadosActivos = NominaEmpleado::where('activo', true)
-            ->orderBy('nombre')
-            ->get();
+        // Búsqueda de empleados para el autocompletado en el modal (activos primero, pero permitiendo inactivos para finiquitos/extemporáneos)
+        $empleadosBusqueda = trim($this->empleadoSearch) !== ''
+            ? NominaEmpleado::with(['area', 'puesto', 'historialLaboral'])
+                ->where(function ($sq) {
+                    $term = '%' . trim($this->empleadoSearch) . '%';
+                    $sq->where('nombre', 'like', $term)
+                        ->orWhere('apellido_paterno', 'like', $term)
+                        ->orWhere('apellido_materno', 'like', $term)
+                        ->orWhere('id', 'like', $term)
+                        ->orWhereHas('puesto', fn($pq) => $pq->where('nombre', 'like', $term))
+                        ->orWhereHas('area', fn($aq) => $aq->where('nombre', 'like', $term));
+                })
+                ->orderBy('activo', 'desc')
+                ->orderBy('nombre', 'asc')
+                ->limit(20)
+                ->get()
+            : collect([]);
+
+        // IDs de empleados que ya tienen un recibo en el período activo
+        $empleadosEnPeriodoIds = $this->selectedPeriodoId
+            ? NominaRecibo::where('id_periodo', $this->selectedPeriodoId)->pluck('id_empleado')->toArray()
+            : [];
+
+        // Períodos disponibles para el modal de reportes contables
+        $periodosReporte = $this->filtroReporteAnio
+            ? NominaPeriodo::whereYear('fecha_inicio', $this->filtroReporteAnio)->orderBy('fecha_inicio', 'desc')->get()
+            : NominaPeriodo::orderBy('fecha_inicio', 'desc')->get();
+
+        // Empleados para el combobox del modal de reportes contables
+        $empleadosReporteBusqueda = ($this->showReporteModal && trim($this->filtroReporteEmpleadoSearch) !== '')
+            ? NominaEmpleado::with(['area', 'puesto'])
+                ->where(function ($sq) {
+                    $term = '%' . trim($this->filtroReporteEmpleadoSearch) . '%';
+                    $sq->where('nombre', 'like', $term)
+                        ->orWhere('apellido_paterno', 'like', $term)
+                        ->orWhere('apellido_materno', 'like', $term)
+                        ->orWhere('id', 'like', $term);
+                })
+                ->orderBy('activo', 'desc')
+                ->orderBy('nombre', 'asc')
+                ->limit(10)
+                ->get()
+            : collect([]);
 
         return view('livewire.administracion.nomina.dispersion', [
             'periodos' => $periodos,
+            'aniosDisponibles' => $aniosDisponibles,
             'selectedPeriodo' => $selectedPeriodo,
             'recibos' => $recibos,
-            'empleadosActivos' => $empleadosActivos,
+            'empleadosBusqueda' => $empleadosBusqueda,
+            'empleadosEnPeriodoIds' => $empleadosEnPeriodoIds,
+            'totalPresupuestoPeriodo' => $totalPresupuestoPeriodo,
+            'totalEmitidoPeriodo' => $totalEmitidoPeriodo,
+            'totalPendientePeriodo' => $totalPendientePeriodo,
+            'conteoIncompletosPeriodo' => $conteoIncompletosPeriodo,
+            'empleadosEnPeriodoInfo' => $empleadosEnPeriodoInfo,
+            'empleadosAuditoria' => $empleadosAuditoria,
+            'periodosReporte' => $periodosReporte,
+            'empleadosReporteBusqueda' => $empleadosReporteBusqueda,
         ]);
     }
 }

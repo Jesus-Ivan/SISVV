@@ -293,7 +293,7 @@
         <h4 class="text-2xl font-bold dark:text-white mb-4">Integrantes</h4>
 
         <!-- Registros integrantes del socio -->
-        <div class="{{ $form->registro_permitido ? '' : 'pointer-events-none opacity-50' }}">
+        <div class="{{ $form->registro_permitido && $permisos ? '' : 'pointer-events-none opacity-50' }}">
             <!-- Inputs -->
             <div class="w-full">
                 <div class="flex gap-2">
@@ -302,7 +302,8 @@
                         <label for="aPaterno-integrante"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Apellido
                             Paterno</label>
-                        <input type="text" id="aPaterno" wire:model="form.apellido_p_integrante"
+                        <input {{ !$permisos ? 'tabindex=-1' : '' }} type="text" id="aPaterno"
+                            wire:model="form.apellido_p_integrante"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             required />
                         @error('formSocio.apellido_p_integrante')
@@ -314,7 +315,8 @@
                         <label for="aMaterno"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Apellido
                             Materno</label>
-                        <input type="text" id="nombre" wire:model="form.apellido_m_integrante"
+                        <input {{ !$permisos ? 'tabindex=-1' : '' }} type="text" id="nombre"
+                            wire:model="form.apellido_m_integrante"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             required />
                         @error('formSocio.apellido_m_integrante')
@@ -325,7 +327,8 @@
                     <div class="w-full">
                         <label for="nombre-miembro"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre</label>
-                        <input wire:model='form.nombre_integrante' type="text" id="nombre-miembro"
+                        <input {{ !$permisos ? 'tabindex=-1' : '' }} wire:model='form.nombre_integrante'
+                            type="text" id="nombre-miembro"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
                         @error('formSocio.nombre_integrante')
                             <x-input-error messages="{{ $message }}" />
@@ -337,7 +340,8 @@
                         <label for="fecha-nac"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fecha
                             nacimiento</label>
-                        <input wire:model='form.fecha_nac' type="date" id="fecha-nac"
+                        <input {{ !$permisos ? 'tabindex=-1' : '' }} wire:model='form.fecha_nac' type="date"
+                            id="fecha-nac"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             placeholder="Soltero(a)" />
                         @error('formSocio.fecha_nac')
@@ -346,9 +350,10 @@
                     </div>
                     <div class="flex gap-3 w-full">
                         <div class="w-full">
-                            <label for="membresias"
+                            <label for="parentesco"
                                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Parentesco</label>
-                            <select wire:model='form.parentesco' id="membresias"
+                            <select {{ !$permisos ? 'tabindex=-1' : '' }} wire:model='form.parentesco'
+                                id="parentesco"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 <option selected value="{{ null }}">Seleccione</option>
                                 @foreach ($this->parentescos as $item)
@@ -362,7 +367,8 @@
                         <div class="w-full">
                             <label for="tel_integrante"
                                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Celular</label>
-                            <input type="tel" id="tel_integrante" wire:model="form.tel_integrante"
+                            <input {{ !$permisos ? 'tabindex=-1' : '' }} type="tel" id="tel_integrante"
+                                wire:model="form.tel_integrante"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 required />
                         </div>
@@ -374,7 +380,7 @@
                             <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                                 for="file_input">Subir
                                 foto</label>
-                            <input wire:model='form.img_path_integrante'
+                            <input {{ !$permisos ? 'tabindex=-1' : '' }} wire:model='form.img_path_integrante'
                                 class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                                 id="file_input" type="file">
                             @error('form.img_path_integrante')
@@ -401,7 +407,8 @@
             <!-- Buton y Image -->
             <div class="flex my-2">
                 <!-- Agregar integrante -->
-                <button type="button" wire:click='registrarIntegrante' wire:loading.attr="disabled"
+                <button type="button" {{ !$permisos ? 'tabindex=-1' : '' }} wire:click='registrarIntegrante'
+                    wire:loading.attr="disabled"
                     class="max-h-11 w-96 text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">
                     <!--loading state image-->
                     <div wire:loading.delay wire:target="registrarIntegrante">
@@ -623,16 +630,18 @@
                                         </svg>
                                         <span class="sr-only">Editar</span>
                                     </button>
-                                    <button type="button" wire:click='eliminarIntegrante({{ $integrante }})'
-                                        class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                            fill="currentColor" class="w-5 h-5">
-                                            <path fill-rule="evenodd"
-                                                d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                        <span class="sr-only">Borrar</span>
-                                    </button>
+                                    @if ($permisos)
+                                        <button type="button" wire:click='eliminarIntegrante({{ $integrante }})'
+                                            class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                fill="currentColor" class="w-5 h-5">
+                                                <path fill-rule="evenodd"
+                                                    d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            <span class="sr-only">Borrar</span>
+                                        </button>
+                                    @endif
                                 </td>
                             @endif
                         </tr>

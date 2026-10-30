@@ -51,13 +51,34 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                 $otrosDescuentos = (float) ($row['otros_descuentos'] ?? 0);
                 $observaciones = $row['observaciones'] ?? null;
 
-                $totalPercepciones = $nominaFiscal + $diferenciaEfectivo + $horasExtras + $bonosOtros;
-                $totalDeducciones = $descuentoAdelanto + $descuentoInfonavit + $otrosDescuentos;
-                $netoPagar = max(0, $totalPercepciones - $totalDeducciones);
-
                 $recibo = NominaRecibo::where('id_periodo', $periodo->id)
                     ->where('id_empleado', $empleado->id)
                     ->first();
+
+                // Calcular deuda de adelantos disponible
+                $cargos = (float) NominaMovimientoCuenta::where('id_empleado', $empleado->id)->where('naturaleza', 'CARGO')->sum('monto');
+                $queryAbonos = NominaMovimientoCuenta::where('id_empleado', $empleado->id)->where('naturaleza', 'ABONO');
+                if ($recibo) {
+                    $queryAbonos->where(function ($q) use ($recibo) {
+                        $q->whereNull('id_recibo')->orWhere('id_recibo', '!=', $recibo->id);
+                    });
+                }
+                $abonos = (float) $queryAbonos->sum('monto');
+                $deudaDisponible = max(0, round($cargos - $abonos, 2));
+
+                if ($descuentoAdelanto > $deudaDisponible) {
+                    if ($deudaDisponible <= 0) {
+                        $this->errors[] = "Fila " . ($index + 2) . ": Empleado #{$idEmpleado} ({$empleado->nombre_completo}) no cuenta con saldo deudor de adelantos. Se ajustó amortización a $0.00.";
+                        $descuentoAdelanto = 0;
+                    } else {
+                        $this->errors[] = "Fila " . ($index + 2) . ": Empleado #{$idEmpleado} ({$empleado->nombre_completo}) solo debe $" . number_format($deudaDisponible, 2) . ". Se ajustó la amortización a $" . number_format($deudaDisponible, 2) . ".";
+                        $descuentoAdelanto = $deudaDisponible;
+                    }
+                }
+
+                $totalPercepciones = $nominaFiscal + $diferenciaEfectivo + $horasExtras + $bonosOtros;
+                $totalDeducciones = $descuentoAdelanto + $descuentoInfonavit + $otrosDescuentos;
+                $netoPagar = max(0, $totalPercepciones - $totalDeducciones);
 
                 if ($recibo) {
                     $recibo->update([
@@ -108,27 +129,40 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                     ]);
                 }
 
-                // Si se amortiza adelanto, registrar en movimientos de cuenta
+                // Sincronizar movimientos de cuenta contable
+                $movimiento = NominaMovimientoCuenta::where('id_recibo', $recibo->id)
+                    ->where('tipo_movimiento', 'DESCUENTO_NOMINA')
+                    ->first();
+
                 if ($descuentoAdelanto > 0) {
-                    $saldoAnterior = (float) $empleado->saldo_adelantos;
-                    $saldoNuevo = max(0, $saldoAnterior - $descuentoAdelanto);
-
-                    NominaMovimientoCuenta::create([
-                        'id_empleado' => $empleado->id,
-                        'id_recibo' => $recibo->id,
-                        'id_periodo' => $periodo->id,
-                        'tipo_movimiento' => 'DESCUENTO_NOMINA',
-                        'naturaleza' => 'ABONO',
-                        'monto' => $descuentoAdelanto,
-                        'saldo_anterior' => $saldoAnterior,
-                        'saldo_nuevo' => $saldoNuevo,
-                        'fecha' => now()->toDateString(),
-                        'referencia' => "Dcto. Nómina Folio {$recibo->folio}",
-                        'id_usuario' => auth()->id(),
-                    ]);
-
-                    $empleado->update(['saldo_adelantos' => $saldoNuevo]);
+                    if ($movimiento) {
+                        $movimiento->update([
+                            'monto' => $descuentoAdelanto,
+                            'referencia' => "Dcto. Nómina Folio {$recibo->folio}",
+                        ]);
+                    } else {
+                        $folioData = NominaMovimientoCuenta::generarSiguienteFolio($empleado->id, 'DESCUENTO_NOMINA');
+                        NominaMovimientoCuenta::create([
+                            'id_empleado' => $empleado->id,
+                            'id_recibo' => $recibo->id,
+                            'id_periodo' => $periodo->id,
+                            'folio' => $folioData['folio'],
+                            'consecutivo_empleado' => $folioData['consecutivo'],
+                            'tipo_movimiento' => 'DESCUENTO_NOMINA',
+                            'naturaleza' => 'ABONO',
+                            'monto' => $descuentoAdelanto,
+                            'saldo_anterior' => (float) $empleado->saldo_adelantos,
+                            'saldo_nuevo' => max(0, (float) $empleado->saldo_adelantos - $descuentoAdelanto),
+                            'fecha' => now()->toDateString(),
+                            'referencia' => "Dcto. Nómina Folio {$recibo->folio}",
+                            'id_usuario' => auth()->id(),
+                        ]);
+                    }
+                } elseif ($movimiento) {
+                    $movimiento->delete();
                 }
+
+                $empleado->recalcularSaldoAdelantos();
 
                 $this->procesados++;
             }

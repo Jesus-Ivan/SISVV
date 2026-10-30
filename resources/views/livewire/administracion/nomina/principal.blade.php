@@ -1,4 +1,30 @@
 <div class="space-y-6">
+    {{-- Estilos globales para inputs number: ocultar flechas/spinners y prevenir scroll accidental en todas las 4 secciones --}}
+    <style>
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button {
+            -webkit-appearance: none !important;
+            margin: 0 !important;
+        }
+        input[type=number] {
+            -moz-appearance: textfield !important;
+            appearance: textfield !important;
+        }
+    </style>
+
+    <script>
+        (function() {
+            if (!window.__wheelNumberInputListenerAdded) {
+                window.__wheelNumberInputListenerAdded = true;
+                window.addEventListener('wheel', function(e) {
+                    if (document.activeElement && document.activeElement.type === 'number') {
+                        document.activeElement.blur();
+                    }
+                }, { passive: true });
+            }
+        })();
+    </script>
+
     <!-- Encabezado Principal del Módulo -->
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

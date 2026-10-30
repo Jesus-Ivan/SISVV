@@ -85,6 +85,18 @@ class NominaEmpleado extends Model
         });
     }
 
+    /**
+     * Recalcula y actualiza el saldo deudor de adelantos según los movimientos contables vigentes
+     */
+    public function recalcularSaldoAdelantos(): float
+    {
+        $cargos = (float) $this->movimientosCuenta()->where('naturaleza', 'CARGO')->sum('monto');
+        $abonos = (float) $this->movimientosCuenta()->where('naturaleza', 'ABONO')->sum('monto');
+        $saldo = max(0, round($cargos - $abonos, 2));
+        $this->update(['saldo_adelantos' => $saldo]);
+        return $saldo;
+    }
+
     public function getNombreCompletoAttribute(): string
     {
         return trim("{$this->nombre} {$this->apellido_paterno} {$this->apellido_materno}");

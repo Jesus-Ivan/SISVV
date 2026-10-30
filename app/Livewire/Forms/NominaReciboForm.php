@@ -126,12 +126,62 @@ class NominaReciboForm extends Form
         return max(0, $this->calcularPercepciones() - $this->calcularDeducciones());
     }
 
+    /**
+     * Calcula la deuda de adelantos máxima amortizable para este recibo
+     */
+    public function calcularDeudaDisponible(?NominaEmpleado $empleado = null): float
+    {
+        $empId = $empleado ? $empleado->id : $this->id_empleado;
+        if (!$empId) {
+            return 0.0;
+        }
+
+        $cargos = (float) NominaMovimientoCuenta::where('id_empleado', $empId)
+            ->where('naturaleza', 'CARGO')
+            ->sum('monto');
+
+        $queryAbonos = NominaMovimientoCuenta::where('id_empleado', $empId)
+            ->where('naturaleza', 'ABONO');
+
+        // Si estamos editando un recibo existente, excluimos el abono de este mismo recibo
+        if ($this->recibo && $this->recibo->id) {
+            $queryAbonos->where(function ($q) {
+                $q->whereNull('id_recibo')->orWhere('id_recibo', '!=', $this->recibo->id);
+            });
+        }
+
+        $abonos = (float) $queryAbonos->sum('monto');
+
+        return max(0, round($cargos - $abonos, 2));
+    }
+
+    /**
+     * Valida que la amortización de adelanto no exceda la deuda real disponible
+     */
+    public function validateDeudaAdelanto(): void
+    {
+        $descuento = (float) ($this->descuento_adelanto ?? 0);
+        if ($descuento > 0) {
+            $deudaDisponible = $this->calcularDeudaDisponible();
+            if ($deudaDisponible <= 0.001) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'form.descuento_adelanto' => 'El empleado no cuenta con saldo deudor de adelantos por amortizar ($0.00).',
+                ]);
+            } elseif ($descuento > $deudaDisponible + 0.001) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'form.descuento_adelanto' => 'La amortización ($' . number_format($descuento, 2) . ') no puede superar el saldo deudor disponible ($' . number_format($deudaDisponible, 2) . ').',
+                ]);
+            }
+        }
+    }
+
     public function store(): NominaRecibo
     {
-        $validated = $this->validate();
+        $this->validate();
+        $this->validateDeudaAdelanto();
         $empleado = NominaEmpleado::with('area', 'puesto')->findOrFail($this->id_empleado);
 
-        return DB::transaction(function () use ($validated, $empleado) {
+        return DB::transaction(function () use ($empleado) {
             $folioData = NominaRecibo::generarSiguienteFolio($empleado->id);
             $totalPercepciones = $this->calcularPercepciones();
             $totalDeducciones = $this->calcularDeducciones();
@@ -176,7 +226,7 @@ class NominaReciboForm extends Form
             // Si hay descuento de adelanto, registrar abono a la cuenta contable del empleado
             if ($descuentoAdelanto > 0) {
                 $saldoAnterior = (float) $empleado->saldo_adelantos;
-                $saldoNuevo = max(0, $saldoAnterior - $descuentoAdelanto);
+                $saldoNuevo = max(0, round($saldoAnterior - $descuentoAdelanto, 2));
                 $folioData = NominaMovimientoCuenta::generarSiguienteFolio($empleado->id, 'DESCUENTO_NOMINA');
 
                 NominaMovimientoCuenta::create([
@@ -195,7 +245,7 @@ class NominaReciboForm extends Form
                     'id_usuario' => auth()->id(),
                 ]);
 
-                $empleado->update(['saldo_adelantos' => $saldoNuevo]);
+                $empleado->recalcularSaldoAdelantos();
             }
 
             if ($this->id_periodo) {
@@ -213,6 +263,7 @@ class NominaReciboForm extends Form
         }
 
         $this->validate();
+        $this->validateDeudaAdelanto();
 
         DB::transaction(function () {
             $totalPercepciones = $this->calcularPercepciones();
@@ -251,9 +302,6 @@ class NominaReciboForm extends Form
             if ($delta != 0) {
                 $empleado = NominaEmpleado::lockForUpdate()->find($this->recibo->id_empleado);
                 if ($empleado) {
-                    $saldoAnterior = (float) $empleado->saldo_adelantos;
-                    $saldoNuevo = max(0, round($saldoAnterior - $delta, 2));
-
                     $movimiento = NominaMovimientoCuenta::where('id_recibo', $this->recibo->id)
                         ->where('tipo_movimiento', 'DESCUENTO_NOMINA')
                         ->first();
@@ -262,7 +310,6 @@ class NominaReciboForm extends Form
                         if ($nuevoDescuento > 0) {
                             $movimiento->update([
                                 'monto' => $nuevoDescuento,
-                                'saldo_nuevo' => $saldoNuevo,
                                 'referencia' => "Descuento en recibo {$this->recibo->folio}",
                             ]);
                         } else {
@@ -279,15 +326,16 @@ class NominaReciboForm extends Form
                             'tipo_movimiento' => 'DESCUENTO_NOMINA',
                             'naturaleza' => 'ABONO',
                             'monto' => $nuevoDescuento,
-                            'saldo_anterior' => $saldoAnterior,
-                            'saldo_nuevo' => $saldoNuevo,
+                            'saldo_anterior' => (float) $empleado->saldo_adelantos,
+                            'saldo_nuevo' => max(0, (float) $empleado->saldo_adelantos - $nuevoDescuento),
                             'fecha' => now()->toDateString(),
                             'referencia' => "Descuento en recibo {$this->recibo->folio}",
                             'id_usuario' => auth()->id(),
                         ]);
                     }
 
-                    $empleado->update(['saldo_adelantos' => $saldoNuevo]);
+                    // Recalcular siempre el saldo real garantizado del empleado
+                    $empleado->recalcularSaldoAdelantos();
                 }
             }
 

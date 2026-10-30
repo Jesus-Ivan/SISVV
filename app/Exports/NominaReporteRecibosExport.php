@@ -91,11 +91,16 @@ class NominaReporteRecibosExport implements FromCollection, WithHeadings, Should
             $totales['total_deducciones']   += $deducciones;
             $totales['neto_pagar']          += $neto;
 
-            $nombrePeriodo = $r->periodo ? "{$r->periodo->nombre_periodo} ({$r->periodo->fecha_inicio?->format('d/m/Y')} - {$r->periodo->fecha_fin?->format('d/m/Y')})" : 'Sin Período';
+            $periodoFechas = $r->periodo 
+                ? "{$r->periodo->fecha_inicio?->format('d/m/Y')} - {$r->periodo->fecha_fin?->format('d/m/Y')}"
+                : ($r->fecha_inicio ? "{$r->fecha_inicio->format('d/m/Y')} - {$r->fecha_fin->format('d/m/Y')}" : 'Sin Período');
+
+            $nombrePeriodo = $r->periodo?->nombre ?: ($r->periodo?->folio ?? 'N/A');
 
             $rows->push([
                 'folio'               => $r->folio,
-                'periodo'             => $nombrePeriodo,
+                'periodo'             => $periodoFechas,
+                'nombre_periodo'      => $nombrePeriodo,
                 'id_empleado'         => $r->id_empleado_snapshot ?: $r->id_empleado,
                 'nombre_completo'     => $r->nombre_empleado_snapshot,
                 'area'                => $r->area_snapshot ?: ($r->empleado?->area?->nombre ?? ''),
@@ -105,6 +110,7 @@ class NominaReporteRecibosExport implements FromCollection, WithHeadings, Should
                 'metodo_pago'         => $r->metodo_pago,
                 'estado_pago'         => $r->estado_pago,
                 'fecha_pago'          => $r->fecha_pago ? $r->fecha_pago->format('d/m/Y') : '',
+                'fecha_pago_real'     => $r->fecha_pago_real ? $r->fecha_pago_real->format('d/m/Y') : '',
                 'nomina_fiscal'       => $fiscal,
                 'diferencia_efectivo' => $efectivo,
                 'horas_extras'        => $he,
@@ -123,6 +129,7 @@ class NominaReporteRecibosExport implements FromCollection, WithHeadings, Should
             $rows->push([
                 'folio'               => 'TOTALES (' . $recibos->count() . ' RECIBOS)',
                 'periodo'             => '',
+                'nombre_periodo'      => '',
                 'id_empleado'         => '',
                 'nombre_completo'     => '',
                 'area'                => '',
@@ -132,6 +139,7 @@ class NominaReporteRecibosExport implements FromCollection, WithHeadings, Should
                 'metodo_pago'         => '',
                 'estado_pago'         => '',
                 'fecha_pago'          => '',
+                'fecha_pago_real'     => '',
                 'nomina_fiscal'       => $totales['nomina_fiscal'],
                 'diferencia_efectivo' => $totales['diferencia_efectivo'],
                 'horas_extras'        => $totales['horas_extras'],
@@ -156,6 +164,7 @@ class NominaReporteRecibosExport implements FromCollection, WithHeadings, Should
         return [
             'FOLIO',
             'PERIODO',
+            'NOMBRE PERIODO',
             'ID EMPLEADO',
             'EMPLEADO',
             'AREA',
@@ -165,6 +174,7 @@ class NominaReporteRecibosExport implements FromCollection, WithHeadings, Should
             'METODO PAGO',
             'ESTADO PAGO',
             'FECHA PAGO',
+            'FECHA PAGO REAL',
             'NOMINA FISCAL',
             'DIFERENCIA EFECTIVO',
             'HORAS EXTRAS',
@@ -182,8 +192,6 @@ class NominaReporteRecibosExport implements FromCollection, WithHeadings, Should
     public function columnFormats(): array
     {
         return [
-            'L' => '"$"#,##0.00',
-            'M' => '"$"#,##0.00',
             'N' => '"$"#,##0.00',
             'O' => '"$"#,##0.00',
             'P' => '"$"#,##0.00',
@@ -192,6 +200,8 @@ class NominaReporteRecibosExport implements FromCollection, WithHeadings, Should
             'S' => '"$"#,##0.00',
             'T' => '"$"#,##0.00',
             'U' => '"$"#,##0.00',
+            'V' => '"$"#,##0.00',
+            'W' => '"$"#,##0.00',
         ];
     }
 

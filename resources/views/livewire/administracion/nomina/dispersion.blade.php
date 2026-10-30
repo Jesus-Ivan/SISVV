@@ -165,7 +165,10 @@
             </div>
 
             <!-- Banner de Auditoría de Saldos Pendientes -->
-            @if ($totalPendientePeriodo > 0)
+            @php
+                $esDiarioOExtraordinario = in_array(strtoupper($selectedPeriodo?->tipo_periodo ?? ''), ['DIARIO', 'EXTRAORDINARIO']);
+            @endphp
+            @if ($totalPendientePeriodo > 0 && !$esDiarioOExtraordinario)
                 <div class="mt-4 p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 dark:from-amber-950/40 dark:to-orange-950/30 dark:border-amber-800/60 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300 flex items-center justify-center flex-shrink-0 shadow-sm">
@@ -195,7 +198,7 @@
                         Ver saldos
                     </button>
                 </div>
-            @elseif ($totalPresupuestoPeriodo > 0)
+            @elseif ($totalPresupuestoPeriodo > 0 && !$esDiarioOExtraordinario)
                 <div class="mt-4 p-3 bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800/60 rounded-xl flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
                     <div class="flex items-center gap-2">
                         <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,46 +236,56 @@
                         Nuevo Recibo
                     </button>
 
-                    <!-- Dropdown Plantilla Excel -->
+                    <!-- Descargar Plantilla Excel -->
                     @if ($selectedPeriodoId)
-                        <div x-data="{ open: false }" class="relative inline-block text-left">
-                            <button @click="open = !open" @click.away="open = false" type="button"
+                        @if ($esDiarioOExtraordinario)
+                            <a href="{{ route('nomina.excel.plantilla', ['id_periodo' => $selectedPeriodoId]) }}" target="_blank"
                                 class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800 transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                 </svg>
                                 <span>Plantilla Excel</span>
-                                <svg class="w-3.5 h-3.5 ms-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </button>
-                            <div x-show="open" x-cloak
-                                class="absolute left-0 z-30 mt-1.5 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1.5 text-xs">
-                                <a href="{{ route('nomina.excel.plantilla', ['id_periodo' => $selectedPeriodoId]) }}" target="_blank"
-                                    @click="open = false"
-                                    class="flex items-start gap-2.5 px-3.5 py-2 hover:bg-gray-50 dark:hover:bg-gray-750 text-gray-700 dark:text-gray-200">
-                                    <svg class="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </a>
+                        @else
+                            <div x-data="{ open: false }" class="relative inline-block text-left">
+                                <button @click="open = !open" @click.away="open = false" type="button"
+                                    class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                     </svg>
-                                    <div>
-                                        <span class="font-bold block">Plantilla Base (Completa)</span>
-                                        <span class="text-[11px] text-gray-400">Todos los empleados con su salario habitual</span>
-                                    </div>
-                                </a>
-                                <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
-                                <a href="{{ route('nomina.excel.plantilla', ['id_periodo' => $selectedPeriodoId, 'solo_incompletos' => 1]) }}" target="_blank"
-                                    @click="open = false"
-                                    class="flex items-start gap-2.5 px-3.5 py-2 hover:bg-amber-50 dark:hover:bg-amber-950/30 text-amber-900 dark:text-amber-300">
-                                    <svg class="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    <span>Plantilla Excel</span>
+                                    <svg class="w-3.5 h-3.5 ms-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                     </svg>
-                                    <div>
-                                        <span class="font-bold block">Plantilla Saldos Pendientes</span>
-                                        <span class="text-[11px] text-gray-500 dark:text-gray-400">Solo empleados incompletos con importe faltante</span>
-                                    </div>
-                                </a>
+                                </button>
+                                <div x-show="open" x-cloak
+                                    class="absolute left-0 z-30 mt-1.5 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1.5 text-xs">
+                                    <a href="{{ route('nomina.excel.plantilla', ['id_periodo' => $selectedPeriodoId]) }}" target="_blank"
+                                        @click="open = false"
+                                        class="flex items-start gap-2.5 px-3.5 py-2 hover:bg-gray-50 dark:hover:bg-gray-750 text-gray-700 dark:text-gray-200">
+                                        <svg class="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                        <div>
+                                            <span class="font-bold block">Plantilla Base (Completa)</span>
+                                            <span class="text-[11px] text-gray-400">Todos los empleados con su salario habitual</span>
+                                        </div>
+                                    </a>
+                                    <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                                    <a href="{{ route('nomina.excel.plantilla', ['id_periodo' => $selectedPeriodoId, 'solo_incompletos' => 1]) }}" target="_blank"
+                                        @click="open = false"
+                                        class="flex items-start gap-2.5 px-3.5 py-2 hover:bg-amber-50 dark:hover:bg-amber-950/30 text-amber-900 dark:text-amber-300">
+                                        <svg class="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                        </svg>
+                                        <div>
+                                            <span class="font-bold block">Plantilla Saldos Pendientes</span>
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400">Solo empleados incompletos con importe faltante</span>
+                                        </div>
+                                    </a>
+                                </div>
                             </div>
-                        </div>
+                        @endif
                     @else
                         <button type="button" disabled title="Selecciona un período primero"
                             class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-400 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700">
@@ -668,7 +681,7 @@
 
                             <div>
                                 <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Fecha Fin *</label>
-                                <input type="date" wire:model="periodoFechaFin"
+                                <input type="date" wire:model.live="periodoFechaFin"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 @error('periodoFechaFin') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                             </div>
@@ -676,7 +689,7 @@
 
                         <div>
                             <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Fecha Estimada de Pago</label>
-                            <input type="date" wire:model="periodoFechaPago"
+                            <input type="date" wire:model.live="periodoFechaPago"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         </div>
 
@@ -1090,14 +1103,14 @@
                     <div class="p-4 bg-red-50/50 dark:bg-gray-750 rounded-xl border border-red-100 dark:border-gray-700 space-y-3">
                         <span class="block text-xs font-bold text-red-900 dark:text-red-300 uppercase">Deducciones / Descuentos</span>
 
-                        @if ($empleadoSeleccionado && (float) $empleadoSeleccionado->saldo_adelantos > 0)
+                        @if ($this->deudaDisponible > 0)
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg dark:bg-amber-950/40 dark:border-amber-800">
                                 <div class="flex items-center gap-2">
                                     <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                                     </svg>
                                     <span class="text-xs text-amber-900 dark:text-amber-200">
-                                        Empleado tiene anticipos de efectivo pendientes por <strong>${{ number_format($empleadoSeleccionado->saldo_adelantos, 2) }}</strong>.
+                                        Empleado tiene anticipos de efectivo disponibles para amortizar por <strong>${{ number_format($this->deudaDisponible, 2) }}</strong>.
                                     </span>
                                 </div>
                                 <button type="button" wire:click="aplicarDescuentoAdelantoSugerido"
@@ -1109,11 +1122,21 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
-                                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Amortización Adelanto Efectivo</label>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Amortización Adelanto Efectivo</label>
                                 <input type="number" step="0.01" wire:model.live="form.descuento_adelanto"
-                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                    placeholder="0.00">
-                                <span class="text-[10px] text-gray-400">Se abonará a su cuenta contable</span>
+                                    class="border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:border-gray-600 dark:text-white {{ $this->deudaDisponible <= 0 ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-700' }}"
+                                    placeholder="0.00"
+                                    {{ $this->deudaDisponible <= 0 ? 'disabled' : '' }}>
+                                @if ($this->deudaDisponible <= 0)
+                                    <span class="text-[10px] text-gray-400 block mt-0.5">Sin saldo deudor por amortizar ($0.00)</span>
+                                @else
+                                    <span class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold block mt-0.5">
+                                        Máximo amortizable: ${{ number_format($this->deudaDisponible, 2) }}
+                                    </span>
+                                @endif
+                                @error('form.descuento_adelanto')
+                                    <span class="text-xs text-red-500 font-semibold block mt-1">{{ $message }}</span>
+                                @enderror
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Infonavit</label>
@@ -1631,7 +1654,7 @@
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     <option value="">Todos los períodos del año</option>
                                     @foreach ($periodosReporte as $p)
-                                        <option value="{{ $p->id }}">{{ $p->nombre_periodo }} ({{ $p->fecha_inicio?->format('d/m/Y') }} - {{ $p->fecha_fin?->format('d/m/Y') }})</option>
+                                        <option value="{{ $p->id }}">{{ $p->nombre }} ({{ $p->fecha_inicio?->format('d/m/Y') }} - {{ $p->fecha_fin?->format('d/m/Y') }})</option>
                                     @endforeach
                                 </select>
                             </div>

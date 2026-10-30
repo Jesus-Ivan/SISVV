@@ -50,6 +50,11 @@ class NominaPeriodo extends Model
         return $this->hasMany(NominaRecibo::class, 'id_periodo');
     }
 
+    public function getNombrePeriodoAttribute(): string
+    {
+        return $this->nombre ?? '';
+    }
+
     public function recalcularTotales(): void
     {
         $this->total_fiscal = (float) $this->recibos()->sum('nomina_fiscal');

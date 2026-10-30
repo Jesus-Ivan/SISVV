@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NominaMovimientoCuenta;
+use App\Models\NominaPeriodo;
 use App\Models\NominaRecibo;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -43,7 +44,7 @@ class NominaPdfController extends Controller
 
     /**
      * Genera un PDF consolidado a partir de una lista de recibos seleccionados
-     * Acomodando exactamente 2 recibos por cada hoja tamaño carta
+     * Reutilizando el formato base individual tamaño media carta para cada recibo
      */
     public function recibosMultiples(Request $request)
     {
@@ -80,10 +81,10 @@ class NominaPdfController extends Controller
             'recibos' => $recibosConLetras,
         ];
 
-        $pdf = Pdf::loadView('reportes.Nominas.recibos-multiples', $data);
+        $pdf = Pdf::loadView('reportes.Nominas.recibo-media-carta', $data);
         $pdf->setOption(['defaultFont' => 'Helvetica', 'isHtml5ParserEnabled' => true]);
-        // Hoja carta estándar: [0, 0, 612, 792] en portrait
-        $pdf->setPaper('letter', 'portrait');
+        // Mismo tamaño Media Carta (5.5 x 8.5 in) idéntico al individual
+        $pdf->setPaper([0, 0, 396, 612], 'portrait');
 
         return $pdf->stream('Recibos-Nomina-Seleccion.pdf');
     }
@@ -129,8 +130,22 @@ class NominaPdfController extends Controller
     {
         $idPeriodo = $request->input('id_periodo') ? (int) $request->input('id_periodo') : null;
         $soloIncompletos = $request->boolean('solo_incompletos');
-        $prefix = $soloIncompletos ? 'Plantilla_Saldos_Pendientes_' : 'Plantilla_Nomina_';
-        $fileName = $prefix . ($idPeriodo ? "Periodo_{$idPeriodo}_" : '') . date('Ymd_His') . '.xlsx';
+
+        $periodo = $idPeriodo ? NominaPeriodo::find($idPeriodo) : null;
+        if ($periodo && in_array(strtoupper($periodo->tipo_periodo), ['DIARIO', 'EXTRAORDINARIO'])) {
+            $soloIncompletos = false;
+        }
+
+        if ($periodo && !empty($periodo->nombre)) {
+            $nombrePeriodo = trim($periodo->nombre);
+            // Reemplazar caracteres no permitidos en nombres de archivo
+            $nombrePeriodo = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '-', $nombrePeriodo);
+        } else {
+            $nombrePeriodo = $idPeriodo ? "Periodo-{$idPeriodo}" : 'Nomina';
+        }
+
+        $tipoPlantilla = $soloIncompletos ? 'Saldos Pendientes' : 'Plantilla Base';
+        $fileName = "{$nombrePeriodo}-{$tipoPlantilla}.xlsx";
 
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\NominaPlantillaExport($idPeriodo, $soloIncompletos),

@@ -36,6 +36,7 @@ class Dispersion extends Component
     public string $periodoFechaInicio = '';
     public string $periodoFechaFin = '';
     public string $periodoFechaPago = '';
+    public bool $periodoFechaPagoManual = false;
     public string $periodoEstado = 'BORRADOR'; // BORRADOR, EN_PROCESO, DISPERSADO, CERRADO
 
     // Filtros de Recibos
@@ -183,6 +184,7 @@ class Dispersion extends Component
         $this->periodoFechaInicio = now()->toDateString();
         $this->periodoFechaFin = now()->addDays(14)->toDateString();
         $this->periodoFechaPago = now()->addDays(14)->toDateString();
+        $this->periodoFechaPagoManual = false;
         $this->periodoEstado = 'BORRADOR';
         $this->isEditingPeriodo = false;
         $this->showPeriodoModal = true;
@@ -197,6 +199,7 @@ class Dispersion extends Component
         $this->periodoFechaInicio = $p->fecha_inicio ? $p->fecha_inicio->format('Y-m-d') : '';
         $this->periodoFechaFin = $p->fecha_fin ? $p->fecha_fin->format('Y-m-d') : '';
         $this->periodoFechaPago = $p->fecha_pago ? $p->fecha_pago->format('Y-m-d') : '';
+        $this->periodoFechaPagoManual = (!empty($this->periodoFechaPago) && $this->periodoFechaPago !== $this->periodoFechaFin);
         $this->periodoEstado = $p->estado;
         $this->isEditingPeriodo = true;
         $this->showPeriodoModal = true;
@@ -208,6 +211,7 @@ class Dispersion extends Component
         if ($tipo === 'DIARIO') {
             $this->periodoFechaFin = $this->periodoFechaInicio;
             $this->periodoFechaPago = $this->periodoFechaInicio;
+            $this->periodoFechaPagoManual = false;
         }
     }
 
@@ -216,7 +220,20 @@ class Dispersion extends Component
         if ($this->periodoTipo === 'DIARIO') {
             $this->periodoFechaFin = $val;
             $this->periodoFechaPago = $val;
+            $this->periodoFechaPagoManual = false;
         }
+    }
+
+    public function updatedPeriodoFechaFin($val): void
+    {
+        if (!$this->periodoFechaPagoManual || empty($this->periodoFechaPago)) {
+            $this->periodoFechaPago = $val;
+        }
+    }
+
+    public function updatedPeriodoFechaPago($val): void
+    {
+        $this->periodoFechaPagoManual = (!empty($val) && $val !== $this->periodoFechaFin);
     }
 
     public function savePeriodo(): void
@@ -280,9 +297,18 @@ class Dispersion extends Component
                     $this->showDeletePeriodoModal = false;
                     return;
                 }
-                // Eliminar recibos asociados
-                $p->recibos()->delete();
-                $p->delete();
+
+                DB::transaction(function () use ($p) {
+                    $empleadosIds = $p->recibos()->pluck('id_empleado')->unique()->filter();
+                    NominaMovimientoCuenta::where('id_periodo', $p->id)->where('tipo_movimiento', 'DESCUENTO_NOMINA')->delete();
+                    $p->recibos()->delete();
+                    $p->delete();
+
+                    foreach ($empleadosIds as $empId) {
+                        NominaEmpleado::find($empId)?->recalcularSaldoAdelantos();
+                    }
+                });
+
                 $this->dispatch('toast', message: 'Período y sus recibos eliminados.', type: 'info');
             }
             $this->selectedPeriodoId = null;
@@ -790,11 +816,17 @@ class Dispersion extends Component
         $this->dispatch('toast', message: 'Secuencia de recibos complementarios cancelada.', type: 'info');
     }
 
+    public function getDeudaDisponibleProperty(): float
+    {
+        return $this->form->calcularDeudaDisponible($this->empleadoSeleccionado);
+    }
+
     public function aplicarDescuentoAdelantoSugerido(): void
     {
-        if ($this->empleadoSeleccionado && $this->empleadoSeleccionado->saldo_adelantos > 0) {
-            $this->form->descuento_adelanto = (float) $this->empleadoSeleccionado->saldo_adelantos;
-            $this->dispatch('toast', message: 'Descuento de anticipo ($' . number_format($this->empleadoSeleccionado->saldo_adelantos, 2) . ') cargado.', type: 'info');
+        $deudaDisponible = $this->deudaDisponible;
+        if ($deudaDisponible > 0) {
+            $this->form->descuento_adelanto = $deudaDisponible;
+            $this->dispatch('toast', message: 'Descuento de anticipo ($' . number_format($deudaDisponible, 2) . ') cargado.', type: 'info');
         }
     }
 
@@ -832,11 +864,13 @@ class Dispersion extends Component
                 }
 
                 DB::transaction(function () use ($recibo) {
-                    // Reversar amortización de adelanto si existía
-                    if ((float) $recibo->descuento_adelanto > 0 && $recibo->id_empleado) {
-                        NominaEmpleado::where('id', $recibo->id_empleado)->increment('saldo_adelantos', (float) $recibo->descuento_adelanto);
-                        NominaMovimientoCuenta::where('id_recibo_nomina', $recibo->id)->delete();
-                    }
+                    $empleado = $recibo->id_empleado ? NominaEmpleado::lockForUpdate()->find($recibo->id_empleado) : null;
+
+                    // Eliminar movimiento contable asociado al recibo si existía
+                    NominaMovimientoCuenta::where('id_recibo', $recibo->id)->delete();
+
+                    // Reconciliar y recalcular el saldo real deudor del empleado según su libro mayor
+                    $empleado?->recalcularSaldoAdelantos();
 
                     $recibo->delete();
                 });
@@ -973,6 +1007,8 @@ class Dispersion extends Component
         $empleadosEnPeriodoInfo = [];
 
         if ($this->selectedPeriodoId && $selectedPeriodo) {
+            $esDiarioOExtraordinario = in_array(strtoupper($selectedPeriodo->tipo_periodo ?? ''), ['DIARIO', 'EXTRAORDINARIO']);
+
             $empleadosPeriodo = NominaEmpleado::with(['area', 'puesto', 'historialLaboral'])
                 ->where(function ($q) use ($selectedPeriodo) {
                     $q->laborandoEnPeriodo($selectedPeriodo->fecha_inicio, $selectedPeriodo->fecha_fin)
@@ -989,22 +1025,24 @@ class Dispersion extends Component
                     return $c->fecha_ingreso <= $selectedPeriodo->fecha_fin && ($c->fecha_baja === null || $c->fecha_baja >= $selectedPeriodo->fecha_inicio);
                 });
                 $salarioBase = $ciclo ? (float) $ciclo->salario_base : (float) $emp->salario_base;
-                $totalPresupuestoPeriodo += $salarioBase;
+                if (!$esDiarioOExtraordinario) {
+                    $totalPresupuestoPeriodo += $salarioBase;
+                }
 
                 $recibosEmp = $recibosPeriodo->get($emp->id, collect([]));
                 $cantRecibos = $recibosEmp->count();
                 $emitido = (float) $recibosEmp->sum('total_percepciones');
-                $faltante = max(0, round($salarioBase - $emitido, 2));
+                $faltante = $esDiarioOExtraordinario ? 0.0 : max(0, round($salarioBase - $emitido, 2));
 
                 $empleadosEnPeriodoInfo[$emp->id] = [
                     'cant_recibos' => $cantRecibos,
                     'emitido' => $emitido,
                     'faltante' => $faltante,
                     'salario_base' => $salarioBase,
-                    'cubierto' => $faltante <= 0.01,
+                    'cubierto' => $esDiarioOExtraordinario || ($faltante <= 0.01),
                 ];
 
-                if ($faltante > 0.01) {
+                if (!$esDiarioOExtraordinario && $faltante > 0.01) {
                     $totalPendientePeriodo += $faltante;
                     $conteoIncompletosPeriodo++;
                 }

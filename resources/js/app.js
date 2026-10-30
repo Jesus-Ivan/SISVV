@@ -17,3 +17,10 @@ Livewire.hook('commit', ({ component, commit, respond, succeed, fail }) => {
 document.addEventListener('livewire:navigated', () => {
     initFlowbite();
 })
+
+// Prevenir que el scroll del mouse modifique el valor de inputs numéricos
+window.addEventListener('wheel', (e) => {
+    if (document.activeElement && document.activeElement.type === 'number') {
+        document.activeElement.blur();
+    }
+}, { passive: true });

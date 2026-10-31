@@ -115,8 +115,7 @@ class NominaPdfController extends Controller
 
         $pdf = Pdf::loadView('reportes.Nominas.comprobante-caja', $data);
         $pdf->setOption(['defaultFont' => 'Helvetica', 'isHtml5ParserEnabled' => true]);
-        // Tamaño Media Carta (5.5 x 8.5 in): [0, 0, 396, 612]
-        $pdf->setPaper([0, 0, 396, 612], 'portrait');
+        $pdf->setPaper('A4', 'portrait');
 
         $nombreArchivo = ($movimiento->folio ?: "MOV-{$movimiento->id}") . '.pdf';
 

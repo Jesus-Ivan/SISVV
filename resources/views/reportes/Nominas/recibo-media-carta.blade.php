@@ -152,7 +152,7 @@
             background-color: #fafafa;
             padding: 3pt 5pt;
             border-radius: 2pt;
-            font-size: 8pt;
+            font-size: 9pt;
             margin-bottom: 4pt;
         }
 

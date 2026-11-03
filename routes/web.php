@@ -8,6 +8,7 @@ use App\Http\Controllers\CocinaController;
 use App\Http\Controllers\EdoCuentaController;
 use App\Http\Controllers\ExcelController;
 use App\Http\Controllers\LockersController;
+use App\Http\Controllers\NominaPdfController;
 use App\Http\Controllers\PuntosController;
 use App\Http\Controllers\RecepcionController;
 use App\Http\Controllers\ReportesController;
@@ -50,6 +51,17 @@ Route::prefix('administracion')->middleware(['auth', 'administracion'])->group(f
         Route::get('buscar-periodo', [AdministracionController::class, 'buscarPeriodo'])->name('administracion.buscar-p');
         Route::get('imprimir-periodo/{ref}', [ReportesController::class, 'imprimirNomina'])->name('administracion.imprimir-p');
         Route::delete('eliminar-periodo/{ref}', [AdministracionController::class, 'eliminarNomina'])->name('administracion.eliminar-p');
+    });
+
+    // Nuevo Módulo de Control de Nómina y Dispersión
+    Route::prefix('control-nomina')->group(function () {
+        Route::view('/', 'administracion.Nomina.index')->name('administracion.nomina.index');
+        Route::get('recibo-pdf/{id}', [NominaPdfController::class, 'reciboIndividual'])->name('nomina.pdf.individual');
+        Route::get('recibos-pdf-multiple', [NominaPdfController::class, 'recibosMultiples'])->name('nomina.pdf.multiple');
+        Route::get('descargar-plantilla', [NominaPdfController::class, 'descargarPlantilla'])->name('nomina.excel.plantilla');
+        Route::get('reporte-cuentas-excel', [NominaPdfController::class, 'exportarCuentasExcel'])->name('nomina.excel.cuentas');
+        Route::get('comprobante-movimiento/{id}', [NominaPdfController::class, 'comprobanteMovimiento'])->name('nomina.pdf.movimiento');
+        Route::get('reporte-recibos-excel', [NominaPdfController::class, 'exportarReporteRecibos'])->name('nomina.excel.reporte-recibos');
     });
     Route::prefix('comprobaciones')->group(function () {
         Route::view('cargar-periodo', 'administracion.Comprobaciones.cargar-periodo')->name('administracion.cargar-comp');

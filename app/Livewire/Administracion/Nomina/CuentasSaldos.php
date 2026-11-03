@@ -30,6 +30,22 @@ class CuentasSaldos extends Component
     public ?int $historialEmpleadoId = null;
     public ?NominaEmpleado $historialEmpleado = null;
 
+    // Filtros del modal Kardex
+    public string $kardexSearch = '';
+    public string $kardexTipoMovimiento = 'TODOS';
+    public string $kardexFechaInicio = '';
+    public string $kardexFechaFin = '';
+
+    // Modal para Reporte a Excel de Cuentas y Movimientos
+    public bool $showReporteExcelModal = false;
+    public ?int $exportEmpleadoId = null;
+    public ?string $exportEmpleadoNombre = null;
+    public string $exportEmpleadoSearch = '';
+    public string $exportTipoEmpleado = 'TODOS';
+    public string $exportTipoMovimiento = 'TODOS';
+    public string $exportFechaInicio = '';
+    public string $exportFechaFin = '';
+
     public string $successMessage = '';
     public string $errorMessage = '';
 
@@ -134,17 +150,29 @@ class CuentasSaldos extends Component
                 'id_usuario' => auth()->id(),
             ]);
 
-            $empleado->update(['saldo_adelantos' => $saldoNuevo]);
+            $empleado->reconciliarKardexSaldos();
 
             return $movimiento;
         });
 
-        $this->dispatch('toast', message: "Movimiento {$movimientoCreado->folio} registrado exitosamente.", type: 'success');
+        $urlPdf = route('nomina.pdf.movimiento', $movimientoCreado->id);
 
-        // Si fue adelanto o abono en efectivo, disparar apertura del comprobante para imprimir en nueva pestaña
-        if (in_array($movimientoCreado->tipo_movimiento, ['ADELANTO_EFECTIVO', 'ABONO_DIRECTO'])) {
-            $this->dispatch('abrir-pdf', url: route('nomina.pdf.movimiento', $movimientoCreado->id));
-        }
+        $actionText = match ($movimientoCreado->tipo_movimiento) {
+            'ADELANTO_EFECTIVO' => '🖨️ Imprimir Vale de Anticipo',
+            'ABONO_DIRECTO' => '🖨️ Imprimir Recibo de Abono',
+            'AJUSTE' => '🖨️ Imprimir Comprobante de Ajuste',
+            default => '🖨️ Imprimir Comprobante PDF',
+        };
+
+        $this->dispatch('toast', 
+            message: "Movimiento {$movimientoCreado->folio} registrado exitosamente.", 
+            type: 'success',
+            actionUrl: $urlPdf,
+            actionText: $actionText
+        );
+
+        // Disparar apertura automática del comprobante para imprimir en nueva pestaña
+        $this->dispatch('abrir-pdf', url: $urlPdf);
 
         $this->showMovimientoModal = false;
     }
@@ -153,7 +181,53 @@ class CuentasSaldos extends Component
     {
         $this->historialEmpleadoId = $empleadoId;
         $this->historialEmpleado = NominaEmpleado::with('area', 'puesto')->findOrFail($empleadoId);
+        $this->limpiarFiltrosKardex();
         $this->showHistorialModal = true;
+    }
+
+    public function limpiarFiltrosKardex(): void
+    {
+        $this->kardexSearch = '';
+        $this->kardexTipoMovimiento = 'TODOS';
+        $this->kardexFechaInicio = '';
+        $this->kardexFechaFin = '';
+    }
+
+    public function reconciliarCuenta(int $empleadoId): void
+    {
+        $empleado = NominaEmpleado::findOrFail($empleadoId);
+        $nuevoSaldo = $empleado->reconciliarKardexSaldos();
+        $this->historialEmpleado = $empleado->fresh(['area', 'puesto']);
+        $this->dispatch('toast', 
+            message: "Kardex de {$empleado->nombre_completo} reconciliado exitosamente. Saldo deudor: $" . number_format($nuevoSaldo, 2), 
+            type: 'success'
+        );
+    }
+
+    public function openReporteExcelModal(): void
+    {
+        $this->exportEmpleadoId = null;
+        $this->exportEmpleadoNombre = null;
+        $this->exportEmpleadoSearch = '';
+        $this->exportTipoEmpleado = 'TODOS';
+        $this->exportTipoMovimiento = 'TODOS';
+        $this->exportFechaInicio = '';
+        $this->exportFechaFin = '';
+        $this->showReporteExcelModal = true;
+    }
+
+    public function seleccionarExportEmpleado(int $id, string $nombre): void
+    {
+        $this->exportEmpleadoId = $id;
+        $this->exportEmpleadoNombre = "#{$id} - {$nombre}";
+        $this->exportEmpleadoSearch = '';
+    }
+
+    public function limpiarExportEmpleado(): void
+    {
+        $this->exportEmpleadoId = null;
+        $this->exportEmpleadoNombre = null;
+        $this->exportEmpleadoSearch = '';
     }
 
     public function render()
@@ -194,14 +268,50 @@ class CuentasSaldos extends Component
             ->orderBy('nombre', 'asc')
             ->paginate(15);
 
-        // Movimientos del empleado si el modal de historial está abierto
+        // Movimientos del empleado con filtros si el modal de historial está abierto
         $historialMovimientos = [];
         if ($this->showHistorialModal && $this->historialEmpleadoId) {
-            $historialMovimientos = NominaMovimientoCuenta::with(['usuario', 'recibo', 'periodo'])
-                ->where('id_empleado', $this->historialEmpleadoId)
-                ->orderBy('fecha', 'desc')
+            $queryHistorial = NominaMovimientoCuenta::with(['usuario', 'recibo', 'periodo'])
+                ->where('id_empleado', $this->historialEmpleadoId);
+
+            if ($this->kardexTipoMovimiento !== 'TODOS') {
+                $queryHistorial->where('tipo_movimiento', $this->kardexTipoMovimiento);
+            }
+
+            if ($this->kardexFechaInicio) {
+                $queryHistorial->whereDate('fecha', '>=', $this->kardexFechaInicio);
+            }
+
+            if ($this->kardexFechaFin) {
+                $queryHistorial->whereDate('fecha', '<=', $this->kardexFechaFin);
+            }
+
+            if (trim($this->kardexSearch) !== '') {
+                $searchK = '%' . trim($this->kardexSearch) . '%';
+                $queryHistorial->where(function ($q) use ($searchK) {
+                    $q->where('folio', 'like', $searchK)
+                        ->orWhere('referencia', 'like', $searchK);
+                });
+            }
+
+            $historialMovimientos = $queryHistorial->orderBy('fecha', 'desc')
                 ->orderBy('id', 'desc')
                 ->get();
+        }
+
+        // Sugerencias de búsqueda de empleado para modal de reporte Excel
+        $empleadosExportBusqueda = collect();
+        if ($this->showReporteExcelModal && trim($this->exportEmpleadoSearch) !== '') {
+            $searchEmp = '%' . trim($this->exportEmpleadoSearch) . '%';
+            $empleadosExportBusqueda = NominaEmpleado::where(function ($q) use ($searchEmp) {
+                $q->where('nombre', 'like', $searchEmp)
+                    ->orWhere('apellido_paterno', 'like', $searchEmp)
+                    ->orWhere('apellido_materno', 'like', $searchEmp)
+                    ->orWhere('id', 'like', $searchEmp);
+            })
+            ->orderBy('nombre')
+            ->limit(10)
+            ->get();
         }
 
         $todosEmpleadosActivos = NominaEmpleado::where('activo', true)->orderBy('nombre')->get();
@@ -213,6 +323,7 @@ class CuentasSaldos extends Component
             'descontadoEnNominaMes' => $descontadoEnNominaMes,
             'historialMovimientos' => $historialMovimientos,
             'todosEmpleadosActivos' => $todosEmpleadosActivos,
+            'empleadosExportBusqueda' => $empleadosExportBusqueda,
         ]);
     }
 }

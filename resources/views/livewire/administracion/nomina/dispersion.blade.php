@@ -329,7 +329,7 @@
 
             <!-- Búsqueda rápida de recibo -->
             <div class="relative w-full md:w-72">
-                <input wire:model.live.debounce.300ms="reciboSearch" type="text"
+                <input wire:model.live.debounce.350ms="reciboSearch" type="text"
                     class="block w-full p-2 ps-8 text-xs text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                     placeholder="Filtrar por empleado, ID o folio...">
                 <div class="absolute inset-y-0 start-0 flex items-center ps-2.5 pointer-events-none">
@@ -398,10 +398,10 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse ($recibos as $recibo)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                        <tr wire:key="recibo-row-{{ $recibo->id }}" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                             <!-- Checkbox para selección rápida -->
                             <td class="p-3 text-center">
-                                <input type="checkbox" wire:model.live="selectedRecibos" value="{{ $recibo->id }}"
+                                <input type="checkbox" wire:key="recibo-check-{{ $recibo->id }}" wire:model.live="selectedRecibos" value="{{ $recibo->id }}"
                                     class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
                             </td>
 
@@ -534,7 +534,7 @@
 
                         <!-- Fila Desplegable con Detalles de Percepciones y Deducciones -->
                         @if (in_array($recibo->id, $expandedRecibos))
-                            <tr class="bg-gray-50 dark:bg-gray-750/70">
+                            <tr wire:key="recibo-detail-{{ $recibo->id }}" class="bg-gray-50 dark:bg-gray-750/70">
                                 <td colspan="9" class="px-6 py-4">
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                                         
@@ -582,7 +582,7 @@
                             </tr>
                         @endif
                     @empty
-                        <tr>
+                        <tr wire:key="recibo-empty">
                             <td colspan="9" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                 <div class="flex flex-col items-center justify-center">
                                     <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -674,14 +674,14 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Fecha Inicio *</label>
-                                <input type="date" wire:model.live="periodoFechaInicio"
+                                <input type="date" wire:model.live.debounce.350ms="periodoFechaInicio"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 @error('periodoFechaInicio') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                             </div>
 
                             <div>
                                 <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Fecha Fin *</label>
-                                <input type="date" wire:model.live="periodoFechaFin"
+                                <input type="date" wire:model.live.debounce.350ms="periodoFechaFin"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 @error('periodoFechaFin') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                             </div>
@@ -689,7 +689,7 @@
 
                         <div>
                             <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Fecha Estimada de Pago</label>
-                            <input type="date" wire:model.live="periodoFechaPago"
+                            <input type="date" wire:model.live.debounce.350ms="periodoFechaPago"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         </div>
 
@@ -833,14 +833,48 @@
                                     @endif
                                 </div>
 
+                                <!-- Monto Acordado del Período (Editable) -->
+                                <div class="mt-2 pt-2 border-t border-blue-100 dark:border-blue-900/40 flex flex-wrap items-center justify-between gap-3 text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <label for="monto_acordado_input" class="font-bold text-gray-700 dark:text-gray-200">
+                                            Monto Total Acordado del Período:
+                                        </label>
+                                        <div class="relative w-36">
+                                            <span class="absolute left-2.5 top-1.5 text-gray-500 font-bold">$</span>
+                                            <input type="number" step="0.01" min="0" id="monto_acordado_input"
+                                                wire:model.live.debounce.350ms="form.monto_total_acordado"
+                                                placeholder="{{ number_format($salarioBaseEmpleadoActual, 2) }}"
+                                                class="w-full pl-6 pr-2 py-1 text-xs font-mono font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-700 border border-blue-300 dark:border-blue-700 rounded-lg focus:ring-1 focus:ring-blue-500">
+                                        </div>
+                                    </div>
+                                    <div class="text-[11px] text-gray-500 dark:text-gray-400">
+                                        (Presupuesto total acordado a cubrir en 1 o más abonos)
+                                    </div>
+                                </div>
+
                                 @if ($recibosPreviosCountEmpleadoActual > 0)
-                                    <div class="p-2.5 bg-amber-100/70 border border-amber-300/80 rounded-lg dark:bg-amber-950/40 dark:border-amber-800 text-[11px] text-amber-900 dark:text-amber-200 flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        <span>
-                                            Tiene <strong>{{ $recibosPreviosCountEmpleadoActual }}</strong> recibo(s) en este período (${{ number_format($totalEmitidoPrevioEmpleadoActual, 2) }} de ${{ number_format($salarioBaseEmpleadoActual, 2) }} base). Se precarga el saldo restante: <strong class="font-bold text-amber-950 dark:text-amber-100 font-mono">${{ number_format($saldoPendienteEmpleadoActual, 2) }}</strong>.
-                                        </span>
+                                    @php
+                                        $montoMeta = (float) ($form->monto_total_acordado ?: $salarioBaseEmpleadoActual);
+                                        $abonoActual = (float) ($form->metodo_pago === 'TRANSFERENCIA' ? $form->nomina_fiscal : $form->diferencia_efectivo);
+                                        $saldoRestanteProyectado = max(0, round($montoMeta - ($totalEmitidoPrevioEmpleadoActual + $abonoActual), 2));
+                                    @endphp
+                                    <div class="p-2.5 bg-amber-50 border border-amber-300/80 rounded-lg dark:bg-amber-950/40 dark:border-amber-800 text-[11px] text-amber-900 dark:text-amber-200 space-y-1">
+                                        <div class="flex items-center justify-between font-medium">
+                                            <span class="flex items-center gap-1.5 font-bold">
+                                                <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                </svg>
+                                                Abono #{{ $recibosPreviosCountEmpleadoActual + 1 }} para este período
+                                            </span>
+                                            <span>
+                                                Ya pagado: <strong class="font-mono text-gray-900 dark:text-white">${{ number_format($totalEmitidoPrevioEmpleadoActual, 2) }}</strong> ({{ $recibosPreviosCountEmpleadoActual }} abono{{ $recibosPreviosCountEmpleadoActual > 1 ? 's' : '' }})
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center justify-between text-xs pt-1 border-t border-amber-200/60 dark:border-amber-900/50">
+                                            <span>Monto Acordado: <strong class="font-mono">${{ number_format($montoMeta, 2) }}</strong></span>
+                                            <span>Saldo pendiente previo: <strong class="font-mono text-amber-700 dark:text-amber-400 font-bold">${{ number_format(max(0, $montoMeta - $totalEmitidoPrevioEmpleadoActual), 2) }}</strong></span>
+                                            <span>Restante tras este recibo: <strong class="font-mono {{ $saldoRestanteProyectado <= 0.01 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-rose-600 dark:text-rose-400 font-bold' }}">${{ number_format($saldoRestanteProyectado, 2) }}</strong></span>
+                                        </div>
                                     </div>
                                 @endif
 
@@ -915,7 +949,7 @@
                                         type="text" 
                                         id="input-empleado-search"
                                         x-ref="searchInput"
-                                        wire:model.live.debounce.200ms="empleadoSearch"
+                                        wire:model.live.debounce.350ms="empleadoSearch"
                                         @focus="if ($wire.empleadoSearch && $wire.empleadoSearch.trim().length > 0) open = true"
                                         @input="open = true; activeIndex = 0"
                                         @keydown.down.prevent="nextItem()"
@@ -949,7 +983,7 @@
                                             @php
                                                 $yaEnPeriodo = in_array($emp->id, $empleadosEnPeriodoIds);
                                             @endphp
-                                            <div 
+                                            <div wire:key="emp-sug-{{ $emp->id }}"
                                                 data-employee-id="{{ $emp->id }}"
                                                 @click="$wire.seleccionarEmpleado({{ $emp->id }}); open = false;"
                                                 @mouseenter="activeIndex = {{ $index }}"
@@ -997,7 +1031,7 @@
                                                 </div>
                                             </div>
                                         @empty
-                                            <div class="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                            <div wire:key="emp-sug-empty" class="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                                 No se encontraron empleados activos que coincidan con "{{ $empleadoSearch }}".
                                             </div>
                                         @endforelse
@@ -1057,22 +1091,22 @@
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <div>
                                 <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Nómina Fiscal</label>
-                                <input type="number" step="0.01" wire:model.live="form.nomina_fiscal"
+                                <input type="number" step="0.01" wire:model.live.debounce.350ms="form.nomina_fiscal"
                                     class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Dif. Efectivo</label>
-                                <input type="number" step="0.01" wire:model.live="form.diferencia_efectivo"
+                                <input type="number" step="0.01" wire:model.live.debounce.350ms="form.diferencia_efectivo"
                                     class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Horas Extras</label>
-                                <input type="number" step="0.01" wire:model.live="form.horas_extras"
+                                <input type="number" step="0.01" wire:model.live.debounce.350ms="form.horas_extras"
                                     class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Bonos / Otros</label>
-                                <input type="number" step="0.01" wire:model.live="form.bonos_otros"
+                                <input type="number" step="0.01" wire:model.live.debounce.350ms="form.bonos_otros"
                                     class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
                         </div>
@@ -1082,17 +1116,17 @@
                             <div class="grid grid-cols-3 gap-3 pt-2 border-t border-blue-200 dark:border-gray-600">
                                 <div>
                                     <label class="block text-xs text-amber-700 dark:text-amber-400 mb-1 font-semibold">Monto Aguinaldo</label>
-                                    <input type="number" step="0.01" wire:model.live="form.monto_aguinaldo"
+                                    <input type="number" step="0.01" wire:model.live.debounce.350ms="form.monto_aguinaldo"
                                         class="bg-white border border-amber-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Vacaciones</label>
-                                    <input type="number" step="0.01" wire:model.live="form.monto_vacaciones"
+                                    <input type="number" step="0.01" wire:model.live.debounce.350ms="form.monto_vacaciones"
                                         class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Prima Vacacional</label>
-                                    <input type="number" step="0.01" wire:model.live="form.monto_prima_vacacional"
+                                    <input type="number" step="0.01" wire:model.live.debounce.350ms="form.monto_prima_vacacional"
                                         class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 </div>
                             </div>
@@ -1123,7 +1157,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Amortización Adelanto Efectivo</label>
-                                <input type="number" step="0.01" wire:model.live="form.descuento_adelanto"
+                                <input type="number" step="0.01" wire:model.live.debounce.350ms="form.descuento_adelanto"
                                     class="border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:border-gray-600 dark:text-white {{ $this->deudaDisponible <= 0 ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-700' }}"
                                     placeholder="0.00"
                                     {{ $this->deudaDisponible <= 0 ? 'disabled' : '' }}>
@@ -1140,12 +1174,12 @@
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Infonavit</label>
-                                <input type="number" step="0.01" wire:model.live="form.descuento_infonavit"
+                                <input type="number" step="0.01" wire:model.live.debounce.350ms="form.descuento_infonavit"
                                     class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Otros Descuentos</label>
-                                <input type="number" step="0.01" wire:model.live="form.otros_descuentos"
+                                <input type="number" step="0.01" wire:model.live.debounce.350ms="form.otros_descuentos"
                                     class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
                         </div>
@@ -1328,28 +1362,54 @@
                                 class="px-3 py-1.5 rounded-md transition {{ $filtroAuditoria === 'SIN_RECIBO' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900' }}">
                                 Sin recibo
                             </button>
+                            <button type="button" wire:click="$set('filtroAuditoria', 'COMPLETO')"
+                                class="px-3 py-1.5 rounded-md transition {{ $filtroAuditoria === 'COMPLETO' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900' }}">
+                                100% Cubiertos
+                            </button>
                         </div>
 
-                        <!-- Filtro Tipo de Empleado (Planta / Temporal) -->
-                        <div class="flex items-center gap-1 bg-gray-200/70 dark:bg-gray-700 p-1 rounded-lg text-xs font-semibold">
-                            <button type="button" wire:click="$set('filtroAuditoriaTipoEmpleado', 'TODOS')"
-                                class="px-2.5 py-1.5 rounded-md transition {{ $filtroAuditoriaTipoEmpleado === 'TODOS' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900' }}">
-                                Todos
-                            </button>
-                            <button type="button" wire:click="$set('filtroAuditoriaTipoEmpleado', 'PLANTA')"
-                                class="px-2.5 py-1.5 rounded-md transition {{ $filtroAuditoriaTipoEmpleado === 'PLANTA' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900' }}">
-                                Planta
-                            </button>
-                            <button type="button" wire:click="$set('filtroAuditoriaTipoEmpleado', 'TEMPORAL')"
-                                class="px-2.5 py-1.5 rounded-md transition {{ $filtroAuditoriaTipoEmpleado === 'TEMPORAL' ? 'bg-amber-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900' }}">
-                                Temporales
-                            </button>
-                        </div>
+                        <!-- Selector Rápido para Asignar Empleados a Finiquito / Extraordinario -->
+                        @if ($selectedPeriodo && in_array($selectedPeriodo->tipo_periodo, ['FINIQUITO', 'EXTRAORDINARIO']))
+                            <div class="relative w-full sm:w-64" x-data="{ openAsignar: false }">
+                                <div class="relative">
+                                    <input type="text"
+                                        wire:model.live.debounce.300ms="searchAsignarEmpleado"
+                                        @focus="openAsignar = true"
+                                        @click.outside="openAsignar = false"
+                                        placeholder="+ Asignar trabajador..."
+                                        class="w-full text-xs pl-8 pr-3 py-1.5 bg-white border border-dashed border-indigo-400 rounded-lg dark:bg-gray-700 dark:border-indigo-500 dark:text-white focus:ring-1 focus:ring-indigo-500">
+                                    <svg class="w-4 h-4 text-indigo-500 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                                    </svg>
+                                </div>
+
+                                @if (!empty(trim($searchAsignarEmpleado)) && count($this->empleadosDisponiblesParaAsignar) > 0)
+                                    <div x-show="openAsignar" class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden divide-y divide-gray-100 dark:divide-gray-700 max-h-56 overflow-y-auto">
+                                        @foreach ($this->empleadosDisponiblesParaAsignar as $empDisp)
+                                            <button type="button"
+                                                wire:key="asignar-emp-{{ $empDisp->id }}"
+                                                wire:click="asignarEmpleadoAPeriodo({{ $empDisp->id }}, {{ (float) $empDisp->salario_base }})"
+                                                @click="openAsignar = false"
+                                                class="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center justify-between text-xs transition">
+                                                <div>
+                                                    <span class="font-bold text-gray-900 dark:text-white">#{{ $empDisp->id }} {{ $empDisp->nombre_completo }}</span>
+                                                    <span class="text-[10px] text-gray-500 block">{{ $empDisp->puesto?->nombre }} · {{ $empDisp->area?->nombre }}</span>
+                                                </div>
+                                                <div class="text-right flex-shrink-0 ml-2">
+                                                    <span class="text-[9px] text-gray-400 block uppercase">Sueldo Base</span>
+                                                    <span class="font-mono font-bold text-indigo-600 dark:text-indigo-400">${{ number_format($empDisp->salario_base, 2) }}</span>
+                                                </div>
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Buscador -->
                     <div class="relative w-full sm:w-72">
-                        <input type="text" wire:model.live.debounce.150ms="searchAuditoria"
+                        <input type="text" wire:model.live.debounce.350ms="searchAuditoria"
                             placeholder="Buscar empleado, puesto o #ID..."
                             class="w-full text-xs pl-8 pr-3 py-1.5 bg-white border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-1 focus:ring-blue-500">
                         <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1368,17 +1428,20 @@
                                         class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
                                 </th>
                                 <th class="p-3">Empleado</th>
-                                <th class="p-3 text-right">Salario Base</th>
+                                <th class="p-3 text-right">Monto Acordado / Objetivo</th>
                                 <th class="p-3 text-right">Emitido en Período</th>
                                 <th class="p-3 text-right">Saldo Faltante</th>
                                 <th class="p-3 text-right">Anticipos Deudores</th>
+                                @if ($selectedPeriodo && in_array($selectedPeriodo->tipo_periodo, ['FINIQUITO', 'EXTRAORDINARIO']))
+                                    <th class="p-3 w-12 text-center"></th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-700 text-xs">
                             @forelse ($empleadosAuditoria as $item)
-                                <tr class="hover:bg-blue-50/40 dark:hover:bg-gray-700/50 transition {{ in_array((string) $item['id_empleado'], $selectedEmpleadosAuditoria) ? 'bg-blue-50/60 dark:bg-blue-950/20' : '' }}">
+                                <tr wire:key="auditoria-row-{{ $item['id_empleado'] }}" class="hover:bg-blue-50/40 dark:hover:bg-gray-700/50 transition {{ in_array((string) $item['id_empleado'], $selectedEmpleadosAuditoria) ? 'bg-blue-50/60 dark:bg-blue-950/20' : '' }}">
                                     <td class="p-3 text-center">
-                                        <input type="checkbox" wire:model.live="selectedEmpleadosAuditoria" value="{{ $item['id_empleado'] }}"
+                                        <input type="checkbox" wire:key="auditoria-check-{{ $item['id_empleado'] }}" wire:model.live="selectedEmpleadosAuditoria" value="{{ $item['id_empleado'] }}"
                                             class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
                                     </td>
                                     <td class="p-3">
@@ -1391,11 +1454,11 @@
                                             </span>
                                             @if ($item['cant_recibos'] > 0)
                                                 <span class="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">
-                                                    {{ $item['cant_recibos'] }} recibo(s)
+                                                    {{ $item['cant_recibos'] }} abono(s)
                                                 </span>
                                             @else
                                                 <span class="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                                                    Sin recibo
+                                                    Sin abonos
                                                 </span>
                                             @endif
                                         </div>
@@ -1403,19 +1466,43 @@
                                             {{ $item['puesto'] }} · {{ $item['area'] }}
                                         </div>
                                     </td>
-                                    <td class="p-3 text-right font-mono font-medium text-gray-700 dark:text-gray-300">
-                                        ${{ number_format($item['salario_base'], 2) }}
-                                    </td>
-                                    <td class="p-3 text-right font-mono font-medium text-gray-900 dark:text-white">
-                                        ${{ number_format($item['emitido'], 2) }}
+                                    <td class="p-3 text-right">
+                                        <div class="flex items-center justify-end gap-1">
+                                            <span class="text-xs text-gray-400 font-bold">$</span>
+                                            <input type="number" step="0.01" min="0"
+                                                wire:key="monto-acordado-{{ $item['id_empleado'] }}"
+                                                value="{{ $item['monto_acordado'] > 0 ? $item['monto_acordado'] : $item['salario_base'] }}"
+                                                wire:change="actualizarMontoAcordado({{ $item['id_empleado'] }}, $event.target.value)"
+                                                class="w-28 text-right font-mono font-bold text-xs py-1 px-2 border rounded-lg bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-1 focus:ring-indigo-500 transition shadow-sm">
+                                        </div>
+                                        @if ($item['monto_acordado'] > 0 && $item['monto_acordado'] != $item['salario_base'])
+                                            <span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium block mt-0.5">
+                                                Base: ${{ number_format($item['salario_base'], 2) }}
+                                            </span>
+                                        @endif
                                     </td>
                                     <td class="p-3 text-right">
-                                        <div class="font-mono font-bold text-amber-600 dark:text-amber-400 text-sm">
-                                            ${{ number_format($item['faltante'], 2) }}
+                                        <div class="font-mono font-bold text-gray-900 dark:text-white">
+                                            ${{ number_format($item['emitido'], 2) }}
                                         </div>
-                                        <div class="text-[10px] text-gray-400">
-                                            {{ $item['porcentaje_cubierto'] }}% cubierto
+                                        <div class="text-[10px] text-gray-500">
+                                            {{ $item['cant_recibos'] }} emitido{{ $item['cant_recibos'] != 1 ? 's' : '' }}
                                         </div>
+                                    </td>
+                                    <td class="p-3 text-right">
+                                        @if ($item['cubierto'])
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                100% Cubierto
+                                            </span>
+                                        @else
+                                            <div class="font-mono font-bold text-amber-600 dark:text-amber-400 text-sm">
+                                                ${{ number_format($item['faltante'], 2) }}
+                                            </div>
+                                            <div class="text-[10px] text-gray-400">
+                                                {{ $item['porcentaje_cubierto'] }}% cubierto
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="p-3 text-right">
                                         @if ($item['saldo_adelantos'] > 0)
@@ -1426,10 +1513,24 @@
                                             <span class="text-gray-400">$0.00</span>
                                         @endif
                                     </td>
+                                    @if ($selectedPeriodo && in_array($selectedPeriodo->tipo_periodo, ['FINIQUITO', 'EXTRAORDINARIO']))
+                                        <td class="p-3 text-center">
+                                            @if ($item['cant_recibos'] === 0)
+                                                <button type="button"
+                                                    wire:click="quitarEmpleadoDePeriodo({{ $item['id_empleado'] }})"
+                                                    title="Quitar trabajador de este período"
+                                                    class="text-gray-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/40 transition">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                </button>
+                                            @endif
+                                        </td>
+                                    @endif
                                 </tr>
                             @empty
-                                <tr>
-                                    <td colspan="6" class="p-8 text-center text-gray-500 dark:text-gray-400">
+                                <tr wire:key="auditoria-empty">
+                                    <td colspan="{{ $selectedPeriodo && in_array($selectedPeriodo->tipo_periodo, ['FINIQUITO', 'EXTRAORDINARIO']) ? '7' : '6' }}" class="p-8 text-center text-gray-500 dark:text-gray-400">
                                         <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300 mx-auto flex items-center justify-center mb-2">
                                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -1660,8 +1761,56 @@
                             </div>
                         </div>
 
-                        <!-- Empleado (Combobox con búsqueda reactiva) -->
-                        <div class="relative">
+                        <!-- Empleado (Combobox con búsqueda reactiva y navegación con teclado) -->
+                        <div x-data="{
+                            open: false,
+                            activeIndex: 0,
+                            getItems() {
+                                return $el.querySelectorAll('[data-report-employee-id]');
+                            },
+                            nextItem() {
+                                const items = this.getItems();
+                                if (items.length === 0) return;
+                                this.open = true;
+                                this.activeIndex = (this.activeIndex + 1) % items.length;
+                                this.scrollToActive();
+                            },
+                            prevItem() {
+                                const items = this.getItems();
+                                if (items.length === 0) return;
+                                this.open = true;
+                                this.activeIndex = (this.activeIndex - 1 + items.length) % items.length;
+                                this.scrollToActive();
+                            },
+                            selectCurrent() {
+                                if (!this.open) return;
+                                const items = this.getItems();
+                                if (items.length > 0 && items[this.activeIndex]) {
+                                    const empId = items[this.activeIndex].getAttribute('data-report-employee-id');
+                                    const empNombre = items[this.activeIndex].getAttribute('data-report-employee-name');
+                                    if (empId) {
+                                        $wire.seleccionarEmpleadoReporte(parseInt(empId), empNombre);
+                                        this.open = false;
+                                    }
+                                }
+                            },
+                            scrollToActive() {
+                                const items = this.getItems();
+                                if (items[this.activeIndex]) {
+                                    items[this.activeIndex].scrollIntoView({ block: 'nearest' });
+                                }
+                            }
+                        }"
+                        x-init="
+                            $watch('$wire.filtroReporteEmpleadoSearch', value => {
+                                if (value && value.trim().length > 0) {
+                                    open = true;
+                                    activeIndex = 0;
+                                }
+                            });
+                        "
+                        @click.outside="open = false"
+                        class="relative">
                             <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
                                 Empleado Específico <span class="font-normal text-gray-400 lowercase">(opcional)</span>
                             </label>
@@ -1681,30 +1830,64 @@
                                 </div>
                             @else
                                 <div class="relative">
-                                    <input type="text" wire:model.live.debounce.250ms="filtroReporteEmpleadoSearch"
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg block w-full p-2.5 ps-8 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    <input type="text" 
+                                        x-ref="searchInputReporte"
+                                        wire:model.live.debounce.350ms="filtroReporteEmpleadoSearch"
+                                        @focus="if ($wire.filtroReporteEmpleadoSearch && $wire.filtroReporteEmpleadoSearch.trim().length > 0) open = true"
+                                        @input="open = true; activeIndex = 0"
+                                        @keydown.down.prevent="nextItem()"
+                                        @keydown.up.prevent="prevItem()"
+                                        @keydown.enter.prevent.stop="selectCurrent()"
+                                        @keydown.escape.prevent.stop="open = false"
+                                        autocomplete="off"
+                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg block w-full p-2.5 ps-8 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         placeholder="Escribe ID o nombre para buscar... (Vacío = Todos los empleados)">
                                     <div class="absolute inset-y-0 start-0 flex items-center ps-2.5 pointer-events-none">
                                         <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                         </svg>
                                     </div>
+                                    @if ($filtroReporteEmpleadoSearch)
+                                        <button type="button" 
+                                            wire:click="$set('filtroReporteEmpleadoSearch', '')" 
+                                            @click="open = false"
+                                            class="absolute inset-y-0 end-0 pe-2.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                            &times;
+                                        </button>
+                                    @endif
                                 </div>
 
-                                @if (count($empleadosReporteBusqueda) > 0)
-                                    <div class="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-gray-750 border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl divide-y divide-gray-100 dark:divide-gray-700">
-                                        @foreach ($empleadosReporteBusqueda as $e)
-                                            <button type="button" wire:click="seleccionarEmpleadoReporte({{ $e->id }}, '{{ addslashes($e->nombre_completo) }}')"
-                                                class="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 dark:hover:bg-gray-700 flex items-center justify-between transition">
+                                @if (strlen(trim($filtroReporteEmpleadoSearch)) > 0)
+                                    <div x-show="open" 
+                                        x-cloak 
+                                        x-transition:enter="transition ease-out duration-100"
+                                        x-transition:enter-start="transform opacity-0 scale-95"
+                                        x-transition:enter-end="transform opacity-100 scale-100"
+                                        x-transition:leave="transition ease-in duration-75"
+                                        x-transition:leave-start="transform opacity-100 scale-100"
+                                        x-transition:leave-end="transform opacity-0 scale-95"
+                                        class="absolute z-50 left-0 right-0 mt-1 max-h-52 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl divide-y divide-gray-100 dark:divide-gray-700">
+                                        @forelse ($empleadosReporteBusqueda as $index => $e)
+                                            <div wire:key="rep-emp-{{ $e->id }}"
+                                                data-report-employee-id="{{ $e->id }}"
+                                                data-report-employee-name="{{ addslashes($e->nombre_completo) }}"
+                                                @click="$wire.seleccionarEmpleadoReporte({{ $e->id }}, '{{ addslashes($e->nombre_completo) }}'); open = false;"
+                                                @mouseenter="activeIndex = {{ $index }}"
+                                                :class="{ 'bg-blue-50 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100': activeIndex === {{ $index }} }"
+                                                class="w-full text-left px-3 py-2 text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-between transition">
                                                 <div>
                                                     <span class="font-bold text-gray-900 dark:text-white">#{{ $e->id }} - {{ $e->nombre_completo }}</span>
                                                     <span class="text-[11px] text-gray-400 block">{{ $e->puesto?->nombre }} · {{ $e->area?->nombre }}</span>
                                                 </div>
-                                                <span class="px-1.5 py-0.5 text-[10px] rounded {{ $e->activo ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600' }}">
+                                                <span class="px-1.5 py-0.5 text-[10px] rounded font-semibold {{ $e->activo ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-750 dark:text-gray-400' }}">
                                                     {{ $e->activo ? 'Activo' : 'Inactivo' }}
                                                 </span>
-                                            </button>
-                                        @endforeach
+                                            </div>
+                                        @empty
+                                            <div wire:key="rep-emp-empty" class="px-3 py-3 text-center text-xs text-gray-400 dark:text-gray-500">
+                                                No se encontraron empleados coincidentes con "<span class="font-semibold text-gray-600 dark:text-gray-300">{{ $filtroReporteEmpleadoSearch }}</span>"
+                                            </div>
+                                        @endforelse
                                     </div>
                                 @endif
                             @endif
@@ -1787,4 +1970,3 @@
         });
     </script>
 </div>
-

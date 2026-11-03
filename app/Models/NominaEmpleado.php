@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class NominaEmpleado extends Model
@@ -59,6 +60,11 @@ class NominaEmpleado extends Model
         return $this->hasMany(NominaRecibo::class, 'id_empleado');
     }
 
+    public function asignacionesPeriodos(): HasMany
+    {
+        return $this->hasMany(NominaPeriodoEmpleado::class, 'id_empleado');
+    }
+
     public function movimientosCuenta(): HasMany
     {
         return $this->hasMany(NominaMovimientoCuenta::class, 'id_empleado')->orderBy('fecha', 'desc');
@@ -86,15 +92,62 @@ class NominaEmpleado extends Model
     }
 
     /**
+     * Reconcilia en cascada la cadena completa de movimientos del kardex
+     * recalculando 'saldo_anterior' y 'saldo_nuevo' en orden cronológico estricto.
+     */
+    public function reconciliarKardexSaldos(): float
+    {
+        return DB::transaction(function () {
+            $empleado = static::lockForUpdate()->find($this->id);
+            if (!$empleado) {
+                return 0.0;
+            }
+
+            $movimientos = $empleado->movimientosCuenta()
+                ->reorder()
+                ->orderBy('fecha', 'asc')
+                ->orderBy('id', 'asc')
+                ->lockForUpdate()
+                ->get();
+
+            $runningBalance = 0.0;
+
+            foreach ($movimientos as $mov) {
+                $saldoAnterior = $runningBalance;
+                $monto = (float) $mov->monto;
+
+                if ($mov->naturaleza === 'CARGO') {
+                    $saldoNuevo = round($saldoAnterior + $monto, 2);
+                } else { // ABONO
+                    $saldoNuevo = max(0, round($saldoAnterior - $monto, 2));
+                }
+
+                $diffAnt = abs((float) $mov->saldo_anterior - $saldoAnterior) > 0.001;
+                $diffNvo = abs((float) $mov->saldo_nuevo - $saldoNuevo) > 0.001;
+
+                if ($diffAnt || $diffNvo) {
+                    $mov->update([
+                        'saldo_anterior' => $saldoAnterior,
+                        'saldo_nuevo' => $saldoNuevo,
+                    ]);
+                }
+
+                $runningBalance = $saldoNuevo;
+            }
+
+            $empleado->update(['saldo_adelantos' => $runningBalance]);
+            $this->saldo_adelantos = $runningBalance;
+
+            return $runningBalance;
+        });
+    }
+
+    /**
      * Recalcula y actualiza el saldo deudor de adelantos según los movimientos contables vigentes
      */
     public function recalcularSaldoAdelantos(): float
     {
-        $cargos = (float) $this->movimientosCuenta()->where('naturaleza', 'CARGO')->sum('monto');
-        $abonos = (float) $this->movimientosCuenta()->where('naturaleza', 'ABONO')->sum('monto');
-        $saldo = max(0, round($cargos - $abonos, 2));
-        $this->update(['saldo_adelantos' => $saldo]);
-        return $saldo;
+        return $this->reconciliarKardexSaldos();
     }
 
     public function getNombreCompletoAttribute(): string

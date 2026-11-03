@@ -50,7 +50,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse ($areas as $area)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <tr wire:key="area-{{ $area->id }}" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                             <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">
                                 {{ $area->nombre }}
                             </td>
@@ -110,7 +110,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse ($puestos as $puesto)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <tr wire:key="puesto-{{ $puesto->id }}" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                             <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">
                                 {{ $puesto->nombre }}
                             </td>

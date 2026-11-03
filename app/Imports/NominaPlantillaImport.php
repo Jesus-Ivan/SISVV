@@ -5,6 +5,7 @@ namespace App\Imports;
 use App\Models\NominaEmpleado;
 use App\Models\NominaMovimientoCuenta;
 use App\Models\NominaPeriodo;
+use App\Models\NominaPeriodoEmpleado;
 use App\Models\NominaRecibo;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +47,21 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                 $diferenciaEfectivo = (float) ($row['diferencia_efectivo'] ?? 0);
                 $horasExtras = (float) ($row['horas_extras'] ?? 0);
                 $bonosOtros = (float) ($row['bonos_otros'] ?? $row['otros_bonos'] ?? 0);
+
+                // Columnas especiales para Aguinaldos y Finiquitos
+                $montoAcordado = (float) ($row['monto_acordado_total'] ?? $row['monto_acordado'] ?? 0);
+                $montoAguinaldo = (float) ($row['monto_aguinaldo'] ?? $row['aguinaldo'] ?? 0);
+                $montoVacaciones = (float) ($row['monto_vacaciones'] ?? $row['vacaciones'] ?? 0);
+                $montoPrimaVacacional = (float) ($row['monto_prima_vacacional'] ?? $row['prima_vacacional'] ?? 0);
+
+                // Si se especificó monto acordado, sincronizar con nomina_periodo_empleados
+                if ($montoAcordado > 0) {
+                    NominaPeriodoEmpleado::updateOrCreate(
+                        ['id_periodo' => $periodo->id, 'id_empleado' => $empleado->id],
+                        ['monto_acordado' => $montoAcordado]
+                    );
+                }
+
                 $descuentoAdelanto = (float) ($row['descuento_adelanto'] ?? $row['descuento_adelantos'] ?? 0);
                 $descuentoInfonavit = (float) ($row['descuento_infonavit'] ?? $row['infonavit'] ?? 0);
                 $otrosDescuentos = (float) ($row['otros_descuentos'] ?? 0);
@@ -76,16 +92,27 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                     }
                 }
 
-                $totalPercepciones = $nominaFiscal + $diferenciaEfectivo + $horasExtras + $bonosOtros;
+                $totalPercepciones = $nominaFiscal + $diferenciaEfectivo + $horasExtras + $bonosOtros + $montoAguinaldo + $montoVacaciones + $montoPrimaVacacional;
                 $totalDeducciones = $descuentoAdelanto + $descuentoInfonavit + $otrosDescuentos;
                 $netoPagar = max(0, $totalPercepciones - $totalDeducciones);
 
+                $tipoRecibo = 'NOMINA';
+                if ($periodo->tipo_periodo === 'AGUINALDO') {
+                    $tipoRecibo = 'AGUINALDO';
+                } elseif ($periodo->tipo_periodo === 'FINIQUITO') {
+                    $tipoRecibo = 'FINIQUITO';
+                }
+
                 if ($recibo) {
                     $recibo->update([
+                        'tipo_recibo' => $tipoRecibo,
                         'nomina_fiscal' => $nominaFiscal,
                         'diferencia_efectivo' => $diferenciaEfectivo,
                         'horas_extras' => $horasExtras,
                         'bonos_otros' => $bonosOtros,
+                        'monto_aguinaldo' => $montoAguinaldo,
+                        'monto_vacaciones' => $montoVacaciones,
+                        'monto_prima_vacacional' => $montoPrimaVacacional,
                         'total_percepciones' => $totalPercepciones,
                         'descuento_adelanto' => $descuentoAdelanto,
                         'descuento_infonavit' => $descuentoInfonavit,
@@ -103,7 +130,7 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                         'consecutivo_empleado' => $folioData['consecutivo'],
                         'id_periodo' => $periodo->id,
                         'id_empleado' => $empleado->id,
-                        'tipo_recibo' => 'NOMINA',
+                        'tipo_recibo' => $tipoRecibo,
                         'id_empleado_snapshot' => $empleado->id,
                         'nombre_empleado_snapshot' => $empleado->nombre_completo,
                         'area_snapshot' => $empleado->area ? $empleado->area->nombre : null,
@@ -116,6 +143,9 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                         'diferencia_efectivo' => $diferenciaEfectivo,
                         'horas_extras' => $horasExtras,
                         'bonos_otros' => $bonosOtros,
+                        'monto_aguinaldo' => $montoAguinaldo,
+                        'monto_vacaciones' => $montoVacaciones,
+                        'monto_prima_vacacional' => $montoPrimaVacacional,
                         'total_percepciones' => $totalPercepciones,
                         'descuento_adelanto' => $descuentoAdelanto,
                         'descuento_infonavit' => $descuentoInfonavit,
@@ -162,7 +192,7 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                     $movimiento->delete();
                 }
 
-                $empleado->recalcularSaldoAdelantos();
+                $empleado->reconciliarKardexSaldos();
 
                 $this->procesados++;
             }

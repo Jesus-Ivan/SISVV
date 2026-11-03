@@ -159,12 +159,13 @@ class NominaPdfController extends Controller
     {
         $idEmpleado = $request->input('id_empleado') ? (int) $request->input('id_empleado') : null;
         $tipo = $request->input('tipo_empleado');
+        $tipoMovimiento = $request->input('tipo_movimiento');
         $fechaInicio = $request->input('fecha_inicio');
         $fechaFin = $request->input('fecha_fin');
         $fileName = 'Cuentas_Saldos_Empleados_' . date('Ymd_His') . '.xlsx';
 
         return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\NominaCuentasExport($idEmpleado, $tipo, $fechaInicio, $fechaFin),
+            new \App\Exports\NominaCuentasExport($idEmpleado, $tipo, $fechaInicio, $fechaFin, $tipoMovimiento),
             $fileName
         );
     }

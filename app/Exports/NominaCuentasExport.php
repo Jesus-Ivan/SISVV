@@ -20,20 +20,27 @@ class NominaCuentasExport implements WithMultipleSheets
     public ?string $tipo_empleado;
     public ?string $fecha_inicio;
     public ?string $fecha_fin;
+    public ?string $tipo_movimiento;
 
-    public function __construct(?int $id_empleado = null, ?string $tipo_empleado = null, ?string $fecha_inicio = null, ?string $fecha_fin = null)
-    {
+    public function __construct(
+        ?int $id_empleado = null,
+        ?string $tipo_empleado = null,
+        ?string $fecha_inicio = null,
+        ?string $fecha_fin = null,
+        ?string $tipo_movimiento = null
+    ) {
         $this->id_empleado = $id_empleado;
         $this->tipo_empleado = $tipo_empleado;
         $this->fecha_inicio = $fecha_inicio;
         $this->fecha_fin = $fecha_fin;
+        $this->tipo_movimiento = $tipo_movimiento;
     }
 
     public function sheets(): array
     {
         return [
             new NominaBalanzaSheet($this->id_empleado, $this->tipo_empleado),
-            new NominaMovimientosSheet($this->id_empleado, $this->tipo_empleado, $this->fecha_inicio, $this->fecha_fin),
+            new NominaMovimientosSheet($this->id_empleado, $this->tipo_empleado, $this->fecha_inicio, $this->fecha_fin, $this->tipo_movimiento),
         ];
     }
 }
@@ -117,13 +124,20 @@ class NominaMovimientosSheet implements FromCollection, WithHeadings, ShouldAuto
     public ?string $tipo_empleado;
     public ?string $fecha_inicio;
     public ?string $fecha_fin;
+    public ?string $tipo_movimiento;
 
-    public function __construct(?int $id_empleado = null, ?string $tipo_empleado = null, ?string $fecha_inicio = null, ?string $fecha_fin = null)
-    {
+    public function __construct(
+        ?int $id_empleado = null,
+        ?string $tipo_empleado = null,
+        ?string $fecha_inicio = null,
+        ?string $fecha_fin = null,
+        ?string $tipo_movimiento = null
+    ) {
         $this->id_empleado = $id_empleado;
         $this->tipo_empleado = $tipo_empleado;
         $this->fecha_inicio = $fecha_inicio;
         $this->fecha_fin = $fecha_fin;
+        $this->tipo_movimiento = $tipo_movimiento;
     }
 
     public function collection()
@@ -136,6 +150,9 @@ class NominaMovimientosSheet implements FromCollection, WithHeadings, ShouldAuto
         if ($this->tipo_empleado && in_array($this->tipo_empleado, ['PLANTA', 'TEMPORAL'])) {
             $query->whereHas('empleado', fn($q) => $q->where('tipo_empleado', $this->tipo_empleado));
         }
+        if ($this->tipo_movimiento && $this->tipo_movimiento !== 'TODOS') {
+            $query->where('tipo_movimiento', $this->tipo_movimiento);
+        }
         if ($this->fecha_inicio) {
             $query->whereDate('fecha', '>=', $this->fecha_inicio);
         }
@@ -146,6 +163,7 @@ class NominaMovimientosSheet implements FromCollection, WithHeadings, ShouldAuto
         return $query->get()->map(function ($mov) {
             return [
                 'fecha' => $mov->fecha ? $mov->fecha->format('Y-m-d') : '',
+                'folio' => $mov->folio ?: 'N/A',
                 'id_empleado' => $mov->id_empleado,
                 'nombre' => $mov->empleado ? $mov->empleado->nombre_completo : 'N/A',
                 'tipo_movimiento' => $mov->tipo_movimiento,
@@ -163,6 +181,7 @@ class NominaMovimientosSheet implements FromCollection, WithHeadings, ShouldAuto
     {
         return [
             'Fecha',
+            'Folio',
             '# ID Empleado',
             'Nombre Empleado',
             'Tipo Movimiento',
@@ -183,9 +202,9 @@ class NominaMovimientosSheet implements FromCollection, WithHeadings, ShouldAuto
     public function columnFormats(): array
     {
         return [
-            'F' => NumberFormat::FORMAT_CURRENCY_USD_SIMPLE,
             'G' => NumberFormat::FORMAT_CURRENCY_USD_SIMPLE,
             'H' => NumberFormat::FORMAT_CURRENCY_USD_SIMPLE,
+            'I' => NumberFormat::FORMAT_CURRENCY_USD_SIMPLE,
         ];
     }
 

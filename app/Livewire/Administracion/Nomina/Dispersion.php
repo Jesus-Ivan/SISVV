@@ -8,6 +8,7 @@ use App\Livewire\Forms\NominaReciboForm;
 use App\Models\NominaEmpleado;
 use App\Models\NominaMovimientoCuenta;
 use App\Models\NominaPeriodo;
+use App\Models\NominaPeriodoEmpleado;
 use App\Models\NominaRecibo;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -77,9 +78,10 @@ class Dispersion extends Component
     public bool $showAuditoriaModal = false;
     public array $selectedEmpleadosAuditoria = [];
     public bool $selectAllAuditoria = false;
-    public string $filtroAuditoria = 'TODOS'; // TODOS, PARCIAL, SIN_RECIBO
-    public string $filtroAuditoriaTipoEmpleado = 'TODOS'; // TODOS, PLANTA, TEMPORAL
+    public string $filtroAuditoria = 'TODOS'; // TODOS, PARCIAL, SIN_RECIBO, COMPLETO
     public string $searchAuditoria = '';
+    public string $searchAsignarEmpleado = '';
+    public float|string $montoAsignarEmpleado = '';
 
     // Aviso empleado fuera del período de labores
     public bool $empleadoFueraDePeriodo = false;
@@ -122,6 +124,26 @@ class Dispersion extends Component
         $this->periodoFechaInicio = now()->startOfMonth()->toDateString();
         $this->periodoFechaFin = now()->endOfMonth()->toDateString();
         $this->periodoFechaPago = now()->toDateString();
+    }
+
+    public function updatingReciboSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroTipoRecibo(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroEstadoPago(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroMetodoPago(): void
+    {
+        $this->resetPage();
     }
 
     public function updatedFiltroAnioPeriodo(): void
@@ -305,7 +327,7 @@ class Dispersion extends Component
                     $p->delete();
 
                     foreach ($empleadosIds as $empId) {
-                        NominaEmpleado::find($empId)?->recalcularSaldoAdelantos();
+                        NominaEmpleado::find($empId)?->reconciliarKardexSaldos();
                     }
                 });
 
@@ -414,21 +436,34 @@ class Dispersion extends Component
         }
         $salarioBasePeriodo = $ciclo ? (float) $ciclo->salario_base : (float) $empleado->salario_base;
 
-        $this->recibosPreviosCountEmpleadoActual = $recibosPrevios->count();
-        $this->salarioBaseEmpleadoActual = $salarioBasePeriodo;
-        $this->totalEmitidoPrevioEmpleadoActual = (float) $recibosPrevios->sum('total_percepciones');
-        $this->saldoPendienteEmpleadoActual = max(0, round($this->salarioBaseEmpleadoActual - $this->totalEmitidoPrevioEmpleadoActual, 2));
+        $asignacion = $this->selectedPeriodoId
+            ? NominaPeriodoEmpleado::where('id_periodo', $this->selectedPeriodoId)->where('id_empleado', $empleado->id)->first()
+            : null;
+        $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : 0.0;
+        $montoObjetivo = $montoAcordado > 0 ? $montoAcordado : $salarioBasePeriodo;
 
-        if ($recibosPrevios->isNotEmpty() && $this->saldoPendienteEmpleadoActual > 0) {
-            // Empleado con recibos previos y saldo faltante
+        $this->form->monto_total_acordado = $montoObjetivo;
+        $this->recibosPreviosCountEmpleadoActual = $recibosPrevios->count();
+        $this->salarioBaseEmpleadoActual = $montoObjetivo;
+        $this->totalEmitidoPrevioEmpleadoActual = (float) $recibosPrevios->sum('total_percepciones');
+        $this->saldoPendienteEmpleadoActual = max(0, round($montoObjetivo - $this->totalEmitidoPrevioEmpleadoActual, 2));
+
+        if ($periodo && in_array($periodo->tipo_periodo, ['AGUINALDO', 'FINIQUITO'])) {
+            $this->form->tipo_recibo = $periodo->tipo_periodo;
+        }
+
+        if ($recibosPrevios->isNotEmpty()) {
+            // Empleado con recibos previos (abono complementario)
             $montoAsignar = $this->saldoPendienteEmpleadoActual;
             $ultimoRecibo = $recibosPrevios->sortByDesc('id')->first();
-            $this->form->tipo_recibo = $ultimoRecibo->tipo_recibo;
-            $this->form->metodo_pago = $ultimoRecibo->metodo_pago;
+            if ($ultimoRecibo) {
+                $this->form->tipo_recibo = $ultimoRecibo->tipo_recibo;
+                $this->form->metodo_pago = $ultimoRecibo->metodo_pago;
+            }
             $numComplemento = $this->recibosPreviosCountEmpleadoActual + 1;
-            $this->form->observaciones = "Recibo complementario #{$numComplemento} - Saldo restante";
+            $this->form->observaciones = "Abono #{$numComplemento} - Saldo restante";
         } else {
-            $montoAsignar = $this->salarioBaseEmpleadoActual;
+            $montoAsignar = $this->saldoPendienteEmpleadoActual > 0 ? $this->saldoPendienteEmpleadoActual : $montoObjetivo;
             $this->form->metodo_pago = $empleado->tipo_pago_predeterminado ?: 'EFECTIVO';
         }
 
@@ -445,6 +480,7 @@ class Dispersion extends Component
     public function limpiarEmpleadoSeleccionado(): void
     {
         $this->form->id_empleado = null;
+        $this->form->monto_total_acordado = null;
         $this->empleadoSeleccionado = null;
         $this->empleadoSearch = '';
         $this->form->nomina_fiscal = 0;
@@ -469,10 +505,20 @@ class Dispersion extends Component
         $this->form->setRecibo($recibo);
         $this->empleadoSeleccionado = NominaEmpleado::with(['area', 'puesto'])->find($recibo->id_empleado);
         $this->empleadoSearch = '';
-        $this->saldoPendienteEmpleadoActual = 0.0;
-        $this->salarioBaseEmpleadoActual = (float) ($this->empleadoSeleccionado?->salario_base ?? 0);
-        $this->totalEmitidoPrevioEmpleadoActual = (float) $recibo->total_percepciones;
-        $this->recibosPreviosCountEmpleadoActual = 1;
+
+        $acordado = NominaPeriodoEmpleado::where('id_periodo', $recibo->id_periodo)
+            ->where('id_empleado', $recibo->id_empleado)
+            ->value('monto_acordado');
+        $montoObjetivo = ($acordado !== null && (float) $acordado > 0) ? (float) $acordado : (float) ($this->empleadoSeleccionado?->salario_base ?? 0);
+
+        $recibosPrevios = NominaRecibo::where('id_periodo', $recibo->id_periodo)
+            ->where('id_empleado', $recibo->id_empleado)
+            ->get();
+
+        $this->recibosPreviosCountEmpleadoActual = $recibosPrevios->count();
+        $this->salarioBaseEmpleadoActual = $montoObjetivo;
+        $this->totalEmitidoPrevioEmpleadoActual = (float) $recibosPrevios->sum('total_percepciones');
+        $this->saldoPendienteEmpleadoActual = max(0, round($montoObjetivo - $this->totalEmitidoPrevioEmpleadoActual, 2));
         $this->isEditingRecibo = true;
         $this->darDeBajaAlFiniquitar = false;
         $this->empleadoFueraDePeriodo = false;
@@ -574,8 +620,9 @@ class Dispersion extends Component
         $this->selectedEmpleadosAuditoria = [];
         $this->selectAllAuditoria = false;
         $this->filtroAuditoria = 'TODOS';
-        $this->filtroAuditoriaTipoEmpleado = 'TODOS';
         $this->searchAuditoria = '';
+        $this->searchAsignarEmpleado = '';
+        $this->montoAsignarEmpleado = '';
         $this->showAuditoriaModal = true;
     }
 
@@ -600,46 +647,60 @@ class Dispersion extends Component
             return [];
         }
 
-        // Consultar únicamente empleados con ciclo laboral en las fechas del período o con recibo emitido en este período
-        $empleados = NominaEmpleado::with(['area', 'puesto', 'historialLaboral'])
-            ->where(function ($q) use ($periodo) {
+        $esFiniquitoOExtraordinario = in_array(strtoupper($periodo->tipo_periodo ?? ''), ['FINIQUITO', 'EXTRAORDINARIO']);
+
+        $query = NominaEmpleado::with([
+            'area',
+            'puesto',
+            'historialLaboral',
+            'asignacionesPeriodos' => fn($q) => $q->where('id_periodo', $periodo->id),
+        ]);
+
+        if ($esFiniquitoOExtraordinario) {
+            $query->where(function ($q) use ($periodo) {
+                $q->whereHas('asignacionesPeriodos', fn($aq) => $aq->where('id_periodo', $periodo->id))
+                  ->orWhereHas('recibos', fn($rq) => $rq->where('id_periodo', $periodo->id));
+            });
+        } else {
+            $query->where(function ($q) use ($periodo) {
                 $q->laborandoEnPeriodo($periodo->fecha_inicio, $periodo->fecha_fin)
                   ->orWhereHas('recibos', fn($rq) => $rq->where('id_periodo', $periodo->id));
-            })
-            ->orderBy('nombre', 'asc')
-            ->get();
+            });
+        }
 
+        $empleados = $query->orderBy('nombre', 'asc')->get();
         $recibos = NominaRecibo::where('id_periodo', $this->selectedPeriodoId)->get()->groupBy('id_empleado');
         $resultado = [];
         $search = mb_strtolower(trim($this->searchAuditoria));
 
         foreach ($empleados as $emp) {
-            // Filtro por tipo de contrato (TODOS, PLANTA, TEMPORAL)
-            if ($this->filtroAuditoriaTipoEmpleado !== 'TODOS' && $emp->tipo_empleado !== $this->filtroAuditoriaTipoEmpleado) {
-                continue;
-            }
-
             // Determinar salario base correspondiente al período
             $ciclo = $emp->historialLaboral->first(function ($c) use ($periodo) {
                 return $c->fecha_ingreso <= $periodo->fecha_fin && ($c->fecha_baja === null || $c->fecha_baja >= $periodo->fecha_inicio);
             });
             $salarioBase = $ciclo ? (float) $ciclo->salario_base : (float) $emp->salario_base;
 
+            $asignacion = $emp->asignacionesPeriodos->first();
+            $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : 0.0;
+            $montoObjetivo = $montoAcordado > 0 ? $montoAcordado : $salarioBase;
+
             $recibosEmp = $recibos->get($emp->id, collect([]));
             $cantRecibos = $recibosEmp->count();
             $emitido = (float) $recibosEmp->sum('total_percepciones');
-            $faltante = max(0, round($salarioBase - $emitido, 2));
+            $faltante = max(0, round($montoObjetivo - $emitido, 2));
+            $cubierto = ($faltante <= 0.01);
 
-            // Solo empleados con saldo pendiente
-            if ($faltante <= 0.01) {
+            // Filtro por pestaña (TODOS, PARCIAL, SIN_RECIBO, COMPLETO)
+            if ($this->filtroAuditoria === 'TODOS' && $cubierto) {
                 continue;
             }
-
-            // Filtro por pestaña (PARCIAL vs SIN_RECIBO)
-            if ($this->filtroAuditoria === 'PARCIAL' && $cantRecibos === 0) {
+            if ($this->filtroAuditoria === 'PARCIAL' && ($cantRecibos === 0 || $cubierto)) {
                 continue;
             }
-            if ($this->filtroAuditoria === 'SIN_RECIBO' && $cantRecibos > 0) {
+            if ($this->filtroAuditoria === 'SIN_RECIBO' && ($cantRecibos > 0 || $cubierto)) {
+                continue;
+            }
+            if ($this->filtroAuditoria === 'COMPLETO' && !$cubierto) {
                 continue;
             }
 
@@ -666,15 +727,106 @@ class Dispersion extends Component
                 'puesto' => $emp->puesto?->nombre ?? 'Sin puesto',
                 'area' => $emp->area?->nombre ?? 'Sin área',
                 'salario_base' => $salarioBase,
+                'monto_acordado' => $montoAcordado,
+                'monto_objetivo' => $montoObjetivo,
                 'emitido' => $emitido,
                 'faltante' => $faltante,
                 'cant_recibos' => $cantRecibos,
                 'saldo_adelantos' => (float) $emp->saldo_adelantos,
-                'porcentaje_cubierto' => $salarioBase > 0 ? min(100, round(($emitido / $salarioBase) * 100)) : 0,
+                'porcentaje_cubierto' => $montoObjetivo > 0 ? min(100, round(($emitido / $montoObjetivo) * 100)) : 0,
+                'cubierto' => $cubierto,
+                'es_asignado' => $asignacion !== null,
+                'tiene_recibos' => $cantRecibos > 0,
             ];
         }
 
         return $resultado;
+    }
+
+    public function actualizarMontoAcordado(int $idEmpleado, $nuevoMonto): void
+    {
+        if (!$this->selectedPeriodoId) {
+            return;
+        }
+
+        $monto = max(0, (float) $nuevoMonto);
+        NominaPeriodoEmpleado::updateOrCreate(
+            ['id_periodo' => $this->selectedPeriodoId, 'id_empleado' => $idEmpleado],
+            ['monto_acordado' => $monto]
+        );
+
+        $empleado = NominaEmpleado::find($idEmpleado);
+        $nombre = $empleado ? $empleado->nombre_completo : "#{$idEmpleado}";
+        $this->dispatch('toast', message: "Monto acordado para {$nombre} actualizado a $" . number_format($monto, 2), type: 'success');
+    }
+
+    public function asignarEmpleadoAPeriodo(int $idEmpleado, $montoAcordado = null): void
+    {
+        if (!$this->selectedPeriodoId) {
+            return;
+        }
+
+        $empleado = NominaEmpleado::find($idEmpleado);
+        if (!$empleado) {
+            $this->dispatch('toast', message: 'Empleado no encontrado.', type: 'error');
+            return;
+        }
+
+        $monto = ($montoAcordado !== null && $montoAcordado !== '' && (float) $montoAcordado > 0)
+            ? (float) $montoAcordado
+            : (float) $empleado->salario_base;
+
+        NominaPeriodoEmpleado::updateOrCreate(
+            ['id_periodo' => $this->selectedPeriodoId, 'id_empleado' => $idEmpleado],
+            ['monto_acordado' => $monto]
+        );
+
+        $this->searchAsignarEmpleado = '';
+        $this->montoAsignarEmpleado = '';
+        $this->dispatch('toast', message: "Empleado {$empleado->nombre_completo} asignado al período con monto $" . number_format($monto, 2), type: 'success');
+    }
+
+    public function quitarEmpleadoDePeriodo(int $idEmpleado): void
+    {
+        if (!$this->selectedPeriodoId) {
+            return;
+        }
+
+        $tieneRecibos = NominaRecibo::where('id_periodo', $this->selectedPeriodoId)
+            ->where('id_empleado', $idEmpleado)
+            ->exists();
+
+        if ($tieneRecibos) {
+            $this->dispatch('toast', message: 'No se puede remover a un empleado que ya cuenta con recibos en este período.', type: 'warning');
+            return;
+        }
+
+        NominaPeriodoEmpleado::where('id_periodo', $this->selectedPeriodoId)
+            ->where('id_empleado', $idEmpleado)
+            ->delete();
+
+        $this->selectedEmpleadosAuditoria = array_values(array_filter($this->selectedEmpleadosAuditoria, fn($id) => (int)$id !== $idEmpleado));
+
+        $this->dispatch('toast', message: 'Empleado removido del período.', type: 'info');
+    }
+
+    public function getEmpleadosDisponiblesParaAsignarProperty()
+    {
+        if (!$this->selectedPeriodoId || empty(trim($this->searchAsignarEmpleado))) {
+            return collect([]);
+        }
+
+        $asignadosIds = NominaPeriodoEmpleado::where('id_periodo', $this->selectedPeriodoId)->pluck('id_empleado');
+        $search = '%' . trim($this->searchAsignarEmpleado) . '%';
+
+        return NominaEmpleado::whereNotIn('id', $asignadosIds)
+            ->where('activo', true)
+            ->where(function ($q) use ($search) {
+                $q->where(DB::raw("CONCAT(nombre, ' ', apellido_paterno, ' ', COALESCE(apellido_materno, ''))"), 'like', $search)
+                  ->orWhere('id', 'like', $search);
+            })
+            ->limit(8)
+            ->get();
     }
 
     public function getTotalSeleccionadosAuditoriaProperty(): float
@@ -751,12 +903,19 @@ class Dispersion extends Component
             ->where('id_empleado', $empleado->id)
             ->get();
 
-        $this->recibosPreviosCountEmpleadoActual = $recibosPrevios->count();
-        $this->salarioBaseEmpleadoActual = (float) $empleado->salario_base;
-        $this->totalEmitidoPrevioEmpleadoActual = (float) $recibosPrevios->sum('total_percepciones');
-        $this->saldoPendienteEmpleadoActual = max(0, round($this->salarioBaseEmpleadoActual - $this->totalEmitidoPrevioEmpleadoActual, 2));
+        $asignacion = NominaPeriodoEmpleado::where('id_periodo', $this->selectedPeriodoId)
+            ->where('id_empleado', $empleado->id)
+            ->first();
+        $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : 0.0;
+        $montoObjetivo = $montoAcordado > 0 ? $montoAcordado : (float) $empleado->salario_base;
 
-        $montoAsignar = $this->saldoPendienteEmpleadoActual > 0 ? $this->saldoPendienteEmpleadoActual : $this->salarioBaseEmpleadoActual;
+        $this->form->monto_total_acordado = $montoObjetivo;
+        $this->recibosPreviosCountEmpleadoActual = $recibosPrevios->count();
+        $this->salarioBaseEmpleadoActual = $montoObjetivo;
+        $this->totalEmitidoPrevioEmpleadoActual = (float) $recibosPrevios->sum('total_percepciones');
+        $this->saldoPendienteEmpleadoActual = max(0, round($montoObjetivo - $this->totalEmitidoPrevioEmpleadoActual, 2));
+
+        $montoAsignar = $this->saldoPendienteEmpleadoActual > 0 ? $this->saldoPendienteEmpleadoActual : $montoObjetivo;
 
         // Heredar tipo de recibo y método de pago
         $ultimoRecibo = $recibosPrevios->sortByDesc('id')->first();
@@ -794,7 +953,7 @@ class Dispersion extends Component
 
         $numComplemento = $this->recibosPreviosCountEmpleadoActual + 1;
         $this->form->observaciones = $this->recibosPreviosCountEmpleadoActual > 0
-            ? "Recibo complementario #{$numComplemento} - Saldo restante de nómina"
+            ? "Abono #{$numComplemento} - Saldo restante"
             : null;
 
         $this->showReciboModal = true;
@@ -869,8 +1028,8 @@ class Dispersion extends Component
                     // Eliminar movimiento contable asociado al recibo si existía
                     NominaMovimientoCuenta::where('id_recibo', $recibo->id)->delete();
 
-                    // Reconciliar y recalcular el saldo real deudor del empleado según su libro mayor
-                    $empleado?->recalcularSaldoAdelantos();
+                    // Reconciliar en cascada y recalcular el saldo real deudor del empleado según su libro mayor
+                    $empleado?->reconciliarKardexSaldos();
 
                     $recibo->delete();
                 });
@@ -1007,15 +1166,30 @@ class Dispersion extends Component
         $empleadosEnPeriodoInfo = [];
 
         if ($this->selectedPeriodoId && $selectedPeriodo) {
-            $esDiarioOExtraordinario = in_array(strtoupper($selectedPeriodo->tipo_periodo ?? ''), ['DIARIO', 'EXTRAORDINARIO']);
+            $tipoPeriodoUpper = strtoupper($selectedPeriodo->tipo_periodo ?? '');
+            $esDiario = $tipoPeriodoUpper === 'DIARIO';
+            $esFiniquitoOExtraordinario = in_array($tipoPeriodoUpper, ['FINIQUITO', 'EXTRAORDINARIO']);
 
-            $empleadosPeriodo = NominaEmpleado::with(['area', 'puesto', 'historialLaboral'])
-                ->where(function ($q) use ($selectedPeriodo) {
+            $queryPeriodo = NominaEmpleado::with([
+                'area',
+                'puesto',
+                'historialLaboral',
+                'asignacionesPeriodos' => fn($q) => $q->where('id_periodo', $selectedPeriodo->id),
+            ]);
+
+            if ($esFiniquitoOExtraordinario) {
+                $queryPeriodo->where(function ($q) use ($selectedPeriodo) {
+                    $q->whereHas('asignacionesPeriodos', fn($aq) => $aq->where('id_periodo', $selectedPeriodo->id))
+                      ->orWhereHas('recibos', fn($rq) => $rq->where('id_periodo', $selectedPeriodo->id));
+                });
+            } else {
+                $queryPeriodo->where(function ($q) use ($selectedPeriodo) {
                     $q->laborandoEnPeriodo($selectedPeriodo->fecha_inicio, $selectedPeriodo->fecha_fin)
                       ->orWhereHas('recibos', fn($rq) => $rq->where('id_periodo', $selectedPeriodo->id));
-                })
-                ->get();
+                });
+            }
 
+            $empleadosPeriodo = $queryPeriodo->get();
             $recibosPeriodo = NominaRecibo::where('id_periodo', $this->selectedPeriodoId)->get()->groupBy('id_empleado');
             $totalEmitidoPeriodo = (float) ($selectedPeriodo?->total_neto ?? 0);
 
@@ -1025,24 +1199,29 @@ class Dispersion extends Component
                     return $c->fecha_ingreso <= $selectedPeriodo->fecha_fin && ($c->fecha_baja === null || $c->fecha_baja >= $selectedPeriodo->fecha_inicio);
                 });
                 $salarioBase = $ciclo ? (float) $ciclo->salario_base : (float) $emp->salario_base;
-                if (!$esDiarioOExtraordinario) {
-                    $totalPresupuestoPeriodo += $salarioBase;
+
+                $asignacion = $emp->asignacionesPeriodos->first();
+                $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : 0.0;
+                $montoObjetivo = $montoAcordado > 0 ? $montoAcordado : $salarioBase;
+
+                if (!$esDiario) {
+                    $totalPresupuestoPeriodo += $montoObjetivo;
                 }
 
                 $recibosEmp = $recibosPeriodo->get($emp->id, collect([]));
                 $cantRecibos = $recibosEmp->count();
                 $emitido = (float) $recibosEmp->sum('total_percepciones');
-                $faltante = $esDiarioOExtraordinario ? 0.0 : max(0, round($salarioBase - $emitido, 2));
+                $faltante = $esDiario ? 0.0 : max(0, round($montoObjetivo - $emitido, 2));
 
                 $empleadosEnPeriodoInfo[$emp->id] = [
                     'cant_recibos' => $cantRecibos,
                     'emitido' => $emitido,
                     'faltante' => $faltante,
-                    'salario_base' => $salarioBase,
-                    'cubierto' => $esDiarioOExtraordinario || ($faltante <= 0.01),
+                    'salario_base' => $montoObjetivo,
+                    'cubierto' => $esDiario || ($faltante <= 0.01),
                 ];
 
-                if (!$esDiarioOExtraordinario && $faltante > 0.01) {
+                if (!$esDiario && $faltante > 0.01) {
                     $totalPendientePeriodo += $faltante;
                     $conteoIncompletosPeriodo++;
                 }

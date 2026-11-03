@@ -50,6 +50,11 @@ class NominaPeriodo extends Model
         return $this->hasMany(NominaRecibo::class, 'id_periodo');
     }
 
+    public function asignacionesEmpleados(): HasMany
+    {
+        return $this->hasMany(NominaPeriodoEmpleado::class, 'id_periodo');
+    }
+
     public function getNombrePeriodoAttribute(): string
     {
         return $this->nombre ?? '';

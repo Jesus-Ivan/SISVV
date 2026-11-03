@@ -11,7 +11,7 @@
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
                     </svg>
                 </div>
-                <input wire:model.live.debounce.400ms="search" type="text"
+                <input wire:model.live.debounce.350ms="search" type="text"
                     class="block w-full p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="Buscar por ID, nombre, apellidos, RFC...">
             </div>
@@ -89,7 +89,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse ($empleados as $empleado)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition {{ !$empleado->activo ? 'opacity-60 bg-gray-50/50' : '' }}">
+                        <tr wire:key="emp-row-{{ $empleado->id }}" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition {{ !$empleado->activo ? 'opacity-60 bg-gray-50/50' : '' }}">
                             <!-- ID Empleado (clave directa) -->
                             <td class="px-4 py-3 text-center font-bold text-gray-900 dark:text-white">
                                 #{{ $empleado->id }}
@@ -779,7 +779,7 @@
                     <!-- Lista Cronológica / Tabla con Scroll Interno -->
                     <div class="overflow-y-auto flex-1 p-5 divide-y divide-gray-100 dark:divide-gray-700">
                         @forelse ($empleadoHistorial?->historialLaboral ?? [] as $index => $ciclo)
-                            <div class="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div wire:key="ciclo-{{ $ciclo->id ?? $index }}" class="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                                 <div class="flex items-start gap-3">
                                     <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs {{ $ciclo->fecha_baja ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' }} shrink-0 mt-0.5">
                                         {{ ($empleadoHistorial?->historialLaboral?->count() ?? 1) - $index }}

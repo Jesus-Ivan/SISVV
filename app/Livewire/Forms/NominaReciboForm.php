@@ -5,6 +5,7 @@ namespace App\Livewire\Forms;
 use App\Models\NominaEmpleado;
 use App\Models\NominaMovimientoCuenta;
 use App\Models\NominaPeriodo;
+use App\Models\NominaPeriodoEmpleado;
 use App\Models\NominaRecibo;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Validate;
@@ -74,6 +75,9 @@ class NominaReciboForm extends Form
     #[Validate('nullable|string')]
     public ?string $observaciones = null;
 
+    #[Validate('nullable|numeric|min:0')]
+    public float|int|string|null $monto_total_acordado = null;
+
     public function setRecibo(NominaRecibo $recibo): void
     {
         $this->recibo = $recibo;
@@ -97,6 +101,11 @@ class NominaReciboForm extends Form
         $this->estado_pago = $recibo->estado_pago;
         $this->fecha_pago_real = $recibo->fecha_pago_real ? $recibo->fecha_pago_real->format('Y-m-d') : null;
         $this->observaciones = $recibo->observaciones;
+
+        $acordado = NominaPeriodoEmpleado::where('id_periodo', $recibo->id_periodo)
+            ->where('id_empleado', $recibo->id_empleado)
+            ->value('monto_acordado');
+        $this->monto_total_acordado = $acordado !== null ? (float) $acordado : null;
     }
 
     public function calcularPercepciones(): float
@@ -245,7 +254,14 @@ class NominaReciboForm extends Form
                     'id_usuario' => auth()->id(),
                 ]);
 
-                $empleado->recalcularSaldoAdelantos();
+                $empleado->reconciliarKardexSaldos();
+            }
+
+            if ($this->id_periodo && $this->monto_total_acordado !== null && $this->monto_total_acordado !== '') {
+                NominaPeriodoEmpleado::updateOrCreate(
+                    ['id_periodo' => $this->id_periodo, 'id_empleado' => $empleado->id],
+                    ['monto_acordado' => (float) $this->monto_total_acordado]
+                );
             }
 
             if ($this->id_periodo) {
@@ -334,9 +350,16 @@ class NominaReciboForm extends Form
                         ]);
                     }
 
-                    // Recalcular siempre el saldo real garantizado del empleado
-                    $empleado->recalcularSaldoAdelantos();
+                    // Recalcular y reconciliar siempre el kardex en cascada para el empleado
+                    $empleado->reconciliarKardexSaldos();
                 }
+            }
+
+            if ($this->recibo->id_periodo && $this->monto_total_acordado !== null && $this->monto_total_acordado !== '') {
+                NominaPeriodoEmpleado::updateOrCreate(
+                    ['id_periodo' => $this->recibo->id_periodo, 'id_empleado' => $this->recibo->id_empleado],
+                    ['monto_acordado' => (float) $this->monto_total_acordado]
+                );
             }
 
             if ($this->recibo->id_periodo) {

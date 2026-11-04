@@ -41,10 +41,6 @@ Route::view('profile', 'profile')
 
 Route::prefix('administracion')->middleware(['auth', 'administracion'])->group(function () {
     Route::view('/', 'administracion.index')->name('administracion');
-    Route::view('reportes-ordenes', 'administracion.reportes-ordenes')->name('administracion.reportes-ordenes');
-    Route::view('detalles-ordenes', 'administracion.detalles-ordenes')->name('administracion.detalles-ordenes');
-    Route::view('reportes-ventas', 'administracion.reportes-ventas')->name('administracion.reportes-ventas');
-    Route::view('reportes-cobranza', 'administracion.reportes-cobranza')->name('administracion.reportes-cobranza');
     Route::prefix('nominas')->group(function () {
         Route::get('cargar-periodo', [AdministracionController::class, 'cargarPeriodo'])->name('administracion.cargar-p');
         Route::post('cargar-periodo', [AdministracionController::class, 'subirPeriodo'])->name('administracion.cargar-p');
@@ -136,12 +132,6 @@ Route::prefix('almacen')->middleware(['auth', 'almacen'])->group(function () {
     });
 
     Route::view('nuevo-costeo', 'almacen.nuevo-costeo')->name('almacen.nuevo');
-
-    Route::prefix('recetas')->group(function () {
-        Route::view('/', 'almacen.Recetas.recetas')->name('almacen.recetas');
-        Route::view('nueva', 'almacen.Recetas.nueva-receta')->name('almacen.recetas.nueva');
-        Route::view('editar', 'almacen.Recetas.editar-receta')->name('almacen.recetas.editar');
-    });
 
     Route::view('mermas', 'almacen.Mermas.mermas')->name('almacen.mermas');
 
@@ -248,25 +238,10 @@ Route::prefix('cocina')->middleware(['auth', 'cocina'])->group(function () {
         Route::post('reporte', [CocinaController::class, 'obtenerReporteOrdenes'])->name('cocina.ordenes.reporte');
     });
 
-    Route::view('inventarios', 'cocina.Inventarios.inventarios')->name('cocina.inventarios');
-
     Route::prefix('inventario')->group(function () {
         Route::view('/', 'cocina.Inventario.solicitar-mercancia')->name('cocina.inventario.solicitar-mercancia');
         Route::view('nueva-solicitud', 'cocina.Inventario.nueva-solicitud')->name('cocina.inventario.nueva-solicitud');
     });
-
-    //Route::get('solicitar-mercancia', [PuntosController::class, 'solicitarMercancia'])->name('pv.solicitud-mercancia');
-    //Route::get('nueva-solicitud', [PuntosController::class, 'nuevaSolicitud'])->name('puntos.inventario.nueva-solicitud');
-
-    Route::view('platillos', 'cocina.Platillos.platillos')->name('cocina.platillos');
-
-    Route::prefix('transformaciones')->group(function () {
-        Route::view('/', 'cocina.Transformaciones.transformaciones')->name('cocina.transformaciones');
-        Route::view('nueva', 'cocina.Transformaciones.nueva-transformacion')->name('cocina.transformaciones.nueva');
-        Route::view('historial', 'cocina.Transformaciones.historial-transformaciones')->name('cocina.transformaciones.historial');
-    });
-
-    Route::view('mermas', 'cocina.Mermas.mermas')->name('cocina.mermas');
 });
 
 Route::prefix('pv/{codigopv}')->middleware(['auth', 'puntos'])->group(function () {
@@ -296,20 +271,6 @@ Route::prefix('pv/{codigopv}')->middleware(['auth', 'puntos'])->group(function (
 
 Route::prefix('sistemas')->middleware(['auth', 'sistemas'])->group(function () {
     Route::view('/', 'sistemas.index')->name('sistemas');
-
-    //DEPARTAMENTO DE ALMACEN
-    Route::prefix('almacen')->group(function () {
-        Route::view('catalogo', 'sistemas.Almacen.catalogo')->name('sistemas.catalogo');
-        Route::view('catalogo/nuevo', 'sistemas.Almacen.nuevo-catalogo')->name('sistemas.almacen.nuevo');
-        Route::get('reporte-entradas', [SistemasController::class, 'repEntradas'])->name('sistemas.almacen.reporte-entradas');
-        Route::post('reporte-entradas', [ReportesController::class, 'repEntradas'])->name('sistemas.almacen.reporte-entradas');
-
-
-        Route::view('proveedores', 'sistemas.proveedores')->name('sistemas.proveedores');
-        Route::view('familias', 'sistemas.familias')->name('sistemas.familias');
-        Route::view('categorias', 'sistemas.categorias')->name('sistemas.categorias');
-        Route::view('unidades', 'sistemas.unidades')->name('sistemas.unidades');
-    });
 
     //DEPARTAMENTO DE PUNTOS DE VENTA
     Route::prefix('PV')->group(function () {

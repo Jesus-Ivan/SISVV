@@ -588,9 +588,6 @@ class Dispersion extends Component
                     $this->form->fecha_pago = $savedFechaPago;
                     $this->form->horas_extras = 0;
                     $this->form->bonos_otros = 0;
-                    $this->form->monto_aguinaldo = 0;
-                    $this->form->monto_vacaciones = 0;
-                    $this->form->monto_prima_vacacional = 0;
                     $this->form->descuento_adelanto = 0;
                     $this->form->descuento_infonavit = 0;
                     $this->form->otros_descuentos = 0;
@@ -681,8 +678,8 @@ class Dispersion extends Component
             $salarioBase = $ciclo ? (float) $ciclo->salario_base : (float) $emp->salario_base;
 
             $asignacion = $emp->asignacionesPeriodos->first();
-            $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : 0.0;
-            $montoObjetivo = $montoAcordado > 0 ? $montoAcordado : $salarioBase;
+            $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : null;
+            $montoObjetivo = ($asignacion !== null) ? (float) $asignacion->monto_acordado : $salarioBase;
 
             $recibosEmp = $recibos->get($emp->id, collect([]));
             $cantRecibos = $recibosEmp->count();
@@ -749,6 +746,18 @@ class Dispersion extends Component
             return;
         }
 
+        if ($nuevoMonto === '' || $nuevoMonto === null) {
+            // Si el usuario borra el valor, eliminar la asignación para restaurar al salario base
+            NominaPeriodoEmpleado::where('id_periodo', $this->selectedPeriodoId)
+                ->where('id_empleado', $idEmpleado)
+                ->delete();
+
+            $empleado = NominaEmpleado::find($idEmpleado);
+            $nombre = $empleado ? $empleado->nombre_completo : "#{$idEmpleado}";
+            $this->dispatch('toast', message: "Monto acordado para {$nombre} restaurado a salario base.", type: 'info');
+            return;
+        }
+
         $monto = max(0, (float) $nuevoMonto);
         NominaPeriodoEmpleado::updateOrCreate(
             ['id_periodo' => $this->selectedPeriodoId, 'id_empleado' => $idEmpleado],
@@ -757,7 +766,11 @@ class Dispersion extends Component
 
         $empleado = NominaEmpleado::find($idEmpleado);
         $nombre = $empleado ? $empleado->nombre_completo : "#{$idEmpleado}";
-        $this->dispatch('toast', message: "Monto acordado para {$nombre} actualizado a $" . number_format($monto, 2), type: 'success');
+        if ($monto == 0) {
+            $this->dispatch('toast', message: "Empleado {$nombre} marcado con $0.00 (excluido de saldos pendientes).", type: 'success');
+        } else {
+            $this->dispatch('toast', message: "Monto acordado para {$nombre} actualizado a $" . number_format($monto, 2), type: 'success');
+        }
     }
 
     public function asignarEmpleadoAPeriodo(int $idEmpleado, $montoAcordado = null): void
@@ -943,9 +956,6 @@ class Dispersion extends Component
         // Percepciones adicionales y deducciones en 0.00
         $this->form->horas_extras = 0;
         $this->form->bonos_otros = 0;
-        $this->form->monto_aguinaldo = 0;
-        $this->form->monto_vacaciones = 0;
-        $this->form->monto_prima_vacacional = 0;
         $this->form->descuento_adelanto = 0;
         $this->form->descuento_infonavit = 0;
         $this->form->otros_descuentos = 0;
@@ -1001,6 +1011,56 @@ class Dispersion extends Component
         }
         $recibo->save();
         $this->dispatch('toast', message: "Estado del recibo {$recibo->folio} actualizado a {$recibo->estado_pago}.", type: 'success');
+    }
+
+    public function marcarRecibosVisiblesComoPagados(): void
+    {
+        if (!$this->selectedPeriodoId) {
+            $this->dispatch('toast', message: 'Selecciona un período de nómina primero.', type: 'warning');
+            return;
+        }
+
+        $periodo = NominaPeriodo::find($this->selectedPeriodoId);
+        if ($periodo && $periodo->estado === 'CERRADO') {
+            $this->dispatch('toast', message: 'Operación bloqueada: El período de nómina está CERRADO.', type: 'error');
+            return;
+        }
+
+        $query = NominaRecibo::where('id_periodo', $this->selectedPeriodoId)
+            ->where('estado_pago', '!=', 'PAGADO');
+
+        if ($this->reciboSearch) {
+            $search = '%' . trim($this->reciboSearch) . '%';
+            $query->where(function ($q) use ($search) {
+                $q->where('nombre_empleado_snapshot', 'like', $search)
+                    ->orWhere('folio', 'like', $search)
+                    ->orWhere('id_empleado_snapshot', 'like', $search);
+            });
+        }
+
+        if ($this->filtroTipoRecibo !== 'TODOS') {
+            $query->where('tipo_recibo', $this->filtroTipoRecibo);
+        }
+
+        if ($this->filtroEstadoPago !== 'TODOS') {
+            $query->where('estado_pago', $this->filtroEstadoPago);
+        }
+
+        if ($this->filtroMetodoPago !== 'TODOS') {
+            $query->where('metodo_pago', $this->filtroMetodoPago);
+        }
+
+        $afectados = $query->update([
+            'estado_pago' => 'PAGADO',
+            'fecha_pago_real' => now()->toDateString(),
+        ]);
+
+        if ($afectados > 0) {
+            $this->recalcularTotalesPeriodo();
+            $this->dispatch('toast', message: "Se marcaron {$afectados} recibo(s) como PAGADOS.", type: 'success');
+        } else {
+            $this->dispatch('toast', message: 'No hay recibos pendientes o parciales que coincidan con los filtros.', type: 'info');
+        }
     }
 
     public function confirmDeleteRecibo(int $id): void
@@ -1083,13 +1143,15 @@ class Dispersion extends Component
             Excel::import($import, $this->archivoExcel);
 
             $registrados = $import->getRegistradosCount();
+            $omitidos = $import->getOmitidosCount();
             $this->importErrors = $import->getErrors();
 
             if ($this->selectedPeriodoId) {
                 NominaPeriodo::find($this->selectedPeriodoId)?->recalcularTotales();
             }
 
-            $this->dispatch('toast', message: "Se procesaron {$registrados} recibos exitosamente desde el archivo Excel.", type: 'success');
+            $mensaje = "Se procesaron {$registrados} recibos exitosamente desde el archivo Excel" . ($omitidos > 0 ? " ({$omitidos} fila(s) vacía(s) o en ceros omitida(s))." : ".");
+            $this->dispatch('toast', message: $mensaje, type: 'success');
 
             if (empty($this->importErrors)) {
                 $this->showImportModal = false;
@@ -1201,8 +1263,8 @@ class Dispersion extends Component
                 $salarioBase = $ciclo ? (float) $ciclo->salario_base : (float) $emp->salario_base;
 
                 $asignacion = $emp->asignacionesPeriodos->first();
-                $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : 0.0;
-                $montoObjetivo = $montoAcordado > 0 ? $montoAcordado : $salarioBase;
+                $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : null;
+                $montoObjetivo = ($asignacion !== null) ? (float) $asignacion->monto_acordado : $salarioBase;
 
                 if (!$esDiario) {
                     $totalPresupuestoPeriodo += $montoObjetivo;

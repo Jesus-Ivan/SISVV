@@ -46,15 +46,6 @@ class NominaReciboForm extends Form
     public float|int|string|null $bonos_otros = 0;
 
     #[Validate('nullable|numeric|min:0')]
-    public float|int|string|null $monto_aguinaldo = 0;
-
-    #[Validate('nullable|numeric|min:0')]
-    public float|int|string|null $monto_vacaciones = 0;
-
-    #[Validate('nullable|numeric|min:0')]
-    public float|int|string|null $monto_prima_vacacional = 0;
-
-    #[Validate('nullable|numeric|min:0')]
     public float|int|string|null $descuento_adelanto = 0;
 
     #[Validate('nullable|numeric|min:0')]
@@ -91,9 +82,6 @@ class NominaReciboForm extends Form
         $this->diferencia_efectivo = (float) $recibo->diferencia_efectivo;
         $this->horas_extras = (float) $recibo->horas_extras;
         $this->bonos_otros = (float) $recibo->bonos_otros;
-        $this->monto_aguinaldo = (float) $recibo->monto_aguinaldo;
-        $this->monto_vacaciones = (float) $recibo->monto_vacaciones;
-        $this->monto_prima_vacacional = (float) $recibo->monto_prima_vacacional;
         $this->descuento_adelanto = (float) $recibo->descuento_adelanto;
         $this->descuento_infonavit = (float) $recibo->descuento_infonavit;
         $this->otros_descuentos = (float) $recibo->otros_descuentos;
@@ -114,10 +102,7 @@ class NominaReciboForm extends Form
             (float) ($this->nomina_fiscal ?? 0) +
             (float) ($this->diferencia_efectivo ?? 0) +
             (float) ($this->horas_extras ?? 0) +
-            (float) ($this->bonos_otros ?? 0) +
-            (float) ($this->monto_aguinaldo ?? 0) +
-            (float) ($this->monto_vacaciones ?? 0) +
-            (float) ($this->monto_prima_vacacional ?? 0)
+            (float) ($this->bonos_otros ?? 0)
         );
     }
 
@@ -216,9 +201,6 @@ class NominaReciboForm extends Form
                 'diferencia_efectivo' => (float) ($this->diferencia_efectivo ?? 0),
                 'horas_extras' => (float) ($this->horas_extras ?? 0),
                 'bonos_otros' => (float) ($this->bonos_otros ?? 0),
-                'monto_aguinaldo' => (float) ($this->monto_aguinaldo ?? 0),
-                'monto_vacaciones' => (float) ($this->monto_vacaciones ?? 0),
-                'monto_prima_vacacional' => (float) ($this->monto_prima_vacacional ?? 0),
                 'total_percepciones' => $totalPercepciones,
                 'descuento_adelanto' => $descuentoAdelanto,
                 'descuento_infonavit' => (float) ($this->descuento_infonavit ?? 0),
@@ -299,9 +281,6 @@ class NominaReciboForm extends Form
                 'diferencia_efectivo' => (float) ($this->diferencia_efectivo ?? 0),
                 'horas_extras' => (float) ($this->horas_extras ?? 0),
                 'bonos_otros' => (float) ($this->bonos_otros ?? 0),
-                'monto_aguinaldo' => (float) ($this->monto_aguinaldo ?? 0),
-                'monto_vacaciones' => (float) ($this->monto_vacaciones ?? 0),
-                'monto_prima_vacacional' => (float) ($this->monto_prima_vacacional ?? 0),
                 'total_percepciones' => $totalPercepciones,
                 'descuento_adelanto' => $nuevoDescuento,
                 'descuento_infonavit' => (float) ($this->descuento_infonavit ?? 0),

@@ -16,6 +16,7 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
 {
     public int $id_periodo;
     public int $procesados = 0;
+    public int $filasOmitidas = 0;
     public array $errors = [];
 
     public function __construct(int $id_periodo)
@@ -43,16 +44,40 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                     continue;
                 }
 
+                // Comprobar si la fila está completamente vacía o con puros ceros
+                $camposNumericos = [
+                    $row['nomina_fiscal'] ?? null,
+                    $row['diferencia_efectivo'] ?? null,
+                    $row['horas_extras'] ?? null,
+                    $row['bonos_otros'] ?? $row['otros_bonos'] ?? null,
+                    $row['descuento_adelanto'] ?? $row['descuento_adelantos'] ?? null,
+                    $row['descuento_infonavit'] ?? $row['infonavit'] ?? null,
+                    $row['otros_descuentos'] ?? null,
+                    $row['monto_acordado_total'] ?? $row['monto_acordado'] ?? null,
+                ];
+
+                $tieneValoresDistintosDeCero = false;
+                foreach ($camposNumericos as $val) {
+                    if ($val !== null && trim((string)$val) !== '') {
+                        if (abs((float)$val) > 0.0001) {
+                            $tieneValoresDistintosDeCero = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!$tieneValoresDistintosDeCero) {
+                    $this->filasOmitidas++;
+                    continue; // Fila completamente vacía o con puros ceros: omitir sin generar recibo
+                }
+
                 $nominaFiscal = (float) ($row['nomina_fiscal'] ?? 0);
                 $diferenciaEfectivo = (float) ($row['diferencia_efectivo'] ?? 0);
                 $horasExtras = (float) ($row['horas_extras'] ?? 0);
                 $bonosOtros = (float) ($row['bonos_otros'] ?? $row['otros_bonos'] ?? 0);
 
-                // Columnas especiales para Aguinaldos y Finiquitos
+                // Columna especial para meta de Aguinaldos y Finiquitos
                 $montoAcordado = (float) ($row['monto_acordado_total'] ?? $row['monto_acordado'] ?? 0);
-                $montoAguinaldo = (float) ($row['monto_aguinaldo'] ?? $row['aguinaldo'] ?? 0);
-                $montoVacaciones = (float) ($row['monto_vacaciones'] ?? $row['vacaciones'] ?? 0);
-                $montoPrimaVacacional = (float) ($row['monto_prima_vacacional'] ?? $row['prima_vacacional'] ?? 0);
 
                 // Si se especificó monto acordado, sincronizar con nomina_periodo_empleados
                 if ($montoAcordado > 0) {
@@ -92,7 +117,7 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                     }
                 }
 
-                $totalPercepciones = $nominaFiscal + $diferenciaEfectivo + $horasExtras + $bonosOtros + $montoAguinaldo + $montoVacaciones + $montoPrimaVacacional;
+                $totalPercepciones = $nominaFiscal + $diferenciaEfectivo + $horasExtras + $bonosOtros;
                 $totalDeducciones = $descuentoAdelanto + $descuentoInfonavit + $otrosDescuentos;
                 $netoPagar = max(0, $totalPercepciones - $totalDeducciones);
 
@@ -110,9 +135,6 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                         'diferencia_efectivo' => $diferenciaEfectivo,
                         'horas_extras' => $horasExtras,
                         'bonos_otros' => $bonosOtros,
-                        'monto_aguinaldo' => $montoAguinaldo,
-                        'monto_vacaciones' => $montoVacaciones,
-                        'monto_prima_vacacional' => $montoPrimaVacacional,
                         'total_percepciones' => $totalPercepciones,
                         'descuento_adelanto' => $descuentoAdelanto,
                         'descuento_infonavit' => $descuentoInfonavit,
@@ -143,9 +165,6 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                         'diferencia_efectivo' => $diferenciaEfectivo,
                         'horas_extras' => $horasExtras,
                         'bonos_otros' => $bonosOtros,
-                        'monto_aguinaldo' => $montoAguinaldo,
-                        'monto_vacaciones' => $montoVacaciones,
-                        'monto_prima_vacacional' => $montoPrimaVacacional,
                         'total_percepciones' => $totalPercepciones,
                         'descuento_adelanto' => $descuentoAdelanto,
                         'descuento_infonavit' => $descuentoInfonavit,
@@ -204,6 +223,11 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
     public function getRegistradosCount(): int
     {
         return $this->procesados;
+    }
+
+    public function getOmitidosCount(): int
+    {
+        return $this->filasOmitidas;
     }
 
     public function getErrors(): array

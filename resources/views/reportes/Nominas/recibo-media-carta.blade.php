@@ -292,27 +292,6 @@
                                             <td class="text-right">${{ number_format($recibo->bonos_otros, 2) }}</td>
                                         </tr>
                                     @endif
-                                    @if ($recibo->monto_aguinaldo > 0)
-                                        <tr>
-                                            <td>Aguinaldo</td>
-                                            <td class="text-right">${{ number_format($recibo->monto_aguinaldo, 2) }}
-                                            </td>
-                                        </tr>
-                                    @endif
-                                    @if ($recibo->monto_vacaciones > 0)
-                                        <tr>
-                                            <td>Vacaciones</td>
-                                            <td class="text-right">${{ number_format($recibo->monto_vacaciones, 2) }}
-                                            </td>
-                                        </tr>
-                                    @endif
-                                    @if ($recibo->monto_prima_vacacional > 0)
-                                        <tr>
-                                            <td>Prima Vacacional</td>
-                                            <td class="text-right">
-                                                ${{ number_format($recibo->monto_prima_vacacional, 2) }}</td>
-                                        </tr>
-                                    @endif
                                     @if ($recibo->total_percepciones == 0)
                                         <tr>
                                             <td>Sin percepciones</td>

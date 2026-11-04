@@ -31,9 +31,6 @@ class NominaRecibo extends Model
         'diferencia_efectivo',
         'horas_extras',
         'bonos_otros',
-        'monto_aguinaldo',
-        'monto_vacaciones',
-        'monto_prima_vacacional',
         'total_percepciones',
         'descuento_adelanto',
         'descuento_infonavit',
@@ -57,9 +54,6 @@ class NominaRecibo extends Model
         'diferencia_efectivo' => 'decimal:2',
         'horas_extras' => 'decimal:2',
         'bonos_otros' => 'decimal:2',
-        'monto_aguinaldo' => 'decimal:2',
-        'monto_vacaciones' => 'decimal:2',
-        'monto_prima_vacacional' => 'decimal:2',
         'total_percepciones' => 'decimal:2',
         'descuento_adelanto' => 'decimal:2',
         'descuento_infonavit' => 'decimal:2',
@@ -94,10 +88,7 @@ class NominaRecibo extends Model
             $this->nomina_fiscal +
             $this->diferencia_efectivo +
             $this->horas_extras +
-            $this->bonos_otros +
-            $this->monto_aguinaldo +
-            $this->monto_vacaciones +
-            $this->monto_prima_vacacional
+            $this->bonos_otros
         );
 
         $this->total_deducciones = (float) (

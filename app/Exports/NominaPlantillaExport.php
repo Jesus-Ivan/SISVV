@@ -22,7 +22,7 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
     ) {
         if ($this->idPeriodo) {
             $this->periodo = NominaPeriodo::find($this->idPeriodo);
-            if ($this->periodo && in_array($this->periodo->tipo_periodo, ['AGUINALDO', 'FINIQUITO'])) {
+            if ($this->periodo && in_array(strtoupper(trim($this->periodo->tipo_periodo)), ['AGUINALDO', 'FINIQUITO'])) {
                 $this->esEspecial = true;
             }
         }
@@ -40,7 +40,7 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
                 'asignacionesPeriodos' => fn($q) => $q->where('id_periodo', $periodo->id),
             ]);
 
-            if ($periodo->tipo_periodo === 'FINIQUITO') {
+            if (strtoupper(trim($periodo->tipo_periodo)) === 'FINIQUITO') {
                 // En Finiquito solo auditar asignados o con recibo
                 $query->where(function ($q) use ($periodo) {
                     $q->whereHas('asignacionesPeriodos', fn($aq) => $aq->where('id_periodo', $periodo->id))
@@ -64,8 +64,8 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
                 $salarioBase = $ciclo ? (float) $ciclo->salario_base : (float) $emp->salario_base;
 
                 $asignacion = $emp->asignacionesPeriodos->first();
-                $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : 0.0;
-                $montoObjetivo = $montoAcordado > 0 ? $montoAcordado : $salarioBase;
+                $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : null;
+                $montoObjetivo = ($asignacion !== null) ? (float) $asignacion->monto_acordado : $salarioBase;
 
                 $recibosEmp = $recibosPeriodo->get($emp->id, collect([]));
                 $emitido = (float) $recibosEmp->sum('total_percepciones');
@@ -81,6 +81,7 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
                         'tipo_empleado'       => $emp->tipo_empleado,
                         'area'                => $emp->area ? $emp->area->nombre : '',
                         'puesto'              => $emp->puesto ? $emp->puesto->nombre : '',
+                        'saldo_deudor'        => (float) $emp->saldo_adelantos,
                         'nomina_fiscal'       => $fiscal,
                         'diferencia_efectivo' => $efectivo,
                         'horas_extras'        => 0,
@@ -88,10 +89,7 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
                     ];
 
                     if ($this->esEspecial) {
-                        $row['monto_acordado_total']   = $montoAcordado;
-                        $row['monto_aguinaldo']        = 0;
-                        $row['monto_vacaciones']       = 0;
-                        $row['monto_prima_vacacional'] = 0;
+                        $row['monto_acordado_total']   = $montoAcordado !== null ? $montoAcordado : 0.0;
                     }
 
                     $row['descuento_adelanto']  = 0;
@@ -114,7 +112,7 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
         ]);
 
         if ($periodo) {
-            if ($periodo->tipo_periodo === 'FINIQUITO') {
+            if (strtoupper(trim($periodo->tipo_periodo)) === 'FINIQUITO') {
                 // Si ya hay empleados asignados o con recibo, exportar solo esos. Si aún no hay nadie, exportar activos para permitir seleccionar.
                 $tieneAsignados = NominaEmpleado::where(function ($q) use ($periodo) {
                     $q->whereHas('asignacionesPeriodos', fn($aq) => $aq->where('id_periodo', $periodo->id))
@@ -153,8 +151,8 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
             }
 
             $asignacion = $emp->asignacionesPeriodos->first();
-            $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : 0.0;
-            $montoInicial = $montoAcordado > 0 ? $montoAcordado : $salarioBase;
+            $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : null;
+            $montoInicial = ($asignacion !== null) ? (float) $asignacion->monto_acordado : $salarioBase;
 
             $fiscal = $emp->tipo_pago_predeterminado === 'TRANSFERENCIA' ? $montoInicial : 0;
             $efectivo = $emp->tipo_pago_predeterminado !== 'TRANSFERENCIA' ? $montoInicial : 0;
@@ -165,6 +163,7 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
                 'tipo_empleado'       => $emp->tipo_empleado,
                 'area'                => $emp->area ? $emp->area->nombre : '',
                 'puesto'              => $emp->puesto ? $emp->puesto->nombre : '',
+                'saldo_deudor'        => (float) $emp->saldo_adelantos,
                 'nomina_fiscal'       => $fiscal,
                 'diferencia_efectivo' => $efectivo,
                 'horas_extras'        => 0,
@@ -172,10 +171,7 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
             ];
 
             if ($this->esEspecial) {
-                $row['monto_acordado_total']   = $montoAcordado;
-                $row['monto_aguinaldo']        = 0;
-                $row['monto_vacaciones']       = 0;
-                $row['monto_prima_vacacional'] = 0;
+                $row['monto_acordado_total']   = $montoAcordado !== null ? $montoAcordado : 0.0;
             }
 
             $row['descuento_adelanto']  = 0;
@@ -195,6 +191,7 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
             'TIPO_EMPLEADO',
             'AREA',
             'PUESTO',
+            'SALDO_DEUDOR',
             'NOMINA_FISCAL',
             'DIFERENCIA_EFECTIVO',
             'HORAS_EXTRAS',
@@ -203,9 +200,6 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
 
         if ($this->esEspecial) {
             $headers[] = 'MONTO_ACORDADO_TOTAL';
-            $headers[] = 'MONTO_AGUINALDO';
-            $headers[] = 'MONTO_VACACIONES';
-            $headers[] = 'MONTO_PRIMA_VACACIONAL';
         }
 
         $headers[] = 'DESCUENTO_ADELANTO';
@@ -218,27 +212,73 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
 
     public function styles(Worksheet $sheet)
     {
-        $baseStyle = [
-            1 => [
-                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
-                'fill' => [
-                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => ['argb' => $this->soloIncompletos ? 'FF991B1B' : 'FF1E3A8A'],
-                ],
-            ],
-        ];
+        $highestRow = $sheet->getHighestRow();
 
-        if ($this->esEspecial) {
-            // Columnas J1 a M1 corresponden a MONTO_ACORDADO_TOTAL, MONTO_AGUINALDO, MONTO_VACACIONES, MONTO_PRIMA_VACACIONAL
-            $sheet->getStyle('J1:M1')->applyFromArray([
-                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+        // 1. Estilo base para el encabezado completo (Fila 1)
+        $sheet->getStyle('1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['argb' => $this->soloIncompletos ? 'FF991B1B' : 'FF1E3A8A'],
+            ],
+        ]);
+
+        // 2. Encabezado distintivo para SALDO_DEUDOR (Columna F)
+        $sheet->getStyle('F1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FFBE185D'], // Rosa/Fucsia oscuro institucional
+            ],
+        ]);
+
+        // 3. Celdas de datos para SALDO_DEUDOR (Toda la columna F)
+        if ($highestRow >= 2) {
+            $sheet->getStyle("F2:F{$highestRow}")->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['argb' => 'FF9D174D']],
                 'fill' => [
                     'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => ['argb' => 'FFD97706'], // Color ámbar / dorado distintivo
+                    'startColor' => ['argb' => 'FFFDF2F8'], // Rosa suave muy sutil
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT,
+                ],
+                'numberFormat' => [
+                    'formatCode' => '"$"#,##0.00',
                 ],
             ]);
         }
 
-        return $baseStyle;
+        // 4. Columna especial para Aguinaldo y Finiquito (Columna K: MONTO_ACORDADO_TOTAL)
+        if ($this->esEspecial) {
+            // Encabezado en Dorado / Ámbar (K1)
+            $sheet->getStyle('K1')->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FFD97706'], // Color dorado / ámbar distintivo
+                ],
+            ]);
+
+            // Celdas de datos en la columna K con fondo dorado suave (K2:K_end)
+            if ($highestRow >= 2) {
+                $sheet->getStyle("K2:K{$highestRow}")->applyFromArray([
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FFFEF3C7'], // Dorado suave de fondo
+                    ],
+                    'font' => ['bold' => true, 'color' => ['argb' => 'FF92400E']],
+                    'alignment' => [
+                        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT,
+                    ],
+                    'numberFormat' => [
+                        'formatCode' => '"$"#,##0.00',
+                    ],
+                ]);
+            }
+        }
+
+        // Se retorna un array vacío para evitar que Maatwebsite Excel sobreescriba la fila 1 después de ejecutarse este método
+        return [];
     }
 }

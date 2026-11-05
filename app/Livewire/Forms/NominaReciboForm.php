@@ -52,6 +52,9 @@ class NominaReciboForm extends Form
     public float|int|string|null $descuento_infonavit = 0;
 
     #[Validate('nullable|numeric|min:0')]
+    public float|int|string|null $retardo_inasistencias = 0;
+
+    #[Validate('nullable|numeric|min:0')]
     public float|int|string|null $otros_descuentos = 0;
 
     #[Validate('required|in:EFECTIVO,TRANSFERENCIA,MIXTO')]
@@ -84,6 +87,7 @@ class NominaReciboForm extends Form
         $this->bonos_otros = (float) $recibo->bonos_otros;
         $this->descuento_adelanto = (float) $recibo->descuento_adelanto;
         $this->descuento_infonavit = (float) $recibo->descuento_infonavit;
+        $this->retardo_inasistencias = (float) $recibo->retardo_inasistencias;
         $this->otros_descuentos = (float) $recibo->otros_descuentos;
         $this->metodo_pago = $recibo->metodo_pago;
         $this->estado_pago = $recibo->estado_pago;
@@ -111,6 +115,7 @@ class NominaReciboForm extends Form
         return (float) (
             (float) ($this->descuento_adelanto ?? 0) +
             (float) ($this->descuento_infonavit ?? 0) +
+            (float) ($this->retardo_inasistencias ?? 0) +
             (float) ($this->otros_descuentos ?? 0)
         );
     }
@@ -204,6 +209,7 @@ class NominaReciboForm extends Form
                 'total_percepciones' => $totalPercepciones,
                 'descuento_adelanto' => $descuentoAdelanto,
                 'descuento_infonavit' => (float) ($this->descuento_infonavit ?? 0),
+                'retardo_inasistencias' => (float) ($this->retardo_inasistencias ?? 0),
                 'otros_descuentos' => (float) ($this->otros_descuentos ?? 0),
                 'total_deducciones' => $totalDeducciones,
                 'neto_pagar' => $neto,
@@ -284,6 +290,7 @@ class NominaReciboForm extends Form
                 'total_percepciones' => $totalPercepciones,
                 'descuento_adelanto' => $nuevoDescuento,
                 'descuento_infonavit' => (float) ($this->descuento_infonavit ?? 0),
+                'retardo_inasistencias' => (float) ($this->retardo_inasistencias ?? 0),
                 'otros_descuentos' => (float) ($this->otros_descuentos ?? 0),
                 'total_deducciones' => $totalDeducciones,
                 'neto_pagar' => $neto,

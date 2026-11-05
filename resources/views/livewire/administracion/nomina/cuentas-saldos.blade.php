@@ -605,7 +605,7 @@
                                 <label
                                     class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Tipo
                                     de Empleado</label>
-                                <select wire:model="exportTipoEmpleado"
+                                <select wire:model.live="exportTipoEmpleado"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     <option value="TODOS">Todos (Planta y Temporales)</option>
                                     <option value="PLANTA">De Planta</option>
@@ -617,7 +617,7 @@
                                 <label
                                     class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Tipo
                                     de Movimiento</label>
-                                <select wire:model="exportTipoMovimiento"
+                                <select wire:model.live="exportTipoMovimiento"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     <option value="TODOS">Todos los movimientos</option>
                                     <option value="ADELANTO_EFECTIVO">Adelanto en Efectivo</option>
@@ -634,7 +634,7 @@
                                 <label
                                     class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Fecha
                                     Desde (Opcional)</label>
-                                <input type="date" wire:model="exportFechaInicio"
+                                <input type="date" wire:model.live="exportFechaInicio"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
 
@@ -642,7 +642,7 @@
                                 <label
                                     class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Fecha
                                     Hasta (Opcional)</label>
-                                <input type="date" wire:model="exportFechaFin"
+                                <input type="date" wire:model.live="exportFechaFin"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
                         </div>
@@ -656,21 +656,20 @@
                             Cerrar
                         </button>
 
-                        <a href="{{ route('nomina.excel.cuentas', [
-                            'id_empleado' => $exportEmpleadoId,
-                            'tipo_empleado' => $exportTipoEmpleado !== 'TODOS' ? $exportTipoEmpleado : null,
-                            'tipo_movimiento' => $exportTipoMovimiento !== 'TODOS' ? $exportTipoMovimiento : null,
-                            'fecha_inicio' => $exportFechaInicio ?: null,
-                            'fecha_fin' => $exportFechaFin ?: null,
-                        ]) }}"
-                            target="_blank" @click="$wire.set('showReporteExcelModal', false)"
-                            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow-sm transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button type="button" wire:click="descargarReporteExcel"
+                            wire:loading.attr="disabled"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg wire:loading.remove wire:target="descargarReporteExcel" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                            Descargar Reporte Excel
-                        </a>
+                            <svg wire:loading wire:target="descargarReporteExcel" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span wire:loading.remove wire:target="descargarReporteExcel">Descargar Reporte Excel</span>
+                            <span wire:loading wire:target="descargarReporteExcel">Generando reporte...</span>
+                        </button>
                     </div>
                 </div>
             </div>

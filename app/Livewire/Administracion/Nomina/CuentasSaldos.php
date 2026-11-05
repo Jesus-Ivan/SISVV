@@ -38,7 +38,7 @@ class CuentasSaldos extends Component
 
     // Modal para Reporte a Excel de Cuentas y Movimientos
     public bool $showReporteExcelModal = false;
-    public ?int $exportEmpleadoId = null;
+    public int|string|null $exportEmpleadoId = null;
     public ?string $exportEmpleadoNombre = null;
     public string $exportEmpleadoSearch = '';
     public string $exportTipoEmpleado = 'TODOS';
@@ -228,6 +228,24 @@ class CuentasSaldos extends Component
         $this->exportEmpleadoId = null;
         $this->exportEmpleadoNombre = null;
         $this->exportEmpleadoSearch = '';
+    }
+
+    public function descargarReporteExcel()
+    {
+        $idEmpleado = !empty($this->exportEmpleadoId) ? (int) $this->exportEmpleadoId : null;
+        $tipo = ($this->exportTipoEmpleado !== 'TODOS' && !empty($this->exportTipoEmpleado)) ? $this->exportTipoEmpleado : null;
+        $tipoMovimiento = ($this->exportTipoMovimiento !== 'TODOS' && !empty($this->exportTipoMovimiento)) ? $this->exportTipoMovimiento : null;
+        $fechaInicio = !empty($this->exportFechaInicio) ? $this->exportFechaInicio : null;
+        $fechaFin = !empty($this->exportFechaFin) ? $this->exportFechaFin : null;
+
+        $this->showReporteExcelModal = false;
+
+        $fileName = 'Cuentas_Saldos_Empleados_' . date('Ymd_His') . '.xlsx';
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\NominaCuentasExport($idEmpleado, $tipo, $fechaInicio, $fechaFin, $tipoMovimiento),
+            $fileName
+        );
     }
 
     public function render()

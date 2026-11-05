@@ -122,19 +122,36 @@
             border: 1px solid #e5e7eb;
         }
 
-        .amount-highlight {
-            font-size: 13pt;
+        .monto-box {
+            border: 1.5px solid {{ $movimiento->tipo_movimiento === 'ADELANTO_EFECTIVO' ? '#fca5a5' : '#a7f3d0' }};
+            background-color: {{ $movimiento->tipo_movimiento === 'ADELANTO_EFECTIVO' ? '#fef2f2' : '#f0fdf4' }};
+            border-radius: 4pt;
+            padding: 5pt 8pt;
+            min-height: 38pt;
+        }
+
+        .monto-label {
+            font-size: 7.5pt;
+            font-weight: bold;
+            color: {{ $movimiento->tipo_movimiento === 'ADELANTO_EFECTIVO' ? '#991b1b' : '#065f46' }};
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .monto-val {
+            font-size: 14pt;
             font-weight: bold;
             font-family: 'Courier', monospace;
             color: {{ $movimiento->tipo_movimiento === 'ADELANTO_EFECTIVO' ? '#b91c1c' : '#047857' }};
+            margin-top: 2pt;
         }
 
-        .letras-box {
+        .letras-box-side {
             background-color: #eff6ff;
             border: 1px solid #bfdbfe;
             border-radius: 4pt;
-            padding: 6pt 8pt;
-            margin-bottom: 8pt;
+            padding: 5pt 8pt;
+            min-height: 38pt;
         }
 
         .letras-title {
@@ -145,10 +162,11 @@
         }
 
         .letras-amount {
-            font-size: 9pt;
+            font-size: 8.5pt;
             font-weight: bold;
             color: #1e3a8a;
-            margin-top: 1pt;
+            margin-top: 2pt;
+            line-height: 1.2;
         }
 
         .obs-box {
@@ -236,38 +254,31 @@
                 </tr>
             </table>
 
-            <!-- Desglose de Movimiento de Caja -->
-            <table class="breakdown-table">
-                <thead>
-                    <tr>
-                        <th style="width: 33%; text-align: left;">Saldo Deudor Anterior</th>
-                        <th style="width: 34%; text-align: center;">
-                            {{ $movimiento->tipo_movimiento === 'ADELANTO_EFECTIVO' ? 'Importe Entregado (+)' : 'Importe Abonado (-)' }}
-                        </th>
-                        <th style="width: 33%; text-align: right;">Saldo Deudor Resultante</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td style="text-align: left; font-family: 'Courier', monospace; font-size: 10pt;">
-                            ${{ number_format($movimiento->saldo_anterior, 2) }}
-                        </td>
-                        <td style="text-align: center;">
-                            <span class="amount-highlight">${{ number_format($movimiento->monto, 2) }}</span>
-                        </td>
-                        <td
-                            style="text-align: right; font-family: 'Courier', monospace; font-size: 10pt; font-weight: bold;">
-                            ${{ number_format($movimiento->saldo_nuevo, 2) }}
-                        </td>
-                    </tr>
-                </tbody>
+            <!-- Importe del Movimiento (Izquierda) e Importe en Letras (Derecha) -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 8pt;">
+                <tr>
+                    <td style="width: 44%; vertical-align: top; padding-right: 4pt;">
+                        <div class="monto-box">
+                            <div class="monto-label">
+                                @if ($movimiento->tipo_movimiento === 'ADELANTO_EFECTIVO')
+                                    Importe Entregado en Efectivo
+                                @elseif($movimiento->tipo_movimiento === 'ABONO_DIRECTO')
+                                    Importe Abonado en Efectivo
+                                @else
+                                    Importe del Movimiento
+                                @endif
+                            </div>
+                            <div class="monto-val">${{ number_format($movimiento->monto, 2) }}</div>
+                        </div>
+                    </td>
+                    <td style="width: 56%; vertical-align: top; padding-left: 4pt;">
+                        <div class="letras-box-side">
+                            <div class="letras-title">Importe en Letras:</div>
+                            <div class="letras-amount">{{ $totalLetras }}</div>
+                        </div>
+                    </td>
+                </tr>
             </table>
-
-            <!-- Importe en Letras -->
-            <div class="letras-box">
-                <div class="letras-title">Importe en Letras:</div>
-                <div class="letras-amount">{{ $totalLetras }}</div>
-            </div>
 
             <!-- Motivo / Referencia -->
             <div class="obs-box">

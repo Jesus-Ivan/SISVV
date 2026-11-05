@@ -11,6 +11,7 @@ use App\Models\NominaPeriodo;
 use App\Models\NominaPeriodoEmpleado;
 use App\Models\NominaRecibo;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -82,6 +83,7 @@ class Dispersion extends Component
     public string $searchAuditoria = '';
     public string $searchAsignarEmpleado = '';
     public float|string $montoAsignarEmpleado = '';
+    public array $ultimaExclusion = [];
 
     // Aviso empleado fuera del período de labores
     public bool $empleadoFueraDePeriodo = false;
@@ -99,9 +101,9 @@ class Dispersion extends Component
 
     // Modal Reporte Contable de Recibos
     public bool $showReporteModal = false;
-    public ?int $filtroReporteAnio = null;
-    public ?int $filtroReportePeriodoId = null;
-    public ?int $filtroReporteEmpleadoId = null;
+    public int|string|null $filtroReporteAnio = null;
+    public int|string|null $filtroReportePeriodoId = null;
+    public int|string|null $filtroReporteEmpleadoId = null;
     public ?string $filtroReporteEmpleadoNombre = null;
     public string $filtroReporteEmpleadoSearch = '';
     public string $filtroReporteMetodoPago = 'TODOS';
@@ -128,21 +130,29 @@ class Dispersion extends Component
 
     public function updatingReciboSearch(): void
     {
+        $this->selectedRecibos = [];
+        $this->selectAll = false;
         $this->resetPage();
     }
 
     public function updatingFiltroTipoRecibo(): void
     {
+        $this->selectedRecibos = [];
+        $this->selectAll = false;
         $this->resetPage();
     }
 
     public function updatingFiltroEstadoPago(): void
     {
+        $this->selectedRecibos = [];
+        $this->selectAll = false;
         $this->resetPage();
     }
 
     public function updatingFiltroMetodoPago(): void
     {
+        $this->selectedRecibos = [];
+        $this->selectAll = false;
         $this->resetPage();
     }
 
@@ -175,16 +185,60 @@ class Dispersion extends Component
         $this->updatedSelectedPeriodoId($id);
     }
 
+    public function getRecibosQuery()
+    {
+        $query = NominaRecibo::with(['empleado.area', 'empleado.puesto']);
+        if ($this->selectedPeriodoId) {
+            $query->where('id_periodo', $this->selectedPeriodoId);
+        } else {
+            $query->whereRaw('1 = 0');
+        }
+
+        if ($this->reciboSearch) {
+            $search = '%' . trim($this->reciboSearch) . '%';
+            $query->where(function ($q) use ($search) {
+                $q->where('nombre_empleado_snapshot', 'like', $search)
+                    ->orWhere('folio', 'like', $search)
+                    ->orWhere('id_empleado_snapshot', 'like', $search);
+            });
+        }
+
+        if ($this->filtroTipoRecibo !== 'TODOS') {
+            $query->where('tipo_recibo', $this->filtroTipoRecibo);
+        }
+
+        if ($this->filtroEstadoPago !== 'TODOS') {
+            $query->where('estado_pago', $this->filtroEstadoPago);
+        }
+
+        if ($this->filtroMetodoPago !== 'TODOS') {
+            $query->where('metodo_pago', $this->filtroMetodoPago);
+        }
+
+        return $query;
+    }
+
     public function updatedSelectAll($value): void
     {
         if ($value && $this->selectedPeriodoId) {
-            $this->selectedRecibos = NominaRecibo::where('id_periodo', $this->selectedPeriodoId)
+            $this->selectedRecibos = $this->getRecibosQuery()
                 ->pluck('id')
                 ->map(fn($id) => (string) $id)
                 ->toArray();
         } else {
             $this->selectedRecibos = [];
         }
+    }
+
+    public function updatedSelectedRecibos(): void
+    {
+        if (!$this->selectedPeriodoId) {
+            $this->selectAll = false;
+            return;
+        }
+
+        $totalFiltrados = $this->getRecibosQuery()->count();
+        $this->selectAll = $totalFiltrados > 0 && count($this->selectedRecibos) >= $totalFiltrados;
     }
 
     public function toggleExpand(int $reciboId): void
@@ -623,8 +677,39 @@ class Dispersion extends Component
         $this->showAuditoriaModal = true;
     }
 
+    public function updatingFiltroAuditoria(): void
+    {
+        $this->selectedEmpleadosAuditoria = [];
+        $this->selectAllAuditoria = false;
+    }
+
+    public function updatingSearchAuditoria(): void
+    {
+        $this->selectedEmpleadosAuditoria = [];
+        $this->selectAllAuditoria = false;
+    }
+
+    public function updatedSelectedEmpleadosAuditoria(): void
+    {
+        if ($this->filtroAuditoria === 'COMPLETO') {
+            $this->selectedEmpleadosAuditoria = [];
+            $this->selectAllAuditoria = false;
+            return;
+        }
+
+        $empleados = $this->obtenerEmpleadosAuditoria();
+        $total = count($empleados);
+        $this->selectAllAuditoria = $total > 0 && count($this->selectedEmpleadosAuditoria) >= $total;
+    }
+
     public function updatedSelectAllAuditoria($value): void
     {
+        if ($this->filtroAuditoria === 'COMPLETO') {
+            $this->selectedEmpleadosAuditoria = [];
+            $this->selectAllAuditoria = false;
+            return;
+        }
+
         if ($value && $this->selectedPeriodoId) {
             $empleados = $this->obtenerEmpleadosAuditoria();
             $this->selectedEmpleadosAuditoria = array_map(fn($item) => (string) $item['id_empleado'], $empleados);
@@ -860,9 +945,103 @@ class Dispersion extends Component
         return $total;
     }
 
+    public function excluirEmpleadosSeleccionados(): void
+    {
+        if ($this->filtroAuditoria === 'COMPLETO' || !$this->selectedPeriodoId || empty($this->selectedEmpleadosAuditoria)) {
+            $this->dispatch('toast', message: 'Selecciona al menos un empleado para excluir.', type: 'warning');
+            return;
+        }
+
+        $periodo = NominaPeriodo::find($this->selectedPeriodoId);
+        if (!$periodo) {
+            return;
+        }
+
+        $ids = array_map('intval', $this->selectedEmpleadosAuditoria);
+        $snapshot = [];
+        $recibosPeriodo = NominaRecibo::where('id_periodo', $this->selectedPeriodoId)
+            ->whereIn('id_empleado', $ids)
+            ->get()
+            ->groupBy('id_empleado');
+
+        $asignaciones = NominaPeriodoEmpleado::where('id_periodo', $this->selectedPeriodoId)
+            ->whereIn('id_empleado', $ids)
+            ->get()
+            ->keyBy('id_empleado');
+
+        foreach ($ids as $idEmp) {
+            $asignacion = $asignaciones->get($idEmp);
+            $recibosEmp = $recibosPeriodo->get($idEmp, collect([]));
+            $emitido = (float) $recibosEmp->sum('total_percepciones');
+
+            $snapshot[] = [
+                'id_empleado'     => $idEmp,
+                'estaba_asignado' => $asignacion !== null,
+                'monto_anterior'  => $asignacion ? (float) $asignacion->monto_acordado : null,
+            ];
+
+            // Si ya tiene dinero emitido, fijar la meta en lo emitido para que el faltante sea 0 y se conserve el presupuesto real.
+            // Si no tiene recibos, fijar en 0.00 (excluido totalmente).
+            $nuevoObjetivo = $emitido > 0 ? $emitido : 0.00;
+
+            NominaPeriodoEmpleado::updateOrCreate(
+                ['id_periodo' => $this->selectedPeriodoId, 'id_empleado' => $idEmp],
+                ['monto_acordado' => $nuevoObjetivo]
+            );
+        }
+
+        $this->ultimaExclusion = [
+            'id_periodo' => $this->selectedPeriodoId,
+            'empleados'  => $snapshot,
+        ];
+
+        $count = count($ids);
+        $this->selectedEmpleadosAuditoria = [];
+        $this->selectAllAuditoria = false;
+
+        $this->dispatch('toast', [
+            'message'     => "Se excluyeron {$count} empleado(s) del período.",
+            'type'        => 'warning',
+            'actionEvent' => 'deshacer-exclusion',
+            'actionText'  => 'Deshacer',
+        ]);
+    }
+
+    #[On('deshacer-exclusion')]
+    public function deshacerExclusion(): void
+    {
+        if (empty($this->ultimaExclusion) || empty($this->ultimaExclusion['empleados'])) {
+            return;
+        }
+
+        $idPeriodo = $this->ultimaExclusion['id_periodo'];
+        $count = count($this->ultimaExclusion['empleados']);
+
+        foreach ($this->ultimaExclusion['empleados'] as $item) {
+            $idEmp = $item['id_empleado'];
+            if ($item['estaba_asignado']) {
+                NominaPeriodoEmpleado::updateOrCreate(
+                    ['id_periodo' => $idPeriodo, 'id_empleado' => $idEmp],
+                    ['monto_acordado' => $item['monto_anterior']]
+                );
+            } else {
+                NominaPeriodoEmpleado::where('id_periodo', $idPeriodo)
+                    ->where('id_empleado', $idEmp)
+                    ->delete();
+            }
+        }
+
+        $this->ultimaExclusion = [];
+
+        $this->dispatch('toast', [
+            'message' => "Exclusión revertida. Se restauraron {$count} empleado(s).",
+            'type'    => 'success',
+        ]);
+    }
+
     public function iniciarSecuenciaComplementaria(): void
     {
-        if (empty($this->selectedEmpleadosAuditoria)) {
+        if ($this->filtroAuditoria === 'COMPLETO' || empty($this->selectedEmpleadosAuditoria)) {
             $this->dispatch('toast', message: 'Selecciona al menos un empleado para iniciar la secuencia.', type: 'warning');
             return;
         }
@@ -1026,34 +1205,12 @@ class Dispersion extends Component
             return;
         }
 
-        $query = NominaRecibo::where('id_periodo', $this->selectedPeriodoId)
-            ->where('estado_pago', '!=', 'PAGADO');
-
-        if ($this->reciboSearch) {
-            $search = '%' . trim($this->reciboSearch) . '%';
-            $query->where(function ($q) use ($search) {
-                $q->where('nombre_empleado_snapshot', 'like', $search)
-                    ->orWhere('folio', 'like', $search)
-                    ->orWhere('id_empleado_snapshot', 'like', $search);
-            });
-        }
-
-        if ($this->filtroTipoRecibo !== 'TODOS') {
-            $query->where('tipo_recibo', $this->filtroTipoRecibo);
-        }
-
-        if ($this->filtroEstadoPago !== 'TODOS') {
-            $query->where('estado_pago', $this->filtroEstadoPago);
-        }
-
-        if ($this->filtroMetodoPago !== 'TODOS') {
-            $query->where('metodo_pago', $this->filtroMetodoPago);
-        }
-
-        $afectados = $query->update([
-            'estado_pago' => 'PAGADO',
-            'fecha_pago_real' => now()->toDateString(),
-        ]);
+        $afectados = $this->getRecibosQuery()
+            ->where('estado_pago', '!=', 'PAGADO')
+            ->update([
+                'estado_pago' => 'PAGADO',
+                'fecha_pago_real' => now()->toDateString(),
+            ]);
 
         if ($afectados > 0) {
             $this->recalcularTotalesPeriodo();
@@ -1189,6 +1346,29 @@ class Dispersion extends Component
         $this->filtroReporteEmpleadoSearch = '';
     }
 
+    public function updatedFiltroReporteAnio(): void
+    {
+        $this->filtroReportePeriodoId = null;
+    }
+
+    public function descargarReporteRecibos()
+    {
+        $anio = !empty($this->filtroReporteAnio) ? (int) $this->filtroReporteAnio : null;
+        $idPeriodo = !empty($this->filtroReportePeriodoId) ? (int) $this->filtroReportePeriodoId : null;
+        $idEmpleado = !empty($this->filtroReporteEmpleadoId) ? (int) $this->filtroReporteEmpleadoId : null;
+        $metodoPago = $this->filtroReporteMetodoPago ?: 'TODOS';
+        $estadoPago = $this->filtroReporteEstadoPago ?: 'TODOS';
+
+        $this->showReporteModal = false;
+
+        $fileName = 'Reporte_Recibos_Nomina_' . date('Ymd_His') . '.xlsx';
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\NominaReporteRecibosExport($anio, $idPeriodo, $idEmpleado, $metodoPago, $estadoPago),
+            $fileName
+        );
+    }
+
     public function render()
     {
         // Años disponibles en la base de datos
@@ -1293,36 +1473,7 @@ class Dispersion extends Component
         $empleadosAuditoria = $this->showAuditoriaModal ? $this->obtenerEmpleadosAuditoria() : [];
 
         // Recibos
-        $recibosQuery = NominaRecibo::with(['empleado.area', 'empleado.puesto']);
-        if ($this->selectedPeriodoId) {
-            $recibosQuery->where('id_periodo', $this->selectedPeriodoId);
-        } else {
-            // Si no hay período seleccionado, no consultar recibos
-            $recibosQuery->whereRaw('1 = 0');
-        }
-
-        if ($this->reciboSearch) {
-            $search = '%' . trim($this->reciboSearch) . '%';
-            $recibosQuery->where(function ($q) use ($search) {
-                $q->where('nombre_empleado_snapshot', 'like', $search)
-                    ->orWhere('folio', 'like', $search)
-                    ->orWhere('id_empleado_snapshot', 'like', $search);
-            });
-        }
-
-        if ($this->filtroTipoRecibo !== 'TODOS') {
-            $recibosQuery->where('tipo_recibo', $this->filtroTipoRecibo);
-        }
-
-        if ($this->filtroEstadoPago !== 'TODOS') {
-            $recibosQuery->where('estado_pago', $this->filtroEstadoPago);
-        }
-
-        if ($this->filtroMetodoPago !== 'TODOS') {
-            $recibosQuery->where('metodo_pago', $this->filtroMetodoPago);
-        }
-
-        $recibos = $recibosQuery->orderBy('id_empleado_snapshot', 'asc')->paginate(15);
+        $recibos = $this->getRecibosQuery()->orderBy('id_empleado_snapshot', 'asc')->paginate(15);
 
         // Búsqueda de empleados para el autocompletado en el modal (activos primero, pero permitiendo inactivos para finiquitos/extemporáneos)
         $empleadosBusqueda = trim($this->empleadoSearch) !== ''

@@ -141,12 +141,12 @@
     <!-- Contenedor Flotante de Notificaciones / Alerts (Esquina inferior izquierda) -->
     <div x-data="{
             toasts: [],
-            add(message, type = 'success', actionUrl = null, actionText = null) {
+            add(message, type = 'success', actionUrl = null, actionText = null, actionEvent = null, actionPayload = null) {
                 const id = 'toast_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-                this.toasts.push({ id, message, type, actionUrl, actionText });
+                this.toasts.push({ id, message, type, actionUrl, actionText, actionEvent, actionPayload });
                 setTimeout(() => {
                     this.remove(id);
-                }, actionUrl ? 8000 : 5000);
+                }, (actionUrl || actionEvent) ? 8000 : 5000);
             },
             remove(id) {
                 this.toasts = this.toasts.filter(t => t.id !== id);
@@ -157,9 +157,9 @@
             if (typeof data === 'string') {
                 add(data, 'success');
             } else if (Array.isArray(data) && data[0]) {
-                add(data[0].message || data[0], data[0].type || 'success', data[0].actionUrl || null, data[0].actionText || null);
+                add(data[0].message || data[0], data[0].type || 'success', data[0].actionUrl || null, data[0].actionText || null, data[0].actionEvent || null, data[0].actionPayload || null);
             } else if (data && typeof data === 'object') {
-                add(data.message || '', data.type || 'success', data.actionUrl || null, data.actionText || null);
+                add(data.message || '', data.type || 'success', data.actionUrl || null, data.actionText || null, data.actionEvent || null, data.actionPayload || null);
             }
         "
         x-on:abrir-pdf.window="
@@ -192,7 +192,7 @@
                             'bg-blue-500': t.type === 'info',
                             'bg-amber-500': t.type === 'warning'
                          }"
-                         :style="'animation: toastProgressBar ' + (t.actionUrl ? '8s' : '5s') + ' linear forwards;'"></div>
+                         :style="'animation: toastProgressBar ' + ((t.actionUrl || t.actionEvent) ? '8s' : '5s') + ' linear forwards;'"></div>
                 </div>
 
                 <div class="p-3.5 flex items-start gap-3">
@@ -241,6 +241,19 @@
                                     </svg>
                                     <span x-text="t.actionText || 'Ver Comprobante PDF'"></span>
                                 </a>
+                            </div>
+                        </template>
+
+                        <!-- Botón de acción para eventos Livewire (Deshacer, etc.) -->
+                        <template x-if="t.actionEvent">
+                            <div class="mt-2.5">
+                                <button type="button" @click="$dispatch(t.actionEvent, t.actionPayload || {}); remove(t.id)"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg shadow-sm transition transform hover:scale-105 cursor-pointer">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a5 5 0 015 5v2m0 0l-4-4m4 4l4-4"/>
+                                    </svg>
+                                    <span x-text="t.actionText || 'Deshacer'"></span>
+                                </button>
                             </div>
                         </template>
                     </div>

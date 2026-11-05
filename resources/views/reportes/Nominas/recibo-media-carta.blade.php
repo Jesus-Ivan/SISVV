@@ -331,6 +331,13 @@
                                                 ${{ number_format($recibo->descuento_infonavit, 2) }}</td>
                                         </tr>
                                     @endif
+                                    @if (($recibo->retardo_inasistencias ?? 0) > 0)
+                                        <tr>
+                                            <td>Retardo / Inasistencias</td>
+                                            <td class="text-right">
+                                                ${{ number_format($recibo->retardo_inasistencias, 2) }}</td>
+                                        </tr>
+                                    @endif
                                     @if ($recibo->otros_descuentos > 0)
                                         <tr>
                                             <td>Otros Descuentos / Ajustes</td>

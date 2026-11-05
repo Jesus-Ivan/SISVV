@@ -56,16 +56,17 @@ class NominaReporteRecibosExport implements FromCollection, WithHeadings, Should
 
         $rows = collect([]);
         $totales = [
-            'nomina_fiscal'       => 0.0,
-            'diferencia_efectivo' => 0.0,
-            'horas_extras'        => 0.0,
-            'bonos_otros'         => 0.0,
-            'total_percepciones'  => 0.0,
-            'descuento_adelanto'  => 0.0,
-            'descuento_infonavit' => 0.0,
-            'otros_descuentos'    => 0.0,
-            'total_deducciones'   => 0.0,
-            'neto_pagar'          => 0.0,
+            'nomina_fiscal'         => 0.0,
+            'diferencia_efectivo'   => 0.0,
+            'horas_extras'          => 0.0,
+            'bonos_otros'           => 0.0,
+            'total_percepciones'    => 0.0,
+            'descuento_adelanto'    => 0.0,
+            'descuento_infonavit'   => 0.0,
+            'retardo_inasistencias' => 0.0,
+            'otros_descuentos'      => 0.0,
+            'total_deducciones'     => 0.0,
+            'neto_pagar'            => 0.0,
         ];
 
         foreach ($recibos as $r) {
@@ -76,20 +77,22 @@ class NominaReporteRecibosExport implements FromCollection, WithHeadings, Should
             $percepciones = (float) $r->total_percepciones;
             $adelanto = (float) $r->descuento_adelanto;
             $infonavit = (float) $r->descuento_infonavit;
+            $retardo = (float) ($r->retardo_inasistencias ?? 0);
             $otrosDesc = (float) $r->otros_descuentos;
             $deducciones = (float) $r->total_deducciones;
             $neto = (float) $r->neto_pagar;
 
-            $totales['nomina_fiscal']       += $fiscal;
-            $totales['diferencia_efectivo'] += $efectivo;
-            $totales['horas_extras']        += $he;
-            $totales['bonos_otros']         += $bonos;
-            $totales['total_percepciones']  += $percepciones;
-            $totales['descuento_adelanto']  += $adelanto;
-            $totales['descuento_infonavit'] += $infonavit;
-            $totales['otros_descuentos']    += $otrosDesc;
-            $totales['total_deducciones']   += $deducciones;
-            $totales['neto_pagar']          += $neto;
+            $totales['nomina_fiscal']         += $fiscal;
+            $totales['diferencia_efectivo']   += $efectivo;
+            $totales['horas_extras']          += $he;
+            $totales['bonos_otros']           += $bonos;
+            $totales['total_percepciones']    += $percepciones;
+            $totales['descuento_adelanto']    += $adelanto;
+            $totales['descuento_infonavit']   += $infonavit;
+            $totales['retardo_inasistencias'] += $retardo;
+            $totales['otros_descuentos']      += $otrosDesc;
+            $totales['total_deducciones']     += $deducciones;
+            $totales['neto_pagar']            += $neto;
 
             $periodoFechas = $r->periodo 
                 ? "{$r->periodo->fecha_inicio?->format('d/m/Y')} - {$r->periodo->fecha_fin?->format('d/m/Y')}"
@@ -98,59 +101,61 @@ class NominaReporteRecibosExport implements FromCollection, WithHeadings, Should
             $nombrePeriodo = $r->periodo?->nombre ?: ($r->periodo?->folio ?? 'N/A');
 
             $rows->push([
-                'folio'               => $r->folio,
-                'periodo'             => $periodoFechas,
-                'nombre_periodo'      => $nombrePeriodo,
-                'id_empleado'         => $r->id_empleado_snapshot ?: $r->id_empleado,
-                'nombre_completo'     => $r->nombre_empleado_snapshot,
-                'area'                => $r->area_snapshot ?: ($r->empleado?->area?->nombre ?? ''),
-                'puesto'              => $r->puesto_snapshot ?: ($r->empleado?->puesto?->nombre ?? ''),
-                'tipo_empleado'       => $r->tipo_empleado_snapshot ?: ($r->empleado?->tipo_empleado ?? ''),
-                'tipo_recibo'         => $r->tipo_recibo,
-                'metodo_pago'         => $r->metodo_pago,
-                'estado_pago'         => $r->estado_pago,
-                'fecha_pago'          => $r->fecha_pago ? $r->fecha_pago->format('d/m/Y') : '',
-                'fecha_pago_real'     => $r->fecha_pago_real ? $r->fecha_pago_real->format('d/m/Y') : '',
-                'nomina_fiscal'       => $fiscal,
-                'diferencia_efectivo' => $efectivo,
-                'horas_extras'        => $he,
-                'bonos_otros'         => $bonos,
-                'total_percepciones'  => $percepciones,
-                'descuento_adelanto'  => $adelanto,
-                'descuento_infonavit' => $infonavit,
-                'otros_descuentos'    => $otrosDesc,
-                'total_deducciones'   => $deducciones,
-                'neto_pagar'          => $neto,
-                'observaciones'       => $r->observaciones ?: '',
+                'folio'                 => $r->folio,
+                'periodo'               => $periodoFechas,
+                'nombre_periodo'        => $nombrePeriodo,
+                'id_empleado'           => $r->id_empleado_snapshot ?: $r->id_empleado,
+                'nombre_completo'       => $r->nombre_empleado_snapshot,
+                'area'                  => $r->area_snapshot ?: ($r->empleado?->area?->nombre ?? ''),
+                'puesto'                => $r->puesto_snapshot ?: ($r->empleado?->puesto?->nombre ?? ''),
+                'tipo_empleado'         => $r->tipo_empleado_snapshot ?: ($r->empleado?->tipo_empleado ?? ''),
+                'tipo_recibo'           => $r->tipo_recibo,
+                'metodo_pago'           => $r->metodo_pago,
+                'estado_pago'           => $r->estado_pago,
+                'fecha_pago'            => $r->fecha_pago ? $r->fecha_pago->format('d/m/Y') : '',
+                'fecha_pago_real'       => $r->fecha_pago_real ? $r->fecha_pago_real->format('d/m/Y') : '',
+                'nomina_fiscal'         => $fiscal,
+                'diferencia_efectivo'   => $efectivo,
+                'horas_extras'          => $he,
+                'bonos_otros'           => $bonos,
+                'total_percepciones'    => $percepciones,
+                'descuento_adelanto'    => $adelanto,
+                'descuento_infonavit'   => $infonavit,
+                'retardo_inasistencias' => $retardo,
+                'otros_descuentos'      => $otrosDesc,
+                'total_deducciones'     => $deducciones,
+                'neto_pagar'            => $neto,
+                'observaciones'         => $r->observaciones ?: '',
             ]);
         }
 
         if ($rows->isNotEmpty()) {
             $rows->push([
-                'folio'               => 'TOTALES (' . $recibos->count() . ' RECIBOS)',
-                'periodo'             => '',
-                'nombre_periodo'      => '',
-                'id_empleado'         => '',
-                'nombre_completo'     => '',
-                'area'                => '',
-                'puesto'              => '',
-                'tipo_empleado'       => '',
-                'tipo_recibo'         => '',
-                'metodo_pago'         => '',
-                'estado_pago'         => '',
-                'fecha_pago'          => '',
-                'fecha_pago_real'     => '',
-                'nomina_fiscal'       => $totales['nomina_fiscal'],
-                'diferencia_efectivo' => $totales['diferencia_efectivo'],
-                'horas_extras'        => $totales['horas_extras'],
-                'bonos_otros'         => $totales['bonos_otros'],
-                'total_percepciones'  => $totales['total_percepciones'],
-                'descuento_adelanto'  => $totales['descuento_adelanto'],
-                'descuento_infonavit' => $totales['descuento_infonavit'],
-                'otros_descuentos'    => $totales['otros_descuentos'],
-                'total_deducciones'   => $totales['total_deducciones'],
-                'neto_pagar'          => $totales['neto_pagar'],
-                'observaciones'       => '',
+                'folio'                 => 'TOTALES (' . $recibos->count() . ' RECIBOS)',
+                'periodo'               => '',
+                'nombre_periodo'        => '',
+                'id_empleado'           => '',
+                'nombre_completo'       => '',
+                'area'                  => '',
+                'puesto'                => '',
+                'tipo_empleado'         => '',
+                'tipo_recibo'           => '',
+                'metodo_pago'           => '',
+                'estado_pago'           => '',
+                'fecha_pago'            => '',
+                'fecha_pago_real'       => '',
+                'nomina_fiscal'         => $totales['nomina_fiscal'],
+                'diferencia_efectivo'   => $totales['diferencia_efectivo'],
+                'horas_extras'          => $totales['horas_extras'],
+                'bonos_otros'           => $totales['bonos_otros'],
+                'total_percepciones'    => $totales['total_percepciones'],
+                'descuento_adelanto'    => $totales['descuento_adelanto'],
+                'descuento_infonavit'   => $totales['descuento_infonavit'],
+                'retardo_inasistencias' => $totales['retardo_inasistencias'],
+                'otros_descuentos'      => $totales['otros_descuentos'],
+                'total_deducciones'     => $totales['total_deducciones'],
+                'neto_pagar'            => $totales['neto_pagar'],
+                'observaciones'         => '',
             ]);
         }
 
@@ -182,6 +187,7 @@ class NominaReporteRecibosExport implements FromCollection, WithHeadings, Should
             'TOTAL PERCEPCIONES',
             'AMORT. ADELANTO',
             'DESC. INFONAVIT',
+            'RETARDO / INASISTENCIAS',
             'OTROS DESCUENTOS',
             'TOTAL DEDUCCIONES',
             'NETO A PAGAR',
@@ -202,6 +208,7 @@ class NominaReporteRecibosExport implements FromCollection, WithHeadings, Should
             'U' => '"$"#,##0.00',
             'V' => '"$"#,##0.00',
             'W' => '"$"#,##0.00',
+            'X' => '"$"#,##0.00',
         ];
     }
 

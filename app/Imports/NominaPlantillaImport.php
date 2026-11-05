@@ -52,6 +52,7 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                     $row['bonos_otros'] ?? $row['otros_bonos'] ?? null,
                     $row['descuento_adelanto'] ?? $row['descuento_adelantos'] ?? null,
                     $row['descuento_infonavit'] ?? $row['infonavit'] ?? null,
+                    $row['retardo_inasistencias'] ?? $row['retardo_o_inasistencias'] ?? $row['retardos_inasistencias'] ?? null,
                     $row['otros_descuentos'] ?? null,
                     $row['monto_acordado_total'] ?? $row['monto_acordado'] ?? null,
                 ];
@@ -89,6 +90,7 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
 
                 $descuentoAdelanto = (float) ($row['descuento_adelanto'] ?? $row['descuento_adelantos'] ?? 0);
                 $descuentoInfonavit = (float) ($row['descuento_infonavit'] ?? $row['infonavit'] ?? 0);
+                $retardoInasistencias = (float) ($row['retardo_inasistencias'] ?? $row['retardo_o_inasistencias'] ?? $row['retardos_inasistencias'] ?? 0);
                 $otrosDescuentos = (float) ($row['otros_descuentos'] ?? 0);
                 $observaciones = $row['observaciones'] ?? null;
 
@@ -118,7 +120,7 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                 }
 
                 $totalPercepciones = $nominaFiscal + $diferenciaEfectivo + $horasExtras + $bonosOtros;
-                $totalDeducciones = $descuentoAdelanto + $descuentoInfonavit + $otrosDescuentos;
+                $totalDeducciones = $descuentoAdelanto + $descuentoInfonavit + $retardoInasistencias + $otrosDescuentos;
                 $netoPagar = max(0, $totalPercepciones - $totalDeducciones);
 
                 $tipoRecibo = 'NOMINA';
@@ -138,6 +140,7 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                         'total_percepciones' => $totalPercepciones,
                         'descuento_adelanto' => $descuentoAdelanto,
                         'descuento_infonavit' => $descuentoInfonavit,
+                        'retardo_inasistencias' => $retardoInasistencias,
                         'otros_descuentos' => $otrosDescuentos,
                         'total_deducciones' => $totalDeducciones,
                         'neto_pagar' => $netoPagar,
@@ -168,6 +171,7 @@ class NominaPlantillaImport implements ToCollection, WithHeadingRow
                         'total_percepciones' => $totalPercepciones,
                         'descuento_adelanto' => $descuentoAdelanto,
                         'descuento_infonavit' => $descuentoInfonavit,
+                        'retardo_inasistencias' => $retardoInasistencias,
                         'otros_descuentos' => $otrosDescuentos,
                         'total_deducciones' => $totalDeducciones,
                         'neto_pagar' => $netoPagar,

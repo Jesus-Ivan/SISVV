@@ -34,6 +34,7 @@ class NominaRecibo extends Model
         'total_percepciones',
         'descuento_adelanto',
         'descuento_infonavit',
+        'retardo_inasistencias',
         'otros_descuentos',
         'total_deducciones',
         'neto_pagar',
@@ -57,6 +58,7 @@ class NominaRecibo extends Model
         'total_percepciones' => 'decimal:2',
         'descuento_adelanto' => 'decimal:2',
         'descuento_infonavit' => 'decimal:2',
+        'retardo_inasistencias' => 'decimal:2',
         'otros_descuentos' => 'decimal:2',
         'total_deducciones' => 'decimal:2',
         'neto_pagar' => 'decimal:2',
@@ -94,6 +96,7 @@ class NominaRecibo extends Model
         $this->total_deducciones = (float) (
             $this->descuento_adelanto +
             $this->descuento_infonavit +
+            $this->retardo_inasistencias +
             $this->otros_descuentos
         );
 

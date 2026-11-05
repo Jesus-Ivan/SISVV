@@ -568,6 +568,9 @@
                                             <span class="font-bold text-red-600 dark:text-red-400 uppercase block mb-1">Deducciones Detalladas</span>
                                             <div class="flex justify-between"><span>Amortización Adelanto:</span> <strong class="text-amber-600">-${{ number_format($recibo->descuento_adelanto, 2) }}</strong></div>
                                             <div class="flex justify-between"><span>Retención Infonavit:</span> <strong>-${{ number_format($recibo->descuento_infonavit, 2) }}</strong></div>
+                                            @if (($recibo->retardo_inasistencias ?? 0) > 0)
+                                                <div class="flex justify-between"><span>Retardo / Inasistencias:</span> <strong class="text-rose-600">-${{ number_format($recibo->retardo_inasistencias, 2) }}</strong></div>
+                                            @endif
                                             <div class="flex justify-between"><span>Otras Deducciones:</span> <strong>-${{ number_format($recibo->otros_descuentos, 2) }}</strong></div>
                                             <div class="flex justify-between pt-1 border-t font-bold text-red-600"><span>Total:</span> <span>-${{ number_format($recibo->total_deducciones, 2) }}</span></div>
                                         </div>
@@ -1142,18 +1145,18 @@
                             </div>
                         @endif
 
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Amortización Adelanto Efectivo</label>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Amortización Adelanto</label>
                                 <input type="number" step="0.01" wire:model.live.debounce.350ms="form.descuento_adelanto"
                                     class="border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:border-gray-600 dark:text-white {{ $this->deudaDisponible <= 0 ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-700' }}"
                                     placeholder="0.00"
                                     {{ $this->deudaDisponible <= 0 ? 'disabled' : '' }}>
                                 @if ($this->deudaDisponible <= 0)
-                                    <span class="text-[10px] text-gray-400 block mt-0.5">Sin saldo deudor por amortizar ($0.00)</span>
+                                    <span class="text-[10px] text-gray-400 block mt-0.5">Sin saldo deudor ($0.00)</span>
                                 @else
                                     <span class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold block mt-0.5">
-                                        Máximo amortizable: ${{ number_format($this->deudaDisponible, 2) }}
+                                        Máx: ${{ number_format($this->deudaDisponible, 2) }}
                                     </span>
                                 @endif
                                 @error('form.descuento_adelanto')
@@ -1163,6 +1166,12 @@
                             <div>
                                 <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Infonavit</label>
                                 <input type="number" step="0.01" wire:model.live.debounce.350ms="form.descuento_infonavit"
+                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Retardo / Inasistencias</label>
+                                <input type="number" step="0.01" wire:model.live.debounce.350ms="form.retardo_inasistencias"
+                                    placeholder="0.00"
                                     class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg p-2 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
                             <div>
@@ -1270,7 +1279,7 @@
 
     <!-- MODAL AUDITORÍA Y SALDOS PENDIENTES -->
     @if ($showAuditoriaModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto m-0" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 z-50 overflow-y-auto m-0" role="dialog" aria-modal="true" @keydown.escape.window="$wire.set('showAuditoriaModal', false)">
             <!-- Backdrop fijo (cubre el 100% de la pantalla) -->
             <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity m-0"
                  wire:click="$set('showAuditoriaModal', false)"
@@ -1300,37 +1309,6 @@
                     <button wire:click="$set('showAuditoriaModal', false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-bold p-1 leading-none">
                         &times;
                     </button>
-                </div>
-
-                <!-- Resumen de Métricas de la Auditoría -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 py-2.5 px-6 bg-gradient-to-r from-gray-50 to-blue-50/30 dark:from-gray-750 dark:to-gray-800 border-b border-gray-200 dark:border-gray-700">
-                    <div class="bg-white dark:bg-gray-700 py-2 px-3 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm">
-                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Presupuesto Estimado</span>
-                        <div class="text-sm font-black text-gray-900 dark:text-white mt-0.5">
-                            ${{ number_format($totalPresupuestoPeriodo, 2) }}
-                        </div>
-                    </div>
-
-                    <div class="bg-white dark:bg-gray-700 py-2 px-3 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm">
-                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Total Dispersado</span>
-                        <div class="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
-                            ${{ number_format($totalEmitidoPeriodo, 2) }}
-                        </div>
-                    </div>
-
-                    <div class="bg-white dark:bg-gray-700 py-2 px-3 rounded-xl border border-amber-300 dark:border-amber-800/80 shadow-sm bg-amber-50/40 dark:bg-amber-950/20">
-                        <span class="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Faltante por Pagar</span>
-                        <div class="text-sm font-black text-amber-600 dark:text-amber-300 mt-0.5">
-                            ${{ number_format($totalPendientePeriodo, 2) }}
-                        </div>
-                    </div>
-
-                    <div class="bg-white dark:bg-gray-700 py-2 px-3 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm">
-                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Empleados Incompletos</span>
-                        <div class="text-sm font-black text-blue-600 dark:text-blue-400 mt-0.5">
-                            {{ $conteoIncompletosPeriodo }} empleados
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Filtros y Búsqueda dentro del Modal -->
@@ -1412,8 +1390,12 @@
                         <thead class="bg-gray-100 dark:bg-gray-750 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 sticky top-0 z-10">
                             <tr>
                                 <th class="p-3 w-10 text-center">
-                                    <input type="checkbox" wire:model.live="selectAllAuditoria"
-                                        class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                    @if ($filtroAuditoria !== 'COMPLETO')
+                                        <input type="checkbox" wire:model.live="selectAllAuditoria"
+                                            class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                    @else
+                                        <span class="text-[10px] text-gray-400 font-bold uppercase">#</span>
+                                    @endif
                                 </th>
                                 <th class="p-3">Empleado</th>
                                 <th class="p-3 text-right">Monto Acordado / Objetivo</th>
@@ -1429,8 +1411,12 @@
                             @forelse ($empleadosAuditoria as $item)
                                 <tr wire:key="auditoria-row-{{ $item['id_empleado'] }}" class="hover:bg-blue-50/40 dark:hover:bg-gray-700/50 transition {{ in_array((string) $item['id_empleado'], $selectedEmpleadosAuditoria) ? 'bg-blue-50/60 dark:bg-blue-950/20' : '' }}">
                                     <td class="p-3 text-center">
-                                        <input type="checkbox" wire:key="auditoria-check-{{ $item['id_empleado'] }}" wire:model.live="selectedEmpleadosAuditoria" value="{{ $item['id_empleado'] }}"
-                                            class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        @if ($filtroAuditoria !== 'COMPLETO')
+                                            <input type="checkbox" wire:key="auditoria-check-{{ $item['id_empleado'] }}" wire:model.live="selectedEmpleadosAuditoria" value="{{ $item['id_empleado'] }}"
+                                                class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        @else
+                                            <span class="text-xs text-gray-400 font-bold font-mono">{{ $loop->iteration }}</span>
+                                        @endif
                                     </td>
                                     <td class="p-3">
                                         <div class="flex items-center gap-2 flex-wrap">
@@ -1551,14 +1537,20 @@
                     </div>
 
                     <div class="flex items-center justify-end gap-3">
-                        <button type="button" wire:click="$set('showAuditoriaModal', false)"
-                            class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 transition">
-                            Cerrar
+                        <button type="button"
+                            wire:click="excluirEmpleadosSeleccionados"
+                            wire:confirm="¿Estás seguro de marcar como excluidos a los {{ count($selectedEmpleadosAuditoria) }} empleados seleccionados de este período?"
+                            @if (count($selectedEmpleadosAuditoria) === 0 || $filtroAuditoria === 'COMPLETO') disabled @endif
+                            class="px-4 py-2 text-sm font-bold rounded-lg transition flex items-center gap-1.5 {{ count($selectedEmpleadosAuditoria) > 0 && $filtroAuditoria !== 'COMPLETO' ? 'bg-amber-600 hover:bg-amber-700 text-white cursor-pointer shadow-sm shadow-amber-600/30' : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60' }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                            </svg>
+                            <span>Excluir ({{ count($selectedEmpleadosAuditoria) }})</span>
                         </button>
 
                         <button type="button" wire:click="iniciarSecuenciaComplementaria"
-                            @if (count($selectedEmpleadosAuditoria) === 0) disabled @endif
-                            class="px-5 py-2 text-sm font-bold text-white rounded-lg shadow-sm transition flex items-center gap-2 {{ count($selectedEmpleadosAuditoria) > 0 ? 'bg-indigo-600 hover:bg-indigo-700 cursor-pointer shadow-indigo-600/30' : 'bg-gray-400 cursor-not-allowed opacity-60' }}">
+                            @if (count($selectedEmpleadosAuditoria) === 0 || $filtroAuditoria === 'COMPLETO') disabled @endif
+                            class="px-5 py-2 text-sm font-bold text-white rounded-lg shadow-sm transition flex items-center gap-2 {{ count($selectedEmpleadosAuditoria) > 0 && $filtroAuditoria !== 'COMPLETO' ? 'bg-indigo-600 hover:bg-indigo-700 cursor-pointer shadow-indigo-600/30' : 'bg-gray-400 cursor-not-allowed opacity-60' }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -1743,7 +1735,7 @@
 
                             <div>
                                 <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Período</label>
-                                <select wire:model="filtroReportePeriodoId"
+                                <select wire:model.live="filtroReportePeriodoId"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     <option value="">Todos los períodos del año</option>
                                     @foreach ($periodosReporte as $p)
@@ -1889,7 +1881,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Método de Pago</label>
-                                <select wire:model="filtroReporteMetodoPago"
+                                <select wire:model.live="filtroReporteMetodoPago"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     <option value="TODOS">Todos los métodos</option>
                                     <option value="EFECTIVO">Efectivo</option>
@@ -1901,7 +1893,7 @@
 
                             <div>
                                 <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Estado de Pago</label>
-                                <select wire:model="filtroReporteEstadoPago"
+                                <select wire:model.live="filtroReporteEstadoPago"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     <option value="TODOS">Todos los estados</option>
                                     <option value="PAGADO">Pagado</option>
@@ -1928,20 +1920,19 @@
                             Cerrar
                         </button>
 
-                        <a href="{{ route('nomina.excel.reporte-recibos', [
-                                'anio' => $filtroReporteAnio,
-                                'id_periodo' => $filtroReportePeriodoId,
-                                'id_empleado' => $filtroReporteEmpleadoId,
-                                'metodo_pago' => $filtroReporteMetodoPago,
-                                'estado_pago' => $filtroReporteEstadoPago,
-                            ]) }}" target="_blank"
-                            @click="$wire.set('showReporteModal', false)"
-                            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow-sm transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button type="button" wire:click="descargarReporteRecibos"
+                            wire:loading.attr="disabled"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg wire:loading.remove wire:target="descargarReporteRecibos" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                             </svg>
-                            Descargar Reporte Excel
-                        </a>
+                            <svg wire:loading wire:target="descargarReporteRecibos" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span wire:loading.remove wire:target="descargarReporteRecibos">Descargar Reporte Excel</span>
+                            <span wire:loading wire:target="descargarReporteRecibos">Generando reporte...</span>
+                        </button>
                     </div>
                 </div>
             </div>

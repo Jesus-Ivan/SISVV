@@ -94,6 +94,7 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
 
                     $row['descuento_adelanto']  = 0;
                     $row['descuento_infonavit'] = 0;
+                    $row['retardo_inasistencias'] = 0;
                     $row['otros_descuentos']    = 0;
                     $row['observaciones']       = 'Recibo complementario - Saldo pendiente';
 
@@ -176,6 +177,7 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
 
             $row['descuento_adelanto']  = 0;
             $row['descuento_infonavit'] = 0;
+            $row['retardo_inasistencias'] = 0;
             $row['otros_descuentos']    = 0;
             $row['observaciones']       = '';
 
@@ -204,6 +206,7 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
 
         $headers[] = 'DESCUENTO_ADELANTO';
         $headers[] = 'DESCUENTO_INFONAVIT';
+        $headers[] = 'RETARDO_INASISTENCIAS';
         $headers[] = 'OTROS_DESCUENTOS';
         $headers[] = 'OBSERVACIONES';
 

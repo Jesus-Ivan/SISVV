@@ -88,9 +88,8 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
                         'bonos_otros'         => 0,
                     ];
 
-                    if ($this->esEspecial) {
-                        $row['monto_acordado_total']   = $montoAcordado !== null ? $montoAcordado : 0.0;
-                    }
+                    $tieneAsignacion = ($asignacion !== null && $asignacion->monto_acordado !== null);
+                    $row['monto_acordado_total'] = $tieneAsignacion ? (float) $asignacion->monto_acordado : '';
 
                     $row['descuento_adelanto']  = 0;
                     $row['descuento_infonavit'] = 0;
@@ -171,9 +170,8 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
                 'bonos_otros'         => 0,
             ];
 
-            if ($this->esEspecial) {
-                $row['monto_acordado_total']   = $montoAcordado !== null ? $montoAcordado : 0.0;
-            }
+            $tieneAsignacion = ($asignacion !== null && $asignacion->monto_acordado !== null);
+            $row['monto_acordado_total'] = $tieneAsignacion ? (float) $asignacion->monto_acordado : '';
 
             $row['descuento_adelanto']  = 0;
             $row['descuento_infonavit'] = 0;
@@ -198,17 +196,13 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
             'DIFERENCIA_EFECTIVO',
             'HORAS_EXTRAS',
             'BONOS_OTROS',
+            'MONTO_ACORDADO_TOTAL',
+            'DESCUENTO_ADELANTO',
+            'DESCUENTO_INFONAVIT',
+            'RETARDO_INASISTENCIAS',
+            'OTROS_DESCUENTOS',
+            'OBSERVACIONES',
         ];
-
-        if ($this->esEspecial) {
-            $headers[] = 'MONTO_ACORDADO_TOTAL';
-        }
-
-        $headers[] = 'DESCUENTO_ADELANTO';
-        $headers[] = 'DESCUENTO_INFONAVIT';
-        $headers[] = 'RETARDO_INASISTENCIAS';
-        $headers[] = 'OTROS_DESCUENTOS';
-        $headers[] = 'OBSERVACIONES';
 
         return $headers;
     }
@@ -252,33 +246,31 @@ class NominaPlantillaExport implements FromCollection, WithHeadings, ShouldAutoS
             ]);
         }
 
-        // 4. Columna especial para Aguinaldo y Finiquito (Columna K: MONTO_ACORDADO_TOTAL)
-        if ($this->esEspecial) {
-            // Encabezado en Dorado / Ámbar (K1)
-            $sheet->getStyle('K1')->applyFromArray([
-                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+        // 4. Columna distintiva para meta acordada (Columna K: MONTO_ACORDADO_TOTAL)
+        // Encabezado en Dorado / Ámbar (K1)
+        $sheet->getStyle('K1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FFD97706'], // Color dorado / ámbar distintivo
+            ],
+        ]);
+
+        // Celdas de datos en la columna K con fondo dorado suave (K2:K_end)
+        if ($highestRow >= 2) {
+            $sheet->getStyle("K2:K{$highestRow}")->applyFromArray([
                 'fill' => [
                     'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => ['argb' => 'FFD97706'], // Color dorado / ámbar distintivo
+                    'startColor' => ['argb' => 'FFFEF3C7'], // Dorado suave de fondo
+                ],
+                'font' => ['bold' => true, 'color' => ['argb' => 'FF92400E']],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT,
+                ],
+                'numberFormat' => [
+                    'formatCode' => '"$"#,##0.00',
                 ],
             ]);
-
-            // Celdas de datos en la columna K con fondo dorado suave (K2:K_end)
-            if ($highestRow >= 2) {
-                $sheet->getStyle("K2:K{$highestRow}")->applyFromArray([
-                    'fill' => [
-                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                        'startColor' => ['argb' => 'FFFEF3C7'], // Dorado suave de fondo
-                    ],
-                    'font' => ['bold' => true, 'color' => ['argb' => 'FF92400E']],
-                    'alignment' => [
-                        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT,
-                    ],
-                    'numberFormat' => [
-                        'formatCode' => '"$"#,##0.00',
-                    ],
-                ]);
-            }
         }
 
         // Se retorna un array vacío para evitar que Maatwebsite Excel sobreescriba la fila 1 después de ejecutarse este método

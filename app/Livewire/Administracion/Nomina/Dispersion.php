@@ -62,6 +62,7 @@ class Dispersion extends Component
     public bool $showImportModal = false;
     public $archivoExcel = null;
     public array $importErrors = [];
+    public array $empleadosDuplicadosEnExcel = [];
 
     // Confirmaciones
     public bool $showDeletePeriodoModal = false;
@@ -493,12 +494,13 @@ class Dispersion extends Component
         $asignacion = $this->selectedPeriodoId
             ? NominaPeriodoEmpleado::where('id_periodo', $this->selectedPeriodoId)->where('id_empleado', $empleado->id)->first()
             : null;
-        $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : 0.0;
-        $montoObjetivo = $montoAcordado > 0 ? $montoAcordado : $salarioBasePeriodo;
+        $tieneMontoGuardado = ($asignacion !== null && $asignacion->monto_acordado !== null);
+        $montoAcordado = $tieneMontoGuardado ? (float) $asignacion->monto_acordado : null;
+        $montoObjetivo = $tieneMontoGuardado ? (float) $montoAcordado : $salarioBasePeriodo;
 
-        $this->form->monto_total_acordado = $montoObjetivo;
+        $this->form->monto_total_acordado = $tieneMontoGuardado ? (float) $montoAcordado : null;
         $this->recibosPreviosCountEmpleadoActual = $recibosPrevios->count();
-        $this->salarioBaseEmpleadoActual = $montoObjetivo;
+        $this->salarioBaseEmpleadoActual = $salarioBasePeriodo;
         $this->totalEmitidoPrevioEmpleadoActual = (float) $recibosPrevios->sum('total_percepciones');
         $this->saldoPendienteEmpleadoActual = max(0, round($montoObjetivo - $this->totalEmitidoPrevioEmpleadoActual, 2));
 
@@ -683,10 +685,10 @@ class Dispersion extends Component
         $this->selectAllAuditoria = false;
     }
 
-    public function updatingSearchAuditoria(): void
+    public function updatedSearchAuditoria(): void
     {
-        $this->selectedEmpleadosAuditoria = [];
-        $this->selectAllAuditoria = false;
+        $empleados = $this->obtenerEmpleadosAuditoria();
+        $this->sincronizarSelectAllAuditoria($empleados);
     }
 
     public function updatedSelectedEmpleadosAuditoria(): void
@@ -698,8 +700,18 @@ class Dispersion extends Component
         }
 
         $empleados = $this->obtenerEmpleadosAuditoria();
-        $total = count($empleados);
-        $this->selectAllAuditoria = $total > 0 && count($this->selectedEmpleadosAuditoria) >= $total;
+        $this->sincronizarSelectAllAuditoria($empleados);
+    }
+
+    private function sincronizarSelectAllAuditoria(array $empleados): void
+    {
+        if ($this->filtroAuditoria === 'COMPLETO') {
+            $this->selectAllAuditoria = false;
+            return;
+        }
+
+        $idsVisibles = array_map(fn($item) => (string) $item['id_empleado'], $empleados);
+        $this->selectAllAuditoria = count($idsVisibles) > 0 && empty(array_diff($idsVisibles, $this->selectedEmpleadosAuditoria));
     }
 
     public function updatedSelectAllAuditoria($value): void
@@ -710,12 +722,28 @@ class Dispersion extends Component
             return;
         }
 
-        if ($value && $this->selectedPeriodoId) {
-            $empleados = $this->obtenerEmpleadosAuditoria();
-            $this->selectedEmpleadosAuditoria = array_map(fn($item) => (string) $item['id_empleado'], $empleados);
-        } else {
+        if (!$this->selectedPeriodoId) {
             $this->selectedEmpleadosAuditoria = [];
+            $this->selectAllAuditoria = false;
+            return;
         }
+
+        $empleados = $this->obtenerEmpleadosAuditoria();
+        $idsVisibles = array_map(fn($item) => (string) $item['id_empleado'], $empleados);
+
+        if ($value) {
+            $this->selectedEmpleadosAuditoria = array_values(array_unique(array_merge(
+                $this->selectedEmpleadosAuditoria,
+                $idsVisibles
+            )));
+        } else {
+            $this->selectedEmpleadosAuditoria = array_values(array_diff(
+                $this->selectedEmpleadosAuditoria,
+                $idsVisibles
+            ));
+        }
+
+        $this->sincronizarSelectAllAuditoria($empleados);
     }
 
     public function obtenerEmpleadosAuditoria(): array
@@ -1098,12 +1126,21 @@ class Dispersion extends Component
         $asignacion = NominaPeriodoEmpleado::where('id_periodo', $this->selectedPeriodoId)
             ->where('id_empleado', $empleado->id)
             ->first();
-        $montoAcordado = $asignacion ? (float) $asignacion->monto_acordado : 0.0;
-        $montoObjetivo = $montoAcordado > 0 ? $montoAcordado : (float) $empleado->salario_base;
+        $tieneMontoGuardado = ($asignacion !== null && $asignacion->monto_acordado !== null);
+        $montoAcordado = $tieneMontoGuardado ? (float) $asignacion->monto_acordado : null;
 
-        $this->form->monto_total_acordado = $montoObjetivo;
+        $ciclo = null;
+        if ($periodo) {
+            $ciclo = $empleado->historialLaboral->first(function ($c) use ($periodo) {
+                return $c->fecha_ingreso <= $periodo->fecha_fin && ($c->fecha_baja === null || $c->fecha_baja >= $periodo->fecha_inicio);
+            });
+        }
+        $salarioBasePeriodo = $ciclo ? (float) $ciclo->salario_base : (float) $empleado->salario_base;
+        $montoObjetivo = $tieneMontoGuardado ? (float) $montoAcordado : $salarioBasePeriodo;
+
+        $this->form->monto_total_acordado = $tieneMontoGuardado ? (float) $montoAcordado : null;
         $this->recibosPreviosCountEmpleadoActual = $recibosPrevios->count();
-        $this->salarioBaseEmpleadoActual = $montoObjetivo;
+        $this->salarioBaseEmpleadoActual = $salarioBasePeriodo;
         $this->totalEmitidoPrevioEmpleadoActual = (float) $recibosPrevios->sum('total_percepciones');
         $this->saldoPendienteEmpleadoActual = max(0, round($montoObjetivo - $this->totalEmitidoPrevioEmpleadoActual, 2));
 
@@ -1278,10 +1315,16 @@ class Dispersion extends Component
 
         $this->archivoExcel = null;
         $this->importErrors = [];
+        $this->empleadosDuplicadosEnExcel = [];
         $this->showImportModal = true;
     }
 
-    public function importarExcel(): void
+    public function cancelarImportacionDuplicados(): void
+    {
+        $this->empleadosDuplicadosEnExcel = [];
+    }
+
+    public function importarExcel(bool $forzarDuplicados = false): void
     {
         if ($this->selectedPeriodoId) {
             $periodo = NominaPeriodo::find($this->selectedPeriodoId);
@@ -1296,18 +1339,80 @@ class Dispersion extends Component
         ]);
 
         try {
+            if (!$forzarDuplicados) {
+                $sheetRows = Excel::toCollection(new NominaPlantillaImport($this->selectedPeriodoId), $this->archivoExcel)->first();
+                $conteoIds = [];
+                if ($sheetRows) {
+                    foreach ($sheetRows as $r) {
+                        $id = $r['id_empleado'] ?? $r['id'] ?? null;
+                        if ($id) {
+                            $valores = [
+                                $r['nomina_fiscal'] ?? null,
+                                $r['diferencia_efectivo'] ?? null,
+                                $r['horas_extras'] ?? null,
+                                $r['bonos_otros'] ?? $r['otros_bonos'] ?? null,
+                                $r['descuento_adelanto'] ?? $r['descuento_adelantos'] ?? null,
+                                $r['descuento_infonavit'] ?? $r['infonavit'] ?? null,
+                                $r['retardo_inasistencias'] ?? $r['retardo_o_inasistencias'] ?? $r['retardos_inasistencias'] ?? null,
+                                $r['otros_descuentos'] ?? null,
+                                $r['monto_acordado_total'] ?? $r['monto_acordado'] ?? null,
+                            ];
+                            $tieneDatos = false;
+                            foreach ($valores as $v) {
+                                if ($v !== null && trim((string)$v) !== '' && abs((float)$v) > 0.0001) {
+                                    $tieneDatos = true;
+                                    break;
+                                }
+                            }
+                            if ($tieneDatos) {
+                                $idInt = (int) $id;
+                                $conteoIds[$idInt] = ($conteoIds[$idInt] ?? 0) + 1;
+                            }
+                        }
+                    }
+                }
+
+                $duplicados = array_filter($conteoIds, fn($c) => $c > 1);
+                if (!empty($duplicados)) {
+                    $empleados = NominaEmpleado::whereIn('id', array_keys($duplicados))->get()->keyBy('id');
+                    $this->empleadosDuplicadosEnExcel = [];
+                    foreach ($duplicados as $id => $veces) {
+                        $emp = $empleados->get($id);
+                        $this->empleadosDuplicadosEnExcel[] = [
+                            'id' => $id,
+                            'nombre' => $emp ? $emp->nombre_completo : "Empleado #{$id}",
+                            'veces' => $veces,
+                        ];
+                    }
+                    return; // Detener y solicitar confirmación interactiva
+                }
+            }
+
+            $this->empleadosDuplicadosEnExcel = [];
             $import = new NominaPlantillaImport($this->selectedPeriodoId);
             Excel::import($import, $this->archivoExcel);
 
             $registrados = $import->getRegistradosCount();
             $omitidos = $import->getOmitidosCount();
+            $actualizados = $import->getRecibosActualizadosAPagadoCount();
+            $metas = $import->getMetasSincronizadasCount();
             $this->importErrors = $import->getErrors();
 
             if ($this->selectedPeriodoId) {
                 NominaPeriodo::find($this->selectedPeriodoId)?->recalcularTotales();
             }
 
-            $mensaje = "Se procesaron {$registrados} recibos exitosamente desde el archivo Excel" . ($omitidos > 0 ? " ({$omitidos} fila(s) vacía(s) o en ceros omitida(s))." : ".");
+            $mensaje = "Se procesaron {$registrados} recibos exitosamente desde el archivo Excel.";
+            if ($actualizados > 0) {
+                $mensaje .= " ({$actualizados} recibo(s) previo(s) se marcaron como PAGADOS).";
+            }
+            if ($metas > 0) {
+                $mensaje .= " ({$metas} meta(s) presupuestal(es) sincronizada(s)).";
+            }
+            if ($omitidos > 0) {
+                $mensaje .= " ({$omitidos} fila(s) vacía(s) omitida(s)).";
+            }
+
             $this->dispatch('toast', message: $mensaje, type: 'success');
 
             if (empty($this->importErrors)) {

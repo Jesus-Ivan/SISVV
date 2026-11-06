@@ -855,7 +855,7 @@
                                             <span class="absolute left-2.5 top-1.5 text-gray-500 font-bold">$</span>
                                             <input type="number" step="0.01" min="0" id="monto_acordado_input"
                                                 wire:model.live.debounce.350ms="form.monto_total_acordado"
-                                                placeholder="{{ number_format($salarioBaseEmpleadoActual, 2) }}"
+                                                placeholder="0.00"
                                                 class="w-full pl-6 pr-2 py-1 text-xs font-mono font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-700 border border-blue-300 dark:border-blue-700 rounded-lg focus:ring-1 focus:ring-blue-500">
                                         </div>
                                     </div>
@@ -1590,12 +1590,47 @@
                             Sube el archivo Excel generado previamente con la plantilla de nómina. El sistema asociará los recibos automáticamente al período activo: <strong>{{ $selectedPeriodo?->nombre }}</strong>.
                         </p>
 
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Selecciona archivo (.xlsx, .xls)</label>
-                            <input type="file" wire:model="archivoExcel" accept=".xlsx,.xls,.csv"
-                                class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600">
-                            @error('archivoExcel') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
-                        </div>
+                        @if (!empty($empleadosDuplicadosEnExcel))
+                            <div class="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 rounded-xl text-xs text-amber-900 dark:text-amber-200 space-y-2">
+                                <div class="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
+                                    <svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <span>Advertencia: Empleados con filas duplicadas en el archivo</span>
+                                </div>
+                                <p class="text-[11px] text-gray-600 dark:text-gray-300">
+                                    Se detectaron los siguientes empleados repetidos en más de una fila del archivo Excel. Al continuar, <strong>cada fila se creará como un recibo complementario independiente</strong> (abono adicional) sin sobreescribir ningún dato:
+                                </p>
+                                <div class="max-h-32 overflow-y-auto space-y-1 bg-white/70 dark:bg-gray-800/70 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-mono text-[11px]">
+                                    @foreach ($empleadosDuplicadosEnExcel as $dup)
+                                        <div class="flex justify-between items-center">
+                                            <span class="font-bold">#{{ $dup['id'] }} {{ $dup['nombre'] }}</span>
+                                            <span class="px-1.5 py-0.5 rounded bg-amber-200 dark:bg-amber-800 text-amber-900 dark:text-amber-100 font-sans text-[10px] font-bold">
+                                                {{ $dup['veces'] }} veces
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <div class="flex items-center justify-end gap-2 pt-2 border-t border-amber-200 dark:border-amber-800">
+                                    <button type="button" wire:click="cancelarImportacionDuplicados"
+                                        class="px-3 py-1.5 text-xs text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200">
+                                        Cancelar
+                                    </button>
+                                    <button type="button" wire:click="importarExcel(true)"
+                                        class="px-3.5 py-1.5 text-xs font-bold text-white bg-amber-600 rounded-lg hover:bg-amber-700 flex items-center gap-1.5 shadow">
+                                        <span wire:loading wire:target="importarExcel(true)" class="inline-block animate-spin">&#9696;</span>
+                                        Continuar e Importar Todo
+                                    </button>
+                                </div>
+                            </div>
+                        @else
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Selecciona archivo (.xlsx, .xls)</label>
+                                <input type="file" wire:model="archivoExcel" accept=".xlsx,.xls,.csv"
+                                    class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600">
+                                @error('archivoExcel') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+                        @endif
 
                         @if (!empty($importErrors))
                             <div class="p-3 bg-red-50 rounded-lg border border-red-200 text-xs text-red-700 max-h-40 overflow-y-auto">
@@ -1613,11 +1648,13 @@
                                 class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300">
                                 Cerrar
                             </button>
-                            <button wire:click="importarExcel" type="button"
-                                class="px-5 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center gap-2">
-                                <span wire:loading wire:target="importarExcel, archivoExcel" class="inline-block animate-spin">&#9696;</span>
-                                Procesar Importación
-                            </button>
+                            @if (empty($empleadosDuplicadosEnExcel))
+                                <button wire:click="importarExcel" type="button"
+                                    class="px-5 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center gap-2">
+                                    <span wire:loading wire:target="importarExcel, archivoExcel" class="inline-block animate-spin">&#9696;</span>
+                                    Procesar Importación
+                                </button>
+                            @endif
                         </div>
                     </div>
                 </div>

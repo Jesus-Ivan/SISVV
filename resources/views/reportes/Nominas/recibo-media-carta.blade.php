@@ -185,244 +185,240 @@
         @php
             $letras = $recibo->total_letras ?? ($totalLetras ?? '');
         @endphp
-        @for ($i = 0; $i < 2; $i++)
-            <div class="recibo-card">
-                <!-- Header -->
-                <table class="header-table">
-                    <tr>
-                        <td style="width: 70%;">
-                            <div class="header-title">
-                                @if ($recibo->tipo_recibo === 'FINIQUITO')
-                                    FINIQUITO Y LIQUIDACIÓN
-                                @elseif($recibo->tipo_recibo === 'AGUINALDO')
-                                    RECIBO DE AGUINALDO
-                                @else
-                                    RECIBO DE NÓMINA
-                                @endif
-                                <div class="header-subtitle">
-                                    {{ $i ? 'COPIA' : 'ORIGINAL' }}</strong></div>
-                            </div>
-                        </td>
-                        <td style="width: 30%;" class="text-right">
-                            <div style="font-size: 8pt; color: #4b5563; margin-top: 2pt;">FOLIO:
-                                <strong>{{ $recibo->folio }}</strong>
-                            </div>
-                            <div style="font-size: 8pt; color: #6b7280;">Emisión:
-                                {{ $recibo->fecha_pago ? $recibo->fecha_pago->format('d/m/Y') : date('d/m/Y') }}</div>
-                        </td>
-                    </tr>
-                </table>
 
-                <!-- Datos del Empleado y Periodo -->
-                <table class="info-table">
-                    <tr>
-                        <td style="width: 15%;">
-                            <div class="info-label">No. Empleado</div>
-                            <div class="info-val">#{{ $recibo->id_empleado_snapshot }}</div>
-                        </td>
-                        <td style="width: 45%;">
-                            <div class="info-label">Nombre del Trabajador</div>
-                            <div class="info-val">{{ $recibo->nombre_empleado_snapshot }}</div>
-                        </td>
-                        <td style="width: 20%;">
-                            <div class="info-label">Puesto</div>
-                            <div class="info-val">{{ $recibo->puesto_snapshot ?: 'N/A' }}</div>
-                        </td>
-                        <td style="width: 20%;">
-                            <div class="info-label">Área</div>
-                            <div class="info-val">{{ $recibo->area_snapshot ?: 'N/A' }}</div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="info-label">Tipo</div>
-                            <div class="info-val">{{ $recibo->tipo_empleado_snapshot ?: 'PLANTA' }}</div>
-                        </td>
-                        <td>
-                            <div class="info-label">Periodo de Pago</div>
-                            <div class="info-val">Del {{ $recibo->fecha_inicio->format('d/m/Y') }} al
-                                {{ $recibo->fecha_fin->format('d/m/Y') }}</div>
-                        </td>
-                        <td>
-                            <div class="info-label">Método de Pago</div>
-                            <div class="info-val">{{ $recibo->metodo_pago }}</div>
-                        </td>
-                        <td>
-                            <div class="info-label">Estatus</div>
-                            <div class="info-val">{{ $recibo->estado_pago }}</div>
-                        </td>
-                    </tr>
-                </table>
+        <div class="recibo-card">
+            <!-- Header -->
+            <table class="header-table">
+                <tr>
+                    <td style="width: 70%;">
+                        <div class="header-title">
+                            @if ($recibo->tipo_recibo === 'FINIQUITO')
+                                FINIQUITO Y LIQUIDACIÓN
+                            @elseif($recibo->tipo_recibo === 'AGUINALDO')
+                                RECIBO DE AGUINALDO
+                            @else
+                                RECIBO DE NÓMINA
+                            @endif
+                            <div class="header-subtitle"></strong></div>
+                        </div>
+                    </td>
+                    <td style="width: 30%;" class="text-right">
+                        <div style="font-size: 8pt; color: #4b5563; margin-top: 2pt;">FOLIO:
+                            <strong>{{ $recibo->folio }}</strong>
+                        </div>
+                        <div style="font-size: 8pt; color: #6b7280;">Emisión:
+                            {{ $recibo->fecha_pago ? $recibo->fecha_pago->format('d/m/Y') : date('d/m/Y') }}</div>
+                    </td>
+                </tr>
+            </table>
 
-                <!-- Tabla de Percepciones y Deducciones -->
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 4pt;">
-                    <tr>
-                        <!-- Percepciones -->
-                        <td style="width: 50%; vertical-align: top; padding-right: 3pt;">
-                            <table class="concepts-table">
-                                <thead>
+            <!-- Datos del Empleado y Periodo -->
+            <table class="info-table">
+                <tr>
+                    <td style="width: 15%;">
+                        <div class="info-label">No. Empleado</div>
+                        <div class="info-val">#{{ $recibo->id_empleado_snapshot }}</div>
+                    </td>
+                    <td style="width: 45%;">
+                        <div class="info-label">Nombre del Trabajador</div>
+                        <div class="info-val">{{ $recibo->nombre_empleado_snapshot }}</div>
+                    </td>
+                    <td style="width: 20%;">
+                        <div class="info-label">Puesto</div>
+                        <div class="info-val">{{ $recibo->puesto_snapshot ?: 'N/A' }}</div>
+                    </td>
+                    <td style="width: 20%;">
+                        <div class="info-label">Área</div>
+                        <div class="info-val">{{ $recibo->area_snapshot ?: 'N/A' }}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="info-label">Tipo</div>
+                        <div class="info-val">{{ $recibo->tipo_empleado_snapshot ?: 'PLANTA' }}</div>
+                    </td>
+                    <td>
+                        <div class="info-label">Periodo de Pago</div>
+                        <div class="info-val">Del {{ $recibo->fecha_inicio->format('d/m/Y') }} al
+                            {{ $recibo->fecha_fin->format('d/m/Y') }}</div>
+                    </td>
+                    <td>
+                        <div class="info-label">Método de Pago</div>
+                        <div class="info-val">{{ $recibo->metodo_pago }}</div>
+                    </td>
+                    <td>
+                        <div class="info-label">Estatus</div>
+                        <div class="info-val">{{ $recibo->estado_pago }}</div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Tabla de Percepciones y Deducciones -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 4pt;">
+                <tr>
+                    <!-- Percepciones -->
+                    <td style="width: 50%; vertical-align: top; padding-right: 3pt;">
+                        <table class="concepts-table">
+                            <thead>
+                                <tr>
+                                    <th>Percepciones</th>
+                                    <th class="text-right" style="width: 35%;">Importe</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if ($recibo->nomina_fiscal > 0)
                                     <tr>
-                                        <th>Percepciones</th>
-                                        <th class="text-right" style="width: 35%;">Importe</th>
+                                        <td>Sueldo / Nómina Fiscal</td>
+                                        <td class="text-right">${{ number_format($recibo->nomina_fiscal, 2) }}</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @if ($recibo->nomina_fiscal > 0)
-                                        <tr>
-                                            <td>Sueldo / Nómina Fiscal</td>
-                                            <td class="text-right">${{ number_format($recibo->nomina_fiscal, 2) }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($recibo->diferencia_efectivo > 0)
-                                        <tr>
-                                            <td>Diferencia en Efectivo</td>
-                                            <td class="text-right">
-                                                ${{ number_format($recibo->diferencia_efectivo, 2) }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($recibo->horas_extras > 0)
-                                        <tr>
-                                            <td>Horas Extras</td>
-                                            <td class="text-right">${{ number_format($recibo->horas_extras, 2) }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($recibo->bonos_otros > 0)
-                                        <tr>
-                                            <td>Bonos / Compensaciones</td>
-                                            <td class="text-right">${{ number_format($recibo->bonos_otros, 2) }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($recibo->total_percepciones == 0)
-                                        <tr>
-                                            <td>Sin percepciones</td>
-                                            <td class="text-right">$0.00</td>
-                                        </tr>
-                                    @endif
-                                    <tr style="background-color: #f9fafb; font-weight: bold;">
-                                        <td>TOTAL PERCEPCIONES</td>
-                                        <td class="text-right">${{ number_format($recibo->total_percepciones, 2) }}
+                                @endif
+                                @if ($recibo->diferencia_efectivo > 0)
+                                    <tr>
+                                        <td>Diferencia en Efectivo</td>
+                                        <td class="text-right">
+                                            ${{ number_format($recibo->diferencia_efectivo, 2) }}</td>
+                                    </tr>
+                                @endif
+                                @if ($recibo->horas_extras > 0)
+                                    <tr>
+                                        <td>Horas Extras</td>
+                                        <td class="text-right">${{ number_format($recibo->horas_extras, 2) }}</td>
+                                    </tr>
+                                @endif
+                                @if ($recibo->bonos_otros > 0)
+                                    <tr>
+                                        <td>Bonos / Compensaciones</td>
+                                        <td class="text-right">${{ number_format($recibo->bonos_otros, 2) }}</td>
+                                    </tr>
+                                @endif
+                                @if ($recibo->total_percepciones == 0)
+                                    <tr>
+                                        <td>Sin percepciones</td>
+                                        <td class="text-right">$0.00</td>
+                                    </tr>
+                                @endif
+                                <tr style="background-color: #f9fafb; font-weight: bold;">
+                                    <td>TOTAL PERCEPCIONES</td>
+                                    <td class="text-right">${{ number_format($recibo->total_percepciones, 2) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+
+                    <!-- Deducciones -->
+                    <td style="width: 50%; vertical-align: top; padding-left: 3pt;">
+                        <table class="concepts-table">
+                            <thead>
+                                <tr>
+                                    <th>Deducciones</th>
+                                    <th class="text-right" style="width: 35%;">Importe</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if ($recibo->descuento_adelanto > 0)
+                                    <tr>
+                                        <td>Amortización de Adelanto / Préstamo</td>
+                                        <td class="text-right">${{ number_format($recibo->descuento_adelanto, 2) }}
                                         </td>
                                     </tr>
-                                </tbody>
-                            </table>
-                        </td>
-
-                        <!-- Deducciones -->
-                        <td style="width: 50%; vertical-align: top; padding-left: 3pt;">
-                            <table class="concepts-table">
-                                <thead>
+                                @endif
+                                @if ($recibo->descuento_infonavit > 0)
                                     <tr>
-                                        <th>Deducciones</th>
-                                        <th class="text-right" style="width: 35%;">Importe</th>
+                                        <td>Infonavit</td>
+                                        <td class="text-right">
+                                            ${{ number_format($recibo->descuento_infonavit, 2) }}</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @if ($recibo->descuento_adelanto > 0)
-                                        <tr>
-                                            <td>Amortización de Adelanto / Préstamo</td>
-                                            <td class="text-right">${{ number_format($recibo->descuento_adelanto, 2) }}
-                                            </td>
-                                        </tr>
-                                    @endif
-                                    @if ($recibo->descuento_infonavit > 0)
-                                        <tr>
-                                            <td>Infonavit</td>
-                                            <td class="text-right">
-                                                ${{ number_format($recibo->descuento_infonavit, 2) }}</td>
-                                        </tr>
-                                    @endif
-                                    @if (($recibo->retardo_inasistencias ?? 0) > 0)
-                                        <tr>
-                                            <td>Retardo / Inasistencias</td>
-                                            <td class="text-right">
-                                                ${{ number_format($recibo->retardo_inasistencias, 2) }}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($recibo->otros_descuentos > 0)
-                                        <tr>
-                                            <td>Otros Descuentos / Ajustes</td>
-                                            <td class="text-right">${{ number_format($recibo->otros_descuentos, 2) }}
-                                            </td>
-                                        </tr>
-                                    @endif
-                                    @if ($recibo->total_deducciones == 0)
-                                        <tr>
-                                            <td style="color: #9ca3af;">Sin deducciones</td>
-                                            <td class="text-right">$0.00</td>
-                                        </tr>
-                                    @endif
-                                    <tr style="background-color: #f9fafb; font-weight: bold;">
-                                        <td>TOTAL DEDUCCIONES</td>
-                                        <td class="text-right">${{ number_format($recibo->total_deducciones, 2) }}</td>
+                                @endif
+                                @if (($recibo->retardo_inasistencias ?? 0) > 0)
+                                    <tr>
+                                        <td>Retardo / Inasistencias</td>
+                                        <td class="text-right">
+                                            ${{ number_format($recibo->retardo_inasistencias, 2) }}</td>
                                     </tr>
-                                </tbody>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
+                                @endif
+                                @if ($recibo->otros_descuentos > 0)
+                                    <tr>
+                                        <td>Otros Descuentos / Ajustes</td>
+                                        <td class="text-right">${{ number_format($recibo->otros_descuentos, 2) }}
+                                        </td>
+                                    </tr>
+                                @endif
+                                @if ($recibo->total_deducciones == 0)
+                                    <tr>
+                                        <td style="color: #9ca3af;">Sin deducciones</td>
+                                        <td class="text-right">$0.00</td>
+                                    </tr>
+                                @endif
+                                <tr style="background-color: #f9fafb; font-weight: bold;">
+                                    <td>TOTAL DEDUCCIONES</td>
+                                    <td class="text-right">${{ number_format($recibo->total_deducciones, 2) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </table>
 
-                <!-- Caja de Neto a Pagar -->
-                <table class="totals-table">
+            <!-- Caja de Neto a Pagar -->
+            <table class="totals-table">
+                <tr>
+                    <td style="vertical-align: middle; width: 65%;">
+                        <div style="font-size: 8pt; color: #4b5563;">IMPORTE NETO EN LETRAS:</div>
+                        <div style="font-size: 9pt; font-weight: bold; color: #111827;">{{ $letras }}</div>
+                    </td>
+                    <td style="width: 35%;">
+                        <div class="neto-box">
+                            <div class="neto-label">NETO A PAGAR</div>
+                            <div class="neto-amount">
+                                ${{ number_format($recibo->neto_pagar, 2) }}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Observaciones si existen -->
+            @if ($recibo->observaciones)
+                <div class="obs-box">
+                    <strong>Observaciones:</strong> {{ $recibo->observaciones }}
+                </div>
+            @endif
+
+            <!-- Leyenda Legal y Firma -->
+            <div class="firma-container">
+                <div class="leyenda">
+                    @if ($recibo->tipo_recibo === 'FINIQUITO')
+                        Hago constar que recibo la cantidad neta indicada en este recibo
+                        por concepto de finiquito y liquidación laboral.
+                    @else
+                        Recibí de conformidad el importe neto total señalado en este documento por concepto de
+                        sueldos y prestaciones devengadas correspondientes al periodo indicado.
+                    @endif
+                </div>
+
+                <table style="width: 100%; margin-top: 20pt">
                     <tr>
-                        <td style="vertical-align: middle; width: 65%;">
-                            <div style="font-size: 8pt; color: #4b5563;">IMPORTE NETO EN LETRAS:</div>
-                            <div style="font-size: 9pt; font-weight: bold; color: #111827;">{{ $letras }}</div>
+                        <td style="width: 50%; text-align: center;">
+                            <br><br>
+                            <div class="linea-firma">
+                                ENTREGADO POR
+                            </div>
                         </td>
-                        <td style="width: 35%;">
-                            <div class="neto-box">
-                                <div class="neto-label">NETO A PAGAR</div>
-                                <div class="neto-amount">
-                                    ${{ number_format($recibo->neto_pagar, 2) }}
-                                </div>
+                        <td style="width: 50%; text-align: center;">
+                            <br><br>
+                            <div class="linea-firma">
+                                NOMBRE Y FIRMA DEL TRABAJADOR<br>
                             </div>
                         </td>
                     </tr>
                 </table>
-
-                <!-- Observaciones si existen -->
-                @if ($recibo->observaciones)
-                    <div class="obs-box">
-                        <strong>Observaciones:</strong> {{ $recibo->observaciones }}
-                    </div>
-                @endif
-
-                <!-- Leyenda Legal y Firma -->
-                <div class="firma-container">
-                    <div class="leyenda">
-                        @if ($recibo->tipo_recibo === 'FINIQUITO')
-                            Hago constar que recibo la cantidad neta indicada en este recibo
-                            por concepto de finiquito y liquidación laboral.
-                        @else
-                            Recibí de conformidad el importe neto total señalado en este documento por concepto de
-                            sueldos y prestaciones devengadas correspondientes al periodo indicado.
-                        @endif
-                    </div>
-
-                    <table style="width: 100%; margin-top: 20pt">
-                        <tr>
-                            <td style="width: 50%; text-align: center;">
-                                <br><br>
-                                <div class="linea-firma">
-                                    ENTREGADO POR
-                                </div>
-                            </td>
-                            <td style="width: 50%; text-align: center;">
-                                <br><br>
-                                <div class="linea-firma">
-                                    NOMBRE Y FIRMA DEL TRABAJADOR<br>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
             </div>
-            @if (!$i)
-                <hr style="border-style: dashed; margin-bottom: 20pt">
-            @endif
-        @endfor
-        @if (!$loop->last)
-            <div class="page-break"></div>
+        </div>
+        @if ($loop->odd)
+            <hr style="border-style: dashed; margin-bottom: 20pt">
         @endif
     @endforeach
 </body>
+
 </html>

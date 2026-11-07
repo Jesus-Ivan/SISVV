@@ -100,6 +100,26 @@ class CuentasSaldos extends Component
             'referencia' => 'nullable|string|max:255',
         ]);
 
+        $empleadoPrevio = NominaEmpleado::findOrFail($this->empleadoIdSeleccionado);
+        $saldoActual = (float) $empleadoPrevio->saldo_adelantos;
+        $montoCapturado = (float) $this->monto;
+
+        if ($this->tipo_movimiento === 'ABONO_DIRECTO' && $montoCapturado > $saldoActual) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'monto' => 'El abono en efectivo ($' . number_format($montoCapturado, 2) . ') no puede exceder el saldo deudor actual del empleado ($' . number_format($saldoActual, 2) . ').',
+            ]);
+        }
+
+        if ($this->tipo_movimiento === 'AJUSTE') {
+            if (abs($montoCapturado - $saldoActual) <= 0.001) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'monto' => 'El saldo objetivo es idéntico al saldo actual ($' . number_format($saldoActual, 2) . '). No se requiere registrar ningún ajuste.',
+                ]);
+            }
+            // Forzar fecha actual para preservar el orden cronológico del kardex
+            $this->fecha = now()->toDateString();
+        }
+
         $movimientoCreado = DB::transaction(function () {
             $empleado = NominaEmpleado::lockForUpdate()->findOrFail($this->empleadoIdSeleccionado);
             $saldoAnterior = (float) $empleado->saldo_adelantos;

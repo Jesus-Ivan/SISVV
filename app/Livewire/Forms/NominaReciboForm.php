@@ -171,6 +171,19 @@ class NominaReciboForm extends Form
                     'form.descuento_adelanto' => 'La amortización ($' . number_format($descuento, 2) . ') no puede superar el saldo deudor disponible ($' . number_format($deudaDisponible, 2) . ').',
                 ]);
             }
+
+            // Validar que el descuento de adelanto no supere las percepciones líquidas disponibles del recibo
+            $percepciones = $this->calcularPercepciones();
+            $deduccionesFijas = (float) ($this->descuento_infonavit ?? 0)
+                + (float) ($this->retardo_inasistencias ?? 0)
+                + (float) ($this->otros_descuentos ?? 0);
+            $disponibleParaAdelanto = max(0, round($percepciones - $deduccionesFijas, 2));
+
+            if ($descuento > $disponibleParaAdelanto + 0.001) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'form.descuento_adelanto' => 'El descuento de adelanto ($' . number_format($descuento, 2) . ') no puede superar las percepciones disponibles del recibo ($' . number_format($disponibleParaAdelanto, 2) . ').',
+                ]);
+            }
         }
     }
 
@@ -178,9 +191,39 @@ class NominaReciboForm extends Form
     {
         $this->validate();
         $this->validateDeudaAdelanto();
+
+        $totalPercepciones = $this->calcularPercepciones();
+        if ($totalPercepciones <= 0.001) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'form.nomina_fiscal' => 'No se puede emitir un recibo con percepciones totales en $0.00. Ingresa sueldo fiscal o diferencia en efectivo.',
+            ]);
+        }
+
+        // Auto-asignación inteligente del método de pago
+        $fiscal = (float) ($this->nomina_fiscal ?? 0);
+        $efectivo = (float) ($this->diferencia_efectivo ?? 0);
+        if ($fiscal > 0 && $efectivo > 0) {
+            $this->metodo_pago = 'MIXTO';
+        } elseif ($fiscal > 0 && $efectivo == 0) {
+            $this->metodo_pago = 'TRANSFERENCIA';
+        } elseif ($efectivo > 0 && $fiscal == 0) {
+            $this->metodo_pago = 'EFECTIVO';
+        }
+
         $empleado = NominaEmpleado::with('area', 'puesto')->findOrFail($this->id_empleado);
 
         return DB::transaction(function () use ($empleado) {
+            // Transicionar recibos previos en PENDIENTE o PARCIAL a PAGADO al emitir un nuevo abono
+            if ($this->id_periodo) {
+                NominaRecibo::where('id_periodo', $this->id_periodo)
+                    ->where('id_empleado', $empleado->id)
+                    ->whereIn('estado_pago', ['PENDIENTE', 'PARCIAL'])
+                    ->update([
+                        'estado_pago' => 'PAGADO',
+                        'fecha_pago_real' => now()->toDateString(),
+                    ]);
+            }
+
             $folioData = NominaRecibo::generarSiguienteFolio($empleado->id);
             $totalPercepciones = $this->calcularPercepciones();
             $totalDeducciones = $this->calcularDeducciones();
@@ -268,6 +311,24 @@ class NominaReciboForm extends Form
 
         $this->validate();
         $this->validateDeudaAdelanto();
+
+        $totalPercepciones = $this->calcularPercepciones();
+        if ($totalPercepciones <= 0.001) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'form.nomina_fiscal' => 'No se puede guardar un recibo con percepciones totales en $0.00. Ingresa sueldo fiscal o diferencia en efectivo.',
+            ]);
+        }
+
+        // Auto-asignación inteligente del método de pago
+        $fiscal = (float) ($this->nomina_fiscal ?? 0);
+        $efectivo = (float) ($this->diferencia_efectivo ?? 0);
+        if ($fiscal > 0 && $efectivo > 0) {
+            $this->metodo_pago = 'MIXTO';
+        } elseif ($fiscal > 0 && $efectivo == 0) {
+            $this->metodo_pago = 'TRANSFERENCIA';
+        } elseif ($efectivo > 0 && $fiscal == 0) {
+            $this->metodo_pago = 'EFECTIVO';
+        }
 
         DB::transaction(function () {
             $totalPercepciones = $this->calcularPercepciones();

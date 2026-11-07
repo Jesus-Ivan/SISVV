@@ -251,6 +251,73 @@ class Dispersion extends Component
         }
     }
 
+    public function updated($property, $value = null): void
+    {
+        if ($property === 'form.metodo_pago') {
+            $metodo = strtoupper(trim((string)$value));
+            if ($metodo === 'TRANSFERENCIA') {
+                $this->form->diferencia_efectivo = 0;
+            } elseif ($metodo === 'EFECTIVO') {
+                $this->form->nomina_fiscal = 0;
+            }
+        } elseif ($property === 'form.nomina_fiscal' || $property === 'form.diferencia_efectivo') {
+            $this->sincronizarMetodoPagoDesdeMontos();
+            $this->resetErrorBag(['form.nomina_fiscal', 'form.diferencia_efectivo', 'form.descuento_adelanto']);
+        } elseif ($property === 'form.descuento_adelanto') {
+            $this->resetErrorBag('form.descuento_adelanto');
+        }
+    }
+
+    public function updatedFormMetodoPago($valor): void
+    {
+        $metodo = strtoupper(trim((string)$valor));
+        if ($metodo === 'TRANSFERENCIA') {
+            $this->form->diferencia_efectivo = 0;
+        } elseif ($metodo === 'EFECTIVO') {
+            $this->form->nomina_fiscal = 0;
+        }
+    }
+
+    public function updatedFormNominaFiscal($valor): void
+    {
+        $this->sincronizarMetodoPagoDesdeMontos();
+        $this->resetErrorBag(['form.nomina_fiscal', 'form.descuento_adelanto']);
+    }
+
+    public function updatedFormDiferenciaEfectivo($valor): void
+    {
+        $this->sincronizarMetodoPagoDesdeMontos();
+        $this->resetErrorBag(['form.diferencia_efectivo', 'form.descuento_adelanto']);
+    }
+
+    public function updatedFormDescuentoAdelanto($valor): void
+    {
+        $this->resetErrorBag('form.descuento_adelanto');
+    }
+
+    private function sincronizarMetodoPagoDesdeMontos(): void
+    {
+        $fiscal = max(0, (float)($this->form->nomina_fiscal ?? 0));
+        $efectivo = max(0, (float)($this->form->diferencia_efectivo ?? 0));
+
+        if ($fiscal > 0 && $efectivo > 0) {
+            $this->form->metodo_pago = 'MIXTO';
+        } elseif ($fiscal > 0 && $efectivo == 0) {
+            $this->form->metodo_pago = 'TRANSFERENCIA';
+        } elseif ($efectivo > 0 && $fiscal == 0) {
+            $this->form->metodo_pago = 'EFECTIVO';
+        }
+    }
+
+    public function closeReciboModal(): void
+    {
+        $this->resetErrorBag();
+        $this->resetValidation();
+        $this->showReciboModal = false;
+        $this->isEditingRecibo = false;
+        $this->limpiarEmpleadoSeleccionado();
+    }
+
     // --- GESTIÓN DE PERÍODOS ---
 
     public function createPeriodo(): void
@@ -406,6 +473,9 @@ class Dispersion extends Component
 
     public function createRecibo(): void
     {
+        $this->resetErrorBag();
+        $this->resetValidation();
+
         if (!$this->selectedPeriodoId) {
             $this->dispatch('toast', message: 'Por favor selecciona un período de nómina primero.', type: 'warning');
             return;
@@ -427,15 +497,15 @@ class Dispersion extends Component
         $this->motivoEmpleadoFueraDePeriodo = null;
 
         if ($p) {
-            if ($p) {
-                $this->form->fecha_inicio = $p->fecha_inicio ? $p->fecha_inicio->format('Y-m-d') : '';
-                $this->form->fecha_fin = $p->fecha_fin ? $p->fecha_fin->format('Y-m-d') : '';
-                $this->form->fecha_pago = $p->fecha_pago ? $p->fecha_pago->format('Y-m-d') : now()->toDateString();
-                if ($p->tipo_periodo === 'AGUINALDO') {
-                    $this->form->tipo_recibo = 'AGUINALDO';
-                } elseif ($p->tipo_periodo === 'FINIQUITO') {
-                    $this->form->tipo_recibo = 'FINIQUITO';
-                }
+            $this->form->fecha_inicio = $p->fecha_inicio ? $p->fecha_inicio->format('Y-m-d') : '';
+            $this->form->fecha_fin = $p->fecha_fin ? $p->fecha_fin->format('Y-m-d') : '';
+            $this->form->fecha_pago = $p->fecha_pago ? $p->fecha_pago->format('Y-m-d') : now()->toDateString();
+            if ($p->tipo_periodo === 'AGUINALDO') {
+                $this->form->tipo_recibo = 'AGUINALDO';
+            } elseif ($p->tipo_periodo === 'FINIQUITO') {
+                $this->form->tipo_recibo = 'FINIQUITO';
+            } elseif ($p->tipo_periodo === 'EXTRAORDINARIO') {
+                $this->form->tipo_recibo = 'EXTRAORDINARIO';
             }
         }
 
@@ -447,6 +517,13 @@ class Dispersion extends Component
 
     public function seleccionarEmpleado(int $id): void
     {
+        $this->resetErrorBag();
+        $this->resetValidation();
+        $this->form->descuento_adelanto = 0;
+        $this->form->descuento_infonavit = 0;
+        $this->form->retardo_inasistencias = 0;
+        $this->form->otros_descuentos = 0;
+
         $empleado = NominaEmpleado::with(['area', 'puesto', 'historialLaboral'])->find($id);
         if (!$empleado) {
             return;
@@ -535,12 +612,18 @@ class Dispersion extends Component
 
     public function limpiarEmpleadoSeleccionado(): void
     {
+        $this->resetErrorBag();
+        $this->resetValidation();
         $this->form->id_empleado = null;
         $this->form->monto_total_acordado = null;
         $this->empleadoSeleccionado = null;
         $this->empleadoSearch = '';
         $this->form->nomina_fiscal = 0;
         $this->form->diferencia_efectivo = 0;
+        $this->form->descuento_adelanto = 0;
+        $this->form->descuento_infonavit = 0;
+        $this->form->retardo_inasistencias = 0;
+        $this->form->otros_descuentos = 0;
         $this->saldoPendienteEmpleadoActual = 0.0;
         $this->salarioBaseEmpleadoActual = 0.0;
         $this->totalEmitidoPrevioEmpleadoActual = 0.0;
@@ -552,6 +635,9 @@ class Dispersion extends Component
 
     public function editRecibo(int $id): void
     {
+        $this->resetErrorBag();
+        $this->resetValidation();
+
         $recibo = NominaRecibo::with('periodo')->findOrFail($id);
         if ($recibo->periodo && $recibo->periodo->estado === 'CERRADO') {
             $this->dispatch('toast', message: 'No se puede editar un recibo de un período CERRADO.', type: 'warning');
@@ -569,6 +655,7 @@ class Dispersion extends Component
 
         $recibosPrevios = NominaRecibo::where('id_periodo', $recibo->id_periodo)
             ->where('id_empleado', $recibo->id_empleado)
+            ->where('id', '!=', $recibo->id)
             ->get();
 
         $this->recibosPreviosCountEmpleadoActual = $recibosPrevios->count();
@@ -1194,6 +1281,8 @@ class Dispersion extends Component
 
     public function cancelarSecuencia(): void
     {
+        $this->resetErrorBag();
+        $this->resetValidation();
         $this->colaSecuencia = [];
         $this->enSecuencia = false;
         $this->showReciboModal = false;
@@ -1210,8 +1299,20 @@ class Dispersion extends Component
     {
         $deudaDisponible = $this->deudaDisponible;
         if ($deudaDisponible > 0) {
-            $this->form->descuento_adelanto = $deudaDisponible;
-            $this->dispatch('toast', message: 'Descuento de anticipo ($' . number_format($deudaDisponible, 2) . ') cargado.', type: 'info');
+            $percepciones = $this->form->calcularPercepciones();
+            $deduccionesFijas = (float) ($this->form->descuento_infonavit ?? 0)
+                + (float) ($this->form->retardo_inasistencias ?? 0)
+                + (float) ($this->form->otros_descuentos ?? 0);
+            $disponibleParaAdelanto = max(0, round($percepciones - $deduccionesFijas, 2));
+            $montoAplicar = min($deudaDisponible, $disponibleParaAdelanto);
+
+            if ($montoAplicar <= 0) {
+                $this->dispatch('toast', message: 'No hay percepciones líquidas disponibles en este recibo para aplicar amortizaciones.', type: 'warning');
+                return;
+            }
+
+            $this->form->descuento_adelanto = $montoAplicar;
+            $this->dispatch('toast', message: 'Descuento de anticipo ($' . number_format($montoAplicar, 2) . ') cargado según percepciones disponibles.', type: 'info');
         }
     }
 

@@ -726,12 +726,12 @@
         <div class="fixed inset-0 z-50 overflow-y-auto m-0" role="dialog" aria-modal="true">
             <!-- Backdrop fijo (cubre el 100% de la pantalla) -->
             <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity m-0"
-                 @if (!$enSecuencia) wire:click="$set('showReciboModal', false)" @endif
+                 @if (!$enSecuencia) wire:click="closeReciboModal" @endif
                  aria-hidden="true"></div>
 
             <!-- Contenedor centrado para scroll -->
             <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0 m-0"
-                 @if (!$enSecuencia) wire:click.self="$set('showReciboModal', false)" @endif>
+                 @if (!$enSecuencia) wire:click.self="closeReciboModal" @endif>
                 <div class="relative w-full max-w-3xl my-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 text-left overflow-hidden transform transition-all"
                      @click.stop>
                 
@@ -743,7 +743,7 @@
                             {{ $isEditingRecibo ? "Editar Recibo {$form->recibo?->folio}" : 'Nuevo Recibo de Nómina' }}
                         @endif
                     </h3>
-                    <button wire:click="{{ $enSecuencia ? 'cancelarSecuencia' : '$set(\'showReciboModal\', false)' }}" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold">
+                    <button wire:click="{{ $enSecuencia ? 'cancelarSecuencia' : 'closeReciboModal' }}" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold">
                         &times;
                     </button>
                 </div>
@@ -867,7 +867,7 @@
                                 @if ($recibosPreviosCountEmpleadoActual > 0)
                                     @php
                                         $montoMeta = (float) ($form->monto_total_acordado ?: $salarioBaseEmpleadoActual);
-                                        $abonoActual = (float) ($form->metodo_pago === 'TRANSFERENCIA' ? $form->nomina_fiscal : $form->diferencia_efectivo);
+                                        $abonoActual = (float) $form->calcularPercepciones();
                                         $saldoRestanteProyectado = max(0, round($montoMeta - ($totalEmitidoPrevioEmpleadoActual + $abonoActual), 2));
                                     @endphp
                                     <div class="p-2.5 bg-amber-50 border border-amber-300/80 rounded-lg dark:bg-amber-950/40 dark:border-amber-800 text-[11px] text-amber-900 dark:text-amber-200 space-y-1">
@@ -1186,7 +1186,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                             <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Método de Pago</label>
-                            <select wire:model="form.metodo_pago"
+                            <select wire:model.live="form.metodo_pago"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 <option value="EFECTIVO">EFECTIVO (Predeterminado)</option>
                                 <option value="TRANSFERENCIA">TRANSFERENCIA</option>
@@ -1248,7 +1248,7 @@
                                 </button>
                             </div>
                         @else
-                            <button type="button" wire:click="$set('showReciboModal', false)"
+                            <button type="button" wire:click="closeReciboModal"
                                 class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 transition">
                                 Cancelar
                             </button>

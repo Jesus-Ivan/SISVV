@@ -292,6 +292,11 @@
                                 <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">
                                     {{ $tipo_movimiento === 'AJUSTE' ? 'Nuevo Saldo Objetivo ($) *' : 'Monto ($) *' }}
                                 </label>
+                                @if ($tipo_movimiento === 'ABONO_DIRECTO')
+                                    <span class="text-[10px] text-amber-600 dark:text-amber-400 block font-normal -mt-0.5 mb-1">
+                                        Máximo a liquidar: ${{ number_format($empleadoSeleccionado?->saldo_adelantos ?? 0, 2) }}
+                                    </span>
+                                @endif
                                 <input type="number" step="0.01" wire:model="monto"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     placeholder="0.00">
@@ -304,8 +309,14 @@
                                 <label
                                     class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-1">Fecha
                                     *</label>
+                                @if ($tipo_movimiento === 'AJUSTE')
+                                    <span class="text-[10px] text-gray-500 dark:text-gray-400 block font-normal -mt-0.5 mb-1">
+                                        Fijada a hoy (corte contable)
+                                    </span>
+                                @endif
                                 <input type="date" wire:model="fecha"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    @if ($tipo_movimiento === 'AJUSTE') disabled class="bg-gray-100 border border-gray-300 text-gray-500 text-sm rounded-lg block w-full p-2.5 cursor-not-allowed dark:bg-gray-750 dark:border-gray-600 dark:text-gray-400"
+                                    @else class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white" @endif>
                                 @error('fecha')
                                     <span class="text-xs text-red-500">{{ $message }}</span>
                                 @enderror
